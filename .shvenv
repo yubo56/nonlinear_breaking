@@ -1,0 +1,8 @@
+#!/bin/zsh
+export _PYTHONPATH=$PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:~/research/fall2017_nonlinearBreaking/dedalus
+
+function shdeactivate () {
+    export PYTHONPATH=$_PYTHONPATH
+    export _PYTHONPATH=
+}
