@@ -76,6 +76,8 @@ u_array = np.array(u_list)
 r_array = np.array(r_list)
 t_array = np.array(t_list)
 xmesh, ymesh = quad_mesh(x=x, y=t_array)
+print(np.shape(xmesh), np.shape(ymesh), np.shape(x), np.shape(t_array),
+    np.shape(r_array))
 plt.figure()
 plt.pcolormesh(xmesh, ymesh, r_array, cmap='winter')
 plt.axis(pad_limits(xmesh, ymesh))
