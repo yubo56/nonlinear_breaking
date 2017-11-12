@@ -14,15 +14,16 @@ from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 logger = logging.getLogger(__name__)
 XMAX = 10
-N_X = 512
+N_X = 2048
 DX = XMAX / N_X
-DT = 1e-4
-
+DT = 1e-5
 C = 5 # speed
+T_F = 0.5 * XMAX / C
+
 SIGMA = 0.3 # for the gaussian wave packet
 WIDTH_GAUSS = 3 # how many sigma to go on either side of center of wave packet
 RHO_0 = 10 # background rho
-RAT = 0.3 # ratio u_1/C, rho_1/RHO_0
+RAT = 0.5 # ratio u_1/C, rho_1/RHO_0
 
 # Bases and domain
 x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
@@ -36,7 +37,7 @@ problem.add_equation("dt(u) = -c * c/r * dx(r) - u * dx(u)")
 
 # Build solver
 solver = problem.build_solver(de.timesteppers.SBDF2)
-solver.stop_sim_time = XMAX / C
+solver.stop_sim_time = T_F
 solver.stop_wall_time = 100000 # should never get hit
 solver.stop_iteration = 100000 # should never get hit
 
@@ -68,11 +69,12 @@ while solver.ok:
         u_list.append(np.copy(u['g']))
         r_list.append(np.copy(r['g']))
         t_list.append(solver.sim_time)
-    if solver.iteration % 200 == 0:
+    if solver.iteration % 1000 == 0:
         logger.info(
-            'Iteration: %i, Time: %.3f, dt: %.3e',
+            'Iteration: %i, Time: %.3f/%3f, dt: %.3e',
             solver.iteration,
             solver.sim_time,
+            T_F,
             DT
         )
 
@@ -82,10 +84,10 @@ r_array = np.array(r_list)
 t_array = np.array(t_list)
 xmesh, ymesh = quad_mesh(x=x, y=t_array)
 plt.figure()
-plt.pcolormesh(xmesh, ymesh, r_array, cmap='winter')
+plt.pcolormesh(xmesh, ymesh, r_array, cmap='YlGnBu')
 plt.axis(pad_limits(xmesh, ymesh))
 plt.colorbar()
 plt.xlabel('rho')
 plt.ylabel('t')
 plt.title('1D uniform wave equation, c=%.3f' % problem.parameters['c'])
-plt.savefig('1d_uniform_rho.png')
+plt.savefig('1d_uniform_rho.png', dpi=1200)
