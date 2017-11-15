@@ -1014,7 +1014,6 @@ class PowerScalarArray(Power, FutureArray):
     def operate(self, out):
         arg0, arg1 = self.args
         np.power(arg0.value, arg1.data, out.data)
-        # print(min(out.data), max(out.data))
 
 
 class PowerFieldScalar(PowerDataScalar, FutureField):
@@ -1033,8 +1032,6 @@ class PowerFieldScalar(PowerDataScalar, FutureField):
         out.layout = self._grid_layout
         np.seterr(all='raise')
         np.power(arg0.data, arg1.value, out.data)
-        print(arg0)
-        print('powerfieldscalar', min(arg0.data), max(arg0.data))
 
 
 class LinearOperator(Operator):

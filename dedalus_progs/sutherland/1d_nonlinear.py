@@ -10,14 +10,16 @@ from dedalus import public as de
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 logger = logging.getLogger(__name__)
-WIDTH = 2 # go out to 2 sigma on either side
 K = 1
 N = 1
+# ZMIN = -150 / K
+# ZMAX = 150 / K
 ZMIN = -20 / K
-ZMAX = 40 / K
-N_Z = 2048
+ZMAX = 80 / K
+N_Z = 1024
 DX = (ZMAX - ZMIN) / N_Z
-DT = 1e-5 / N
+# DT = 1e-4 / N
+DT = 2e-4 / N
 
 m = -0.4 * K
 w = 0.93 * N
@@ -28,94 +30,116 @@ H = 10 / K
 sigm = 10 / K
 A = 0.05 / K
 
-T_F = 5 / N * 0.01
+T_F = 150 / N
 
-# Bases and domain
-z_basis = de.Chebyshev('z', N_Z, interval=(ZMIN, ZMAX))
-domain = de.Domain([z_basis], np.float64)
+try:
+    # Bases and domain
+    z_basis = de.Fourier('z', N_Z, interval=(ZMIN, ZMAX), dealias=1)
+    domain = de.Domain([z_basis], np.float64)
 
-# Problem
-problem = de.IVP(domain, variables=['Ar',  'Ai'])
-problem.parameters['C_G'] = C_G
-problem.parameters['w_mm'] = w_mm
-problem.parameters['w_mmm'] = w_mmm
-problem.parameters['K'] = K
-problem.parameters['U0'] = (K ** 2 + m ** 2 + H ** 2 / 4) ** (3 / 2)\
-        / (2 * N)
-problem.parameters['w'] = w
-problem.parameters['N'] = N
-problem.parameters['H'] = H
-problem.parameters['m'] = m
-problem.parameters['e'] = np.e
-print(problem.parameters)
-# 0.32 * dz(Ar) + 0.25 * dzz(Ai) - 1/3 * dzzz(Ar)
-# - 67 * (Ar^2 +Ai^2) * e^(z/10) * Ar
-# + 1/(20) * 67 * e^(z/10) * (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))
-#   * (-42 * Ar + Ai)
-problem.add_equation('dt(Ar) = -C_G * (Ar) - w_mm * ((Ai)) / 2 + \
-    w_mmm * (((Ar))) / 6 - K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ar + \
-    w**2 / (2 * N**2 * K * H) * (U0 * e**(z/H) * \
-    (2 * Ar * (Ar) + 2 * Ai * (Ai))) * (3 * m * H * Ar + Ai)')
-problem.add_equation('dt(Ai) = -C_G * (Ai) + w_mm * ((Ar)) / 2 + \
-    w_mmm * (((Ai))) / 6 + K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ai + \
-    w**2 / (2 * N**2 * K * H) * (U0 * e**(z/H) * \
-    (2 * Ar * (Ar) + 2 * Ai * (Ai))) * (3 * m * H * Ai - Ar)')
+    # Problem
+    problem = de.IVP(domain, variables=['Ar',  'Ai'])
+    problem.parameters['C_G'] = C_G
+    problem.parameters['w_mm'] = w_mm
+    problem.parameters['w_mmm'] = w_mmm
+    problem.parameters['K'] = K
+    problem.parameters['U0'] = (K ** 2 + m ** 2 + H ** 2 / 4) ** (3 / 2)\
+            / (2 * N)
+    problem.parameters['w'] = w
+    problem.parameters['N'] = N
+    problem.parameters['H'] = H
+    problem.parameters['m'] = m
+    problem.parameters['e'] = np.e
+    # notes: only second term produces divergences...
+    problem.add_equation('dt(Ar) + C_G * dz(Ar) = -\
+        1 * w_mm * dz(dz(Ai)) / 2 +\
+        0 * w_mmm * dz(dz(dz(Ar))) / 6 -\
+        1 * K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ar +\
+        1 * w**2 / (2 * N**2 * K * H) * (\
+            (U0 * e**(z/H) * (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))) \
+            + (U0 * (Ar ** 2 + Ai ** 2) * e**(z/H) / H)) *\
+            (3 * m * H * Ar + Ai)')
+    problem.add_equation('dt(Ai) + C_G * dz(Ai) =\
+        1 * w_mm * dz(dz(Ar)) / 2 +\
+        0 * w_mmm * dz(dz(dz(Ai))) / 6 +\
+        1 * K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ai +\
+        1 * w**2 / (2 * N**2 * K * H) * (\
+            (U0 * e**(z/H) * (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))) \
+            + U0 * (Ar ** 2 + Ai ** 2) * e**(z/H) / H) *\
+            (3 * m * H * Ai - Ar)')
 
-# Build solver
-solver = problem.build_solver(de.timesteppers.SBDF2)
-solver.stop_sim_time = T_F
-solver.stop_wall_time = 100000 # should never get hit
-solver.stop_iteration = 5 # should never get hit
+    # Build solver
+    solver = problem.build_solver(de.timesteppers.SBDF2)
+    solver.stop_sim_time = T_F
+    solver.stop_wall_time = 10000000 # should never get hit
+    solver.stop_iteration = 10000000 # should never get hit
 
-# Initial conditions
-z = domain.grid(0)
-zero_idx = -ZMIN / DX
-if zero_idx < WIDTH * sigm / DX:
-    raise ValueError('Domain cannot fit Gaussian of width %d centered at %d'
-            % (WIDTH * sigm / DX, zero_idx))
-Ar = solver.state['Ar']
-Ai = solver.state['Ai']
+    # Initial conditions
+    z = domain.grid(0)
+    zero_idx = -ZMIN / DX
+    Ar = solver.state['Ar']
+    Ai = solver.state['Ai']
 
-Ar['g'] = np.zeros(np.shape(z))
-Ai['g'] = np.zeros(np.shape(z))
-for i in range(int(zero_idx - WIDTH * sigm / DX),
-        int(zero_idx + WIDTH * sigm / DX)):
-    Ar['g'][i] += A * np.exp(-(zero_idx - i)**2 / (2 * (sigm / DX)**2))
+    num_els = len(Ar['g'])
+    Ar['g'] = 1e-20 * np.ones(num_els)
+    Ai['g'] = 1e-20 * np.ones(num_els)
+    for i in range(num_els):
+        Ar['g'][i] += A * \
+            np.exp(-min((zero_idx - i)**2, (zero_idx + num_els - i)**2)
+            / (2 * (sigm / DX)**2))
 
-# Store data for final plot
-Ar.set_scales(1, keep_data=True)
-Ai.set_scales(1, keep_data=True)
-ar_list = [np.copy(Ar['g'])]
-ai_list = [np.copy(Ai['g'])]
-t_list = [solver.sim_time]
-
-# Main loop
-while solver.ok:
-    solver.step(DT)
+    # Store data for final plot
     Ar.set_scales(1, keep_data=True)
     Ai.set_scales(1, keep_data=True)
-    ar_list.append(np.copy(Ar['g']))
-    ai_list.append(np.copy(Ai['g']))
-    t_list.append(solver.sim_time)
-    if solver.iteration % 100 == 0:
-        logger.info(
-            'Iteration: %i, Time: %.3f/%3f, dt: %.3e',
-            solver.iteration,
-            solver.sim_time,
-            T_F,
-            DT
-        )
+    ar_list = [np.copy(Ar['g'])]
+    ai_list = [np.copy(Ai['g'])]
+    t_list = [solver.sim_time]
 
-# Create space-time plot
-ar_arr = np.array(ar_list)
-ai_arr = np.array(ai_list)
-t_array = np.array(t_list)
-xmesh, ymesh = quad_mesh(x=z, y=t_array)
-plt.figure()
-plt.pcolormesh(xmesh, ymesh, ar_arr, cmap='YlGnBu')
-plt.axis(pad_limits(xmesh, ymesh))
-plt.colorbar()
-plt.xlabel('Ar')
-plt.ylabel('t')
-plt.title('title')
-plt.savefig('1d_nonlinear.png', dpi=600)
+    # Main loop
+    while solver.ok:
+        solver.step(DT)
+        if solver.iteration % round((T_F // DT) / 200) == 0:
+            Ar.set_scales(1, keep_data=True)
+            Ai.set_scales(1, keep_data=True)
+            print('Maxes:', max(Ar['g']), max(Ai['g']))
+            ar_list.append(np.copy(Ar['g']))
+            ai_list.append(np.copy(Ai['g']))
+            t_list.append(solver.sim_time)
+            logger.info(
+                'Iteration: %i, Time: %.3f/%.3f, dt: %.3e',
+                solver.iteration,
+                solver.sim_time,
+                T_F,
+                DT
+            )
+
+except Exception as e:
+    print('Caught exception:', e, '\n\tTrying to plot')
+except KeyboardInterrupt as e:
+    print('Caught keyboard interrupt, plotting...')
+
+if ar_list and ai_list:
+    # Create space-time plot
+    ar_arr = np.array(ar_list)
+    ai_arr = np.array(ai_list)
+    t_array = np.array(t_list)
+
+    xmesh, ymesh = quad_mesh(x=z, y=t_array)
+    plt.figure()
+    plt.pcolormesh(xmesh, ymesh, ar_arr, cmap='YlGnBu')
+    plt.axis(pad_limits(xmesh, ymesh))
+    plt.colorbar()
+    plt.xlabel('Ar')
+    plt.ylabel('t')
+    plt.title('title')
+    plt.savefig('1d_nonlinear_Ar.png', dpi=600)
+
+    plt.clf()
+    plt.figure()
+    plt.pcolormesh(xmesh, ymesh, ai_arr, cmap='YlGnBu')
+    plt.axis(pad_limits(xmesh, ymesh))
+    plt.colorbar()
+    plt.xlabel('Ai')
+    plt.ylabel('t')
+    plt.title('title')
+    plt.savefig('1d_nonlinear_Ai.png', dpi=600)
