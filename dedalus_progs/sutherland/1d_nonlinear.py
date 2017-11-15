@@ -15,9 +15,9 @@ K = 1
 N = 1
 ZMIN = -20 / K
 ZMAX = 40 / K
-N_X = 2048
-DX = (ZMAX - ZMIN) / N_X
-DT = 1e-3 / N
+N_Z = 2048
+DX = (ZMAX - ZMIN) / N_Z
+DT = 1e-5 / N
 
 m = -0.4 * K
 w = 0.93 * N
@@ -31,8 +31,8 @@ A = 0.05 / K
 T_F = 5 / N * 0.01
 
 # Bases and domain
-x_basis = de.Chebyshev('z', N_X, interval=(ZMIN, ZMAX))
-domain = de.Domain([x_basis], np.float64)
+z_basis = de.Chebyshev('z', N_Z, interval=(ZMIN, ZMAX))
+domain = de.Domain([z_basis], np.float64)
 
 # Problem
 problem = de.IVP(domain, variables=['Ar',  'Ai'])
@@ -47,21 +47,25 @@ problem.parameters['N'] = N
 problem.parameters['H'] = H
 problem.parameters['m'] = m
 problem.parameters['e'] = np.e
-problem.meta[:]['z']['dirichlet'] = True
-problem.add_equation('dt(Ar) = -C_G * dz(Ar) - w_mm * dz(dz(Ai)) / 2 + \
-    w_mmm * dz(dz(dz(Ar))) / 6 - K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ar + \
+print(problem.parameters)
+# 0.32 * dz(Ar) + 0.25 * dzz(Ai) - 1/3 * dzzz(Ar)
+# - 67 * (Ar^2 +Ai^2) * e^(z/10) * Ar
+# + 1/(20) * 67 * e^(z/10) * (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))
+#   * (-42 * Ar + Ai)
+problem.add_equation('dt(Ar) = -C_G * (Ar) - w_mm * ((Ai)) / 2 + \
+    w_mmm * (((Ar))) / 6 - K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ar + \
     w**2 / (2 * N**2 * K * H) * (U0 * e**(z/H) * \
-    (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))) * (3 * m * H * Ar + Ai)')
-problem.add_equation('dt(Ai) = -C_G * dz(Ai) + w_mm * dz(dz(Ar)) / 2 + \
-    w_mmm * dz(dz(dz(Ai))) / 6 + K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ai + \
+    (2 * Ar * (Ar) + 2 * Ai * (Ai))) * (3 * m * H * Ar + Ai)')
+problem.add_equation('dt(Ai) = -C_G * (Ai) + w_mm * ((Ar)) / 2 + \
+    w_mmm * (((Ai))) / 6 + K * U0 * (Ar**2 + Ai**2) * e**(z/H) * Ai + \
     w**2 / (2 * N**2 * K * H) * (U0 * e**(z/H) * \
-    (2 * Ar * dz(Ar) + 2 * Ai * dz(Ai))) * (3 * m * H * Ai - Ar)')
+    (2 * Ar * (Ar) + 2 * Ai * (Ai))) * (3 * m * H * Ai - Ar)')
 
 # Build solver
 solver = problem.build_solver(de.timesteppers.SBDF2)
 solver.stop_sim_time = T_F
 solver.stop_wall_time = 100000 # should never get hit
-solver.stop_iteration = 100000 # should never get hit
+solver.stop_iteration = 5 # should never get hit
 
 # Initial conditions
 z = domain.grid(0)
@@ -88,12 +92,11 @@ t_list = [solver.sim_time]
 # Main loop
 while solver.ok:
     solver.step(DT)
-    if solver.iteration % 20 == 0:
-        Ar.set_scales(1, keep_data=True)
-        Ai.set_scales(1, keep_data=True)
-        ar_list.append(np.copy(Ar['g']))
-        ai_list.append(np.copy(Ai['g']))
-        t_list.append(solver.sim_time)
+    Ar.set_scales(1, keep_data=True)
+    Ai.set_scales(1, keep_data=True)
+    ar_list.append(np.copy(Ar['g']))
+    ai_list.append(np.copy(Ai['g']))
+    t_list.append(solver.sim_time)
     if solver.iteration % 100 == 0:
         logger.info(
             'Iteration: %i, Time: %.3f/%3f, dt: %.3e',
