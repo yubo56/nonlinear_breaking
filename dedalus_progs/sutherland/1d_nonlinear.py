@@ -3,6 +3,7 @@ Eq. 26 from Sutherland et al 2011
 """
 
 import logging
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -12,14 +13,15 @@ from dedalus.extras.plot_tools import quad_mesh, pad_limits
 logger = logging.getLogger(__name__)
 K = 1
 N = 1
-# ZMIN = -150 / K
-# ZMAX = 150 / K
-ZMIN = -20 / K
-ZMAX = 80 / K
-N_Z = 1024
+ZMIN = -150 / K
+ZMAX = 150 / K
+# ZMIN = -20 / K
+# ZMAX = 80 / K
+# N_Z = 1024
+N_Z = 2048
 DX = (ZMAX - ZMIN) / N_Z
 # DT = 1e-4 / N
-DT = 2e-4 / N
+DT = 5e-5 / N
 
 m = -0.4 * K
 w = 0.93 * N
@@ -98,10 +100,10 @@ try:
     # Main loop
     while solver.ok:
         solver.step(DT)
-        if solver.iteration % round((T_F // DT) / 200) == 0:
+        if solver.iteration % round((T_F // DT) / 800) == 0:
             Ar.set_scales(1, keep_data=True)
             Ai.set_scales(1, keep_data=True)
-            print('Maxes:', max(Ar['g']), max(Ai['g']))
+            print('\tMaxes:', max(Ar['g']), max(Ai['g']))
             ar_list.append(np.copy(Ar['g']))
             ai_list.append(np.copy(Ai['g']))
             t_list.append(solver.sim_time)
@@ -112,6 +114,11 @@ try:
                 T_F,
                 DT
             )
+            pickle.dump({
+                'Ar': ar_list,
+                'Ai': ai_list,
+                't': t_list
+            }, open('dump.pkl', 'wb'))
 
 except Exception as e:
     print('Caught exception:', e, '\n\tTrying to plot')
