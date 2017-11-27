@@ -1,0 +1,268 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{report}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\bra}[1]{\left<#1\right|}
+    \newcommand*{\ket}[1]{\left|#1\right>}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\norm}[1]{\left|\left|#1\right|\right|}
+    \newcommand*{\abs}[1]{\left|#1\right|}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\expvalue}[1]{\left<#1\right>}
+    \newcommand*{\ang}[0]{\text{\AA}}
+    \newcommand*{\mum}[0]{\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\rfoot{Yubo Su}
+\cfoot{\thepage/\pageref{LastPage}}
+
+\title{Research Notes}
+\author{Yubo Su}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\chapter{2D Wave Breaking in Atmospheres}
+
+The goal of this will be to lay out a formalism that can reproduce Sutherland et
+al.~2011\footnote{DOI:10.1175/JAS-D-11--097.1} and also investigate driven
+oscillations versus the breaking of a single wave packet. This represents wave
+breaking in the atmosphere.
+
+\section{Dynamical Setup}
+
+We adopt notation where $q_0$ is the background quantity and $q_1$ is the
+perturbed quantity from the propagating wave.
+
+\subsection{Nonturbulent Equations of Motion}
+
+The equations of motion are the usual fluid equations
+\begin{subequations}\label{se:fl_eq}
+    \begin{align}
+        \pd{\rho}{t} + \vec{\nabla} \cdot \rho \vec{u} &= 0,
+            \label{eq:fl_eq.cont}\\
+        \rd{\vec{u}}{t} &= -\frac{\vec{\nabla}P}{\rho} - g\hat{z},
+            \label{eq:fl_eq.mom}
+    \end{align}
+\end{subequations}
+where $\rd{}{t} = \pd{}{t} + \vec{u} \cdot \vec{\nabla}$ denotes the Lagrangian
+derivative. We take $\vec{u}_0 = 0$ no background flow, $P_0(x, z) = P_0(z)
+\propto e^{-z/H}$ where $H$ is the scale height of the atmosphere. We take the
+fluid to be incompressible $\vec{\nabla} \cdot \vec{u} = 0$, which turns the
+continuity equation \autoref{eq:fl_eq.cont} into $\rd{\rho}{t} = 0$. Finally, we
+take the atmosphere to be isothermal, implying $\rho_0 \propto P_0 \propto
+e^{-z/H}$, and more importantly $\frac{P_0}{\rho_0} = \frac{P_1}{\rho_1} =
+\frac{k_BT}{\mu m_p}$. We denote $P_0 = P_0(z=0), \rho_0 = \rho_0(z=0)$.
+
+We write out the new fluid equations under these assumptions; note that we do
+not assume perturbed quantities are small and must keep all terms
+\begin{subequations}\label{se:lin_eq}
+    \begin{align}
+        \pd{\rho_1}{t} &= \frac{u_{1z}}{H}\rho_0e^{-z/H} - \vec{u}_1 \cdot
+            \vec{\nabla} \rho_1, \label{eq:lin_eq.cont}\\
+        \pd{\vec{u}_1}{t} &=
+            -\p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
+            -\frac{-\frac{\hat{z}}{H}P_0e^{-z/H} + \frac{k_BT}{\mu m_p}
+                \vec{\nabla} \rho_1}{\rho_0e^{-z/H} + \rho_1}
+                - g\hat{z}, \label{eq:lin_eq.mom}.
+    \end{align}
+\end{subequations}
+This consists of four equations in four unknowns, $\rho_1$ and the three
+components of $\vec{u}_1$.
+
+\subsection{Turbulent Dissipation}
+
+In order to mimic the effect of turbulent dissipation, we introduce a viscosity
+term into the equations of motion. Per the incompressible Navier-Stokes
+equation, we quantify viscosity via $\nu \nabla^2 \vec{u}_1$ where $\nu$ is the
+turbulent viscosity. For this problem, we simply use $\nu \neq
+0.1\;\mathrm{cm^2/s}$ for air.
+
+We identify the kinetic energy density carried by the perturbation to be
+$\mathcal{U}_T = \frac{1}{2}\rho \p*{\vec{u}_1 \cdot \vec{u}_1}$. We require
+$\rd{\mathcal{U}}{t} = 0$ under the dissipation-free fluid equations
+\autoref{se:fl_eq} where we denote $\mathcal{U} \equiv \mathcal{U}_T +
+\mathcal{U}_V$ the sum of the kinetic and potential energy densities; we assume
+incompressibility as per our present problem:
+\begin{align}
+    \rd{\p*{\mathcal{U}_T + \mathcal{U}_V}}{t} = 0
+        &= \frac{1}{2}u_1^2 \cancelto{0}{\rd{\rho}{t}}
+        + \rho \vec{u}_1 \cdot \rd{\vec{u}_1}{t} + \rd{\mathcal{U}_V}{t}
+        ,\nonumber\\
+        &= \rho \p*{
+                -\frac{\vec{u}_1 \cdot \vec{\nabla}P}{\rho} - u_{1z}g
+            } + \rd{\mathcal{U}_V}{t},\nonumber\\
+        &= -\cancelto{0}{\rd{P}{t}} + \cancelto{0}{\pd{P_0}{t}}
+            + \pd{P_1}{t} - \rho u_{1z}g + \rd{\mathcal{U}_V}{t}.
+\end{align}
+
+%TODO figure this out from L&L, figure out the energy dissipation upon adding
+%Navier-Stokes term.
+
+\subsection{Boundary Conditions}
+
+We must bound this to a finite domain. We choose periodic boundary conditions in
+$x$ with total length $L_x$, $x \in \s*{-\frac{L}{2}, \frac{L}{2}}$. We choose
+$z$ dimension to have total length $L_z$, $z \in [0, L_z]$.
+
+To set up the boundary condition at $z = 0$, we recall that gravity waves in an
+atmosphere with $e^{-z/H}$ profile have form
+\begin{equation}
+    u_{1z} \propto e^{\frac{z}{2H}}e^{i\p*{k_xx + k_zz - \omega t}},
+        \label{eq:bc_below}
+\end{equation}
+where ($N^2 \equiv \frac{g}{H}$ is the Brunt-V\"ais\"al\"a frequency in an
+incompressible, stratified atmosphere)
+\begin{equation}
+    \omega^2 = \frac{N^2 k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
+        \label{eq:omega}
+\end{equation}
+Thus, at constant $z = 0$ we must have
+\begin{equation}
+    \vec{u}_{1z}(z = 0) = e^{i(k_xx - \omega t)}\label{eq:bc_u1z}.
+\end{equation}
+
+The boundary condition at $z = L_z$ is much harder to determine. It is clear
+that $\vec{u}_1(z = \infty) = \rho_1(z = \infty) = 0$, and for $L_z \gg H$ this
+would be a reasonable approximation, if simply because we expect the majority of
+the wave to dissipate via turbulent dissipation as $z$ reaches many $H$. We will
+simply choose the BC to be many multiples of $H$. We can solve with both a
+Dirichlet and Neumann BC and compare the two solutions; if the solutions
+differ significantly then we must choose a larger $L_z$. These are the only two
+solutions that can be implemented where we do not need the phase of the linear
+wave, which we lose during the nonlinear breaking region, to relate the function
+and derivative at the boundary.
+
+For the boundary conditions on $\rho$, we note that in the linear regime it
+should just have a phase offset from $u_{1z}$, thus we choose $\rho(z = 0)
+\propto e^{\frac{z}{2H}}ie^{i\p*{k_xx + k_zz - \omega t}}$ and a similar
+treatment at $z = L_z$, taking both a Dirichlet and Neumann BC\@. This should be
+sufficient information to constrain our problem, as satisfying incompressibility
+along the boundaries constrains $u_{1x}$.
+
+\subsubsection{Old Stuff---$u_{1z}(z = L_z)$}
+
+\textbf{Note:} The reason the below is difficult to make work is that it tries
+to restore a linear treatment to the wave. However, since we must capture
+nonlinear dynamics, we lose the concept of the ``phase'' of the wave in the wave
+breaking region, and it proves difficult to write down a BC that is
+phase-independent.
+
+However, at any finite boundary there is nonzero reflection thanks to the
+continually varying impedance. \emph{The correct BC to use when performing a
+finite truncation must match propagation characteristics with an untruncated
+medium.}
+
+We assume the perturbations have once again become small at $L_z$, i.e.\
+dissipation between $[0, L_z]$ is sufficient that only a small amplitude
+perturbation persists to $z = L_z$. This is a necessary criterion for choosing
+$L_z$ else we do not have a representative portrait of the energy dissipation
+profile of the propagating wave with our simulation. Then we recall that in the
+linear regime, the solution given by \autoref{eq:bc_below} is the propagating
+solution. We assume that $k_x, \omega$ are the same as the values at the $z = 0$
+boundary, then
+\begin{equation}
+    \frac{\rho_{,z}}{\rho} = \frac{u_{1z, z}}{u_{1z}} = \frac{1}{2H} + ik_z.
+        \label{eq:bc_above}
+\end{equation}
+Recall that since our equations of motion are nonlinear, we cannot use complex
+notation except in very limited, time-averaged cases. Thus, how to implement
+this BC is tricky\dots
+
+\subsection{Simulation}
+
+We begin our simulation with $\rho_1 = 0, \vec{u}_1 = 0$ strictly within the
+domain of simulation. We will borrow some values from Sutherland's paper and use
+$k_z = 2\;\mathrm{km^{-1}}$ then define $k_x = -0.4k_z, H = 10 / k_z, A = 0.05 /
+k_z, L_z = 300 / k_z, L_x = 20 / k_z$, We also use $\mu \approx 29, T =
+273\;\mathrm{K}, \rho_0 = 1\;\mathrm{kg/m^3}, P_0 = \frac{\rho_0 k_BT}{\mu m_p},
+g = 10\;\mathrm{m/s^2}$.
+
+\end{document}
+
