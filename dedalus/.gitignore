@@ -1,0 +1,13 @@
+build
+venv
+docs
+*.pyc
+.hg
+
+*.png
+*.db
+*.c
+*.so
+*.o
+*.h5
+.ipynb_checkpoints
