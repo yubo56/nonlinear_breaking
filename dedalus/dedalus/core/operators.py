@@ -673,7 +673,6 @@ class Multiply(Arithmetic, metaclass=MultiClass):
     def canonical_linear_form(self, *vars):
         """Eliminate nonlinear multiplications and float specified variables right."""
         arg0, arg1 = self.args
-        print(arg0, arg1)
         if arg0.has(*vars) and arg1.has(*vars):
             raise NonlinearOperatorError("Cannot multiply two linear terms.")
         elif arg0.has(*vars):
@@ -1004,6 +1003,18 @@ class PowerArrayScalar(PowerDataScalar, FutureArray):
         arg0, arg1 = self.args
         np.power(arg0.data, arg1.value, out.data)
 
+class PowerScalarArray(Power, FutureArray):
+
+    argtypes = {0: (Scalar, FutureScalar),
+                1: (Array, FutureArray)}
+
+    def check_conditions(self):
+        return True
+
+    def operate(self, out):
+        arg0, arg1 = self.args
+        np.power(arg0.value, arg1.data, out.data)
+
 
 class PowerFieldScalar(PowerDataScalar, FutureField):
 
@@ -1019,6 +1030,7 @@ class PowerFieldScalar(PowerDataScalar, FutureField):
         # Raise in grid layout
         arg0.require_grid_space()
         out.layout = self._grid_layout
+        np.seterr(all='raise')
         np.power(arg0.data, arg1.value, out.data)
 
 

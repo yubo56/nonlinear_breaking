@@ -154,9 +154,10 @@ class Future(Operand):
             out = self.domain.new_data(self.future_type)
 
         # Copy metadata
-        out.meta = self.meta
-        out.meta[:]['scale'] = None
-        out.set_scales(self.domain.dealias, keep_data=False)
+        # HACK (YS)
+        # out.meta = self.meta
+        # out.meta[:]['scale'] = None
+        # out.set_scales(self.domain.dealias, keep_data=False)
 
         # Perform operation
         self.operate(out)
