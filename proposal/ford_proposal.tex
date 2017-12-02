@@ -1,0 +1,207 @@
+    \documentclass[12pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        times,
+        booktabs % \bottomrule instead of hline apparently
+    }
+    \usepackage[margin=0.5in, top=1in, bottom=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\bra}[1]{\left<#1\right|}
+    \newcommand*{\ket}[1]{\left|#1\right>}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\norm}[1]{\left|\left|#1\right|\right|}
+    \newcommand*{\abs}[1]{\left|#1\right|}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\expvalue}[1]{\left<#1\right>}
+    \newcommand*{\ang}[0]{\text{\AA}}
+    \newcommand*{\mum}[0]{\upmu \mathrm{m}}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag}
+
+    \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\doublespacing
+
+% helpful links:
+% http://www.alexhunterlang.com/nsf-fellowship#TOC-Examples-of-Successful-Essays
+
+\section{Proposed Research}
+
+In the last decade, astrophysical systems with one white dwarf orbiting another
+body e.g.\ a black hole or another white dwarf (referred to collectively as WD
+binaries) have become increasingly important for several topics in astrophysics.
+As gravitational wave (GW) astronomy takes off with the recent triumphs of the
+Laser Interferometer Gravitational-Wave Observatory (LIGO), understanding GW
+profiles of WD systems is paramount. Mergers of WD-WD binaries create a variety
+of astrophysical systems, the most important of which are type Ia supernovae,
+the standard candle of observational astronomy. WD-BH (black hole) systems are
+expected to produce detectable flares that can be observed to yield constraints
+on currently unknown physics.
+% (https://arxiv.org/pdf/1701.08162.pdf)
+
+\emph{Tidal interactions}, the effect of an uneven gravitational field produced
+by one body on the other, are the key component in such systems. In WD binaries,
+tidal interactions are expected to excite internal gravity waves in the WD\@.
+These then propagate towards the surface and dissipate by wave breaking, as ocean
+waves do on a beach, among other mechanisms.
+Prior work shows that this wave breaking can play a dominant role in determining
+the internal structure of the WD\@. Nonetheless, previous treatments of WD
+binaries adopt incomplete, semi-analytical treatments to estimate the location
+and strength of wave-breaking induced dissipation. For such fluid systems,
+numerical simulation is the only way to obtain quantitatively accurate results.
+% (Fuller 2012d)
+
+\textbf{We propose to study nonlinear wave breaking of internal gravity waves in
+WDs using numerical hydrodynamic codes.} There are already a wide assortment of
+suitable hydrodynamical codes
+% (Dedalus\footnote{
+% http://iopscience.iop.org/article/10.1088/0004-%
+% 637X/796/1/17}, Athena\footnote{e.g.\
+% http://iopscience.iop.org/article/10.1088/0004-%
+% 637X/741/1/57})
+capable of solving the fully nonlinear hydrodynamical equations, we expect to be
+able to apply such codes with slight modifications to solve the proposed
+problem. Should existing codes prove inapplicable, the applicant is well
+equipped to develop suitable software from scratch (\autoref{s:plan}). We aim
+to extend our findings to observational signatures for a variety of compositions
+and uncertain material properties.
+
+The results of our study as GW astronomy continues to improve; inaccuracies are
+especially important to mitigate with the high sensitivity requirements
+involved. Conversely, a gravitational wave detection could yield significant
+information on WD dynamics that, thanks to their ubiquity, could have
+ramifications throughout astronomy. Equally importantly, our approach would be
+highly transferable to other problems such as tidal heating during exoplanet
+formation, another area of crucial and open research.
+
+A tentative timeline for research follows:
+\begin{itemize}
+    \item 2--4 months: Set up hydrodynamic code, calibrate against simplified,
+        well-understood fiducial models.
+    \item 4--10 months: Apply hydrodynamic code to systems found in literature.
+    \item 10--14 months: Generate observational counterparts to predicted
+        phenomena.
+    \item 14--24 months: Explore related interesting astrophysical systems, seek
+        analytical descriptions of any discovered phenomena.
+\end{itemize}
+
+\section{Plan of Study}\label{s:plan}
+
+Cornell University is the ideal institution to pursue the proposed research.
+Professor Dong Lai, the applicant's adviser, has authored numerous papers on WD
+tidal dissipation and is a foremost expert in the subject. Other faculty and
+researchers at Cornell are equally well-suited for the project. Notably,
+Professor Saul Teukolsky is a leading researcher in numerical techniques in
+astrophysics for the past five decades.
+
+The applicant earned two B.S.\ from the California Institute of Technology in
+Physics and Computer science and is well equipped for the proposed problem with
+teaching proficiency in differential equations and completed coursework in
+computational physics, astrophysical fluid dynamics, GPU programming and others.
+Future relevant coursework includes astrophysical processes, celestial
+mechanics and physics of compact objects, all of which are scheduled to be
+completed within six months of recipt of the fellowship funding. These courses
+will enable both a complete treatment of relevant physics and accurate, fast
+programming of numerical codes.
+
+The proposed study is integral to the long-term career goals of the applicant,
+a professorship in astrophysics at a research institution. Proficiency in
+numerical techniques and software development is extremely important in modern
+astrophysical studies. White dwarfs both are important to observational
+astronomy and involve many astrophysical processes, so such a project would be
+relevant to many members of the academic community and open avenues for
+collaboration.
+
+% \begin{itemize}
+%     \item Lots of WKB treatments
+%     % TODO radiative diffusion vs turbulent dissipation?
+%     %   - if in stars can power energic outbursts, same for WD?
+%     % Planet formation, WD inspirals + waveforms (important b/c Fuller et al P4)
+%     %   - heating should have visible signatures in flares
+%     \item
+
+%     \item \url{http://journals.ametsoc.org/doi/pdf/10.1175/1520-%
+%         0469\%281983\%29040\%3C2497\%3ATIOGWB\%3E2.0.CO\%3B2} Wave breaking is
+%         an essential part of circulation % holten et al 1983
+
+%     \item \url{https://arxiv.org/pdf/1211.0624.pdf}, % fuller 2012, vick 2016
+%         \url{https://arxiv.org/abs/1612.07316} Show necessary to get heating as
+%         function of depth
+
+%     \item \url{http://journals.ametsoc.org/doi/abs/10.1175/JAS-D-11%
+%         -097.1} has already studied to some extent in atmospheres, weakly
+%         nonlinear regime
+%         % sutherland 2011
+
+%     \item Tidal heating in planet formation too!
+% \end{itemize}
+
+\end{document}
+
