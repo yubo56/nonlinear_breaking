@@ -1,0 +1,242 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\bra}[1]{\left<#1\right|}
+    \newcommand*{\ket}[1]{\left|#1\right>}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\norm}[1]{\left|\left|#1\right|\right|}
+    \newcommand*{\abs}[1]{\left|#1\right|}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\expvalue}[1]{\left<#1\right>}
+    \newcommand*{\ang}[0]{\text{\AA}}
+    \newcommand*{\mum}[0]{\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\section*{Timelines}
+
+\begin{itemize}
+    \item 12/31/17---NDSEG \url{http://www.ndsegfellowships.org/application}
+        \begin{itemize}
+            \item \emph{Please submit a proposal relevant to the DoD Agency
+                (AIRFORCE, ARMY, ONR)/field that interest you.} (Pitch as
+                ``science of extreme materials, results that can be useful in
+                understanding turbulence''?)
+            \item 3 page proposal.
+        \end{itemize}
+
+    \item 01/10/17---NNSA SSGF \url{
+        https://www.krellinst.org/ssgf/about-doe-nnsa-ssgf/fields-study}
+        \begin{itemize}
+            \item Promote stewardship science (National Nuclear Security
+                Administration).
+            \item Fields of study: \textbf{High Energy Density Physics,
+                Materials under Extreme Conditions and Hydrodynamics}.
+            \item Ask to propose \emph{program of study}, I picked:
+                \begin{itemize}
+                    \item Advanced Plasmas
+                    \item Physics of BHs, WDs, stars
+                    \item Theory stellar structure/evolution
+                    \item Applications of Parallel Computers
+                    \item Computational fluid dynamics
+                    \item Turbulence/turbulent flows (not sure this one)
+                \end{itemize}
+            \item Essays:
+                \begin{itemize}
+                    \item 500w area of research
+                    \item 300w intellectual excitement
+                    \item 300w ``how your research will directly compile to
+                        stockpile stewardship in your area'' Advice from
+                        theoretical astrophysicist: ``\emph{I pretty much argued
+                        that SNe are labs for many different types of extreme
+                        physics and can help inform ground-based experiments.
+                        Also many of the same principles in my simulations could
+                        be applied to other things. Depending on what you study
+                        it shouldn't be too hard to justify (especially if
+                        you're into plasmas, high energy particles, fluid
+                        dynamics, etc.)}''
+                \end{itemize}
+        \end{itemize}
+
+    \item 01/17/17---DOE CSGF \url{
+        https://www.krellinst.org/csgf/about-doe-csgf/fields-study}
+        \begin{itemize}
+            \item Math + Computers to study fields e.g.\ astrophysics, etc.,
+                promote interdisciplinary, require broad program of study.
+            \item Possible proposal: \textbf{Propose to develop new software? Or
+                just say that we'll be ready to, just in case.}
+            \item Program of Study:
+                \begin{itemize}
+                    \item (Science/Eng) Physics BH, WD, NS
+                    \item (Science/Eng) Computational Fluid Dynamics
+                    \item (Math/Stats) Applied Dynamical Systems
+                    \item (Math/Stats) Functional Analysis
+                    \item (Computer Science) Applications of Parallel Computers
+                    \item (Computer Science) Advanced Programming Languages
+                \end{itemize}
+            \item Essays:
+                \begin{itemize}
+                    \item 2250c Field of Interest, role of CS
+                    \item 2250c use of CS + math in proposed research
+                    \item 2250c justify program of study.
+                \end{itemize}
+        \end{itemize}
+    \item 02/01/17---NSPIRES NESSF \url{
+        https://nspires.nasaprs.com/external/solicitations/summary.do?method=init&solId={1A7F0A8C-1126-EA39-6584-10DBD500C8AC}&path=open
+        }
+        \begin{itemize}
+            \item \textbf{Adviser starts}, check instructions at \href{
+                https://nspires.nasaprs.com/external/viewrepositorydocument/cmdocumentid=539448/solicitationId=\%7B1A7F0A8C-1126-EA39-6584-10DBD500C8AC\%7D/viewSolicitationDocument=1/NESSF\%202017-2018\%20Proposal\%20Submission\%20Instructions.pdf}{here}
+            \item Proposal limit 6 pages
+        \end{itemize}
+\end{itemize}
+
+\newpage
+
+\title{Nonlinear Tidal Dissipation in White Dwarfs}
+\author{Yubo Su}
+\date{}
+
+\maketitle
+
+\section{Introduction}
+
+\subsection{Background}
+
+\begin{itemize}
+    \item \emph{Steal a bunch from Fuller et al}
+    \item WD-WD systems are important, produce sdO stars, giant stars,
+        Ia supernovae (Fuller Paper II citations)
+    \item WD-BH systems, tidal disruption produces observable flares
+        (https://arxiv.org/pdf/1701.08162.pdf)
+    \item WD binaries are in LISA sensitivity band, GW astronomy is powerful
+        tool evidenced by the recent LIGO success (FullerII)
+    \item Tidal dissipation can contribute significantly to the brightnesses of
+        these binaries (FullerII)
+\end{itemize}
+
+\subsection{Previous Work}
+
+\begin{itemize}
+    \item Fuller + Lai determined in WD binaries, interval gravity waves are
+        excited that propagate towards the surface and nonlinear dissipate in
+        some WDs.
+    \item Predicted dissipation luminosity dominates black body dissipation,
+        significant contribution to energy dynamics. (FullerII)
+    \item State of the art is WKB (FullerIV)
+    \item Sensitive probe of WD conditions/models, e.g.\ discern whether certain
+        white dwarfs are undergoing strong tidal heating (FullerIV).
+    \item Require numerical simulations to determine dissipation profile.
+\end{itemize}
+
+\section{Proposed Research}
+
+\textbf{Propose to study nonlinear wave breaking in white dwarf binaries via
+numerical simulation}.
+
+\begin{itemize}
+    \item Research Plan
+        \begin{itemize}
+            \item For various WD models + compositions, run simulations to
+                determine $E, \vec{L}$ dissipation distribution.
+            \item Start with spectral code (Dedalus), existing literature shows
+                that handles instability-driven turbulence with high accuracy
+                and speed.
+            \item Have the computational expertise to modify existing
+                codes/build new code if existing ones are insufficient.
+            \item Determine whether observed events e.g.\ Brown et al 2011 match
+                our predictions for any models, other observational signatures.
+            \item Study model output for simpler models to develop analytical
+                tools.
+        \end{itemize}
+    \item Further applications
+        \begin{itemize}
+            \item Forming hot Jupiters (Michelle paper)
+            \item \textbf{LIGO detecting kilonovae means many energetic
+                phenomena to study, any chance to apply similar approach?}
+        \end{itemize}
+\end{itemize}
+
+
+\end{document}
+
