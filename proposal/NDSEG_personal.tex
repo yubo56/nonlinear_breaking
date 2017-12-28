@@ -1,0 +1,147 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\bra}[1]{\left<#1\right|}
+    \newcommand*{\ket}[1]{\left|#1\right>}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\norm}[1]{\left|\left|#1\right|\right|}
+    \newcommand*{\abs}[1]{\left|#1\right|}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\expvalue}[1]{\left<#1\right>}
+    \newcommand*{\ang}[0]{\text{\AA}}
+    \newcommand*{\mum}[0]{\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\singlespacing
+
+As an aspiring theoretical astrophysics professor, my goals consist of
+developing both a strong grasp of pertinent numerical and analytical techniques
+and a broad understanding of all science that can be observed in astrophysical
+systems. Having this extra understanding will allow me to contribute to many
+fields using the natural laboratories that astronomical objects supply, probing
+physics inacessible to traditional experiment. To this end, the NDSEG fellowship
+along with its associated benefits are a great fit for my goals, and I would
+look forward to contributing to the NDSEG fellow community and the scientific
+community at large.
+
+My immediate priority in becoming a professor is to seek highly versatile,
+interdisciplinary research to best prepare myself for future work. Such research
+will build up a core skillset that can be applied to various fields. My proposed
+research, numerical studies of nonlinear wave breaking in white dwarfs, is an
+example of such research that combines high energy physics, fluid dynamics and
+numerics. I intend to continue studying energetic phenomena in astrophysics...
+% maybe one more goal
+
+Ultimately, I seek to become a research professor developing simple, tractable
+mobels of behaviors in astrophysical systems inacessible to man-made
+laboratories. I believe such models are invaluable for turning astronomical
+observations into constraints useful for other fields of study. My proposed work
+accomplishes this by turning observed white dwarf luminosity and orbital
+parameters into constraints on the behavior of matter under extreme conditions.
+Furthermore, such models are
+
+% short term goals: perform highly interdisciplinary research that will enable
+% me to contribute to a variety of fields and bring novel tools across
+% specialties.
+%   - build core "swiss army knife" to apply to variety of problems
+%   - practice learning new ideas, i.e. breadth ~= depth, cross-pollination
+% long term goals: astrophysics research professor studying them as natural
+% laboratories for simple, tractable models of behavior inaccessible to
+% experiment
+%   - strong grasp of wide breadth of literature to understand what mechasims
+%   can be at play
+%   - passion for teaching, information dissemination
+% goals developed from desire to study complicated problems with easily grasped
+% explanations
+%   - implications beyond target problem
+%   - demonstration of principle of prescient analysis, outreach inspiration
+% I have already begun to lay foundation for this
+%   - research with multidisciplinary Dong Lai, strong emphasis on simplified
+%   problems
+%   - bringing new tools to table; double major, software best practice
+% fellowship fits into goals of understanding a wide breadth of material at a
+% strong enough level for application to unrelated problems
+
+\end{document}
+
