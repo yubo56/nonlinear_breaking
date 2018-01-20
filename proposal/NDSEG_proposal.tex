@@ -83,12 +83,13 @@
 
 \def\Snospace~{\S{}} % hack to remove the space left after autorefs
 \renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\subsectionautorefname}{\Snospace}
 \renewcommand*{\appendixautorefname}{\Snospace}
 \renewcommand*{\figureautorefname}{Fig.}
 \renewcommand*{\equationautorefname}{Eq.}
 \renewcommand*{\tableautorefname}{Tab.}
 
-\onehalfspacing
+\setstretch{1.2}
 
 % helpful links:
 % http://www.alexhunterlang.com/nsf-fellowship#TOC-Examples-of-Successful-Essays
@@ -101,131 +102,140 @@
 
 \section{Introduction: White Dwarf Binaries}
 
-White dwarfs (WDs) are luminous, long-lasting products of late-stage stellar
-evolution that are held up by electron degeneracy pressure, a quantum mechanical
-effect arising from subjecting electrons to immense pressures. They are some of
-the densest objects in the known universe, behind only neutron stars (NS) and
-black holes (BH), fitting a solar mass into an Earth-sized sphere. Furthermore,
-they exhibit various chemical compositions, each of which is subject to
-different physics, and are found in a variety of interesting systems. As such,
-WDs are a unique and diverse window into matter under extreme conditions.
+White dwarfs (WDs) are remnants of stellar evolution for stars with mass
+$\lesssim 8 M_{sun}$. They are some of the densest objects in the universe,
+fitting a solar mass into an Earth-sized sphere. They are supported against
+gravity by electron degeneracy pressure, a quantum mechanical effect arising from
+subjecting electrons to immense pressures Furthermore, they exhibit various
+chemical compositions, each of which is subject to different physics, and are
+found in a variety of interesting systems. As such, WDs are a unique and diverse
+window into matter under extreme conditions.
 
-WDs are commonly found in binary orbits with companion objects, in which the two
-orbit their center of mass under their mutual gravitational attraction. The
-companion object ranges from another WD to a supermassive BH (SMBH),
-hypothesized to be at the center of galaxies and have mass $10^5$--$10^6$ solar
-masses. All of these binary systems are very important to astrophysics. WD-WD
-binaries are most important for being thought to generate \emph{Type Ia
-supernovae} in which one of the two WDs reaches a critical mass through
-accreting surrounding matter and collapses under its own gravity, producing a
-shock wave that tears the WD apart and releases immense amounts of energy. Type
-Ia supernovae are unique in astrophysics for their near-constancy throughout
-space and time, consistently occuring at the WD critical mass, and have been
-used to discover numerous cosmological phenomena such as dark energy.
+WDs are commonly found in binaries in which two objects orbit their center of
+mass under mutual gravitational attraction. The companion object ranges
+from another WD to a supermassive BH (SMBH), hypothesized to be at the center of
+galaxies and have mass $\gtrsim 10^5$ solar masses. All of these binary systems
+are very important to astrophysics. WD-WD binaries are most important for being
+thought to generate \emph{Type Ia supernovae} in which two WDs merge and
+initiate runaway thermonuclear fusion that powers an explosion, releasing
+immense amounts of energy. Because Type Ia supernovae (SNe Ia) are highly
+luminous, can be seen at large distances and are very consistent, they have been
+used as a ``standard candle'' to probe the expansion rate of the universe (e.g.\
+observations of SNe Ia provided the first evidence of the existence of dark
+energy in the universe).
 
-WD-BH systems are also interesting subjects of study. Studies indicate that
-as WDs orbit the extreme gravity surrounding BHs, they will produce observable
-flares induced by gravitational tidal forces\cite{flares}. A WD orbiting a SMBH
-would produce gravitational waves, waves carried by distortions in space-time
-and generated according to Einstein's general relativity by accelerating massive
-objects, that are expected to be detected by the space-based \emph{Laser
-Interferometer Space Antenna (LISA)} when deployed\cite{lisa}. Gravitational
-wave astronomy is an increasingly exciting field as the \emph{Laser
-Interferometer Gravitational-Wave Observatory (LIGO)} continues to make
-detections since its first in late 2015. As gravitational wave astronomy relies
-on accurate predictions of the expected signals, it is important to build as
-accurate models as possible before observation runs begin.
+WD-BH systems are also interesting subjects of study. Recent works indicate that
+as WDs plunge close to BHs, they will produce observable flares induced by
+gravitational tidal forces\cite{flares}. A WD orbiting a SMBH would also produce
+gravitational waves, waves of space-time warping as predicted by Einstein's
+theory of general relativity, that are expected to be detected by the
+space-based \emph{Laser Interferometer Space Antenna (LISA)} when
+deployed\cite{lisa}. Gravitational wave astronomy is an increasingly exciting
+field as the \emph{Laser Interferometer Gravitational-Wave Observatory (LIGO)}
+continues to make progress since its first detection in late 2015. As
+gravitational wave astronomy relies on accurate predictions of the expected
+signals, it is important to build as accurate models as possible before
+observation runs begin.
 
 \subsection{Tidal Dissipation}
 
 The excitation of \emph{internal gravity waves} in the WD by the tidal forces of
-the companion is an effect seen in all of the aforementioned systems. Internal
-gravity waves, not to be confused with the gravitational waves discussed above,
-are internal displacements in the WD that oscillate and propagate due to a
-restoring buoyancy force. As these waves propagate outward from where they are
-excited, they are expected to grow in amplitude until they break, as do ocean
-waves on a shore, and deposit both energy and angular momentum inside the WD\@.
+the companion is an effect exhibited in all of the aforementioned systems.
+Internal gravity waves, not to be confused with the gravitational waves above,
+are internal displacements in the WD fluid that oscillate and propagate due to a
+restoring buoyancy force. These tidally excited gravity waves are analogous to
+tides on Earth raised by the Moon and the Sun, except that since WDs do not have
+sharp surfaces these waves are internal to the WD\@. As these waves propagate
+outward from where they are excited, they are expected to grow in amplitude
+until they break, as do ocean waves on a shore, and deposit both energy and
+angular momentum in the WD envelope.
 
 Previous work predicts that this dissipation mechanism can generate
 significantly more energy than thermal radiation from the WD surface alone and
 are thus a significant contribution to the WD energy budget\cite{fullerII}. The
-exact radial dissipation profile is of enormous interest since it is both
-sensitive to WD properties and can produce drastically different observable
-outcomes. One proposed outcome is a \emph{tidal nova}, in which heating in the
-WD's degenerate hydrogen layer is significant enough to trigger runaway nuclear
-fusion and a significant, observable explosion\cite{tidal_novae}. Understanding
-whether such phenomena occur requires understanding how energy is distributed
-internally inside a WD\@.
+exact radial dissipation profile is of interest since it both is sensitive to WD
+properties and can produce vastly different observable outcomes. One proposed
+outcome is a \emph{tidal nova}, in which heating in the WD's degenerate hydrogen
+layer is sufficient to trigger runaway nuclear fusion and an observable
+surface explosion\cite{tidal_novae}. Understanding whether such phenomena occur
+requires understanding how energy is distributed internally inside a WD\@.
 
 Internal gravity wave breaking is a nonlinear hydrodynamic phenomenon. Such
 phenomena are known to require numerical simulation to study. It is therefore
 paramount to begin numerical study to build dissipation models inside WDs to
-characterise what phenomena can be observed in which WD models and
-characteristics.
+characterize what phenomena can be observed in different WD models.
 
 \section{Proposed Research}
 
 \textbf{We propose to study tidal dissipation via nonlinear gravity wave
-breaking in white dwarfs via numerical simulation.}
+breaking in white dwarfs using numerical simulation.}
 
-Our research will consist of computing for various WD models and compositions
-the energy and angular momentum dissipation profiles inside WDs. Once such
-profiles are obtained, we intend to add these profiles to existing stellar
-evolution codes to study the dynamical effects of tidal dissipation. We will
-attempt to find a compact or even analytical representation of our numerical
-work to greatly simplify and accelerate such integration. Finally, we will make
-observational predictions with our results and compare our predictions with
-existing observed WDs. Any software and results would be made in accordance with
-best practice and publicly available for the entire community.
+Our research will initially consist of numerically computing for various WD
+models and compositions the energy and angular momentum dissipation profiles
+inside WDs. Once such profiles are obtained, we intend to add these profiles to
+existing stellar evolution codes to study the dynamical effects of tidal
+dissipation. We will attempt to find a compact or even analytical representation
+of our numerical work to greatly simplify and accelerate such integration.
+Finally, we will make observational predictions with our results and compare our
+predictions with existing observed WDs in binaries. Any software and results
+would be made in accordance with best practice and publicly available for the
+scientific community.
 
-\subsection{Qualifications}
+\subsection{Numerical Approach}
+
+Much of our proposed research will rely on numerical solutions to fluid
+dynamical equations. Guided by current literature, we have begun with the
+Dedalus numerical solver, a modern spectral solver that integrates the fluid
+equations both quickly and to high accuracy\cite{dedalus}. Dedalus has been
+shown in current literature to describe turbulence and fluid instabilities well,
+and our preliminary work supports this conclusion.
+
+For our problem, we will first adapt Dedalus to study gravity waves in the
+stratified atmosphere/envelope of WDs and later consider global (spherical) WD
+models. Should Dedalus prove inadequate, we are able (\autoref{ss:quals}) and
+willing to contribute a new hydrodynamic code to the community. Notably, no
+GPU-accelerated spectral hydrodynamic code has yet been released, which would be
+of great value to researchers. Nevertheless, in the interest of the proposed
+science objectives codes will be developed on an as-needed basis.
+
+After characterizing tidal dissipation, we intend to apply our models to WD
+evolution under tidal heating. Modules for Experiments in Stellar Astrophysics
+(MESA) is a proven stellar evolution code that would require comparatively
+little adaptation to incorporate tidal heating in studying WD
+evolution\cite{MESA}. A released extension to MESA containing our work would be
+the most effective way to release our work to prospective users.
+
+\subsection{Qualifications}\label{ss:quals}
 
 The proposing researcher (YS) and his adviser (DL) are uniquely qualified to
-pursue such studies. YS has ample research experience in numerical simulation
-and is continuing to pursue academic study in hydrodynamics, turbulence and
-computation. He also completed a double Bachelors degree in physics and computer
-science from the California Institute of Technology. Finally, he has worked in
+pursue such studies. YS has completed a double Bachelors degree in physics and
+computer science from the California Institute of Technology. He also has ample
+research experience in numerical simulation and is continuing to pursue academic
+study in hydrodynamics, turbulence and computation. Finally, he has worked in
 the software industry for a year and continues to follow discussions of best
 practice far ahead of those in academia and apply them to his own work.
 
-DL is a co-author on much of the latest literature on WD binaries and is an
+DL is a co-author of a number of recent papers on WD binaries and is an
 expert on many related subjects such as fluid dynamics in extreme matter and
 studies of other compact object systems. Cornell University also houses Saul
 Teukolsky's research group, one of the pre-eminent numerical relativity groups
 in the world, which will be frequently consulted for numerical best practices.
 
-In terms of software, YS proposes to only implement what is not currently
-available in the community. Current literature indicates that the spectral
-hydrodynamic code Dedalus is able to handle instability-driven turbulence with
-high accuracy and speed, and our preliminary work seems to indicate that Dedalus
-will be sufficiently accurate to simulate wave breaking
-dissipation\cite{dedalus}. Modules for Experiments in Stellar Astrophysics
-(MESA) is a proven stellar evolution code that will likely need only be extended
-to incorporate the discovered dissipation models\cite{MESA}. Nevertheless, both
-codes will require adaptation to be applied to the present problem (YS has
-already contributed an improvement to Dedalus), a task for which YS is
-well-equiped.
-
-Should no existing software prove adequate, we are more than able and willing to
-develop a new code and contribute it to the community. Notably, no
-GPU-accelerated spectral hydrodynamic code has yet been released, which would be
-of great value to researchers, and YS is well-versed in GPU programming.
-Nevertheless, in the interest of the proposed science objectives codes will be
-developed on an as-needed basis.
-
 \subsection{Applications, Interest to the DoD}
 
-A robust pipeline coupling nonlinear wave breaking to system evolution
-would be of interest spanning all fields of physics. Barring BHs, all
-astrophysical objects exhibit internal waves that can break as they propagate
-towards the surface. Notable present interests in the astrophysical community
-include tidal disruption, planet formation and stars. Even in planetary and
-atmospheric sciences, wave breaking in atmospheres would share many common
-techniques with the proposed research.
+Although our proposed research deals with astronomical objects and phenomena
+(WDs and BHs), the tools we use and develop in our research
+have applications in many areas of physical sciences and engineering. As
+discussed above, through our research we will develop extensive expertise in
+nonlinear hydrodynamics (internal gravity waves), radiation physics (radiative
+transfer and diffusion of heat inside WD), nuclear physics (tidal heating
+leading to runaway fusion) and numerical computation. Such a research project
+thus contributes to many science and engineering fields and equips me to tackle
+an exceptionally large variety of problems.
 
 The proposed research is extremely relevant to Department of Defense (DoD)
-fields of interest. WDs and its energetic phenomena we propose to study e.g.\
-novae of all sorts are natural laboratories of extreme physics that have
+fields of interest. WDs and its energetic phenomena we propose to study (e.g.\
+novae) of all sorts are natural laboratories of extreme physics that have
 direct consequences for understanding of plasmas and other technologies integral
 to propulsion in aeronautics. A theory of nonlinear wave breaking would have
 far-reaching consequences in turbulence study and atmospheric sciences. Finally,
