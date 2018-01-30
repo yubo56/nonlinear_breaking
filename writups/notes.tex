@@ -130,42 +130,79 @@ The fluid equations are
     \end{align}
 \end{subequations}
 where we will take gravity to be uniform throughout the domain of interest. We
-will study for no background flow $\vec{u}_0 = 0$ and in vertically stratified
-atmosphere $\rho_0 \propto e^{-z/H}$. In the absence of any perturbations it is
-then easy to show that $P_0 = \rho_0 g H$.
+will study for no background flow $\vec{u}_0 = 0$ and in the presence of
+stratification $\rho_0 \propto e^{-z/H}$. In the absence of any perturbations it
+is then easy to show that $\rd{P_0}{z} = -\rho_0 g$.
 
-\subsection{Linear Regime}
+\subsection{Linear, Incompressible}
+
+\subsubsection{Solution for Arbitrary Stratification}
 
 First, we solve the incompressible case $c_s^2 \to \infty, \vec{\nabla} \cdot
-\vec{u} = 0$ in the linear regime. The fluid equations to first order reduce to
+\vec{u} = 0$ in the linear regime. For funsies, we solve for arbitrary
+stratification first. The fluid equations to first order reduce to
 \begin{equation}
     \begin{split}
         \pd{\rho_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\rho_0 &= 0,\\
         \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
         \pd{\vec{u}_1}{t} &= -\frac{\vec{\nabla}P_1}{\rho_0}
             - P_1 \vec{\nabla}\frac{1}{\rho_0}
-            + \rho_1 gH \vec{\nabla}\frac{1}{\rho_0}
-            + \frac{gH}{\rho_0} \vec{\nabla}\rho_1.
     \end{split}\label{eq:lin_incomp}
 \end{equation}
-Substituting in plane waves of form $e^{i\p*{\vec{k} \cdot \vec{r} - \omega t}}$
-and the given vertically stratified $e^{-z/H}$ density and pressure profiles
-gives system of equations
+We expect there to be some $z$ dependence in the amplitude, so we substitute
+variables of form $e^{i(kx - \omega t)}$ and do not specify the $z$ dependence.
+This gives us
+\begin{equation}
+    \begin{split}
+        -i\omega \rho_1 - u_{1z}\rd{\rho_0}{z} &= 0,\\
+        iku_{1x} + \rd{u_{1z}}{z} &= 0,\\
+        -iw u_{1x} + \frac{ik_x P_1}{\rho_0} &= 0,\\
+        -iw u_{1z} + \frac{1}{\rho_0}\pd{P_1}{z} +
+            \frac{\rho_1}{\rho_0^2}\rd{P_0}{z} &= 0.
+    \end{split}
+\end{equation}
+We substitute $N^2 = -\frac{g}{\rho_0}\rd{\rho_0}{z}$ and $\rd{P_0}{z} = -\rho
+g$ to obtain
+\begin{subequations}
+    \begin{align}
+        -i\omega \rho_1 - u_{1z}\frac{\rho_0N^2}{g} &= 0,\label{eq:lin.cont}\\
+        iku_{1x} + \rd{u_{1z}}{z} &= 0,\label{eq:lin.div}\\
+        -iw u_{1x} + \frac{ik_x P_1}{\rho_0} &= 0,\label{eq:lin.mom_x}\\
+        -iw u_{1z} + \frac{1}{\rho_0}\pd{P_1}{z} +
+            \frac{\rho_1g}{\rho_0} &= 0.\label{eq:lin.mom_z}
+    \end{align}
+\end{subequations}
+Eliminating $u_{1x}$ by substituting~\eqref{eq:lin.div}
+into~\eqref{eq:lin.mom_x} and $\rho_1$ by substituting~\eqref{eq:lin.cont}
+into~\eqref{eq:lin.mom_z} give
+\begin{subequations}
+    \begin{align}
+        i\omega \rd{u_{1z}}{z} + \frac{k_x^2 P_1}{\rho_0} &= 0,
+            \label{eq:lin.eq1}\\
+        \p*{\omega^2 - N^2 }u_{1z} + \frac{i\omega}{\rho_0}\rd{P_1}{z} &= 0.
+            \label{eq:lin.eq2}
+    \end{align}
+\end{subequations}
+Finally, we multiply~\eqref{eq:lin.eq1} with $\rho_0$ and differentiate
+$\mathrm{d}z$ and combine with~\eqref{eq:lin.eq2} to give
+\begin{equation}
+    \rtd{u_{1z}}{z} + \frac{1}{\rho_0}\rd{\rho_0}{z}\rd{u_{1z}}{z}
+        + k_x^2\p*{\frac{N^2}{\omega^2} - 1}u_{1z} = 0.\label{eq:lin.incomp.gen}
+\end{equation}
+
+\subsubsection{Introduce Stratification}
+
+With stratification $\rho \propto e^{-z/H}$ \autoref{eq:lin.incomp.gen} clearly
+has exponential solutions $e^{\kappa z}$ for
+\begin{equation}
+    \kappa^2 - \frac{\kappa}{H} + k_x^2\p*{\frac{N^2}{\omega^2} - 1} = 0.
+\end{equation}
+
+We permit complex $\kappa = -\frac{1}{2H} + ik_z$, and from the above clearly
 \begin{align}
-    \begin{bmatrix}
-        -i\omega & 0 & -\frac{\rho_0}{H} & 0\\
-        0 & ik_x & ik_z & 0\\
-        0 & -i\omega & 0 & \frac{ik_x}{\rho_0}\\
-        \frac{P_0}{\rho_0^2H} & 0 & -i\omega & \frac{ik_z}{\rho_0}
-    \end{bmatrix}\begin{bmatrix}
-        \rho_1 \\ u_{1x} \\ u_{1z} \\ P_1
-    \end{bmatrix} &= 0,\nonumber\\
-    \omega^2 k^2 + \frac{P_0}{\rho_0^2H}k_x^2 = \omega^2k^2 - N^2k_x^2 &= 0.
+    k_z^2 &= -\frac{1}{4H^2} + k_x^2\p*{\frac{N^2}{\omega^2} - 1},\nonumber\\
+    \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
 \end{align}
-We identify $\frac{P_0}{\rho_0^2H} = \frac{g}{H} = N^2$ the Brunt-V\"ais\"al\"a
-frequency. This agrees with the usual incompressible dispersion relation
-$\omega^2 = N^2\cos^2\theta$ where $\theta$ is the angle formed between
-$\vec{k}$ and $\hat{x}$.
 
 \subsection{Linear Regime, Compressible}
 
