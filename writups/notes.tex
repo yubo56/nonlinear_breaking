@@ -120,70 +120,54 @@ breaking in the atmosphere.
 We adopt notation where $q_0$ is the background quantity and $q_1$ is the
 perturbed quantity from the propagating wave.
 
-\subsection{Nonturbulent Equations of Motion}
-
-The equations of motion are the usual fluid equations
+The fluid equations are
 \begin{subequations}\label{se:fl_eq}
     \begin{align}
         \pd{\rho}{t} + \vec{\nabla} \cdot \rho \vec{u} &= 0,
             \label{eq:fl_eq.cont}\\
-        \rd{\vec{u}}{t} &= -\frac{\vec{\nabla}P}{\rho} - g\hat{z},
+        \rd{\vec{u}}{t} &= -\vec{\nabla}\frac{P}{\rho} - g\hat{z},
             \label{eq:fl_eq.mom}
     \end{align}
 \end{subequations}
-where $\rd{}{t} = \pd{}{t} + \vec{u} \cdot \vec{\nabla}$ denotes the Lagrangian
-derivative. We take $\vec{u}_0 = 0$ no background flow, $P_0(x, z) = P_0(z)
-\propto e^{-z/H}$ where $H$ is the scale height of the atmosphere. We take the
-fluid to be incompressible $\vec{\nabla} \cdot \vec{u} = 0$, which turns the
-continuity equation \autoref{eq:fl_eq.cont} into $\rd{\rho}{t} = 0$. Finally, we
-take the atmosphere to be isothermal, implying $\rho_0 \propto P_0 \propto
-e^{-z/H}$, and more importantly $\frac{P_0}{\rho_0} = \frac{P_1}{\rho_1} =
-\frac{k_BT}{\mu m_p}$. We denote $P_0 = P_0(z=0), \rho_0 = \rho_0(z=0)$.
+where we will take gravity to be uniform throughout the domain of interest. We
+will study for no background flow $\vec{u}_0 = 0$ and in vertically stratified
+atmosphere $\rho_0 \propto e^{-z/H}$. In the absence of any perturbations it is
+then easy to show that $P_0 = \rho_0 g H$.
 
-We write out the new fluid equations under these assumptions; note that we do
-not assume perturbed quantities are small and must keep all terms
-\begin{subequations}\label{se:lin_eq}
-    \begin{align}
-        \pd{\rho_1}{t} &= \frac{u_{1z}}{H}\rho_0e^{-z/H} - \vec{u}_1 \cdot
-            \vec{\nabla} \rho_1, \label{eq:lin_eq.cont}\\
-        \pd{\vec{u}_1}{t} &=
-            -\p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
-            -\frac{-\frac{\hat{z}}{H}P_0e^{-z/H} + \frac{k_BT}{\mu m_p}
-                \vec{\nabla} \rho_1}{\rho_0e^{-z/H} + \rho_1}
-                - g\hat{z}, \label{eq:lin_eq.mom}.
-    \end{align}
-\end{subequations}
-This consists of four equations in four unknowns, $\rho_1$ and the three
-components of $\vec{u}_1$.
+\subsection{Linear Regime, Incompressible}
 
-\subsection{Turbulent Dissipation}
-
-In order to mimic the effect of turbulent dissipation, we introduce a viscosity
-term into the equations of motion. Per the incompressible Navier-Stokes
-equation, we quantify viscosity via $\nu \nabla^2 \vec{u}_1$ where $\nu$ is the
-turbulent viscosity. For this problem, we simply use $\nu \neq
-0.1\;\mathrm{cm^2/s}$ for air.
-
-We identify the kinetic energy density carried by the perturbation to be
-$\mathcal{U}_T = \frac{1}{2}\rho \p*{\vec{u}_1 \cdot \vec{u}_1}$. We require
-$\rd{\mathcal{U}}{t} = 0$ under the dissipation-free fluid equations
-\autoref{se:fl_eq} where we denote $\mathcal{U} \equiv \mathcal{U}_T +
-\mathcal{U}_V$ the sum of the kinetic and potential energy densities; we assume
-incompressibility as per our present problem:
+First, we solve the incompressible case $c_s^2 \to \infty, \vec{\nabla} \cdot
+\vec{u} = 0$ in the linear regime. The fluid equations to first order reduce to
+\begin{equation}
+    \begin{split}
+        \pd{\rho_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\rho_0 &= 0,\\
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\vec{u}_1}{t} &= -\frac{\vec{\nabla}P_1}{\rho_0}
+            - P_1 \vec{\nabla}\frac{1}{\rho_0}
+            + \rho_1 gH \vec{\nabla}\frac{1}{\rho_0}
+            + \frac{gH}{\rho_0} \vec{\nabla}\rho_1.
+    \end{split}\label{eq:lin_incomp}
+\end{equation}
+Substituting in plane waves of form $e^{i\p*{\vec{k} \cdot \vec{r} - \omega t}}$
+and the given vertically stratified $e^{-z/H}$ density and pressure profiles
+gives system of equations
 \begin{align}
-    \rd{\p*{\mathcal{U}_T + \mathcal{U}_V}}{t} = 0
-        &= \frac{1}{2}u_1^2 \cancelto{0}{\rd{\rho}{t}}
-        + \rho \vec{u}_1 \cdot \rd{\vec{u}_1}{t} + \rd{\mathcal{U}_V}{t}
-        ,\nonumber\\
-        &= \rho \p*{
-                -\frac{\vec{u}_1 \cdot \vec{\nabla}P}{\rho} - u_{1z}g
-            } + \rd{\mathcal{U}_V}{t},\nonumber\\
-        &= -\cancelto{0}{\rd{P}{t}} + \cancelto{0}{\pd{P_0}{t}}
-            + \pd{P_1}{t} - \rho u_{1z}g + \rd{\mathcal{U}_V}{t}.
+    \begin{bmatrix}
+        -i\omega & 0 & -\frac{\rho_0}{H} & 0\\
+        0 & ik_x & ik_z & 0\\
+        0 & -i\omega & 0 & \frac{ik_x}{\rho_0}\\
+        \frac{P_0}{\rho_0^2H} & 0 & -i\omega & \frac{ik_z}{\rho_0}
+    \end{bmatrix}\begin{bmatrix}
+        \rho_0 \\ u_{1x} \\ u_{1z} \\ P_1
+    \end{bmatrix} &= 0,\nonumber\\
+    \omega^2 k^2 + \frac{P_0}{\rho_0^2H}k_x^2 = \omega^2k^2 - N^2k_x^2 &= 0.
 \end{align}
+We identify $\frac{P_0}{\rho_0^2H} = \frac{g}{H} = N^2$ the Brunt-V\"ais\"al\"a
+frequency. This agrees with the usual incompressible dispersion relation
+$\omega^2 = N^2\cos^2\theta$ where $\theta$ is the angle formed between
+$\vec{k}$ and $\hat{x}$.
 
-%TODO figure this out from L&L, figure out the energy dissipation upon adding
-%Navier-Stokes term.
+\subsection{Linear Regime, Compressible}
 
 \subsection{Boundary Conditions}
 
@@ -205,7 +189,7 @@ incompressible, stratified atmosphere)
 \end{equation}
 Thus, at constant $z = 0$ we must have
 \begin{equation}
-    \vec{u}_{1z}(z = 0) = e^{i(k_xx - \omega t)}\label{eq:bc_u1z}.
+    \vec{u}_{1z}(z = 0) \propto e^{i(k_xx - \omega t)}\label{eq:bc_u1z}.
 \end{equation}
 
 The boundary condition at $z = L_z$ is much harder to determine. It is clear
@@ -222,38 +206,7 @@ and derivative at the boundary.
 For the boundary conditions on $\rho$, we note that in the linear regime it
 should just have a phase offset from $u_{1z}$, thus we choose $\rho(z = 0)
 \propto e^{\frac{z}{2H}}ie^{i\p*{k_xx + k_zz - \omega t}}$ and a similar
-treatment at $z = L_z$, taking both a Dirichlet and Neumann BC\@. This should be
-sufficient information to constrain our problem, as satisfying incompressibility
-along the boundaries constrains $u_{1x}$.
-
-\subsubsection{Old Stuff---$u_{1z}(z = L_z)$}
-
-\textbf{Note:} The reason the below is difficult to make work is that it tries
-to restore a linear treatment to the wave. However, since we must capture
-nonlinear dynamics, we lose the concept of the ``phase'' of the wave in the wave
-breaking region, and it proves difficult to write down a BC that is
-phase-independent.
-
-However, at any finite boundary there is nonzero reflection thanks to the
-continually varying impedance. \emph{The correct BC to use when performing a
-finite truncation must match propagation characteristics with an untruncated
-medium.}
-
-We assume the perturbations have once again become small at $L_z$, i.e.\
-dissipation between $[0, L_z]$ is sufficient that only a small amplitude
-perturbation persists to $z = L_z$. This is a necessary criterion for choosing
-$L_z$ else we do not have a representative portrait of the energy dissipation
-profile of the propagating wave with our simulation. Then we recall that in the
-linear regime, the solution given by \autoref{eq:bc_below} is the propagating
-solution. We assume that $k_x, \omega$ are the same as the values at the $z = 0$
-boundary, then
-\begin{equation}
-    \frac{\rho_{,z}}{\rho} = \frac{u_{1z, z}}{u_{1z}} = \frac{1}{2H} + ik_z.
-        \label{eq:bc_above}
-\end{equation}
-Recall that since our equations of motion are nonlinear, we cannot use complex
-notation except in very limited, time-averaged cases. Thus, how to implement
-this BC is tricky\dots
+treatment at $z = L_z$, taking both a Dirichlet and Neumann BC\@.
 
 \subsection{Simulation}
 
