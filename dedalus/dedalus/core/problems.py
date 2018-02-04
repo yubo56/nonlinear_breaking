@@ -233,7 +233,6 @@ class ProblemBase:
 
     def _check_meta_consistency(self, LHS, RHS):
         """Check LHS and RHS metadata for compatability."""
-        return True # HACK (YS)
         default_meta = Metadata(self.domain)
         for axis in range(self.domain.dim):
             for key in default_meta[axis]:
