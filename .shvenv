@@ -1,6 +1,6 @@
 #!/bin/zsh
 export _PYTHONPATH=$PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:~/research/fall2017_nonlinearbreaking/dedalus
+export PYTHONPATH=$PYTHONPATH:~/research/nonlinear_breaking/dedalus
 
 function shdeactivate () {
     export PYTHONPATH=$_PYTHONPATH
