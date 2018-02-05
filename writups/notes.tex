@@ -204,7 +204,82 @@ We permit complex $\kappa = -\frac{1}{2H} + ik_z$, and from the above clearly
     \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
 \end{align}
 
-\subsection{Linear Regime, Compressible}
+\subsection{Developing the Anelastic/Boussinesq Approximations}
+
+Let's relax the incompressibility constraint (we will expand the continuity
+equation to first order, but the momentum equation will merit a separate
+treatment):
+\begin{equation}
+    \begin{split}
+        \pd{\rho_1}{t} + \vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1} &= 0,\\
+        \pd{\vec{u}_1}{t} &= -\frac{\vec{\nabla}P}{\rho} - \vec{g}.
+    \end{split}
+\end{equation}
+Suppose we are interested in phenomena with characteristic length scale $L$ and
+time scale $\tau$. Let's first examine the relative magnitudes of the terms in
+the continuity equation
+\begin{equation*}
+    \frac{\rho_1}{\tau} + \frac{\rho_0 \abs{u_1}}{L} = 0.
+\end{equation*}
+Thus, if we are interested in time scales $\tau \gg
+\frac{\rho_1}{\rho_0}\frac{L}{\abs{u_1}}$ then we neglect the first term, the
+time derivative. This corresponds to making the perturbation incompressible;
+note that $\pd{\rho_1}{t} \approx \rd{\rho_1}{t}$ to first order, so we drop the
+high frequency restoring forces in the perturbation.
+
+For the momentum equation, we instead first manipulate to first order
+\begin{align}
+    -\frac{\vec{\nabla}P}{\rho} - \vec{g}
+        &= -\frac{\vec{\nabla}P_0}{\rho} - \frac{\vec{\nabla}P_1}{\rho_0}
+            - \vec{g},\nonumber\\
+        &= - \frac{\vec{\nabla}P_1}{\rho_0} +
+            \p*{\frac{\rho_0}{\rho} - 1}\vec{g},\nonumber\\
+        &= -\vec{\nabla}\p*{\frac{P_1}{\rho_0}}
+            - \frac{P_1}{\rho_0^2}\vec{\nabla}\rho_0
+            - \frac{\rho_1}{\rho_0}\vec{g}.
+\end{align}
+
+We now have three equations for four variables, $\vec{u}_1, \rho_1, P_1$. We
+must introduce a fourth equation, a thermodynamic equation. For an adiabatic
+process $P\rho^{-\gamma} \propto P^{1-\gamma}T^\gamma$ is constant. We thus
+introduce the concept of the \emph{potential temperature}
+\begin{equation}
+    \theta = T\p*{\frac{P_0}{P}}^\kappa.
+        \label{eq:pot_temp}
+\end{equation}
+For an adiabatic process, $\rd{\theta}{t} = 0$. Motivated by this, we use
+\begin{equation}
+    \begin{split}
+        \pd{1}{\rho_0}\pd{\rho_0}{z} &= \frac{1}{\gamma P_0}\pd{P_0}{z}
+            - \frac{1}{\theta_0}\pd{\theta_0}{z},\\
+        \frac{\rho_1}{\rho_0} &= \frac{1}{\gamma} \frac{P_1}{P_0}
+            - \frac{\theta_1}{\theta_0},
+    \end{split}
+\end{equation}
+to give the momentum equation form
+\begin{equation}
+    \rd{\vec{u}_1}{t} = -\vec{\nabla}\p*{\frac{P_1}{\rho_0}}
+        + \frac{P_1}{\rho_0}\p*{\frac{1}{\theta_0}\vec{\nabla}\theta_0}
+        + \vec{g} \frac{\theta_1}{\theta_0}.\label{eq:mom_unsimp}
+\end{equation}
+
+We also recognize $N^2 = \frac{g}{\theta_0}\pd{\theta_0}{z}$. We now do the same
+trick where we consider dynamics on length scale $D$ and compare the first and
+second terms in \autoref{eq:mom_unsimp}. Their ratio is $\frac{N^2 D}{g}$, and
+so as $N^2 \ll \frac{g}{D}$ the freefall time we neglect the second term.
+
+The anelastic fluid equations thus read
+\begin{equation}
+    \begin{split}
+        \vec{\nabla} \cdot \p*{\rho_0\vec{u}} &= 0,\\
+        \pd{\vec{u}_1}{t} + \vec{\nabla}\p*{\frac{P_1}{\rho_0}}
+            - \vec{g}\frac{\theta_1}{\theta_0} &= 0,\\
+        \pd{\theta_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\theta_0 &= 0.
+    \end{split}\label{eq:lin_anelastic}
+\end{equation}
+
+The Boussinesq equations are obtained from these in the limit where $H \gg D$
+the relevant length scale, thus we allow $\rho_0$ to be approximately constant.
 
 \subsection{Boundary Conditions}
 
