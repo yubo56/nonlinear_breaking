@@ -154,19 +154,19 @@ variables of form $e^{i(kx - \omega t)}$ and do not specify the $z$ dependence.
 This gives us
 \begin{equation}
     \begin{split}
-        -i\omega \rho_1 - u_{1z}\rd{\rho_0}{z} &= 0,\\
-        iku_{1x} + \rd{u_{1z}}{z} &= 0,\\
+        -i\omega \rho_1 - u_{1z}\pd{\rho_0}{z} &= 0,\\
+        iku_{1x} + \pd{u_{1z}}{z} &= 0,\\
         -iw u_{1x} + \frac{ik_x P_1}{\rho_0} &= 0,\\
         -iw u_{1z} + \frac{1}{\rho_0}\pd{P_1}{z} +
-            \frac{\rho_1}{\rho_0^2}\rd{P_0}{z} &= 0.
+            \frac{\rho_1}{\rho_0^2}\pd{P_0}{z} &= 0.
     \end{split}
 \end{equation}
-We substitute $N^2 = -\frac{g}{\rho_0}\rd{\rho_0}{z}$ and $\rd{P_0}{z} = -\rho
+We substitute $N^2 = -\frac{g}{\rho_0}\pd{\rho_0}{z}$ and $\pd{P_0}{z} = -\rho
 g$ to obtain
 \begin{subequations}
     \begin{align}
         -i\omega \rho_1 - u_{1z}\frac{\rho_0N^2}{g} &= 0,\label{eq:lin.cont}\\
-        iku_{1x} + \rd{u_{1z}}{z} &= 0,\label{eq:lin.div}\\
+        iku_{1x} + \pd{u_{1z}}{z} &= 0,\label{eq:lin.div}\\
         -iw u_{1x} + \frac{ik_x P_1}{\rho_0} &= 0,\label{eq:lin.mom_x}\\
         -iw u_{1z} + \frac{1}{\rho_0}\pd{P_1}{z} +
             \frac{\rho_1g}{\rho_0} &= 0.\label{eq:lin.mom_z}
@@ -177,16 +177,16 @@ into~\eqref{eq:lin.mom_x} and $\rho_1$ by substituting~\eqref{eq:lin.cont}
 into~\eqref{eq:lin.mom_z} give
 \begin{subequations}
     \begin{align}
-        i\omega \rd{u_{1z}}{z} + \frac{k_x^2 P_1}{\rho_0} &= 0,
+        i\omega \pd{u_{1z}}{z} + \frac{k_x^2 P_1}{\rho_0} &= 0,
             \label{eq:lin.eq1}\\
-        \p*{\omega^2 - N^2 }u_{1z} + \frac{i\omega}{\rho_0}\rd{P_1}{z} &= 0.
+        \p*{\omega^2 - N^2 }u_{1z} + \frac{i\omega}{\rho_0}\pd{P_1}{z} &= 0.
             \label{eq:lin.eq2}
     \end{align}
 \end{subequations}
 Finally, we multiply~\eqref{eq:lin.eq1} with $\rho_0$ and differentiate
 $\mathrm{d}z$ and combine with~\eqref{eq:lin.eq2} to give
 \begin{equation}
-    \rtd{u_{1z}}{z} + \frac{1}{\rho_0}\rd{\rho_0}{z}\rd{u_{1z}}{z}
+    \rtd{u_{1z}}{z} + \frac{1}{\rho_0}\pd{\rho_0}{z}\pd{u_{1z}}{z}
         + k_x^2\p*{\frac{N^2}{\omega^2} - 1}u_{1z} = 0.\label{eq:lin.incomp.gen}
 \end{equation}
 
@@ -281,7 +281,31 @@ The anelastic fluid equations thus read
 The Boussinesq equations are obtained from these in the limit where $H \gg D$
 the relevant length scale, thus we allow $\rho_0$ to be approximately constant.
 
-\subsection{Boundary Conditions}
+\subsection{Anelastic Solution}
+
+We simply substitute $e^{i(\vec{k} \cdot \vec{r} - \omega t)}$ into
+\autoref{eq:lin_anelastic} with $\rho_0 \propto e^{-z/H}$ and obtain
+\begin{equation}
+    \begin{bmatrix}
+        0 & 0 & ik_x\rho_0 & ik_z \rho_0 - \frac{\rho_0}{H}\\
+        0 & -i\omega & 0 & \frac{N^2\theta_0}{g}\\
+        \frac{ik_x}{\rho_0} & 0 & -i\omega & 0\\
+        \frac{ik_z}{\rho_0} + \frac{1}{\rho_0 H} & -\frac{g}{\theta_0}
+            & 0 & -i\omega
+    \end{bmatrix} \begin{bmatrix}
+        P_1 \\ \theta_1 \\ u_{1x} \\ u_{1z}
+    \end{bmatrix} = 0.
+\end{equation}
+Taking the determinant of this matrix produces
+\begin{align}
+    -k_x^2\p*{-N^2 + \omega^2} + \p*{ik_z - \frac{1}{H}}
+        \p*{ik_z + \frac{1}{H}}\omega^2 &= 0,\nonumber\\
+    \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}} &= \omega^2.
+\end{align}
+
+\section{Boundary Conditions}
+
+\subsection{Incompressible}
 
 We must bound this to a finite domain. We choose periodic boundary conditions in
 $x$ with total length $L_x$, $x \in \s*{-\frac{L}{2}, \frac{L}{2}}$. We choose
@@ -290,19 +314,13 @@ $z$ dimension to have total length $L_z$, $z \in [0, L_z]$.
 To set up the boundary condition at $z = 0$, we recall that gravity waves in an
 atmosphere with $e^{-z/H}$ profile have form
 \begin{equation}
-    u_{1z} \propto e^{\frac{z}{2H}}e^{i\p*{k_xx + k_zz - \omega t}},
+    u_{1z} \propto e^{\frac{z}{2H}}e^{i\p*{k_xx + k_zz - \omega t}}.
         \label{eq:bc_below}
 \end{equation}
-where ($N^2 \equiv \frac{g}{H}$ is the Brunt-V\"ais\"al\"a frequency in an
-incompressible, stratified atmosphere)
-\begin{equation}
-    \omega^2 = \frac{N^2 k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
-        \label{eq:omega}
-\end{equation}
-Thus, at constant $z = 0$ we must have
-\begin{equation}
-    \vec{u}_{1z}(z = 0) \propto e^{i(k_xx - \omega t)}\label{eq:bc_u1z}.
-\end{equation}
+We will take Boussinesq/WKB approximation $H \to 0$, reasonable in the linear
+regime, to simplify the BCs. Then $\rho_1 = 0$ (reasonable in the incompressible
+limit), $u_{1x} = -\frac{k_z}{k_x}u_{1z}$ and $P_1 = -\frac{\omega
+\rho_0}{k_z}u_{1z}$, from the linearized incompressible equations.
 
 The boundary condition at $z = L_z$ is much harder to determine. It is clear
 that $\vec{u}_1(z = \infty) = \rho_1(z = \infty) = 0$, and for $L_z \gg H$ this
@@ -315,12 +333,7 @@ solutions that can be implemented where we do not need the phase of the linear
 wave, which we lose during the nonlinear breaking region, to relate the function
 and derivative at the boundary.
 
-For the boundary conditions on $\rho$, we note that in the linear regime it
-should just have a phase offset from $u_{1z}$, thus we choose $\rho(z = 0)
-\propto e^{\frac{z}{2H}}ie^{i\p*{k_xx + k_zz - \omega t}}$ and a similar
-treatment at $z = L_z$, taking both a Dirichlet and Neumann BC\@.
-
-\subsection{Simulation}
+\section{Simulation}
 
 We begin our simulation with $\rho_1 = 0, \vec{u}_1 = 0$ strictly within the
 domain of simulation. We will borrow some values from Sutherland's paper and use
