@@ -115,7 +115,7 @@ plt.colorbar()
 plt.xlabel('x')
 plt.ylabel('z')
 plt.title('Testing')
-plt.savefig('test.png')
+plt.savefig('travel0.png')
 plt.clf()
 
 # Store data for final plot
@@ -135,12 +135,12 @@ while solver.ok:
     u_list.append(np.copy(u['g']))
     w_list.append(np.copy(w['g']))
     t_list.append(solver.sim_time)
-    if solver.iteration % 50 == 0:
+    if solver.iteration % 500 == 0:
         maxu = np.sqrt(u['g']**2 + w['g']**2).max()
         idx += 1
         logger.info(
             '''Iteration: %i, Time: %.3f/%3f, dt: %.3e
-            \tSaving test%s.png. Max velocity is %.3f''',
+            \tSaving travel%s.png. Max velocity is %.3f''',
             solver.iteration,
             solver.sim_time,
             T_F,
