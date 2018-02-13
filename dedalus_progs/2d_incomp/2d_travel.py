@@ -1,15 +1,5 @@
 '''
-Linear Incompressible 2D. EOM are:
-    - Du/Dt = -Div P/rho^(0) - g
-    - Div(u) = 0
-    - D(rho)/Dt = 0
-Things start propto e^{-z^2 / (2*s^2)} cos(kx + mz)e^{-z/2H}
-    - k * s = 10
-    - k * H = 10
-    - k * A (displacement) = 0.05
-    - m = -0.4k
-- Things should be periodic-ish in x, Fourier basis
-    - less so in z, chebyshev (like example)
+Incompressible fluid equations w/o delta rho, velocity perturbation just travels
 '''
 
 import logging
