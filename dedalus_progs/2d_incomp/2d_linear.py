@@ -1,6 +1,6 @@
 '''
 Linear Incompressible 2D. EOM are:
-    - Du/Dt = -Div P/rho^(0) - g
+    - Du/Dt = -Div P/rho^(0) - g * rho / rho^(0)
     - Div(u) = 0
     - D(rho)/Dt = 0
 Things start propto e^{-z^2 / (2*s^2)} cos(kx + mz)e^{-z/2H}
@@ -45,18 +45,20 @@ x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
 z_basis = de.Chebyshev('z', N_Z, interval=(0, ZMAX), dealias=3/2)
 domain = de.Domain([x_basis, z_basis], np.float64)
 
-problem = de.IVP(domain, variables=['P', 'u', 'w', 'uz', 'wz'])
+problem = de.IVP(domain, variables=['P', 'u', 'w', 'rho', 'uz', 'wz'])
 problem.meta['P','u','w']['z']['dirichlet'] = True
 problem.parameters['nu'] = nu
 problem.parameters['H'] = H
 problem.parameters['g'] = g
 problem.parameters['rho0'] = rho0
 problem.add_equation("dx(u) + wz = 0")
-# problem.add_equation('dt(rho) = -u * dx(rho) - w * dz(rho)')
+problem.add_equation('dt(rho) = -u * dx(rho) - w * dz(rho)')
 problem.add_equation(
     "dt(u) - nu*(dx(dx(u)) + dz(uz)) + dx(P)/rho0 = -(u*dx(u) + w*uz)")
 problem.add_equation(
-    "dt(w) - nu*(dx(dx(w)) + dz(wz)) + dz(P)/rho0 = -(u*dx(w) + w*wz) - g")
+    """
+    dt(w) - nu*(dx(dx(w)) + dz(wz)) + dz(P)/rho0 =
+    -g * rho / rho0 - (u*dx(w) + w*wz)""")
 problem.add_equation("uz - dz(u) = 0")
 problem.add_equation("wz - dz(w) = 0")
 problem.add_bc("left(u) = 0")
@@ -80,11 +82,11 @@ uz = solver.state['uz']
 w = solver.state['w']
 wz = solver.state['wz']
 P = solver.state['P']
-# rho = solver.state['rho']
+rho = solver.state['rho']
 
 # need to reverse for some reason?
 gshape = domain.dist.grid_layout.global_shape(scales=1)
-# rho['g'] = rho0 * np.ones(gshape)
+rho['g'] = rho0 * np.ones(gshape)
 u['g'] = np.zeros(gshape)
 w['g'] = np.ones(gshape)
 
@@ -115,7 +117,7 @@ plt.colorbar()
 plt.xlabel('x')
 plt.ylabel('z')
 plt.title('Testing')
-plt.savefig('travel0.png')
+plt.savefig('linear0.png')
 plt.clf()
 
 # Store data for final plot
@@ -140,7 +142,7 @@ while solver.ok:
         idx += 1
         logger.info(
             '''Iteration: %i, Time: %.3f/%3f, dt: %.3e
-            \tSaving travel%s.png. Max velocity is %.3f''',
+            \tSaving linear%s.png. Max velocity is %.3f''',
             solver.iteration,
             solver.sim_time,
             T_F,
@@ -159,5 +161,5 @@ while solver.ok:
         plt.xlabel('x')
         plt.ylabel('z')
         plt.title('Testing')
-        plt.savefig('test%s.png' % idx)
+        plt.savefig('linear%s.png' % idx)
         plt.clf()
