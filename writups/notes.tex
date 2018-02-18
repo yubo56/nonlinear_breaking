@@ -108,6 +108,120 @@
 
 \newpage
 
+\chapter{Preliminary Problems}
+
+To get an intuition for how Dedalus and fluid mechanics works, we will solve
+some toy problems. Recall fluid equations in the presence of a uniform
+gravitational field $\vec{g} = -g\hat{z}$:
+\begin{equation}
+    \begin{split}
+        \rd{\rho}{t} + \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} - \vec{g} &= 0.
+    \end{split}\label{eq:fluid_eq}
+\end{equation}
+
+In the incompressible limit, $\rd{\rho}{t} = 0$, which implies $\vec{\nabla}
+\cdot \vec{u} = 0$. We use subscripts to indicate perturbed quantities, $Q_0$ is
+background and $Q_1$ is perturbed. We will generally use $\vec{u}_0 = 0$ unless
+otherwise noted. We will also generally assume symmetry along all axes except
+$z$ the vertical axis.
+
+In the incompressible limit, the fluid equations become
+\begin{equation}
+    \begin{split}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} + u_{1z}\pd{\rho_0}{z} &= 0,\\
+        \pd{\vec{u}_1}{t} + \frac{1}{\rho_0}\vec{\nabla}P_1
+            + \frac{\rho_1 g \hat{z}}{\rho_0} &= 0.
+    \end{split}\label{eq:lin.incomp}
+\end{equation}
+We have used $\vec{\nabla}P_0 = -\rho_0 g \hat{z}$ in the absence of
+perturbations.
+
+\section{Incompressible, No Gravity}
+
+We note that in the no gravity limit that $\rho_1$ does not have an effect on
+other dynamical variables, so the equations of motion we must solve are
+\begin{equation}
+    \begin{split}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P_1}{\rho_0} &= 0.
+    \end{split}\label{eq:lin.no_g_eom}
+\end{equation}
+We can take the divergence of the momentum equation and substitute the
+continuity equation to get $\nabla^2 P = 0$. This is a Laplace equation, which
+we've solved countless times. Imposing periodic boundary conditions in the $x$
+direction and $P_1(z = L) = 0, P_1(z = 0) = \mathcal{P}(x, t)$, we obtain
+eigenfunctions
+\begin{equation}
+    \begin{split}
+        P_{1, n}(x, z, t) &=
+            \frac{\mathcal{P}_n(t)}{\sinh(k_nL)}e^{ik_nx}\sinh\p*{k_n(L - z)},\\
+        u_{1x, n}(x, z, t) &=
+            \int\limits^t -\frac{1}{\rho_0}\pd{P_{1, n}}{x}\;\mathrm{d}t,\\
+        u_{1z, n}(x, z, t) &=
+            \int\limits^t -\frac{1}{\rho_0}\pd{P_{1, n}}{z}\;\mathrm{d}t.
+    \end{split}\label{eq:incomp_nog}
+\end{equation}
+We define $k_n = \frac{2\pi n}{L}, n \in [0, L - 1]$ and $\mathcal{P}(x, t) =
+\sum\limits_n \mathcal{P}_n(t)e^{ik_nx}$.
+
+Thus, if we impose BCs $\mathcal{P}(x, t) = \sin \frac{2\pi x}{L}$ and start
+with initial conditions such that all quantities are zero, we would expect after
+transients die out that
+\begin{equation}
+    \begin{split}
+        P(x, z, t) &= \frac{\sin \frac{2\pi x}{L}}{\sinh 2\pi}
+            \sinh \p*{2\pi \frac{L - z}{L}},\\
+        u_{1x}(x, z, t) &= -\frac{2\pi t}{L\rho_0}
+            \frac{\cos \frac{2\pi x}{L}}{\sinh 2\pi}\sinh \p*{2\pi \frac{L -
+                z}{L}},\\
+        u_{1z}(x, z, t) &= +\frac{2\pi t}{L\rho_0}
+            \frac{\sin \frac{2\pi z}{L}}{\sinh 2\pi}\cosh \p*{2\pi \frac{L -
+                z}{L}}.
+    \end{split}\label{eq:incomp_nog_sol}
+\end{equation}
+This is in good agreement with the results, presented in \autoref{fig:no_g}.
+Note that $P$ is constant while $\vec{u}$ increases linearly in time, and we
+observe the expected $\sim \sin x \sinh \frac{L - z}{z}$ dependence.
+
+\begin{figure}[!h]
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_P_t50.png}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_ux_t50.png}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_uz_t50.png}
+    \end{subfigure}
+
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_P_t100.png}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_ux_t100.png}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_uz_t100.png}
+    \end{subfigure}
+    \caption{$P, u_x, u_z$ at $t = 0.5$ and $t = 1$ for $\rho_0 = 1$.
+    }\label{fig:no_g}
+\end{figure}
+
+It is worth noting that, since our \autoref{eq:lin.no_g_eom} reduced to a Laplace
+equation, we needed two $z$ BCs and two $x$ BCs (periodic BCs amount to equating
+the value and derivative of the function). This is in agreement with the
+observation that the original \autoref{eq:lin.no_g_eom} had two derivatives in
+$x, z$ apiece, so we needed two BCs each.
+
 \chapter{2D Wave Breaking in Atmospheres}
 
 The goal of this will be to lay out a formalism that can reproduce Sutherland et
