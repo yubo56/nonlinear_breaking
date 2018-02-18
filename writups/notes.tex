@@ -101,6 +101,7 @@
 
 \title{Research Notes}
 \author{Yubo Su}
+\rhead{}
 
 \maketitle
 
@@ -149,10 +150,13 @@ other dynamical variables, so the equations of motion we must solve are
     \end{split}\label{eq:lin.no_g_eom}
 \end{equation}
 We can take the divergence of the momentum equation and substitute the
-continuity equation to get $\nabla^2 P = 0$. This is a Laplace equation, which
-we've solved countless times. Imposing periodic boundary conditions in the $x$
-direction and $P_1(z = L) = 0, P_1(z = 0) = \mathcal{P}(x, t)$, we obtain
-eigenfunctions
+continuity equation to get $\nabla^2 P = 0$.
+
+\subsection{Dirichlet BCs}
+
+This is a Laplace equation, which we've solved countless times. Imposing
+periodic boundary conditions in the $x$ direction and $P_1(z = L) = 0, P_1(z =
+0) = \mathcal{P}(x, t)$, we obtain eigenfunctions
 \begin{equation}
     \begin{split}
         P_{1, n}(x, z, t) &=
@@ -163,7 +167,7 @@ eigenfunctions
             \int\limits^t -\frac{1}{\rho_0}\pd{P_{1, n}}{z}\;\mathrm{d}t.
     \end{split}\label{eq:incomp_nog}
 \end{equation}
-We define $k_n = \frac{2\pi n}{L}, n \in [0, L - 1]$ and $\mathcal{P}(x, t) =
+We define $k_n = \frac{2\pi n}{L}, n \geq 0$ and $\mathcal{P}(x, t) =
 \sum\limits_n \mathcal{P}_n(t)e^{ik_nx}$.
 
 Thus, if we impose BCs $\mathcal{P}(x, t) = \sin \frac{2\pi x}{L}$ and start
@@ -183,7 +187,8 @@ transients die out that
 \end{equation}
 This is in good agreement with the results, presented in \autoref{fig:no_g}.
 Note that $P$ is constant while $\vec{u}$ increases linearly in time, and we
-observe the expected $\sim \sin x \sinh \frac{L - z}{z}$ dependence.
+observe the expected $\sim \sin x \sinh \frac{L - z}{z}$ dependence. In fact,
+$u_{1x}, u_{1z}$ are exactly $\frac{2\pi}{10}$ at $t = 1$.
 
 \begin{figure}[!h]
     \centering
@@ -212,8 +217,8 @@ observe the expected $\sim \sin x \sinh \frac{L - z}{z}$ dependence.
         \centering
         \includegraphics[width=\textwidth]{../sims/prelim/no_g/no_g_uz_t100.png}
     \end{subfigure}
-    \caption{$P, u_x, u_z$ at $t = 0.5$ and $t = 1$ for $\rho_0 = 1$.
-    }\label{fig:no_g}
+    \caption{$P, u_x, u_z$ at $t = 0.5$ and $t = 1$ for $\rho_0 = 1$. We choose
+    a $L = 10$ square domain.}\label{fig:no_g}
 \end{figure}
 
 It is worth noting that, since our \autoref{eq:lin.no_g_eom} reduced to a Laplace
@@ -222,45 +227,25 @@ the value and derivative of the function). This is in agreement with the
 observation that the original \autoref{eq:lin.no_g_eom} had two derivatives in
 $x, z$ apiece, so we needed two BCs each.
 
-\chapter{2D Wave Breaking in Atmospheres}
+\subsection{Sommerfield/Radiative + Driving BCs}
 
-The goal of this will be to lay out a formalism that can reproduce Sutherland et
-al.~2011\footnote{DOI:10.1175/JAS-D-11--097.1} and also investigate driven
-oscillations versus the breaking of a single wave packet. This represents wave
-breaking in the atmosphere.
+This is the more interesting case. Let's go back to the Laplace equation
+$\nabla^2 P = 0$ but instead implement a driving term at $z = 0$ and radiative
+BCs at $z = L$. This
 
-\section{Dynamical Setup}
+\section{Incompressible, Stratified w/ Gravity}
 
-We adopt notation where $q_0$ is the background quantity and $q_1$ is the
-perturbed quantity from the propagating wave.
+\subsection{Eigenfunctions}
 
-The fluid equations are
-\begin{subequations}\label{se:fl_eq}
-    \begin{align}
-        \pd{\rho}{t} + \vec{\nabla} \cdot \rho \vec{u} &= 0,
-            \label{eq:fl_eq.cont}\\
-        \rd{\vec{u}}{t} &= -\vec{\nabla}\frac{P}{\rho} - g\hat{z},
-            \label{eq:fl_eq.mom}
-    \end{align}
-\end{subequations}
-where we will take gravity to be uniform throughout the domain of interest. We
-will study for no background flow $\vec{u}_0 = 0$ and in the presence of
-stratification $\rho_0 \propto e^{-z/H}$. In the absence of any perturbations it
-is then easy to show that $\rd{P_0}{z} = -\rho_0 g$.
-
-\subsection{Linear, Incompressible}
-
-\subsubsection{Solution for Arbitrary Stratification}
-
-First, we solve the incompressible case $c_s^2 \to \infty, \vec{\nabla} \cdot
-\vec{u} = 0$ in the linear regime. For funsies, we solve for arbitrary
-stratification first. The fluid equations to first order reduce to
+Let's restore the $\rho_1 g$ term now. For funsies, we begin by solving for
+arbitrary stratification $\rho_0(z)$ first. The fluid equations to first order
+reduce to
 \begin{equation}
     \begin{split}
         \pd{\rho_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\rho_0 &= 0,\\
         \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
         \pd{\vec{u}_1}{t} &= -\frac{\vec{\nabla}P_1}{\rho_0}
-            - P_1 \vec{\nabla}\frac{1}{\rho_0}
+            - \frac{\rho_1 g}{\rho_0}
     \end{split}\label{eq:lin_incomp}
 \end{equation}
 We expect there to be some $z$ dependence in the amplitude, so we substitute
@@ -272,11 +257,10 @@ This gives us
         iku_{1x} + \pd{u_{1z}}{z} &= 0,\\
         -iw u_{1x} + \frac{ik_x P_1}{\rho_0} &= 0,\\
         -iw u_{1z} + \frac{1}{\rho_0}\pd{P_1}{z} +
-            \frac{\rho_1}{\rho_0^2}\pd{P_0}{z} &= 0.
+            \frac{\rho_1 g}{\rho_g} &= 0.
     \end{split}
 \end{equation}
-We substitute $N^2 = -\frac{g}{\rho_0}\pd{\rho_0}{z}$ and $\pd{P_0}{z} = -\rho
-g$ to obtain
+We substitute $N^2 = -\frac{g}{\rho_0}\pd{\rho_0}{z}$ to obtain
 \begin{subequations}
     \begin{align}
         -i\omega \rho_1 - u_{1z}\frac{\rho_0N^2}{g} &= 0,\label{eq:lin.cont}\\
@@ -304,19 +288,29 @@ $\mathrm{d}z$ and combine with~\eqref{eq:lin.eq2} to give
         + k_x^2\p*{\frac{N^2}{\omega^2} - 1}u_{1z} = 0.\label{eq:lin.incomp.gen}
 \end{equation}
 
-\subsubsection{Introduce Stratification}
-
-With stratification $\rho \propto e^{-z/H}$ \autoref{eq:lin.incomp.gen} clearly
-has exponential solutions $e^{\kappa z}$ for
+Let's now pick stratification $\rho \propto e^{-z/H}$
+\autoref{eq:lin.incomp.gen} clearly has exponential solutions $e^{\kappa z}$ for
 \begin{equation}
     \kappa^2 - \frac{\kappa}{H} + k_x^2\p*{\frac{N^2}{\omega^2} - 1} = 0.
 \end{equation}
-
-We permit complex $\kappa = -\frac{1}{2H} + ik_z$, and from the above clearly
+We permit complex $\kappa = \frac{1}{2H} + ik_z$, and from the above clearly
 \begin{align}
     k_z^2 &= -\frac{1}{4H^2} + k_x^2\p*{\frac{N^2}{\omega^2} - 1},\nonumber\\
     \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
 \end{align}
+Thus the eigenfunctions are
+\begin{equation}
+    \begin{split}
+        u_{1z} &= e^{z/2H} e^{i(k_zz + k_xx - \omega t)},\\
+        u_{1x} &= -\frac{k_z + i/2H}{k_x} u_{1z},\\
+        \rho_1 &= \frac{i \rho_0}{H\omega} u_{1z},\\
+        P_1 &= -\frac{\rho_0 \omega}{k_x^2}\p*{k_z + i/2H}u_{1z}.
+    \end{split}\label{eq:strat_eigens}
+\end{equation}
+
+\subsection{Solving an IVP}
+
+\section{(Algebra) The Anelastic/Boussinesq Approximations}
 
 \subsection{Developing the Anelastic/Boussinesq Approximations}
 
@@ -395,7 +389,7 @@ The anelastic fluid equations thus read
 The Boussinesq equations are obtained from these in the limit where $H \gg D$
 the relevant length scale, thus we allow $\rho_0$ to be approximately constant.
 
-\subsection{Anelastic Solution}
+\subsection{Anelastic Solution to Stratified Atmosphere}
 
 We simply substitute $e^{i(\vec{k} \cdot \vec{r} - \omega t)}$ into
 \autoref{eq:lin_anelastic} with $\rho_0 \propto e^{-z/H}$ and obtain
@@ -417,44 +411,20 @@ Taking the determinant of this matrix produces
     \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}} &= \omega^2.
 \end{align}
 
+\chapter{2D Wave Breaking in Atmospheres}
+
+\section{Dynamical Setup}
+
+TODO (fluid equations, driven on bottom, parameters)
+
 \section{Boundary Conditions}
 
-\subsection{Incompressible}
-
-We must bound this to a finite domain. We choose periodic boundary conditions in
-$x$ with total length $L_x$, $x \in \s*{-\frac{L}{2}, \frac{L}{2}}$. We choose
-$z$ dimension to have total length $L_z$, $z \in [0, L_z]$.
-
-To set up the boundary condition at $z = 0$, we recall that gravity waves in an
-atmosphere with $e^{-z/H}$ profile have form
-\begin{equation}
-    u_{1z} \propto e^{\frac{z}{2H}}e^{i\p*{k_xx + k_zz - \omega t}}.
-        \label{eq:bc_below}
-\end{equation}
-We will take Boussinesq/WKB approximation $H \to 0$, reasonable in the linear
-regime, to simplify the BCs. Then $\rho_1 = 0$ (reasonable in the incompressible
-limit), $u_{1x} = -\frac{k_z}{k_x}u_{1z}$ and $P_1 = -\frac{\omega
-\rho_0}{k_z}u_{1z}$, from the linearized incompressible equations.
-
-The boundary condition at $z = L_z$ is much harder to determine. It is clear
-that $\vec{u}_1(z = \infty) = \rho_1(z = \infty) = 0$, and for $L_z \gg H$ this
-would be a reasonable approximation, if simply because we expect the majority of
-the wave to dissipate via turbulent dissipation as $z$ reaches many $H$. We will
-simply choose the BC to be many multiples of $H$. We can solve with both a
-Dirichlet and Neumann BC and compare the two solutions; if the solutions
-differ significantly then we must choose a larger $L_z$. These are the only two
-solutions that can be implemented where we do not need the phase of the linear
-wave, which we lose during the nonlinear breaking region, to relate the function
-and derivative at the boundary.
+TODO (periodic in x, show that right number of BCs in $z$, discuss whether gauge
+choice).
 
 \section{Simulation}
 
-We begin our simulation with $\rho_1 = 0, \vec{u}_1 = 0$ strictly within the
-domain of simulation. We will borrow some values from Sutherland's paper and use
-$k_z = 2\;\mathrm{km^{-1}}$ then define $k_x = -0.4k_z, H = 10 / k_z, A = 0.05 /
-k_z, L_z = 300 / k_z, L_x = 20 / k_z$, We also use $\mu \approx 29, T =
-273\;\mathrm{K}, \rho_0 = 1\;\mathrm{kg/m^3}, P_0 = \frac{\rho_0 k_BT}{\mu m_p},
-g = 10\;\mathrm{m/s^2}$.
+TODO (CFL conditions etc.)
 
 \end{document}
 
