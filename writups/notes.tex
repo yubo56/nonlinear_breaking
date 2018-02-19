@@ -189,7 +189,6 @@ This is in good agreement with the results, presented in \autoref{fig:no_g}.
 Note that $P$ is constant while $\vec{u}$ increases linearly in time, and we
 observe the expected $\sim \sin x \sinh \frac{L - z}{z}$ dependence. In fact,
 $u_{1x}, u_{1z}$ are exactly $\frac{2\pi}{10}$ at $t = 1$.
-
 \begin{figure}[!h]
     \centering
     \begin{subfigure}{0.3\textwidth}
@@ -221,17 +220,31 @@ $u_{1x}, u_{1z}$ are exactly $\frac{2\pi}{10}$ at $t = 1$.
     a $L = 10$ square domain.}\label{fig:no_g}
 \end{figure}
 
+\subsection{Things to Note}
+
 It is worth noting that, since our \autoref{eq:lin.no_g_eom} reduced to a Laplace
 equation, we needed two $z$ BCs and two $x$ BCs (periodic BCs amount to equating
 the value and derivative of the function). This is in agreement with the
 observation that the original \autoref{eq:lin.no_g_eom} had two derivatives in
 $x, z$ apiece, so we needed two BCs each.
 
-\subsection{Sommerfield/Radiative + Driving BCs}
+It is also worth seeing from our solution that $P$ immediately goes to the
+equilibrium solution. This is not surprising since in the incompressible limit,
+sound speed goes to infinity which is the timescale on which the pressure field
+adjusts to net forces. Thus, the dynamics solely arise from the static pressure
+field pushing the velocity field to equilibrium.
 
-This is the more interesting case. Let's go back to the Laplace equation
-$\nabla^2 P = 0$ but instead implement a driving term at $z = 0$ and radiative
-BCs at $z = L$. This
+We chose time-independent $\mathcal{P}(x, t)$, but it is clear that whatever
+$\mathcal{P}(x, t)$ we choose, the time dependence propagates to the velocities
+by way of an integral. If we had instead chosen to take Fourier transform $t \to
+\omega$, we would have had to integrate the boundary condition against the
+eigenfunctions for each of the $\omega$, which is still easily computable, to
+get the full $u_{1x}(x, z, t)$. We consider this in preparation for when we can
+only solve for a set of $\vec{k}, \omega$ in the next problem.
+
+The next thing we would have wanted to do is solve a problem with radiative BCs,
+but we need to have wave solutions, which are missing in the absence of gravity.
+We thus move on to the next configuration.
 
 \section{Incompressible, Stratified w/ Gravity}
 
@@ -296,7 +309,8 @@ Let's now pick stratification $\rho \propto e^{-z/H}$
 We permit complex $\kappa = \frac{1}{2H} + ik_z$, and from the above clearly
 \begin{align}
     k_z^2 &= -\frac{1}{4H^2} + k_x^2\p*{\frac{N^2}{\omega^2} - 1},\nonumber\\
-    \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
+    \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 +
+        \frac{1}{4H^2}}.\label{eq:strat_disp}
 \end{align}
 Thus the eigenfunctions are
 \begin{equation}
@@ -308,7 +322,105 @@ Thus the eigenfunctions are
     \end{split}\label{eq:strat_eigens}
 \end{equation}
 
-\subsection{Solving an IVP}
+\subsection{Analytically Solving an IVP, Dirichlet + Driving BCs}
+
+We will analyze everything in terms of $u_{1z}$ since it has the simplest form;
+note that when actually choosing the BCs we will have to consider the gauge
+freedom of $P$ and some considerations we defer to the computational section.
+
+Currently, we have a set of eigenfunctions
+\begin{equation}
+    u_{1z}\p*{x, z, t \middle| \vec{k}, \omega}
+        = e^{z/2H} e^{i(k_zz + k_xx - \omega t)}.
+        \label{eq:strat.uz_eigen}
+\end{equation}
+Note that $u_{1z}$ is really only a function of two parameters rather than the
+three $(k_x, k_z, \omega)$, since the three are related by dispersion relation
+\autoref{eq:strat_disp}.
+
+Now, we implement BCs. Consider domain $x, z \in [0, L]$. We will use periodic
+BCs again in $x$, so then $k_{x, n} = \frac{2\pi n}{L}, n \geq 0$. Then, we will
+require $u_{1z, n}(x, L, t) = 0$, a Dirichlet condition at the top boundary,
+which restricts us to eigenfunctions of form
+\begin{equation}
+    u_{1z, n}\p*{x, z, t \middle| \vec{k}, \omega}
+        = e^{z/2H}e^{i(k_xx - \omega t)}\sin\p*{k_z\p*{L - z}}.
+        \label{eq:strat.uz_eigen_l-z}
+\end{equation}
+
+Finally, we must choose a BC at $z = 0$. We will choose a general function
+$u_{1z}(x, 0, t) = F(x, t)$ where we can decompose
+\begin{equation}
+    F(x, t) = \int\limits \sum\limits_n \mathcal{F}(k_{x, n}, \omega)
+        e^{i(k_{x, n}x - \omega t)}\;\mathrm{d}\omega.
+\end{equation}
+Matching BCs then gives us general solution for $u_{1z}$ given an arbitrary
+driving function
+\begin{equation}
+    u_{1z}\p*{x, z, t \middle| \vec{k}, \omega}
+        = \int\limits \sum\limits_n \mathcal{F}\p*{k_{x, n}, \omega}
+            \frac{e^{z/2H}e^{i\p*{k_{x, n}x - \omega t}}\sin \p*{k_z(L - z)}}{
+            \sin k_zL}\;\mathrm{d}\omega.
+            \label{eq:strat.full_sol}
+\end{equation}
+
+For ease of computation, let's pick $F(x, t) = \cos \p*{\frac{2 \pi x}{L} -
+\omega_0 t}$, so our full expected solution is (note $A + \epsilon =
+Ae^{\epsilon/A} + \mathcal{O}(\epsilon^2)$)
+\begin{equation}
+    \begin{split}
+        u_{1z}\p*{x, z, t \middle | \vec{k}, \omega}
+            &= e^{z/2H}\frac{\cos\p*{\frac{2\pi x}{L} - \omega_0 t}
+                \sin \p*{k_z(L - z)}}{\sin k_zL},\\
+        u_{1x}\p*{x, z, t \middle | \vec{k}, \omega}
+            &\approx -\frac{k_z}{k_x} e^{z/2H}\frac{
+                \cos\p*{\frac{2\pi x}{L} - \omega_0 t + \frac{1}{2Hk_z}}
+                \sin \p*{k_z(L - z)}
+            }{\sin k_zL},\\
+        \rho_1\p*{x, z, t \middle | \vec{k}, \omega}
+            &\approx \frac{\rho_0}{H\omega} e^{z/2H}\frac{
+                -\sin\p*{\frac{2\pi x}{L} - \omega_0 t}
+                \sin \p*{k_z(L - z)}
+            }{\sin k_zL},\\
+        P_1\p*{x, z, t \middle | \vec{k}, \omega}
+            &\approx -\frac{\rho_0 \omega k_z}{k_x^2} e^{z/2H}\frac{
+                -\cos\p*{\frac{2\pi x}{L} - \omega_0 t + \frac{1}{2Hk_z}}
+                \sin \p*{k_z(L - z)}
+            }{\sin k_zL},\\
+    \end{split}\label{eq:strat.part_sol}
+\end{equation}
+where $k_z: \omega(k_x, k_z) = \omega_0$ by the dispersion relation
+\autoref{eq:strat_disp}. Note that $H$ contributes both to the overall
+exponential profile and to the phase lag of $u_{1z}$.
+
+\subsection{Computationally Solving an IVP, Dirichlet + Driving BCs}
+
+To solve this computationally with the aforementioned BCs, periodic in $x$,
+Dirichlet $0$ at $z = L$ and $\cos \p*{\frac{2\pi x}{L} - \omega_0 t}$ at $z =
+0$, we must address the gauge freedom in $P$. This arises because for $k_x = 0$,
+the divergence-free condition $\vec{\nabla} \cdot \vec{u}_1 = \pd{u_z}{z} = 0$
+specificies $u_{1z}$ up to a constant already, so the bottom BC will fix the
+value of $u_z$ when $k_x = 0$.
+
+A different way of phrasing the same argument is as follows. Consider the
+discrete $N \times N$ (square for notational simplicity) grid. At the boundary,
+there is a list of values $f\p*{\z*{x_i}, z_0}$ that lives in an $N$ dimensional
+space. We can thus pick a spanning set of $N$ basis vectors, and for each of
+these $N$ vectors, by enforcing $\vec{\nabla} \cdot \vec{u} = 0$ at the boundary
+we fix the allowed $f\p*{\z*{x_i}, z_{-1}}$ boundary conditions we can implement.
+But there exists a choice of basis vectors for which one of the basis vectors is
+constant $f_i\p*{\z*{x_i}, z_0} = C$. For this basis vector, the boundary
+condition is fully determined, so we only have $N - 1$ dimensions from which to
+choose the BCs $f\p*{\z*{x_i}, z_{-1}}$. Since the dimensionality of a space
+cannot depend on the choice of basis vector, the divergence free condition
+actually yields an extra degree of freedom.
+
+We can use this extra degreee of freedom to specify $P(z = L) = P_L$ some
+constant. Then we can just simulate away! Let's choose $L = 10, k_x = k_z = 1, H
+= 10, g = 10$ which constrains $N^2 \equiv g/H = 1, \omega^2 = \frac{1}{2 +
+1/400}$.
+
+\subsection{Sommerfield/Radiative BCs}
 
 \section{(Algebra) The Anelastic/Boussinesq Approximations}
 

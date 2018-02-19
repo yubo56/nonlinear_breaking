@@ -1,11 +1,5 @@
 '''
-linearized fluid equations w/o gravity. Fluid equations reduce to
-- div u = 0
-- dt(u) + grad(P) / rho0 = 0
-
-Domain is L x L
-ICs are zero everywhere
-BCs are periodic x, Dirichlet 0 at z = L, sin(2*pi*x/L) at z = 0.
+Incompressible fluid equations w/
 '''
 
 import logging
@@ -36,8 +30,8 @@ problem.parameters['rho0'] = 1
 problem.add_equation("dx(ux) + dz(uz) = 0")
 problem.add_equation("dt(ux) + dx(P)/rho0 = 0")
 problem.add_equation("dt(uz) + dz(P)/rho0 = 0")
-problem.add_bc("right(P) = 0")
-problem.add_bc("left(P) = sin(6.28 * x / 10)")
+problem.add_bc("right(dt(P) - dz(P)) = 0")
+problem.add_bc("left(P) = sin(6.28 * (x - t) / 10)")
 
 # Build solver
 solver = problem.build_solver(de.timesteppers.RK222)
