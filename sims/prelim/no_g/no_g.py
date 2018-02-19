@@ -8,14 +8,12 @@ ICs are zero everywhere
 BCs are periodic x, Dirichlet 0 at z = L, sin(2*pi*x/L) at z = 0.
 '''
 
-import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
 from dedalus import public as de
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
-logger = logging.getLogger(__name__)
 XMAX = 10
 ZMAX = 10
 N_X = 64

@@ -415,10 +415,22 @@ choose the BCs $f\p*{\z*{x_i}, z_{-1}}$. Since the dimensionality of a space
 cannot depend on the choice of basis vector, the divergence free condition
 actually yields an extra degree of freedom.
 
-We can use this extra degreee of freedom to specify $P(z = L) = P_L$ some
-constant. Then we can just simulate away! Let's choose $L = 10, k_x = k_z = 1, H
-= 10, g = 10$ which constrains $N^2 \equiv g/H = 1, \omega^2 = \frac{1}{2 +
-1/400}$.
+We can use this extra degreee of freedom to specify $P(z = L) = 0$ so the
+oscillations should have zero mean. Then we can just simulate away!
+
+Since we're much more interested in the $z$ behavior, we will set the $z$ axis
+to be further away. Let's choose $\rho_0 = 1, L_x = 10, L_z = 20, k_x = 2, k_z =
+1, H = 5, g = 10$ which constrains $N^2 \equiv g/H = 1, \omega^2 = \frac{4}{5 +
+1/100}$. Some considerations:
+\begin{itemize}
+    \item $\frac{1}{k_xH}, \frac{1}{k_zH}$ are $1/10, 1/5$ respectively,
+        small-ish but $L_Z = 8H$ so we should be able to see the $e^{z/2H}$
+        behavior well.
+
+    \item The vertical phase velocity is $\frac{\omega}{k_z} \sim 1$, so we
+        should simulate at least out to $t = 20$ for the wave to fully propagate
+        to the boundary.
+\end{itemize}
 
 \subsection{Sommerfield/Radiative BCs}
 
