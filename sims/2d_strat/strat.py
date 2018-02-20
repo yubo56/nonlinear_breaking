@@ -28,7 +28,7 @@ G = 10
 N = G / H
 RHO0 = 1
 
-NUM_SNAPSHOTS = 40
+NUM_SNAPSHOTS = 800
 
 if __name__ == '__main__':
     # Bases and domain
@@ -73,30 +73,34 @@ if __name__ == '__main__':
     uz['g'] = np.zeros(gshape)
     rho['g'] = np.zeros(gshape)
 
+    snapshots = solver.evaluator.add_file_handler('snapshots',
+                                                  sim_dt=T_F / NUM_SNAPSHOTS)
+    snapshots.add_system(solver.state)
+
     # Main loop
     while solver.ok:
         solver.step(DT)
         curr_iter = solver.iteration
 
-        if curr_iter % int((T_F / DT) / NUM_SNAPSHOTS) == 0:
-            ux.set_scales(1, keep_data=True)
-            uz.set_scales(1, keep_data=True)
-            P.set_scales(1, keep_data=True)
-            rho.set_scales(1, keep_data=True)
+#         if curr_iter % int((T_F / DT) / NUM_SNAPSHOTS) == 0:
+#             ux.set_scales(1, keep_data=True)
+#             uz.set_scales(1, keep_data=True)
+#             P.set_scales(1, keep_data=True)
+#             rho.set_scales(1, keep_data=True)
 
-            # plot vars
-            xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-            for var, name in [(ux['g'], 'ux'), (uz['g'], 'uz'),
-                              (rho['g'], 'rho'), (P['g'], 'P')]:
-                f = plt.figure()
-                plt.pcolormesh(xmesh, zmesh, np.transpose(var), cmap='YlGnBu')
-                plt.axis(pad_limits(xmesh, zmesh))
-                plt.colorbar()
-                plt.xlabel('x')
-                plt.ylabel('z')
-                plt.title('%s, (t = %.2f)' % (name, curr_iter * DT))
-                filename = 'plots/strat_%s_t%05.1f.png' % (name, curr_iter * DT)
-                logger.info('Saving %s' % filename)
-                plt.savefig(filename)
-                plt.clf()
-                plt.close(f)
+#             # plot vars
+#             xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+#             for var, name in [(ux['g'], 'ux'), (uz['g'], 'uz'),
+#                               (rho['g'], 'rho'), (P['g'], 'P')]:
+#                 f = plt.figure()
+#                 plt.pcolormesh(xmesh, zmesh, np.transpose(var), cmap='YlGnBu')
+#                 plt.axis(pad_limits(xmesh, zmesh))
+#                 plt.colorbar()
+#                 plt.xlabel('x')
+#                 plt.ylabel('z')
+#                 plt.title('%s, (t = %.2f)' % (name, curr_iter * DT))
+#                 filename = 'plots/strat_%s_t%05.1f.png' % (name, curr_iter * DT)
+#                 logger.info('Saving %s' % filename)
+#                 plt.savefig(filename)
+#                 plt.clf()
+#                 plt.close(f)
