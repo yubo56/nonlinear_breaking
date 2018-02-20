@@ -19,8 +19,8 @@ N_Z = 256
 DX = XMAX / N_X
 DZ = ZMAX / N_Z
 
-T_F = 100
-DT = 1e-2
+T_F = 200
+DT = 2e-2
 KX = 2
 KZ = 1
 H = 5
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 plt.xlabel('x')
                 plt.ylabel('z')
                 plt.title('%s, (t = %.2f)' % (name, curr_iter * DT))
-                filename = 'plots/strat_%s_t%04.1f.png' % (name, curr_iter * DT)
+                filename = 'plots/strat_%s_t%05.1f.png' % (name, curr_iter * DT)
                 logger.info('Saving %s' % filename)
                 plt.savefig(filename)
                 plt.clf()
