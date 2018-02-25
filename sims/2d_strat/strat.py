@@ -7,13 +7,12 @@ Incompressible fluid equations w/ vertical stratification
 Periodic BC in x, Dirichlet/Neumann 0 at z=L, Driving term at z=0
 '''
 import logging
-from mpi4py import MPI
 import numpy as np
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 from dedalus import public as de
-from dedalus.extras.plot_tools import quad_mesh, pad_limits
+from dedalus.extras.plot_tools import quad_mesh
 from dedalus.extras.flow_tools import CFL
 
 XMAX = 10
@@ -54,7 +53,15 @@ if __name__ == '__main__':
     rho0 = domain.new_field()
     rho0.meta['x']['constant'] = True
     rho0['g'] = RHO0 * np.exp(-z / H)
+    xmesh, zmesh = quad_mesh(x=x[:,0], y=z[0])
     problem.parameters['rho0'] = rho0
+
+    plt.pcolormesh(xmesh, zmesh, np.transpose(rho0['g']))
+    plt.xlabel('x')
+    plt.ylabel('z')
+    plt.title('Background rho0')
+    plt.colorbar()
+    plt.savefig('strat_rho0.png')
 
     problem.add_equation("dx(ux) + dz(uz) = 0")
     problem.add_equation("dt(rho) - rho0 * uz / H = 0")
