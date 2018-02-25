@@ -1,3 +1,4 @@
-.png
-.h5
-.mp4
+snapshots
+*.png
+*.h5
+*.mp4
