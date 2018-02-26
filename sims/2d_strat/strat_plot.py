@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
 plot single run results for strat.py, strat_sommer.py
-
-ffmpeg -y -framerate 10 -i t_%d.png test.mp4
 """
 import sys
 import os
@@ -54,7 +52,7 @@ if __name__ == '__main__':
                 fig.suptitle('%s (t=%.2f)' % (filetitle,
                                               sim_time))
                 fig.subplots_adjust(hspace=0.2, wspace=0.2)
-                savefig = SAVE_FMT_STR % sim_time
+                savefig = SAVE_FMT_STR % t_idx
                 plt.savefig('%s/%s' % (path, savefig))
                 print('Saved %s' % savefig)
                 plt.close()

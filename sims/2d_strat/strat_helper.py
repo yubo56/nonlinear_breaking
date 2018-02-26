@@ -4,31 +4,33 @@ helper function to run the shared stratification scenario. user just has to
 specify BCs and ICs
 '''
 import logging
-import numpy as np
+import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 from dedalus import public as de
 from dedalus.extras.plot_tools import quad_mesh
 # from dedalus.extras.flow_tools import CFL
 
 logger = logging.getLogger(__name__)
+SNAPSHOTS_DIR = 'snapshots'
 
 def run_strat_sim(set_bc,
                   set_ICs,
-                  XMAX=10,
-                  ZMAX=20,
-                  N_X=64,
-                  N_Z=256,
-                  T_F=40,
-                  DT=2e-2,
-                  KX=2,
-                  KZ=1,
-                  H_FACT=3,
-                  RHO0=1,
-                  G=10):
+                  XMAX,
+                  ZMAX,
+                  N_X,
+                  N_Z,
+                  T_F,
+                  DT,
+                  KX,
+                  KZ,
+                  H_FACT,
+                  RHO0,
+                  NUM_SNAPSHOTS,
+                  G):
     H = ZMAX / H_FACT
-
-    NUM_SNAPSHOTS = 80
+    os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
 
     # Bases and domain
     x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
@@ -66,7 +68,7 @@ def run_strat_sim(set_bc,
     problem.add_equation("dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
     set_bc(problem)
     problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = sin(KX * x - omega * t)")
+    problem.add_bc("left(uz) = cos(KX * x - omega * t)")
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)
@@ -81,7 +83,7 @@ def run_strat_sim(set_bc,
     # cfl = CFL(solver, initial_dt=DT, cadence=10, max_dt=10 * DT, threshold=0.05)
     # cfl.add_velocities(('ux', 'uz'))
 
-    snapshots = solver.evaluator.add_file_handler('snapshots',
+    snapshots = solver.evaluator.add_file_handler(SNAPSHOTS_DIR,
                                                   sim_dt=T_F / NUM_SNAPSHOTS)
     snapshots.add_system(solver.state)
 
