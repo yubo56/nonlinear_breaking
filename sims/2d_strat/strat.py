@@ -6,22 +6,24 @@ Incompressible fluid equations w/ vertical stratification
 
 Periodic BC in x, Dirichlet/Neumann 0 at z=L, Driving term at z=0
 '''
+from multiprocessing import Pool
 import numpy as np
 from strat_helper import run_strat_sim
 
+N_PARALLEL = 8
 if __name__ == '__main__':
     params = {'XMAX': 10,
               'ZMAX': 20,
               'N_X': 64,
               'N_Z': 256,
-              'T_F': 80,
+              'T_F': 120,
               'DT': 2e-2,
               'KX': 2 * np.pi / 10, # kx = 2pi/L_x
               'KZ': 1,
               'H_FACT': 2,
               'RHO0': 1,
               'G': 10,
-              'NUM_SNAPSHOTS': 80}
+              'NUM_SNAPSHOTS': 120}
 
     def dirichlet_bc(problem):
         problem.add_bc("right(uz) = 0", condition="nx != 0")
@@ -55,7 +57,7 @@ if __name__ == '__main__':
         kz = params['KZ']
         rho0 = params['RHO0']
         g = params['G']
-        omega = g / H * kx**2 / (kx**2 + kz**2 + 1/(4 * H**2))
+        omega = np.sqrt(g / H * kx**2 / (kx**2 + kz**2 + 1/(4 * H**2)))
 
         common_factor = np.exp(z / (2 * H)) * np.sin(kz * (ZMAX - z)) / \
             np.sin(kz * ZMAX)
@@ -65,11 +67,12 @@ if __name__ == '__main__':
         P['g'] = rho0 * omega * kz / kx**2 *np.cos(kx * x + 1 / (2 * H * kz)) \
             * common_factor
 
-    # strat_dirichlet_s1.mp4
-    run_strat_sim(dirichlet_bc, zero_ic, **params)
+    def run(conditions):
+        bc, ic = conditions
+        run_strat_sim(bc, ic, **params)
 
-    # strat_neumann_s2.mp4
-    run_strat_sim(neumann_bc, zero_ic, **params)
-
-    # strat_dirichlet_ss_s3.mp4
-    run_strat_sim(dirichlet_bc, steady_dirichlet_ic, **params)
+    p = Pool(N_PARALLEL)
+    p.map(run, [
+        (dirichlet_bc, zero_ic), # strat_dirichlet_s1.mp4
+        (neumann_bc, zero_ic), # strat_neumann_s2.mp4
+        (dirichlet_bc, steady_dirichlet_ic)])# strat_dirichlet_ss_s3.mp4
