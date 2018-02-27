@@ -28,17 +28,46 @@ if __name__ == '__main__':
               'G': 10,
               'NUM_SNAPSHOTS': 120}
 
-    def dirichlet_bc(problem):
+    def dirichlet_bc(problem, *_):
         strat_helper.default_problem(problem)
-        problem.add_bc("right(uz) = 0", condition="nx != 0")
+        problem.add_bc('right(uz) = 0', condition='nx != 0')
 
-    def neumann_bc(problem):
+    def neumann_bc(problem, *_):
         strat_helper.default_problem(problem)
-        problem.add_bc("right(dz(uz)) = 0", condition="nx != 0")
+        problem.add_bc('right(dz(uz)) = 0', condition='nx != 0')
 
-    def rad_bc(problem):
+    def rad_bc(problem, *_):
         strat_helper.default_problem(problem)
-        problem.add_bc("right(dt(uz) = omega / kz * dz(uz)")
+        problem.add_bc('right(dt(uz) + omega / KZ * dz(uz)) = 0',
+                       condition='nx != 0')
+
+    def sponge(problem, domain):
+        '''
+        puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
+        is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
+        '''
+        steep = 5 # steepness of sigmoid transition
+        z_sigmoid = params['ZMAX'] * 0.7 # location of sigmoid transition
+        damping = 3
+
+        z = domain.grid(1)
+
+        # sponge field
+        sponge = domain.new_field()
+        sponge.meta['x']['constant'] = True
+        sig_exp = np.exp(steep * (z - z_sigmoid))
+        sponge['g'] = damping * sig_exp / (1 + sig_exp)
+
+        problem.parameters['sponge'] = sponge
+        problem.add_equation("dx(ux) + dz(uz) = 0")
+        problem.add_equation("dt(rho) - rho0 * uz / H + sponge * rho= 0")
+        problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux= 0")
+        problem.add_equation(
+            "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz= 0")
+
+        problem.add_bc("left(P) = 0", condition="nx == 0")
+        problem.add_bc("left(uz) = cos(KX * x - omega * t)")
+        problem.add_bc('right(uz) = 0', condition='nx != 0')
 
     def zero_ic(solver, domain):
         ux = solver.state['ux']
@@ -82,10 +111,11 @@ if __name__ == '__main__':
 
     with Pool(processes=N_PARALLEL) as p:
         tasks = [
-            # (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet_s1.mp4
-            # (neumann_bc, zero_ic, 'n0'), # strat_neumann_s2.mp4
-            # (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss_s3.mp4
-            (rad_bc, zero_ic, 'rad0'), # strat_rad_s4.mp4
+            # (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet.mp4
+            # (neumann_bc, zero_ic, 'n0'), # strat_neumann.mp4
+            # (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss.mp4
+            # (rad_bc, zero_ic, 'rad'), # strat_rad.mp4
+            (sponge, zero_ic, 'sponge'), # strat_sponge.mp4
         ]
         res = []
         for task in tasks:

@@ -46,6 +46,7 @@ def run_strat_sim(setup_problem,
     problem.parameters['g'] = G
     problem.parameters['H'] = H
     problem.parameters['KX'] = KX
+    problem.parameters['KZ'] = KZ
     problem.parameters['omega'] = np.sqrt(
         (G / H) * KX**2 / (KX**2 + KZ**2 + 0.25 / H**2))
 
@@ -53,9 +54,9 @@ def run_strat_sim(setup_problem,
     rho0 = domain.new_field()
     rho0.meta['x']['constant'] = True
     rho0['g'] = RHO0 * np.exp(-z / H)
-    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     problem.parameters['rho0'] = rho0
 
+    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     plt.pcolormesh(xmesh, zmesh, np.transpose(rho0['g']))
     plt.xlabel('x')
     plt.ylabel('z')
@@ -63,7 +64,7 @@ def run_strat_sim(setup_problem,
     plt.colorbar()
     plt.savefig('strat_rho0.png')
 
-    setup_problem(problem)
+    setup_problem(problem, domain)
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)

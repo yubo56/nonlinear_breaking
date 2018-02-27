@@ -45,7 +45,8 @@ if __name__ == '__main__':
                     p = axes.pcolormesh(xmesh,
                                         zmesh,
                                         np.transpose(var_dat[t_idx]),
-                                        vmin=var_dat.min(), vmax=var_dat.max())
+                                        vmin=var_dat.min(), vmax=var_dat.max()
+                                       )
                     axes.axis(pad_limits(xmesh, zmesh))
                     fig.colorbar(p, ax=axes)
 
