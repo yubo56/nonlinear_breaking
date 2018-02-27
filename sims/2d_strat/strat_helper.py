@@ -12,7 +12,6 @@ from dedalus import public as de
 from dedalus.extras.plot_tools import quad_mesh
 # from dedalus.extras.flow_tools import CFL
 
-logger = logging.getLogger(__name__)
 SNAPSHOTS_DIR = 'snapshots'
 
 def run_strat_sim(set_bc,
@@ -28,9 +27,11 @@ def run_strat_sim(set_bc,
                   H_FACT,
                   RHO0,
                   NUM_SNAPSHOTS,
-                  G):
-    H = ZMAX / H_FACT
+                  G,
+                  name=None):
     os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
+    H = ZMAX / H_FACT
+    logger = logging.getLogger(name or __name__)
 
     # Bases and domain
     x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
@@ -89,6 +90,7 @@ def run_strat_sim(set_bc,
 
     # Main loop
     timesteps = []
+    logger.info('Starting sim...')
     while solver.ok:
         # cfl_dt = cfl.compute_dt()
         cfl_dt = DT

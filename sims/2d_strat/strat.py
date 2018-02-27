@@ -10,7 +10,7 @@ from multiprocessing import Pool
 import numpy as np
 from strat_helper import run_strat_sim
 
-N_PARALLEL = 8
+N_PARALLEL = 3 # python refuses to kick off more than 2 here on my local...
 if __name__ == '__main__':
     params = {'XMAX': 10,
               'ZMAX': 20,
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         uz['g'] = np.zeros(gshape)
         rho['g'] = np.zeros(gshape)
 
-    def steady_dirichlet_ic(solver, domain):
+    def steady_ic(solver, domain):
         ux = solver.state['ux']
         uz = solver.state['uz']
         P = solver.state['P']
@@ -67,12 +67,12 @@ if __name__ == '__main__':
         P['g'] = rho0 * omega * kz / kx**2 *np.cos(kx * x + 1 / (2 * H * kz)) \
             * common_factor
 
-    def run(conditions):
-        bc, ic = conditions
-        run_strat_sim(bc, ic, **params)
+    def run(bc, ic, name):
+        run_strat_sim(bc, ic, name=name, **params)
 
-    p = Pool(N_PARALLEL)
-    p.map(run, [
-        (dirichlet_bc, zero_ic), # strat_dirichlet_s1.mp4
-        (neumann_bc, zero_ic), # strat_neumann_s2.mp4
-        (dirichlet_bc, steady_dirichlet_ic)])# strat_dirichlet_ss_s3.mp4
+    with Pool(processes=N_PARALLEL) as p:
+        p.starmap(run, [
+            (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet_s1.mp4
+            (neumann_bc, zero_ic, 'n0'), # strat_neumann_s2.mp4
+            (dirichlet_bc, steady_ic, 'dss')# strat_dirichlet_ss_s3.mp4
+            ])
