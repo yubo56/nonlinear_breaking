@@ -6,11 +6,14 @@ Incompressible fluid equations w/ vertical stratification
 
 Periodic BC in x, Dirichlet/Neumann 0 at z=L, Driving term at z=0
 '''
+import time
+
 from multiprocessing import Pool
 import numpy as np
-from strat_helper import run_strat_sim
+import strat_helper
 
-N_PARALLEL = 3 # python refuses to kick off more than 2 here on my local...
+N_PARALLEL = 8 # python refuses to kick off more than 2 here on my local...
+START_DELAY = 10 # sleep so h5py has time to claim snapshots
 if __name__ == '__main__':
     params = {'XMAX': 10,
               'ZMAX': 20,
@@ -26,10 +29,16 @@ if __name__ == '__main__':
               'NUM_SNAPSHOTS': 120}
 
     def dirichlet_bc(problem):
+        strat_helper.default_problem(problem)
         problem.add_bc("right(uz) = 0", condition="nx != 0")
 
     def neumann_bc(problem):
+        strat_helper.default_problem(problem)
         problem.add_bc("right(dz(uz)) = 0", condition="nx != 0")
+
+    def rad_bc(problem):
+        strat_helper.default_problem(problem)
+        problem.add_bc("right(dt(uz) = omega / kz * dz(uz)")
 
     def zero_ic(solver, domain):
         ux = solver.state['ux']
@@ -68,11 +77,20 @@ if __name__ == '__main__':
             * common_factor
 
     def run(bc, ic, name):
-        run_strat_sim(bc, ic, name=name, **params)
+        strat_helper.run_strat_sim(bc, ic, name=name, **params)
+        return '%s completed' % name
 
     with Pool(processes=N_PARALLEL) as p:
-        p.starmap(run, [
-            (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet_s1.mp4
-            (neumann_bc, zero_ic, 'n0'), # strat_neumann_s2.mp4
-            (dirichlet_bc, steady_ic, 'dss')# strat_dirichlet_ss_s3.mp4
-            ])
+        tasks = [
+            # (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet_s1.mp4
+            # (neumann_bc, zero_ic, 'n0'), # strat_neumann_s2.mp4
+            # (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss_s3.mp4
+            (rad_bc, zero_ic, 'rad0'), # strat_rad_s4.mp4
+        ]
+        res = []
+        for task in tasks:
+            res.append(p.apply_async(run, task))
+            time.sleep(START_DELAY)
+
+        for r in res:
+            print(r.get())

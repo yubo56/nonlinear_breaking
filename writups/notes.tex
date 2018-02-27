@@ -418,23 +418,27 @@ actually yields an extra degree of freedom.
 We can use this extra degreee of freedom to specify $P(z = L) = 0$ so the
 oscillations should have zero mean. Then we can just simulate away!
 
-Since we're much more interested in the $z$ behavior, we will set the $z$ axis
-to be further away. Let's choose $\rho_0 = 1, L_x = 10, L_z = 20, k_x = 2, k_z =
-1, H = 5, g = 10$ which constrains $N^2 \equiv g/H = 1, \omega^2 = \frac{4}{5 +
-1/100}$. Some considerations:
-\begin{itemize}
-    \item $\frac{1}{k_xH}, \frac{1}{k_zH}$ are $1/10, 1/5$ respectively,
-        small-ish but $L_Z = 8H$ so we should be able to see the $e^{z/2H}$
-        behavior well.
+From here we can just tweak the parameters until we get something useful, can
+look at the videos. Note that we should simulate until at least $T >
+\frac{2L_z}{v_{p, z}}$ the $z$ phase space velocity, so we can capture any
+reflections off the boundary. Turns out both Dirichlet and Neumann BCs give
+strong reflections that produce standing waves in the $z$ and traveling waves in
+the $x$.
 
-    \item The vertical phase velocity is $\frac{\omega}{k_z} \sim 1$, so we
-        should simulate at least out to $t = 20$ for the wave to fully propagate
-        to the boundary.
-\end{itemize}
+\subsection{Supressing Reflection}
 
-\subsection{Sommerfield/Radiative BCs}
+Sourced from \url{https://people.maths.ox.ac.uk/trefethen/6all.pdf}. There are
+largely two ways to do this. The first is to add a damping zone, a region in
+which $\dot{q} = -q/\tau_d(z)$ where $\tau_d(0) = 0$ and increases to some
+non-small number for some $z_0$ beyond which we want damping.
 
-\section{(Algebra) The Anelastic/Boussinesq Approximations}
+This requires we compute a ton of extra points though. Ideally, we want to use
+BCs. Based on our explicit solution \autoref{eq:strat.full_sol} we might expect
+to write something like $\pd{u_{1z}}{z} = \frac{1/2H +
+ik_z}{\mp i\omega}\pd{u_{1z}}{z} \approx \pm \frac{k_z}{\omega}\pd{u_{1z}}{z}$.
+For an outgoing wave we expect to choose the negative sign.
+
+\section{(Algebra/Optional) The Anelastic/Boussinesq Approximations}
 
 \subsection{Developing the Anelastic/Boussinesq Approximations}
 
@@ -534,21 +538,6 @@ Taking the determinant of this matrix produces
         \p*{ik_z + \frac{1}{H}}\omega^2 &= 0,\nonumber\\
     \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}} &= \omega^2.
 \end{align}
-
-\chapter{2D Wave Breaking in Atmospheres}
-
-\section{Dynamical Setup}
-
-TODO (fluid equations, driven on bottom, parameters)
-
-\section{Boundary Conditions}
-
-TODO (periodic in x, show that right number of BCs in $z$, discuss whether gauge
-choice).
-
-\section{Simulation}
-
-TODO (CFL conditions etc.)
 
 \end{document}
 

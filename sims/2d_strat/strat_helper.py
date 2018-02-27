@@ -14,7 +14,7 @@ from dedalus.extras.plot_tools import quad_mesh
 
 SNAPSHOTS_DIR = 'snapshots'
 
-def run_strat_sim(set_bc,
+def run_strat_sim(setup_problem,
                   set_ICs,
                   XMAX,
                   ZMAX,
@@ -63,13 +63,7 @@ def run_strat_sim(set_bc,
     plt.colorbar()
     plt.savefig('strat_rho0.png')
 
-    problem.add_equation("dx(ux) + dz(uz) = 0")
-    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
-    problem.add_equation("dt(ux) + dx(P) / rho0 = 0")
-    problem.add_equation("dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
-    set_bc(problem)
-    problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = cos(KX * x - omega * t)")
+    setup_problem(problem)
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)
@@ -103,3 +97,11 @@ def run_strat_sim(set_bc,
                         solver.sim_time,
                         np.mean(timesteps))
             timesteps = []
+
+def default_problem(problem):
+    problem.add_equation("dx(ux) + dz(uz) = 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
+    problem.add_equation("dt(ux) + dx(P) / rho0 = 0")
+    problem.add_equation("dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
+    problem.add_bc("left(P) = 0", condition="nx == 0")
+    problem.add_bc("left(uz) = cos(KX * x - omega * t)")
