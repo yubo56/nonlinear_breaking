@@ -15,18 +15,21 @@ import strat_helper
 N_PARALLEL = 8 # python refuses to kick off more than 2 here on my local...
 START_DELAY = 10 # sleep so h5py has time to claim snapshots
 if __name__ == '__main__':
-    params = {'XMAX': 10,
-              'ZMAX': 20,
+    H = 8
+    XMAX = H
+    ZMAX = 5 * H
+    params = {'XMAX': H,
+              'ZMAX': 5 * H,
               'N_X': 64,
               'N_Z': 256,
-              'T_F': 120,
+              'T_F': 200,
               'DT': 2e-2,
-              'KX': 2 * np.pi / 10, # kx = 2pi/L_x
-              'KZ': 1,
-              'H_FACT': 2,
+              'KX': 2 * np.pi / XMAX,
+              'KZ': 5 * (2 * np.pi / ZMAX),
+              'H': H,
               'RHO0': 1,
               'G': 10,
-              'NUM_SNAPSHOTS': 120}
+              'NUM_SNAPSHOTS': 200}
 
     def dirichlet_bc(problem, *_):
         strat_helper.default_problem(problem)
@@ -46,17 +49,16 @@ if __name__ == '__main__':
         puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
         is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
         '''
-        steep = 5 # steepness of sigmoid transition
-        z_sigmoid = params['ZMAX'] * 0.7 # location of sigmoid transition
-        damping = 3
-
+        zmax = params['ZMAX']
+        damp_start = zmax * 0.7 # start damping zone
         z = domain.grid(1)
 
         # sponge field
         sponge = domain.new_field()
         sponge.meta['x']['constant'] = True
-        sig_exp = np.exp(steep * (z - z_sigmoid))
-        sponge['g'] = damping * sig_exp / (1 + sig_exp)
+        sponge['g'] = np.minimum(
+            1 - (z - zmax)**2 / (damp_start - zmax)**2,
+            np.zeros(np.shape(z)))
 
         problem.parameters['sponge'] = sponge
         problem.add_equation("dx(ux) + dz(uz) = 0")
@@ -111,10 +113,9 @@ if __name__ == '__main__':
 
     with Pool(processes=N_PARALLEL) as p:
         tasks = [
-            # (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet.mp4
-            # (neumann_bc, zero_ic, 'n0'), # strat_neumann.mp4
-            # (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss.mp4
-            # (rad_bc, zero_ic, 'rad'), # strat_rad.mp4
+            (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet.mp4
+            (neumann_bc, zero_ic, 'n0'), # strat_neumann.mp4
+            (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss.mp4
             (sponge, zero_ic, 'sponge'), # strat_sponge.mp4
         ]
         res = []

@@ -24,13 +24,12 @@ def run_strat_sim(setup_problem,
                   DT,
                   KX,
                   KZ,
-                  H_FACT,
+                  H,
                   RHO0,
                   NUM_SNAPSHOTS,
                   G,
                   name=None):
     os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
-    H = ZMAX / H_FACT
     logger = logging.getLogger(name or __name__)
 
     # Bases and domain
