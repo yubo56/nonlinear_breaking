@@ -425,12 +425,39 @@ reflections off the boundary. Turns out both Dirichlet and Neumann BCs give
 strong reflections that produce standing waves in the $z$ and traveling waves in
 the $x$.
 
+\subsection{Extracting Information from the Waveform}
+
+Let's make sure we can extract information from the linearized problem. Notable
+things we should be interested in: phase/group velocity, energy density and
+energy flux.
+
+Let's first consider the phase velocity. We traditionally think about the phase
+velocity in 1D $v_{ph} = \frac{\omega(k)}{k}$, but in general it is the function
+such that $\vec{k} \cdot \vec{r} - \omega t = \vec{k} \cdot \p*{\vec{r} -
+\vec{v}_{ph}t}$ is constant (the phase of the wave). Thus, it must satisfy
+$\vec{k} \cdot \vec{v}_{ph} = \omega$, and so one sensible choice is
+$\vec{v}_{ph} = \frac{\omega \hat{k}}{\abs{\vec{k}}} = \frac{\omega
+\vec{k}}{\abs{\vec{k}}^2}$. Thus, if we have some waveform $f(x, z, t)$, we can
+estimate its phase velocity $\vec{v}_{ph}(x, z, t)$ by
+\begin{equation}
+    \vec{v}_{ph}(x, z, t) = \frac{\partial_t f
+        \vec{\nabla}f}{\abs{\vec{\nabla}f}^2}.\label{eq:v_ph}
+\end{equation}
+This can be validated in the $f(x, z, t) \propto e^{i(\vec{k} \cdot \vec{x} -
+\omega t)}$ case to give $\vec{v}_{ph} = \frac{\omega \vec{k}}{k^2}$. Note the
+sign in \autoref{eq:v_ph}
+
 \subsection{Supressing Reflection}
 
 Sourced from \url{https://people.maths.ox.ac.uk/trefethen/6all.pdf}. There are
 largely two ways to do this. The first is to add a damping zone, a region in
 which $\dot{q} = -q/\tau_d(z)$ where $\tau_d(0) = 0$ and increases to some
-non-small number for some $z_0$ beyond which we want damping.
+non-small number for some $z_0$ beyond which we want damping. One form, chosen
+in Ryan and Dong's paper, is to use multiplicative factor $f(z) = \max\s*{0, 1 -
+\frac{\p*{z - z_b}^2}{\p*{z_d - z_b}^2}}$ where $z_b$ is where one begins
+supression and $z_b$ is the boundary. Then a dynamical variable $q$ can be
+supressed via $\dot{q} = (\dots) - f(z)\frac{q - q_0}{\tau}$ where $\tau$ is the
+dynamical timescale on which to damp and $q_0$ is the value to damp to.
 
 This requires we compute a ton of extra points though. Ideally, we want to use
 BCs. Based on our explicit solution \autoref{eq:strat.full_sol} we might expect
