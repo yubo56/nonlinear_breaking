@@ -35,7 +35,7 @@ if __name__ == '__main__':
             xmesh = np.array(dat['tasks']['uz'].dims[1][0])
             zmesh = np.array(dat['tasks']['uz'].dims[2][0])
 
-            for t_idx, sim_time in enumerate(sim_times):
+            for t_idx, sim_time in enumerate(sim_times[ : 100]):
                 fig = plt.figure(dpi=200)
 
                 for idx, var in enumerate(plot_vars):
@@ -45,13 +45,12 @@ if __name__ == '__main__':
                     p = axes.pcolormesh(xmesh,
                                         zmesh,
                                         np.transpose(var_dat[t_idx]),
-                                        vmin=var_dat.min(), vmax=var_dat.max()
-                                       )
+                                        vmin=var_dat.min(), vmax=var_dat.max())
                     axes.axis(pad_limits(xmesh, zmesh))
                     fig.colorbar(p, ax=axes)
 
-                fig.suptitle('%s (t=%.2f)' % (filetitle,
-                                              sim_time))
+                fig.suptitle('%s (t=%.2f, kx=-2pi/H, kz=2pi/H)' % (filetitle,
+                                                                   sim_time))
                 fig.subplots_adjust(hspace=0.2, wspace=0.2)
                 savefig = SAVE_FMT_STR % t_idx
                 plt.savefig('%s/%s' % (path, savefig))

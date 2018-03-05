@@ -12,24 +12,38 @@ from multiprocessing import Pool
 import numpy as np
 import strat_helper
 
-N_PARALLEL = 8 # python refuses to kick off more than 2 here on my local...
+N_PARALLEL = 8
 START_DELAY = 10 # sleep so h5py has time to claim snapshots
 if __name__ == '__main__':
-    H = 8
+    H = 1
+    num_timesteps = 1e4
+
     XMAX = H
     ZMAX = 5 * H
+    KX = -2 * np.pi / H
+    KZ = 2 * np.pi / H
+    G = 10
+    OMEGA = strat_helper.get_omega(G, H, KX, KZ)
+    T_F = ZMAX / (OMEGA/KZ) * 5
+    DT = T_F / 3e4
+
     params = {'XMAX': H,
               'ZMAX': 5 * H,
               'N_X': 64,
               'N_Z': 256,
-              'T_F': 200,
-              'DT': 2e-2,
-              'KX': 2 * np.pi / XMAX,
-              'KZ': 5 * (2 * np.pi / ZMAX),
+              'T_F': T_F,
+              'DT': DT,
+              'KX': KX,
+              'KZ': KZ,
               'H': H,
               'RHO0': 1,
-              'G': 10,
+              'G': G,
               'NUM_SNAPSHOTS': 200}
+    # modified sponge params
+    params_sponge = dict(params)
+    params_sponge['DT'] = 10 * DT
+    params['N_X'] = 32
+    params['N_Z'] = 128
 
     def dirichlet_bc(problem, *_):
         strat_helper.default_problem(problem)
@@ -62,10 +76,10 @@ if __name__ == '__main__':
 
         problem.parameters['sponge'] = sponge
         problem.add_equation("dx(ux) + dz(uz) = 0")
-        problem.add_equation("dt(rho) - rho0 * uz / H + sponge * rho= 0")
-        problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux= 0")
+        problem.add_equation("dt(rho) - rho0 * uz / H - sponge * rho= 0")
+        problem.add_equation("dt(ux) + dx(P) / rho0 - sponge * ux= 0")
         problem.add_equation(
-            "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz= 0")
+            "dt(uz) + dz(P) / rho0 + rho * g / rho0 - sponge * uz= 0")
 
         problem.add_bc("left(P) = 0", condition="nx == 0")
         problem.add_bc("left(uz) = cos(KX * x - omega * t)")
@@ -91,32 +105,26 @@ if __name__ == '__main__':
         x = domain.grid(0)
         z = domain.grid(1)
 
-        ZMAX = params['ZMAX']
-        H = params['ZMAX'] / params['H_FACT']
-        kx = params['KX']
-        kz = params['KZ']
         rho0 = params['RHO0']
-        g = params['G']
-        omega = np.sqrt(g / H * kx**2 / (kx**2 + kz**2 + 1/(4 * H**2)))
 
-        common_factor = np.exp(z / (2 * H)) * np.sin(kz * (ZMAX - z)) / \
-            np.sin(kz * ZMAX)
-        uz['g'] = np.cos(kx * x) * common_factor
-        ux['g'] = -kz / kx * np.cos(kx * x + 1 / (2 * H * kz)) * common_factor
-        rho['g'] = -rho0 / (H * omega) * np.sin(kx * x) * common_factor
-        P['g'] = rho0 * omega * kz / kx**2 *np.cos(kx * x + 1 / (2 * H * kz)) \
+        common_factor = np.exp(z / (2 * H)) * np.sin(KZ * (ZMAX - z)) / \
+            np.sin(KZ * ZMAX)
+        uz['g'] = np.cos(KX * x) * common_factor
+        ux['g'] = -KZ / KX * np.cos(KX * x + 1 / (2 * H * KZ)) * common_factor
+        rho['g'] = -rho0 / (H * OMEGA) * np.sin(KX * x) * common_factor
+        P['g'] = rho0 * OMEGA * KZ / KX**2 *np.cos(KX * x + 1 / (2 * H * KZ)) \
             * common_factor
 
-    def run(bc, ic, name):
-        strat_helper.run_strat_sim(bc, ic, name=name, **params)
+    def run(bc, ic, name, params_dict):
+        strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
         return '%s completed' % name
 
     with Pool(processes=N_PARALLEL) as p:
         tasks = [
-            (dirichlet_bc, zero_ic, 'd0'), # strat_dirichlet.mp4
-            (neumann_bc, zero_ic, 'n0'), # strat_neumann.mp4
-            (dirichlet_bc, steady_ic, 'dss'), # strat_dirichlet_ss.mp4
-            (sponge, zero_ic, 'sponge'), # strat_sponge.mp4
+            (dirichlet_bc, zero_ic, 'd0', params), # strat_dirichlet.mp4
+            (neumann_bc, zero_ic, 'n0', params), # strat_neumann.mp4
+            (dirichlet_bc, steady_ic, 'dss', params), # strat_dirichlet_ss.mp4
+            (sponge, zero_ic, 'sponge', params_sponge), # strat_sponge.mp4
         ]
         res = []
         for task in tasks:
