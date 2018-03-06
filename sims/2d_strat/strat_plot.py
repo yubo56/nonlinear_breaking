@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-plot single run results for strat.py, strat_sommer.py
+plot a single h5 file into mp4
 """
 import sys
 import os
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                     var_dat = np.array(dat['tasks'][var])
                     p = axes.pcolormesh(xmesh,
                                         zmesh,
-                                        np.transpose(var_dat[t_idx]),
+                                        var_dat[t_idx].T,
                                         vmin=var_dat.min(), vmax=var_dat.max())
                     axes.axis(pad_limits(xmesh, zmesh))
                     fig.colorbar(p, ax=axes)

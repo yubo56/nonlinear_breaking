@@ -430,6 +430,17 @@ the $x$.
 Let's figure out the analytical forms for the phase, group velocity and the
 energy density/power flux. We will try to recover these from waveforms.
 
+Let's first consider the phase velocity. We traditionally think about the phase
+velocity in 1D $v_{ph} = \frac{\omega(k)}{k}$, but in general it is the function
+such that $\vec{k} \cdot \vec{r} - \omega t = \vec{k} \cdot \p*{\vec{r} -
+\vec{v}_{ph}t}$ is constant (the phase of the wave). Thus, it must satisfy
+$\vec{k} \cdot \vec{v}_{ph} = \omega$, and so one sensible choice is
+\begin{equation}
+    \vec{v}_{ph} = \frac{\omega \hat{k}}{\abs{\vec{k}}}
+        = \frac{\omega \vec{k}}{\abs{\vec{k}}^2}.
+        \label{eq:v_ph}
+\end{equation}
+
 For our stratified atmosphere problem, $\omega^2 = \frac{N^2 k_x^2}{k^2 +
 \frac{1}{4H^2}}$. Plugging in our parameters $k_z = -k_x = 2pi, N^2 = 10$ we can
 find $\omega \approx 2.23\;\mathrm{Hz}$, so $\vec{v}_{ph} \approx
@@ -454,14 +465,9 @@ Let's make sure we can extract information from the linearized problem. Notable
 things we should be interested in: phase/group velocity, energy density and
 energy flux.
 
-Let's first consider the phase velocity. We traditionally think about the phase
-velocity in 1D $v_{ph} = \frac{\omega(k)}{k}$, but in general it is the function
-such that $\vec{k} \cdot \vec{r} - \omega t = \vec{k} \cdot \p*{\vec{r} -
-\vec{v}_{ph}t}$ is constant (the phase of the wave). Thus, it must satisfy
-$\vec{k} \cdot \vec{v}_{ph} = \omega$, and so one sensible choice is
-$\vec{v}_{ph} = \frac{\omega \hat{k}}{\abs{\vec{k}}} = \frac{\omega
-\vec{k}}{\abs{\vec{k}}^2}$. Thus, if we have some waveform $f(x, z, t)$, we can
-estimate its phase velocity $\vec{v}_{ph}(x, z, t)$ by
+Based on our phase velocity expression \autoref{eq:v_ph}, if we have some
+waveform $f(x, z, t)$, we can estimate its phase velocity $\vec{v}_{ph}(x, z,
+t)$ by
 \begin{equation}
     \vec{v}_{ph}(x, z, t) = \frac{\partial_t f
         \vec{\nabla}f}{\abs{\vec{\nabla}f}^2}.\label{eq:v_ph}
