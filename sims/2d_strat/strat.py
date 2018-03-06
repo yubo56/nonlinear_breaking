@@ -27,8 +27,8 @@ if __name__ == '__main__':
     T_F = ZMAX / (OMEGA/KZ) * 5
     DT = T_F / 3e4
 
-    params = {'XMAX': H,
-              'ZMAX': 5 * H,
+    params = {'XMAX': XMAX,
+              'ZMAX': ZMAX,
               'N_X': 64,
               'N_Z': 256,
               'T_F': T_F,
