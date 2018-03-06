@@ -10,7 +10,7 @@ zmesh = np.array(dat['tasks']['uz'].dims[2][0])
 
 uz = dat['tasks']['uz']
 bc = uz[:, :, 10]
-plt.pcolormesh(tmesh, xmesh, np.transpose(bc))
+plt.pcolormesh(tmesh, xmesh, bc.T)
 plt.colorbar()
 plt.show()
 plt.close()

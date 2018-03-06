@@ -425,20 +425,49 @@ reflections off the boundary. Turns out both Dirichlet and Neumann BCs give
 strong reflections that produce standing waves in the $z$ and traveling waves in
 the $x$.
 
-\subsection{Extracting Information from the Waveform}
+\subsection{Waveform Properties, Analytical}
 
-Let's make sure we can extract information from the linearized problem. Notable
-things we should be interested in: phase/group velocity, energy density and
-energy flux.
+Let's figure out the analytical forms for the phase, group velocity and the
+energy density/power flux. We will try to recover these from waveforms.
 
 Let's first consider the phase velocity. We traditionally think about the phase
 velocity in 1D $v_{ph} = \frac{\omega(k)}{k}$, but in general it is the function
 such that $\vec{k} \cdot \vec{r} - \omega t = \vec{k} \cdot \p*{\vec{r} -
 \vec{v}_{ph}t}$ is constant (the phase of the wave). Thus, it must satisfy
 $\vec{k} \cdot \vec{v}_{ph} = \omega$, and so one sensible choice is
-$\vec{v}_{ph} = \frac{\omega \hat{k}}{\abs{\vec{k}}} = \frac{\omega
-\vec{k}}{\abs{\vec{k}}^2}$. Thus, if we have some waveform $f(x, z, t)$, we can
-estimate its phase velocity $\vec{v}_{ph}(x, z, t)$ by
+\begin{equation}
+    \vec{v}_{ph} = \frac{\omega \hat{k}}{\abs{\vec{k}}}
+        = \frac{\omega \vec{k}}{\abs{\vec{k}}^2}.
+        \label{eq:v_ph}
+\end{equation}
+
+For our stratified atmosphere problem, $\omega^2 = \frac{N^2 k_x^2}{k^2 +
+\frac{1}{4H^2}}$. Plugging in our parameters $k_z = -k_x = 2pi, N^2 = 10$ we can
+find $\omega \approx 2.23\;\mathrm{Hz}$, so $\vec{v}_{ph} \approx
+0.1777\p*{-\hat{x} + \hat{z}}\;\mathrm{s^{-1}}$.
+
+Since we use a height of $5$, we should expect the initial disturbance to reach
+the top boundary at $t \sim 30\;\mathrm{s}$.
+
+On the other hand the group velocity is given $\vec{v}_g =
+\pd{\omega}{k_i}\hat{\imath}$. In our problem, $v_{g, z} =
+-\frac{N^2k_x^2k_z}{\p*{k_x^2 + k_z^2 + 1/4H^2}^{3/2}}$ while $v_{g, x} =
+\frac{2N^2k_x}{\sqrt{k_x^2 + k_z^2 + 1/4H^2}} - \frac{N^2k_x^3}{\p*{k_x^2 +
+k_z^2 + 1/4H^2}^{3/2}}$.
+
+We should note that the kinetic energy density is just $E = \frac{1}{2}\rho
+v^2$, the kinetic energy. Using then $\rd{E}{t} = 0$ shows that the
+corresponding power flux is $\vec{P} = \frac{\vec{v}}{2}\rho v^2$.
+
+\subsection{Extracting Information from the Waveform}
+
+Let's make sure we can extract information from the linearized problem. Notable
+things we should be interested in: phase/group velocity, energy density and
+energy flux.
+
+Based on our phase velocity expression \autoref{eq:v_ph}, if we have some
+waveform $f(x, z, t)$, we can estimate its phase velocity $\vec{v}_{ph}(x, z,
+t)$ by
 \begin{equation}
     \vec{v}_{ph}(x, z, t) = \frac{\partial_t f
         \vec{\nabla}f}{\abs{\vec{\nabla}f}^2}.\label{eq:v_ph}
@@ -460,10 +489,7 @@ supressed via $\dot{q} = (\dots) - f(z)\frac{q - q_0}{\tau}$ where $\tau$ is the
 dynamical timescale on which to damp and $q_0$ is the value to damp to.
 
 This requires we compute a ton of extra points though. Ideally, we want to use
-BCs. Based on our explicit solution \autoref{eq:strat.full_sol} we might expect
-to write something like $\pd{u_{1z}}{z} = \frac{1/2H +
-ik_z}{\mp i\omega}\pd{u_{1z}}{z} \approx \pm \frac{k_z}{\omega}\pd{u_{1z}}{z}$.
-For an outgoing wave we expect to choose the negative sign.
+BCs. TODO
 
 \section{(Algebra/Optional) The Anelastic/Boussinesq Approximations}
 
