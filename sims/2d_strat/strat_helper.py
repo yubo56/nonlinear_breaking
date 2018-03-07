@@ -146,10 +146,11 @@ def plot(setup_problem,
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
     interp = 2
-    plot_vars = ['uz', 'ux', 'rho', 'P']
-    n_cols = 2
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    plot_vars = dyn_vars + ['E']
+    # also plotting E, Px, Pz
+    n_cols = 3
     n_rows = 2
-    assert len(plot_vars) == n_cols * n_rows
 
     if not os.path.exists(snapshots_dir):
         raise ValueError('No snapshots dir "%s" found!' % snapshots_dir)
@@ -163,24 +164,30 @@ def plot(setup_problem,
 
     with h5py.File(filename, mode='r') as dat:
         sim_times = np.array(dat['scales']['sim_time'])
-
-    state_vars = defaultdict(list)
     # we let the file close before trying to reopen it again in load
+
+    # load into state_vars
+    state_vars = defaultdict(list)
     for idx, time in enumerate(sim_times):
         solver.load_state(filename, idx)
 
-        for varname in plot_vars:
+        for varname in dyn_vars:
             values = solver.state[varname]
             values.set_scales(interp, keep_data=True)
             state_vars[varname].append(np.copy(values['g']))
+    # cast to np arrays
+    for key in state_vars.keys():
+        state_vars[key] = np.array(state_vars[key])
+    state_vars['E'] = (
+            state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)) / 2
 
-    for t_idx, sim_time in enumerate(sim_times):
+    for t_idx, sim_time in enumerate(sim_times[ :120]):
         fig = plt.figure(dpi=200)
 
         for idx, var in enumerate(plot_vars):
             axes = fig.add_subplot(n_cols, n_rows, idx + 1, title=var)
 
-            var_dat = np.array(state_vars[var])
+            var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
                                 var_dat[t_idx].T,

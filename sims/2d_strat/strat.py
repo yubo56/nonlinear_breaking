@@ -125,18 +125,17 @@ if __name__ == '__main__':
     params_sponge['N_Z'] = 128
     tasks = [
         (dirichlet_bc, zero_ic, 'd0', PARAMS),
-        (neumann_bc, zero_ic, 'n0', PARAMS),
-        (sponge, zero_ic, 'sponge', params_sponge),
+        # (neumann_bc, zero_ic, 'n0', PARAMS),
+        # (sponge, zero_ic, 'sponge', params_sponge),
     ]
 
-    # with Pool(processes=N_PARALLEL) as p:
-    #     res = []
-    #     for task in tasks:
-    #         res.append(p.apply_async(run, task))
-    #         time.sleep(START_DELAY)
+    with Pool(processes=N_PARALLEL) as p:
+        res = []
+        for task in tasks:
+            res.append(p.apply_async(run, task))
 
-    #     for r in res:
-    #         print(r.get())
+        for r in res:
+            print(r.get())
 
     for bc, ic, name, params_dict in tasks:
         strat_helper.plot(bc, ic, name=name, **params_dict)
