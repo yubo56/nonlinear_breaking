@@ -59,23 +59,23 @@ def sponge(problem, domain):
     puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
     is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
     '''
-    zmax = params['ZMAX']
+    zmax = PARAMS['ZMAX']
     damp_start = zmax * 0.7 # start damping zone
     z = domain.grid(1)
 
     # sponge field
     sponge = domain.new_field()
     sponge.meta['x']['constant'] = True
-    sponge['g'] = np.minimum(
+    sponge['g'] = np.maximum(
         1 - (z - zmax)**2 / (damp_start - zmax)**2,
         np.zeros(np.shape(z)))
 
     problem.parameters['sponge'] = sponge
     problem.add_equation("dx(ux) + dz(uz) = 0")
-    problem.add_equation("dt(rho) - rho0 * uz / H - sponge * rho= 0")
-    problem.add_equation("dt(ux) + dx(P) / rho0 - sponge * ux= 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H + sponge * rho= 0")
+    problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux= 0")
     problem.add_equation(
-        "dt(uz) + dz(P) / rho0 + rho * g / rho0 - sponge * uz= 0")
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz= 0")
 
     problem.add_bc("left(P) = 0", condition="nx == 0")
     problem.add_bc("left(uz) = cos(KX * x - omega * t)")
@@ -106,8 +106,8 @@ if __name__ == '__main__':
     params_sponge['N_Z'] = 128
     tasks = [
         (dirichlet_bc, zero_ic, 'd0', PARAMS),
-        # (neumann_bc, zero_ic, 'n0', PARAMS),
-        # (sponge, zero_ic, 'sponge', params_sponge),
+        (neumann_bc, zero_ic, 'n0', PARAMS),
+        (sponge, zero_ic, 'sponge', params_sponge),
     ]
 
     with Pool(processes=N_PARALLEL) as p:
