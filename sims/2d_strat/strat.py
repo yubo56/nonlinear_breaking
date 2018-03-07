@@ -59,7 +59,7 @@ def sponge(problem, domain):
     puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
     is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
     '''
-    zmax = PARAMS['ZMAX']
+    zmax = params['ZMAX']
     damp_start = zmax * 0.7 # start damping zone
     z = domain.grid(1)
 
@@ -93,24 +93,6 @@ def zero_ic(solver, domain):
     uz['g'] = np.zeros(gshape)
     rho['g'] = np.zeros(gshape)
 
-def steady_ic(solver, domain):
-    ux = solver.state['ux']
-    uz = solver.state['uz']
-    P = solver.state['P']
-    rho = solver.state['rho']
-    x = domain.grid(0)
-    z = domain.grid(1)
-
-    rho0 = PARAMS['RHO0']
-
-    common_factor = np.exp(z / (2 * H)) * np.sin(KZ * (ZMAX - z)) / \
-        np.sin(KZ * ZMAX)
-    uz['g'] = np.cos(KX * x) * common_factor
-    ux['g'] = -KZ / KX * np.cos(KX * x + 1 / (2 * H * KZ)) * common_factor
-    rho['g'] = -rho0 / (H * OMEGA) * np.sin(KX * x) * common_factor
-    P['g'] = rho0 * OMEGA * KZ / KX**2 *np.cos(KX * x + 1 / (2 * H * KZ)) \
-        * common_factor
-
 def run(bc, ic, name, params_dict):
     try:
         strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
@@ -119,7 +101,6 @@ def run(bc, ic, name, params_dict):
     return '%s completed' % name
 
 if __name__ == '__main__':
-    # modified sponge params
     params_sponge = dict(PARAMS)
     params_sponge['N_X'] = 32
     params_sponge['N_Z'] = 128
