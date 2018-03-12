@@ -147,10 +147,10 @@ def plot(setup_problem,
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
     interp = 2
     dyn_vars = ['uz', 'ux', 'rho', 'P']
-    plot_vars = dyn_vars + ['E']
-    # also plotting E, Px, Pz
+    plot_vars = dyn_vars + ['E', 'dE_t', 'P_x', 'P_z']
     n_cols = 3
-    n_rows = 2
+    n_rows = 3
+    plot_stride = 2
 
     if not os.path.exists(snapshots_dir):
         raise ValueError('No snapshots dir "%s" found!' % snapshots_dir)
@@ -178,10 +178,13 @@ def plot(setup_problem,
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
-    state_vars['E'] = (
-            state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    state_vars['E'] = ((RHO0 + state_vars['rho']) *
+                       (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    state_vars['dE_t'] = np.gradient(state_vars['E'])[0]
+    state_vars['P_x'] = state_vars['E'] * state_vars['ux']
+    state_vars['P_z'] = state_vars['E'] * state_vars['uz']
 
-    for t_idx, sim_time in enumerate(sim_times[ :120]):
+    for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
 
         for idx, var in enumerate(plot_vars):
@@ -190,15 +193,15 @@ def plot(setup_problem,
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             fig.colorbar(p, ax=axes)
 
         fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H)' % (name,
                                                            sim_time))
-        fig.subplots_adjust(hspace=0.2, wspace=0.2)
-        savefig = SAVE_FMT_STR % t_idx
+        fig.subplots_adjust(hspace=0.4, wspace=0.4)
+        savefig = SAVE_FMT_STR % (t_idx // plot_stride)
         plt.savefig('%s/%s' % (path, savefig))
         print('Saved %s/%s' % (path, savefig))
         plt.close()
