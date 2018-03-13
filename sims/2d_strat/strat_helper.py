@@ -147,7 +147,7 @@ def plot(setup_problem,
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
     interp = 2
     dyn_vars = ['uz', 'ux', 'rho', 'P']
-    plot_vars = dyn_vars + ['E', 'dE_t', 'P_x', 'P_z']
+    plot_vars = dyn_vars + ['E', 'dE_t', 'P_x', 'P_z', 'divP']
     n_cols = 3
     n_rows = 3
     plot_stride = 2
@@ -181,8 +181,12 @@ def plot(setup_problem,
     state_vars['E'] = ((RHO0 + state_vars['rho']) *
                        (state_vars['ux']**2 + state_vars['uz']**2)) / 2
     state_vars['dE_t'] = np.gradient(state_vars['E'])[0]
+
+    dx = XMAX / N_X
+    dz = ZMAX / N_Z
     state_vars['P_x'] = state_vars['E'] * state_vars['ux']
     state_vars['P_z'] = state_vars['E'] * state_vars['uz']
+    state_vars['divP'] = state_vars['P_x'] + state_vars['P_z']
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
