@@ -150,7 +150,7 @@ def plot(setup_problem,
     z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
     n_cols = 3
     n_rows = 3
-    plot_stride = 2
+    plot_stride = 1
 
     if not os.path.exists(snapshots_dir):
         raise ValueError('No snapshots dir "%s" found!' % snapshots_dir)
