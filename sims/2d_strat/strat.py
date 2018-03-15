@@ -106,8 +106,8 @@ if __name__ == '__main__':
     params_sponge['N_Z'] = 128
     tasks = [
         (dirichlet_bc, zero_ic, 'd0', PARAMS),
-        # (neumann_bc, zero_ic, 'n0', PARAMS),
-        # (sponge, zero_ic, 'sponge', params_sponge),
+        (neumann_bc, zero_ic, 'n0', PARAMS),
+        (sponge, zero_ic, 'sponge', params_sponge),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

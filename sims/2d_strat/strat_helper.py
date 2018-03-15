@@ -147,7 +147,7 @@ def plot(setup_problem,
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
     interp = 2
     dyn_vars = ['uz', 'ux', 'rho', 'P']
-    plot_vars = dyn_vars + ['E', 'dE_t', 'P_x', 'P_z', 'divP']
+    z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
     n_cols = 3
     n_rows = 3
     plot_stride = 2
@@ -178,29 +178,42 @@ def plot(setup_problem,
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
-    state_vars['E'] = ((RHO0 + state_vars['rho']) *
-                       (state_vars['ux']**2 + state_vars['uz']**2)) / 2
-    state_vars['dE_t'] = np.gradient(state_vars['E'])[0]
 
     dx = XMAX / N_X
     dz = ZMAX / N_Z
-    state_vars['P_x'] = state_vars['E'] * state_vars['ux']
-    state_vars['P_z'] = state_vars['E'] * state_vars['uz']
-    state_vars['divP'] = state_vars['P_x'] + state_vars['P_z']
+    e_raw = ((RHO0 + state_vars['rho']) *
+             (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    dE_t = np.gradient(e_raw)[0]
+    px = e_raw * state_vars['ux']
+    pz = e_raw * state_vars['uz']
+
+    state_vars['E'] = np.sum(e_raw, axis=1)
+    state_vars['dE_t'] = np.sum(dE_t, axis=1)
+    state_vars['P_x'] = np.sum(px, axis=1)
+    state_vars['P_z'] = np.sum(pz, axis=1)
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
 
-        for idx, var in enumerate(plot_vars):
-            axes = fig.add_subplot(n_cols, n_rows, idx + 1, title=var)
+        idx = 1
+        for var in dyn_vars:
+            axes = fig.add_subplot(n_cols, n_rows, idx, title=var)
 
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             fig.colorbar(p, ax=axes)
+            idx += 1
+        for var in z_vars:
+            axes = fig.add_subplot(n_cols, n_rows, idx, title=var)
+            var_dat = state_vars[var]
+            z_pts = (zmesh[1:,0] + zmesh[:-1, 0]) / 2
+            p = axes.plot(z_pts, var_dat[t_idx])
+            axes.set_ylim(var_dat.min(), var_dat.max())
+            idx += 1
 
         fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H)' % (name,
                                                            sim_time))
