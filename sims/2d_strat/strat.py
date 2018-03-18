@@ -7,8 +7,6 @@ Incompressible fluid equations w/ vertical stratification
 Periodic BC in x, Dirichlet/Neumann 0 at z=L, Driving term at z=0
 creates h5 snapshot, then plots. if snapshot exists, skips computation
 '''
-import time
-
 from multiprocessing import Pool
 import numpy as np
 import strat_helper
@@ -25,21 +23,29 @@ KZ = 2 * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = VPH_Z * 3
+T_F = VPH_Z / 3
 DT = T_F / 1e4
 
-PARAMS = {'XMAX': XMAX,
-          'ZMAX': ZMAX,
-          'N_X': 64,
-          'N_Z': 256,
-          'T_F': T_F,
-          'DT': DT,
-          'KX': KX,
-          'KZ': KZ,
-          'H': H,
-          'RHO0': 1,
-          'G': G,
-          'NUM_SNAPSHOTS': 200}
+PARAMS_RAW = {'XMAX': XMAX,
+              'ZMAX': ZMAX,
+              'N_X': 64,
+              'N_Z': 256,
+              'T_F': T_F,
+              'DT': DT,
+              'KX': KX,
+              'KZ': KZ,
+              'H': H,
+              'RHO0': 1,
+              'G': G,
+              'NUM_SNAPSHOTS': 20}
+
+def build_interp_params(interp_x, interp_z):
+    params = dict(PARAMS_RAW)
+    params['INTERP_X'] = interp_x
+    params['INTERP_Z'] = interp_z
+    params['N_X'] //= interp_x
+    params['N_Z'] //= interp_z
+    return params
 
 def dirichlet_bc(problem, *_):
     strat_helper.default_problem(problem)
@@ -59,7 +65,7 @@ def sponge(problem, domain):
     puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
     is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
     '''
-    zmax = PARAMS['ZMAX']
+    zmax = PARAMS_RAW['ZMAX']
     damp_start = zmax * 0.7 # start damping zone
     z = domain.grid(1)
 
@@ -94,20 +100,15 @@ def zero_ic(solver, domain):
     rho['g'] = np.zeros(gshape)
 
 def run(bc, ic, name, params_dict):
-    try:
-        strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
-    except KeyboardInterrupt:
-        print('Received interrupt, stopping...')
-    return '%s completed' % name
+    assert 'INTERP_X' in params_dict and 'INTERP_Z' in params_dict,\
+        'params need INTERP'
+    strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
 
 if __name__ == '__main__':
-    params_sponge = dict(PARAMS)
-    params_sponge['N_X'] = 32
-    params_sponge['N_Z'] = 128
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', PARAMS),
-        (neumann_bc, zero_ic, 'n0', PARAMS),
-        (sponge, zero_ic, 'sponge', params_sponge),
+        (dirichlet_bc, zero_ic, 'd0_22', build_interp_params(4, 4)),
+        # (neumann_bc, zero_ic, 'n0_22', build_interp_params(2, 2)),
+        # (sponge, zero_ic, 'sponge_44', build_interp_params(4, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:
@@ -118,5 +119,5 @@ if __name__ == '__main__':
         for r in res:
             print(r.get())
 
-    for bc, ic, name, params_dict in tasks:
-        strat_helper.plot(bc, ic, name=name, **params_dict)
+    for bc, _, name, params_dict in tasks:
+        strat_helper.plot(bc, name=name, **params_dict)

@@ -3,14 +3,15 @@
 helper function to run the shared stratification scenario. user just has to
 specify BCs and ICs
 '''
-import h5py
 import logging
 import os
+from collections import defaultdict
+
+import h5py
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from collections import defaultdict
 from dedalus import public as de
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
@@ -79,7 +80,8 @@ def run_strat_sim(setup_problem,
                   RHO0,
                   NUM_SNAPSHOTS,
                   G,
-                  name=None):
+                  name=None,
+                  **_):
     snapshots_dir = SNAPSHOTS_DIR % name
     try:
         os.makedirs(snapshots_dir)
@@ -126,7 +128,6 @@ def get_vph(g, h, kx, kz):
     return norm * kz, norm * kz
 
 def plot(setup_problem,
-         set_ICs,
          XMAX,
          ZMAX,
          N_X,
@@ -136,16 +137,17 @@ def plot(setup_problem,
          KX,
          KZ,
          H,
-         RHO0,
-         NUM_SNAPSHOTS,
          G,
-         name=None):
+         RHO0,
+         INTERP_X,
+         INTERP_Z,
+         name=None,
+         **_):
     SAVE_FMT_STR = 't_%d.png'
     matplotlib.rcParams.update({'font.size': 6})
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
-    interp = 2
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
     n_cols = 3
@@ -158,8 +160,8 @@ def plot(setup_problem,
     solver, domain = get_solver(
         setup_problem,
         XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G)
-    x = domain.grid(0, scales=interp)
-    z = domain.grid(1, scales=interp)
+    x = domain.grid(0, scales=INTERP_X)
+    z = domain.grid(1, scales=INTERP_Z)
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
 
     with h5py.File(filename, mode='r') as dat:
@@ -168,22 +170,20 @@ def plot(setup_problem,
 
     # load into state_vars
     state_vars = defaultdict(list)
-    for idx, time in enumerate(sim_times):
+    for idx in range(len(sim_times)):
         solver.load_state(filename, idx)
 
         for varname in dyn_vars:
             values = solver.state[varname]
-            values.set_scales(interp, keep_data=True)
+            values.set_scales((INTERP_X, INTERP_Z), keep_data=True)
             state_vars[varname].append(np.copy(values['g']))
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    dx = XMAX / N_X
-    dz = ZMAX / N_Z
     e_raw = ((RHO0 + state_vars['rho']) *
              (state_vars['ux']**2 + state_vars['uz']**2)) / 2
-    dE_t = np.gradient(e_raw)[0]
+    dE_t = np.gradient(e_raw)[0] / DT
     px = e_raw * state_vars['ux']
     pz = e_raw * state_vars['uz']
 
@@ -210,13 +210,13 @@ def plot(setup_problem,
         for var in z_vars:
             axes = fig.add_subplot(n_cols, n_rows, idx, title=var)
             var_dat = state_vars[var]
-            z_pts = (zmesh[1:,0] + zmesh[:-1, 0]) / 2
+            z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(z_pts, var_dat[t_idx])
             axes.set_ylim(var_dat.min(), var_dat.max())
             idx += 1
 
         fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H)' % (name,
-                                                           sim_time))
+                                                                   sim_time))
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
         savefig = SAVE_FMT_STR % (t_idx // plot_stride)
         plt.savefig('%s/%s' % (path, savefig))
