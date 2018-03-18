@@ -107,9 +107,17 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(1, 1)),
-        (neumann_bc, zero_ic, 'n0', build_interp_params(1, 1)),
-        (sponge, zero_ic, 'sponge2', build_interp_params(2, 2)),
+        (dirichlet_bc, zero_ic, 'd0_4_2', build_interp_params(4, 2)),
+        (dirichlet_bc, zero_ic, 'd0_4_4', build_interp_params(4, 4)),
+        (dirichlet_bc, zero_ic, 'd0_4_8', build_interp_params(4, 8)),
+        (dirichlet_bc, zero_ic, 'd0_4_16', build_interp_params(4, 16)),
+        (dirichlet_bc, zero_ic, 'd0_2_4', build_interp_params(2, 4)),
+        (dirichlet_bc, zero_ic, 'd0_8_4', build_interp_params(8, 4)),
+        (dirichlet_bc, zero_ic, 'd0_16_4', build_interp_params(16, 4)),
+        (dirichlet_bc, zero_ic, 'd0_dt0', build_interp_params(4, 4, dt=DT * 2)),
+        (dirichlet_bc, zero_ic, 'd0_dt2', build_interp_params(4, 4, dt=DT / 2)),
+        (dirichlet_bc, zero_ic, 'd0_dt3', build_interp_params(4, 4, dt=DT / 4)),
+        (dirichlet_bc, zero_ic, 'd0_dt4', build_interp_params(4, 4, dt=DT / 8)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:
