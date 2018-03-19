@@ -37,6 +37,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'G': G,
+              'A': 0.05,
               'NUM_SNAPSHOTS': 200}
 
 def build_interp_params(interp_x, interp_z, dt=DT):
@@ -107,9 +108,9 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(1, 1)),
-        (neumann_bc, zero_ic, 'n0', build_interp_params(1, 1)),
-        (sponge, zero_ic, 'sponge2', build_interp_params(2, 2)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(2, 2)),
+        (neumann_bc, zero_ic, 'n0', build_interp_params(2, 2)),
+        (sponge, zero_ic, 'sponge2', build_interp_params(4, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

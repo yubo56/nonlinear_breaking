@@ -37,6 +37,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'G': G,
+              'A': 0.05,
               'NUM_SNAPSHOTS': 200}
 
 def build_interp_params(interp_x, interp_z, dt=DT):

@@ -26,7 +26,8 @@ def get_solver(setup_problem,
                KZ,
                H,
                RHO0,
-               G):
+               G,
+               A):
     # Bases and domain
     x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
     z_basis = de.Chebyshev('z', N_Z, interval=(0, ZMAX), dealias=3/2)
@@ -38,6 +39,7 @@ def get_solver(setup_problem,
     problem.parameters['L'] = XMAX
     problem.parameters['g'] = G
     problem.parameters['H'] = H
+    problem.parameters['A'] = A
     problem.parameters['KX'] = KX
     problem.parameters['KZ'] = KZ
     problem.parameters['omega'] = get_omega(G, H, KX, KZ)
@@ -80,6 +82,7 @@ def run_strat_sim(setup_problem,
                   RHO0,
                   NUM_SNAPSHOTS,
                   G,
+                  A,
                   name=None,
                   **_):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -92,7 +95,7 @@ def run_strat_sim(setup_problem,
 
     solver, domain = get_solver(
         setup_problem,
-        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G)
+        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G, A)
 
     # Initial conditions
     set_ICs(solver, domain)
@@ -118,7 +121,7 @@ def default_problem(problem):
     problem.add_equation("dt(ux) + dx(P) / rho0 = 0")
     problem.add_equation("dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
     problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = cos(KX * x - omega * t)")
+    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -138,6 +141,7 @@ def plot(setup_problem,
          KZ,
          H,
          G,
+         A,
          RHO0,
          INTERP_X,
          INTERP_Z,
@@ -159,7 +163,7 @@ def plot(setup_problem,
 
     solver, domain = get_solver(
         setup_problem,
-        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G)
+        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G, A)
     x = domain.grid(0, scales=INTERP_X)
     z = domain.grid(1, scales=INTERP_Z)
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
