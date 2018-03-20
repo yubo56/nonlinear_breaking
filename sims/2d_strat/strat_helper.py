@@ -95,7 +95,8 @@ def run_strat_sim(setup_problem,
 
     solver, domain = get_solver(
         setup_problem,
-        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G, A)
+        XMAX=XMAX, ZMAX=ZMAX, N_X=N_X, N_Z=N_Z, T_F=T_F, KX=KX, KZ=KZ, H=H,
+        RHO0=RHO0, G=G, A=A)
 
     # Initial conditions
     set_ICs(solver, domain)
@@ -130,7 +131,7 @@ def get_vph(g, h, kx, kz):
     norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
     return norm * kz, norm * kz
 
-def plot(setup_problem,
+def load(setup_problem,
          XMAX,
          ZMAX,
          N_X,
@@ -145,28 +146,19 @@ def plot(setup_problem,
          RHO0,
          INTERP_X,
          INTERP_Z,
+         dyn_vars,
          name=None,
          **_):
-    SAVE_FMT_STR = 't_%d.png'
-    matplotlib.rcParams.update({'font.size': 6})
     snapshots_dir = SNAPSHOTS_DIR % name
-    path = '{s}/{s}_s1'.format(s=snapshots_dir)
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
-    dyn_vars = ['uz', 'ux', 'rho', 'P']
-    z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
-    n_cols = 3
-    n_rows = 3
-    plot_stride = 1
 
     if not os.path.exists(snapshots_dir):
         raise ValueError('No snapshots dir "%s" found!' % snapshots_dir)
 
     solver, domain = get_solver(
         setup_problem,
-        XMAX, ZMAX, N_X, N_Z, T_F, KX, KZ, H, RHO0, G, A)
-    x = domain.grid(0, scales=INTERP_X)
-    z = domain.grid(1, scales=INTERP_Z)
-    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+        XMAX=XMAX, ZMAX=ZMAX, N_X=N_X, N_Z=N_Z, T_F=T_F, KX=KX, KZ=KZ, H=H,
+        RHO0=RHO0, G=G, A=A)
 
     with h5py.File(filename, mode='r') as dat:
         sim_times = np.array(dat['scales']['sim_time'])
@@ -185,16 +177,66 @@ def plot(setup_problem,
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    e_raw = ((RHO0 + state_vars['rho']) *
-             (state_vars['ux']**2 + state_vars['uz']**2)) / 2
-    dE_t = np.gradient(e_raw)[0] / DT
-    px = e_raw * state_vars['ux']
-    pz = e_raw * state_vars['uz']
+    z = domain.grid(1, scales=INTERP_Z)
+    rho0 = RHO0 * np.exp(-z / H)
+    state_vars['E'] = ((rho0 + state_vars['rho']) *
+                       (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    state_vars['dE_t'] = np.gradient(state_vars['E'])[0] / DT
+    state_vars['P_x'] = state_vars['E'] * state_vars['ux']
+    state_vars['P_z'] = state_vars['E'] * state_vars['uz']
+    return sim_times, domain, state_vars
 
-    state_vars['E'] = np.sum(e_raw, axis=1)
-    state_vars['dE_t'] = np.sum(dE_t, axis=1)
-    state_vars['P_x'] = np.sum(px, axis=1)
-    state_vars['P_z'] = np.sum(pz, axis=1)
+def plot(setup_problem,
+         XMAX,
+         ZMAX,
+         N_X,
+         N_Z,
+         T_F,
+         DT,
+         KX,
+         KZ,
+         H,
+         G,
+         A,
+         RHO0,
+         INTERP_X,
+         INTERP_Z,
+         name=None,
+         **_):
+    SAVE_FMT_STR = 't_%d.png'
+    snapshots_dir = SNAPSHOTS_DIR % name
+    path = '{s}/{s}_s1'.format(s=snapshots_dir)
+    matplotlib.rcParams.update({'font.size': 6})
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
+    n_cols = 3
+    n_rows = 3
+    plot_stride = 2
+
+    sim_times, domain, state_vars = load(setup_problem,
+                                         XMAX=XMAX,
+                                         ZMAX=ZMAX,
+                                         N_X=N_X,
+                                         N_Z=N_Z,
+                                         T_F=T_F,
+                                         DT=DT,
+                                         KX=KX,
+                                         KZ=KZ,
+                                         H=H,
+                                         G=G,
+                                         A=A,
+                                         RHO0=RHO0,
+                                         INTERP_X=INTERP_X,
+                                         INTERP_Z=INTERP_Z,
+                                         dyn_vars=dyn_vars,
+                                         name=name)
+
+    x = domain.grid(0, scales=INTERP_X)
+    z = domain.grid(1, scales=INTERP_Z)
+    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+
+    for var in z_vars:
+        state_vars[var] = np.sum(state_vars[var], axis=1)
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
