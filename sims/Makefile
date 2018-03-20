@@ -1,3 +1,3 @@
 clean:
-	rm -f $$(find 2d_strat* -iname *.png)
+	rm -f $$(find . -iname t_[0-9]*.png)
 	rm -f *.mp4

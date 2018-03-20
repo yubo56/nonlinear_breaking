@@ -14,7 +14,7 @@ import strat_helper
 N_PARALLEL = 8
 START_DELAY = 10 # sleep so h5py has time to claim snapshots
 H = 1
-num_timesteps = 1e4
+num_timesteps = 4e4
 
 XMAX = H
 ZMAX = 5 * H
@@ -23,8 +23,8 @@ KZ = 2 * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 6
-DT = T_F / 2e4
+T_F = (ZMAX / VPH_Z) * 12
+DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -86,7 +86,7 @@ def sponge(problem, domain):
         "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz= 0")
 
     problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = cos(KX * x - omega * t)")
+    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
     problem.add_bc('right(uz) = 0', condition='nx != 0')
 
 def zero_ic(solver, domain):
@@ -108,9 +108,9 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(2, 2)),
-        (neumann_bc, zero_ic, 'n0', build_interp_params(4, 4)),
-        (sponge, zero_ic, 'sponge2', build_interp_params(4, 4)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(16, 2)),
+        (neumann_bc, zero_ic, 'n0', build_interp_params(16, 4)),
+        (sponge, zero_ic, 'sponge2', build_interp_params(16, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:
