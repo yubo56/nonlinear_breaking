@@ -268,5 +268,5 @@ def plot(setup_problem,
         plt.savefig('%s/%s' % (path, savefig))
         print('Saved %s/%s' % (path, savefig))
         plt.close()
-    os.system('ffmpeg -y -framerate 10 -i %s/%s %s.mp4' %
+    os.system('ffmpeg -y -framerate 6 -i %s/%s %s.mp4' %
               (path, SAVE_FMT_STR, name))
