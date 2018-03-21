@@ -145,7 +145,7 @@ if __name__ == '__main__':
              [rms_diff(dat['d0_dt0']['uz'], dat['d0_16_4']['uz']),
               rms_diff(dat['d0_16_4']['uz'], dat['d0_dt2']['uz']),
               rms_diff(dat['d0_dt2']['uz'], dat['d0_dt3']['uz']),
-              rms_diff(dat['d0_dt3']['uz'], dat['d0_dt4']['uz'])])
+              rms_diff(dat['d0_dt3']['uz'], dat['d0_dt4']['uz'])], 'bo')
     plt.xlabel('Timestep')
     plt.ylabel('RMS difference w/ half the timestep')
     plt.title('2nd order Runge-Kutta timestep convergence in u_z')
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     plt.semilogy(PARAMS_RAW['N_Z'] / np.array([8, 4, 2]),
                  [rms_diff(dat['d0_16_8']['uz'], dat['d0_16_4']['uz']),
                   rms_diff(dat['d0_16_4']['uz'], dat['d0_16_2']['uz']),
-                  rms_diff(dat['d0_16_2']['uz'], dat['d0_16_1']['uz'])])
+                  rms_diff(dat['d0_16_2']['uz'], dat['d0_16_1']['uz'])], 'bo')
     plt.xlabel('Number of z points')
     plt.ylabel('RMS difference w/ twice as many z points')
     plt.title('Convergence in uz, N_X held constant at %d' %
@@ -167,7 +167,7 @@ if __name__ == '__main__':
              [rms_diff(dat['d0_16_4']['uz'], dat['d0_8_4']['uz']),
               rms_diff(dat['d0_8_4']['uz'], dat['d0_4_4']['uz']),
               rms_diff(dat['d0_4_4']['uz'], dat['d0_2_4']['uz']),
-              rms_diff(dat['d0_2_4']['uz'], dat['d0_1_4']['uz'])])
+              rms_diff(dat['d0_2_4']['uz'], dat['d0_1_4']['uz'])], 'bo')
     plt.xlabel('Number of x points')
     plt.ylabel('RMS difference w/ twice as many x points')
     plt.title('Convergence in uz, N_Z held constant at %d' %
