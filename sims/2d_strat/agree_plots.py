@@ -11,13 +11,14 @@ A = 0.05
 H = 1
 XMAX = H
 ZMAX = 5 * H
-KX = -2 * np.pi / H
-KZ = (np.pi / 2) * np.pi / H
+KX = 2 * np.pi / H
+_KZ = (np.pi / 2) * np.pi / H
 G = 10
 RHO0 = 1
-OMEGA = strat_helper.get_omega(G, H, KX, KZ)
+OMEGA = strat_helper.get_omega(G, H, KX, _KZ)
 
 def agree_sponge(plot_idx, t_idx=-30):
+    KZ = -_KZ
     dat = h5py.File('snapshots_sponge2/snapshots_sponge2_s1/snapshots_sponge2_s1_p0.h5', mode='r')
     tmesh = np.array(dat['tasks']['uz'].dims[0][0])
     xmesh = np.array(dat['tasks']['uz'].dims[1][0])
@@ -31,9 +32,9 @@ def agree_sponge(plot_idx, t_idx=-30):
     analyticals = {
         'uz': uz_anal,
         'ux': KZ / KX * uz_anal,
-        'rho': rho0 * A / (H * OMEGA)* np.exp(zmesh / (2 * H)) \
+        'rho': -rho0 * A / (H * OMEGA)* np.exp(zmesh / (2 * H)) \
             * np.sin(KX * xmesh[x_idx] + KZ * zmesh - OMEGA * tmesh[t_idx]),
-        'P': rho0 * OMEGA / KX**2 * KZ * uz_anal,
+        'P': -rho0 * OMEGA / KX**2 * KZ * uz_anal,
     }
 
     fig = plt.figure(dpi=200)
@@ -55,6 +56,7 @@ def agree_sponge(plot_idx, t_idx=-30):
     return plot_idx + 1
 
 def agree_d0(plot_idx, t_idx=-10):
+    KZ = _KZ
     dat = h5py.File('snapshots_d0/snapshots_d0_s1/snapshots_d0_s1_p0.h5', mode='r')
     tmesh = np.array(dat['tasks']['uz'].dims[0][0])
     xmesh = np.array(dat['tasks']['uz'].dims[1][0])
@@ -71,12 +73,12 @@ def agree_d0(plot_idx, t_idx=-10):
         'ux': KZ / KX * A * np.exp(zmesh / (2 * H)) \
             * np.sin(KX * xmesh[x_idx] - OMEGA * tmesh[t_idx]) \
             * np.cos(KZ * (ZMAX - zmesh)) / np.sin(KZ * ZMAX),
-        'rho': -rho0 * A / (H * OMEGA)* np.exp(zmesh / (2 * H)) \
+        'rho': -rho0 * A / (H * OMEGA) * np.exp(zmesh / (2 * H)) \
             * np.sin(KX * xmesh[x_idx] - OMEGA * tmesh[t_idx]) \
             * np.sin(KZ * (ZMAX - zmesh)) / np.sin(KZ * ZMAX),
-        'P': rho0 * OMEGA / KX**2 * KZ * A * np.exp(zmesh / (2 * H)) \
+        'P': -rho0 * OMEGA / KX**2 * KZ * A * np.exp(zmesh / (2 * H)) \
             * np.cos(KX * xmesh[x_idx] - OMEGA * tmesh[t_idx]) \
-            * np.sin(KZ * (ZMAX - zmesh) + 1 / (2 * H * KZ)) / np.sin(KZ * ZMAX),
+            * np.sin(KZ * (ZMAX - zmesh)) / np.sin(KZ * ZMAX),
     }
 
 
@@ -102,15 +104,15 @@ if __name__ == '__main__':
     matplotlib.rcParams.update({'font.size': 6})
     plot_idx = 0
 
-    plot_idx = agree_sponge(plot_idx, -30)
-    plot_idx = agree_sponge(plot_idx, -22)
-    plot_idx = agree_sponge(plot_idx, -15)
-    plot_idx = agree_sponge(plot_idx, -7)
+    plot_idx = agree_sponge(plot_idx, -5)
+    plot_idx = agree_sponge(plot_idx, -4)
+    plot_idx = agree_sponge(plot_idx, -3)
+    plot_idx = agree_sponge(plot_idx, -2)
     plot_idx = agree_sponge(plot_idx, -1)
 
     plot_idx = 0
-    plot_idx = agree_d0(plot_idx, -30)
-    plot_idx = agree_d0(plot_idx, -22)
-    plot_idx = agree_d0(plot_idx, -15)
-    plot_idx = agree_d0(plot_idx, -7)
+    plot_idx = agree_d0(plot_idx, -5)
+    plot_idx = agree_d0(plot_idx, -4)
+    plot_idx = agree_d0(plot_idx, -3)
+    plot_idx = agree_d0(plot_idx, -2)
     plot_idx = agree_d0(plot_idx, -1)
