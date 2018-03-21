@@ -19,7 +19,7 @@ num_timesteps = 4e4
 XMAX = H
 ZMAX = 5 * H
 KX = -2 * np.pi / H
-KZ = 2 * np.pi / H
+KZ = (np.pi / 2) * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
@@ -53,11 +53,8 @@ def dirichlet_bc(problem, *_):
     strat_helper.default_problem(problem)
     problem.add_bc('right(uz) = 0', condition='nx != 0')
 
-def neumann_bc(problem, *_):
-    strat_helper.default_problem(problem)
-    problem.add_bc('right(dz(uz)) = 0', condition='nx != 0')
-
 def rad_bc(problem, *_):
+    # TODO incorrect
     strat_helper.default_problem(problem)
     problem.add_bc('right(dt(uz) + omega / KZ * dz(uz)) = 0',
                    condition='nx != 0')
@@ -108,9 +105,8 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(16, 2)),
-        (neumann_bc, zero_ic, 'n0', build_interp_params(16, 4)),
-        (sponge, zero_ic, 'sponge2', build_interp_params(16, 4)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 2)),
+        (sponge, zero_ic, 'sponge2', build_interp_params(8, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

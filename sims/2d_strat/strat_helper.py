@@ -146,9 +146,9 @@ def load(setup_problem,
          RHO0,
          INTERP_X,
          INTERP_Z,
-         dyn_vars,
          name=None,
          **_):
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
 
@@ -181,8 +181,6 @@ def load(setup_problem,
     rho0 = RHO0 * np.exp(-z / H)
     state_vars['E'] = ((rho0 + state_vars['rho']) *
                        (state_vars['ux']**2 + state_vars['uz']**2)) / 2
-    state_vars['dE_t'] = np.gradient(state_vars['E'])[0] / DT
-    state_vars['P_x'] = state_vars['E'] * state_vars['ux']
     state_vars['P_z'] = state_vars['E'] * state_vars['uz']
     return sim_times, domain, state_vars
 
@@ -207,11 +205,15 @@ def plot(setup_problem,
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    dyn_vars = ['uz', 'ux', 'rho', 'P']
-    z_vars = ['E', 'dE_t', 'P_x', 'P_z'] # sum these over x
+    plot_vars = ['uz', 'ux', 'rho', 'P', 'P_z']
+    z_vars = ['E'] # sum these over x
     n_cols = 3
-    n_rows = 3
-    plot_stride = 2
+    n_rows = 2
+    plot_stride = 1
+
+    if os.path.exists('%s.mp4' % name):
+        print('%s.mp4 already exists, not regenerating' % name)
+        return
 
     sim_times, domain, state_vars = load(setup_problem,
                                          XMAX=XMAX,
@@ -228,7 +230,6 @@ def plot(setup_problem,
                                          RHO0=RHO0,
                                          INTERP_X=INTERP_X,
                                          INTERP_Z=INTERP_Z,
-                                         dyn_vars=dyn_vars,
                                          name=name)
 
     x = domain.grid(0, scales=INTERP_X)
@@ -242,8 +243,8 @@ def plot(setup_problem,
         fig = plt.figure(dpi=200)
 
         idx = 1
-        for var in dyn_vars:
-            axes = fig.add_subplot(n_cols, n_rows, idx, title=var)
+        for var in plot_vars:
+            axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
@@ -254,7 +255,7 @@ def plot(setup_problem,
             fig.colorbar(p, ax=axes)
             idx += 1
         for var in z_vars:
-            axes = fig.add_subplot(n_cols, n_rows, idx, title=var)
+            axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
             var_dat = state_vars[var]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(z_pts, var_dat[t_idx])
