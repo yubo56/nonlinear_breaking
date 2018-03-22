@@ -13,18 +13,17 @@ import strat_helper
 import matplotlib.pyplot as plt
 
 N_PARALLEL = 8
-START_DELAY = 10 # sleep so h5py has time to claim snapshots
 H = 1
 num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 5 * H
 KX = -2 * np.pi / H
-KZ = 2 * np.pi / H
+KZ = (np.pi / 2) * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 3
+T_F = (ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -109,22 +108,22 @@ def run(name, args):
     strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
 
 def rms_diff(arr1, arr2):
-    return np.sqrt(np.sum((arr1 - arr2)**2) / np.size(arr1))
+    return np.sqrt(np.sum((arr1 - arr2)**2)) / np.sqrt(np.sum(arr1**2))
 
 if __name__ == '__main__':
     tasks = {
-        'd0_dt0': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT * 2)),
-        'd0_dt2': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 2)),
-        'd0_dt3': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 4)),
-        'd0_dt4': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 8)),
-        'd0_16_1': (dirichlet_bc, zero_ic, build_interp_params(16, 1)),
-        'd0_16_2': (dirichlet_bc, zero_ic, build_interp_params(16, 2)),
-        'd0_16_4': (dirichlet_bc, zero_ic, build_interp_params(16, 4)),
-        'd0_16_8': (dirichlet_bc, zero_ic, build_interp_params(16, 8)),
-        'd0_1_4': (dirichlet_bc, zero_ic, build_interp_params(1, 4)),
-        'd0_2_4': (dirichlet_bc, zero_ic, build_interp_params(2, 4)),
-        'd0_4_4': (dirichlet_bc, zero_ic, build_interp_params(4, 4)),
-        'd0_8_4': (dirichlet_bc, zero_ic, build_interp_params(8, 4)),
+        's0_dt0': (sponge, zero_ic, build_interp_params(16, 8, dt=DT * 2)),
+        's0_dt2': (sponge, zero_ic, build_interp_params(16, 8, dt=DT / 2)),
+        's0_dt3': (sponge, zero_ic, build_interp_params(16, 8, dt=DT / 4)),
+        's0_dt4': (sponge, zero_ic, build_interp_params(16, 8, dt=DT / 8)),
+        's0_16_1': (sponge, zero_ic, build_interp_params(16, 1)),
+        's0_16_2': (sponge, zero_ic, build_interp_params(16, 2)),
+        's0_16_4': (sponge, zero_ic, build_interp_params(16, 4)),
+        's0_16_8': (sponge, zero_ic, build_interp_params(16, 8)),
+        's0_1_4': (sponge, zero_ic, build_interp_params(1, 8)),
+        's0_2_4': (sponge, zero_ic, build_interp_params(2, 8)),
+        's0_4_4': (sponge, zero_ic, build_interp_params(4, 8)),
+        's0_8_4': (sponge, zero_ic, build_interp_params(8, 8)),
     }
 
     with Pool(processes=N_PARALLEL) as p:
@@ -142,20 +141,20 @@ if __name__ == '__main__':
                                    **args[2])[2]
            for name, args in tasks.items()}
     plt.plot(DT / np.array([0.5, 1, 2, 4]),
-             [rms_diff(dat['d0_dt0']['uz'], dat['d0_16_4']['uz']),
-              rms_diff(dat['d0_16_4']['uz'], dat['d0_dt2']['uz']),
-              rms_diff(dat['d0_dt2']['uz'], dat['d0_dt3']['uz']),
-              rms_diff(dat['d0_dt3']['uz'], dat['d0_dt4']['uz'])], 'bo')
+             [rms_diff(dat['s0_dt0']['uz'], dat['s0_16_4']['uz']),
+              rms_diff(dat['s0_16_4']['uz'], dat['s0_dt2']['uz']),
+              rms_diff(dat['s0_dt2']['uz'], dat['s0_dt3']['uz']),
+              rms_diff(dat['s0_dt3']['uz'], dat['s0_dt4']['uz'])], 'bo')
     plt.xlabel('Timestep')
     plt.ylabel('RMS difference w/ half the timestep')
-    plt.title('2nd order Runge-Kutta timestep convergence in u_z')
+    plt.title('3nd order Runge-Kutta timestep convergence in u_z')
     plt.savefig('t_conv.png')
     plt.clf()
 
     plt.semilogy(PARAMS_RAW['N_Z'] / np.array([8, 4, 2]),
-                 [rms_diff(dat['d0_16_8']['uz'], dat['d0_16_4']['uz']),
-                  rms_diff(dat['d0_16_4']['uz'], dat['d0_16_2']['uz']),
-                  rms_diff(dat['d0_16_2']['uz'], dat['d0_16_1']['uz'])], 'bo')
+                 [rms_diff(dat['s0_16_8']['uz'], dat['s0_16_4']['uz']),
+                  rms_diff(dat['s0_16_4']['uz'], dat['s0_16_2']['uz']),
+                  rms_diff(dat['s0_16_2']['uz'], dat['s0_16_1']['uz'])], 'bo')
     plt.xlabel('Number of z points')
     plt.ylabel('RMS difference w/ twice as many z points')
     plt.title('Convergence in uz, N_X held constant at %d' %
@@ -164,10 +163,10 @@ if __name__ == '__main__':
     plt.clf()
 
     plt.plot(PARAMS_RAW['N_X'] / np.array([16, 8, 4, 2]),
-             [rms_diff(dat['d0_16_4']['uz'], dat['d0_8_4']['uz']),
-              rms_diff(dat['d0_8_4']['uz'], dat['d0_4_4']['uz']),
-              rms_diff(dat['d0_4_4']['uz'], dat['d0_2_4']['uz']),
-              rms_diff(dat['d0_2_4']['uz'], dat['d0_1_4']['uz'])], 'bo')
+             [rms_diff(dat['s0_16_4']['uz'], dat['s0_8_4']['uz']),
+              rms_diff(dat['s0_8_4']['uz'], dat['s0_4_4']['uz']),
+              rms_diff(dat['s0_4_4']['uz'], dat['s0_2_4']['uz']),
+              rms_diff(dat['s0_2_4']['uz'], dat['s0_1_4']['uz'])], 'bo')
     plt.xlabel('Number of x points')
     plt.ylabel('RMS difference w/ twice as many x points')
     plt.title('Convergence in uz, N_Z held constant at %d' %

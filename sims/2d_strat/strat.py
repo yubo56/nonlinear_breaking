@@ -12,9 +12,8 @@ import numpy as np
 import strat_helper
 
 N_PARALLEL = 8
-START_DELAY = 10 # sleep so h5py has time to claim snapshots
 H = 1
-num_timesteps = 4e4
+num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 5 * H
@@ -23,7 +22,7 @@ KZ = (np.pi / 2) * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 12
+T_F = (ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -64,6 +63,7 @@ def sponge(problem, domain):
     puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
     is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
     '''
+    sponge_strength = 0.7
     zmax = PARAMS_RAW['ZMAX']
     damp_start = zmax * 0.7 # start damping zone
     z = domain.grid(1)
@@ -71,7 +71,7 @@ def sponge(problem, domain):
     # sponge field
     sponge = domain.new_field()
     sponge.meta['x']['constant'] = True
-    sponge['g'] = np.maximum(
+    sponge['g'] = sponge_strength * np.maximum(
         1 - (z - zmax)**2 / (damp_start - zmax)**2,
         np.zeros(np.shape(z)))
 
@@ -105,8 +105,8 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 2)),
-        (sponge, zero_ic, 'sponge2', build_interp_params(8, 4)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 4)),
+        (sponge, zero_ic, 'sponge', build_interp_params(8, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

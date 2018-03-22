@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from dedalus import public as de
+from dedalus.extras.flow_tools import CFL
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 SNAPSHOTS_DIR = 'snapshots_%s'
@@ -62,7 +63,7 @@ def get_solver(setup_problem,
     setup_problem(problem, domain)
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = T_F
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -101,6 +102,8 @@ def run_strat_sim(setup_problem,
     # Initial conditions
     set_ICs(solver, domain)
 
+    cfl = CFL(solver, initial_dt=DT, cadence=10, max_dt=DT, threshold=0.10)
+    cfl.add_velocities(('ux', 'uz'))
     snapshots = solver.evaluator.add_file_handler(snapshots_dir,
                                                   sim_dt=T_F / NUM_SNAPSHOTS)
     snapshots.add_system(solver.state)
@@ -108,13 +111,15 @@ def run_strat_sim(setup_problem,
     # Main loop
     logger.info('Starting sim...')
     while solver.ok:
-        solver.step(DT)
+        cfl_dt = cfl.compute_dt()
+        solver.step(cfl_dt)
         curr_iter = solver.iteration
 
         if curr_iter % int((T_F / DT) / NUM_SNAPSHOTS) == 0:
-            logger.info('Reached time %f out of %f',
+            logger.info('Reached time %f out of %f, timestep %f vs max %f',
                         solver.sim_time,
-                        solver.stop_sim_time)
+                        solver.stop_sim_time,
+                        cfl_dt, DT)
 
 def default_problem(problem):
     problem.add_equation("dx(ux) + dz(uz) = 0")
@@ -234,6 +239,7 @@ def plot(setup_problem,
 
     x = domain.grid(0, scales=INTERP_X)
     z = domain.grid(1, scales=INTERP_Z)
+    OMEGA = get_omega(G, H, KX, KZ)
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
 
     for var in z_vars:
@@ -262,8 +268,8 @@ def plot(setup_problem,
             axes.set_ylim(var_dat.min(), var_dat.max())
             idx += 1
 
-        fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H)' % (name,
-                                                                   sim_time))
+        fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H, omega=%.2f)' %
+                     (name, sim_time, OMEGA))
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
         savefig = SAVE_FMT_STR % (t_idx // plot_stride)
         plt.savefig('%s/%s' % (path, savefig))
