@@ -85,6 +85,7 @@ def run_strat_sim(setup_problem,
                   G,
                   A,
                   name=None,
+                  USE_CFL=True,
                   **_):
     snapshots_dir = SNAPSHOTS_DIR % name
     try:
@@ -111,7 +112,7 @@ def run_strat_sim(setup_problem,
     # Main loop
     logger.info('Starting sim...')
     while solver.ok:
-        cfl_dt = cfl.compute_dt()
+        cfl_dt = cfl.compute_dt() if USE_CFL else DT
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 

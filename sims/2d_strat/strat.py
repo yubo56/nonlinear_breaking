@@ -102,11 +102,12 @@ def run(bc, ic, name, params_dict):
     assert 'INTERP_X' in params_dict and 'INTERP_Z' in params_dict,\
         'params need INTERP'
     strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
+    return '%s completed' % name
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 4)),
-        (sponge, zero_ic, 'sponge', build_interp_params(8, 4)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 1)),
+        (sponge, zero_ic, 'sponge', build_interp_params(4, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

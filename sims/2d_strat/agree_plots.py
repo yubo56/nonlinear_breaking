@@ -19,7 +19,7 @@ OMEGA = strat_helper.get_omega(G, H, KX, _KZ)
 
 def agree_sponge(plot_idx, t_idx=-30):
     KZ = -_KZ
-    dat = h5py.File('snapshots_sponge2/snapshots_sponge2_s1/snapshots_sponge2_s1_p0.h5', mode='r')
+    dat = h5py.File('snapshots_sponge/snapshots_sponge_s1/snapshots_sponge_s1_p0.h5', mode='r')
     tmesh = np.array(dat['tasks']['uz'].dims[0][0])
     xmesh = np.array(dat['tasks']['uz'].dims[1][0])
     zmesh = np.array(dat['tasks']['uz'].dims[2][0])
