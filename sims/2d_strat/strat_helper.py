@@ -187,7 +187,7 @@ def load(setup_problem,
     rho0 = RHO0 * np.exp(-z / H)
     state_vars['E'] = ((rho0 + state_vars['rho']) *
                        (state_vars['ux']**2 + state_vars['uz']**2)) / 2
-    state_vars['P_z'] = state_vars['E'] * state_vars['uz']
+    state_vars['rho0'] = rho0 * np.ones(np.shape(state_vars['E']))
     return sim_times, domain, state_vars
 
 def plot(setup_problem,
@@ -211,7 +211,7 @@ def plot(setup_problem,
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz', 'ux', 'rho', 'P', 'P_z']
+    plot_vars = ['uz', 'ux', 'rho', 'P', 'rho0']
     z_vars = ['E'] # sum these over x
     n_cols = 3
     n_rows = 2
@@ -265,8 +265,8 @@ def plot(setup_problem,
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
             var_dat = state_vars[var]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
-            p = axes.plot(z_pts, var_dat[t_idx])
-            axes.set_ylim(var_dat.min(), var_dat.max())
+            p = axes.plot(var_dat[t_idx], z_pts)
+            axes.set_xlim(var_dat.min(), var_dat.max())
             idx += 1
 
         fig.suptitle('Config: %s (t=%.2f, kx=-2pi/H, kz=2pi/H, omega=%.2f)' %
