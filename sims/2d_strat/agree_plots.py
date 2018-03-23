@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # plot agreement of simulation/analytical at various (x, t) slices over z.
 
+import os
 import h5py
 import matplotlib.pyplot as plt
 import matplotlib
@@ -101,17 +102,20 @@ def agree_d0(plot_idx, t_idx=-10):
     return plot_idx + 1
 
 if __name__ == '__main__':
+    try:
+        os.makedirs('agree_plots')
+    except FileExistsError:
+        pass
+
     matplotlib.rcParams.update({'font.size': 6})
     plot_idx = 0
 
-    plot_idx = agree_sponge(plot_idx, -5)
     plot_idx = agree_sponge(plot_idx, -4)
     plot_idx = agree_sponge(plot_idx, -3)
     plot_idx = agree_sponge(plot_idx, -2)
     plot_idx = agree_sponge(plot_idx, -1)
 
     plot_idx = 0
-    plot_idx = agree_d0(plot_idx, -5)
     plot_idx = agree_d0(plot_idx, -4)
     plot_idx = agree_d0(plot_idx, -3)
     plot_idx = agree_d0(plot_idx, -2)
