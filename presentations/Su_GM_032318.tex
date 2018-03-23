@@ -145,7 +145,7 @@ Problem}
 
     \begin{itemize}
         \item Top BC can be chosen Dirichlet $u_{1z}(x, L_z, t) = 0$,
-            analytically tractable.
+            analytically tractable as linear combination of $\pm k_z$ solutions.
 
         \item Driving term will pump energy into the system, without dissipation
             becomes like driven undamped SHO\@. In full nonlinear problem not an
@@ -154,7 +154,7 @@ Problem}
         \item More realistically, two solutions: radiative boundary conditions
             and damping zone.
 
-        \item We use damping zone, add term $\rd{}{t}\vec{q} = L\vec{q}
+        \item We use damping zone, add term $\pd{}{t}\vec{q} = L\vec{q}
             - f(z)\p*{\vec{q} - \vec{q}_0}$ where
             \begin{equation}
                 f(z) =
@@ -207,8 +207,8 @@ Problem}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat/agree_plots/sponge_3.png}
         \end{subfigure}
-        \caption{Agreement of numerical and analytical solution at four adjacent
-        snapshots.}\label{fig:sponge_agree}
+        \caption{Numerical and analytical solutions agree. Numerics chooses
+        $v_{gz} > 0$.}\label{fig:sponge_agree}
     \end{figure}
 \end{frame}
 
