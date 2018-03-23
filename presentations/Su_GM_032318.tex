@@ -98,8 +98,9 @@ Problem}
     \frametitle{Problem Setup}
     \framesubtitle{Problem Statement}
     \begin{itemize}
-        \item 2D hydrodynamics with driving boundary condition, produce gravity
-            waves.
+        \item Eventual objective: simulate IGW breaking in WDs, compute
+            energy/angular momentum dissipation profiles.
+        \item Toy problem: 2D hydrodynamics with driving boundary condition.
         \item Begin with linear incompressible case, equations:
         \begin{subequations}\label{se:eom}
             \begin{align}
@@ -126,7 +127,12 @@ Problem}
 
         \item Wavelike solutions $u_{1z} \propto e^{z/2H}e^{i\p*{k_xx + k_zz -
             \omega t}}$, $u_{1x}, P_1, \rho_1$ similar up to phase and terms
-            $\sim \mathcal{O}\p*{H^{-1}}$.
+            $\sim \mathcal{O}\p*{H^{-1}} \ll k_z$.
+
+        \item Obeys dispersion relation
+            \begin{equation}
+                \omega^2 = \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
+            \end{equation}
 
         \item Driven bottom BC\@: $u_{1z}(x, 0, t) = A\cos \p*{k_xx + \omega t}$
             (1).
@@ -169,12 +175,12 @@ Problem}
     \framesubtitle{Problem Statement Summary}
 
     \begin{itemize}
-        \item Linear incompressible hydrodynamics with periodic BCs in $x$,
+        \item Linear incompressible 2D hydrodynamics with periodic BCs in $x$,
             driving term at $z = 0$ and either Dirichlet or reflection-free BCs
             at $z = L_z$.
 
-        \item Spectral code Dedalus, built-in Runge-Kutta timestepper (simplest
-            to characterize).
+        \item Spectral code Dedalus, exponential convergence for shock-free
+            hydrodynamics.
     \end{itemize}
 \end{frame}
 
@@ -184,20 +190,20 @@ Problem}
 
     \begin{figure}[!h]
         \centering
-        \begin{subfigure}{0.4\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat/agree_plots/sponge_0.png}
         \end{subfigure}
-        \begin{subfigure}{0.4\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat/agree_plots/sponge_1.png}
         \end{subfigure}
 
-        \begin{subfigure}{0.4\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat/agree_plots/sponge_2.png}
         \end{subfigure}
-        \begin{subfigure}{0.4\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat/agree_plots/sponge_3.png}
         \end{subfigure}
@@ -211,28 +217,23 @@ Problem}
     \framesubtitle{Convergence Tests}
 
     \begin{itemize}
-        \item $RMS = \frac{\sqrt{\sum\limits_{x, z, t} \p*{u_{1z}^{(N)}(x, z, t)
-            - u_{1z}^{(2N)}(x, z, t)}^2}}{\sqrt{
-            \sum\limits_{x, z, t} \p*{u_{1z}^{(N)}(x, z, t)}^2}}$
+        \item $RMS_i = \frac{\sqrt{\sum\limits_{x, z, t} \p*{u_{1z}^{(i)}(x, z,
+            t) - u_{1z}^{(N)}(x, z, t)}^2}}{\sqrt{ \sum\limits_{x, z, t}
+            \p*{u_{1z}^{(N)}(x, z, t)}^2}}$
     \end{itemize}
     \begin{figure}[!h]
         \centering
-        \begin{subfigure}{0.3\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{../sims/2d_strat_conv/t_conv.png}
-        \end{subfigure}
-        \begin{subfigure}{0.3\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat_conv/x_conv.png}
         \end{subfigure}
-
-        \begin{subfigure}{0.3\textwidth}
+        \begin{subfigure}{0.37\textwidth}
             \centering
             \includegraphics[width=\textwidth]{../sims/2d_strat_conv/z_conv.png}
         \end{subfigure}
-        \caption{Convergences of time stepsize and grid resolution. Note the
-        power law convergence in timestep but exponential in $z$ points (since
-        $x$ is always monochromatic, increasing resolution does little).}\label{fig:convsv}
+        \caption{Convergences of RMS over grid resolution. Note the exponential
+        convergence in $z$ to machine precision (since $x$ is always
+        monochromatic, increasing resolution does little).}\label{fig:convsv}
     \end{figure}
 \end{frame}
 

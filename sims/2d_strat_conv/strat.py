@@ -29,7 +29,7 @@ DT = T_F / num_timesteps
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
               'N_X': 64,
-              'N_Z': 256,
+              'N_Z': 512,
               'T_F': T_F,
               'DT': DT,
               'KX': KX,
@@ -110,22 +110,26 @@ def run(name, args):
     return '%s completed' % name
 
 def rms_diff(arr1, arr2):
-    return np.sqrt(np.sum((arr1 - arr2)**2)) / np.sqrt(np.sum(arr1**2))
+    num_times = len(arr1)
+    return np.sqrt(np.sum((arr1[num_times // 2: ] - arr2[num_times // 2: ])**2))\
+        / np.sqrt(np.sum(arr1[num_times //2 : ]**2))
 
 if __name__ == '__main__':
     tasks = {
-        'd0_dt0': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT * 2)),
-        'd0_dt2': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 2)),
-        'd0_dt3': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 4)),
-        'd0_dt4': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT / 8)),
+        'd0_dt0': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT * 2)),
+        'd0_dt2': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT / 2)),
+        'd0_dt3': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT / 4)),
+        'd0_dt4': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT / 8)),
+        'd0_dt5': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT / 16)),
         'd0_16_1': (dirichlet_bc, zero_ic, build_interp_params(16, 1, dt=DT)),
         'd0_16_2': (dirichlet_bc, zero_ic, build_interp_params(16, 2, dt=DT)),
         'd0_16_4': (dirichlet_bc, zero_ic, build_interp_params(16, 4, dt=DT)),
         'd0_16_8': (dirichlet_bc, zero_ic, build_interp_params(16, 8, dt=DT)),
-        'd0_1_4': (dirichlet_bc, zero_ic, build_interp_params(1, 4, dt=DT)),
-        'd0_2_4': (dirichlet_bc, zero_ic, build_interp_params(2, 4, dt=DT)),
-        'd0_4_4': (dirichlet_bc, zero_ic, build_interp_params(4, 4, dt=DT)),
-        'd0_8_4': (dirichlet_bc, zero_ic, build_interp_params(8, 4, dt=DT)),
+        'd0_16_16': (dirichlet_bc, zero_ic, build_interp_params(16, 16, dt=DT)),
+        'd0_1_8': (dirichlet_bc, zero_ic, build_interp_params(1, 8, dt=DT)),
+        'd0_2_8': (dirichlet_bc, zero_ic, build_interp_params(2, 8, dt=DT)),
+        'd0_4_8': (dirichlet_bc, zero_ic, build_interp_params(4, 8, dt=DT)),
+        'd0_8_8': (dirichlet_bc, zero_ic, build_interp_params(8, 8, dt=DT)),
     }
 
     with Pool(processes=N_PARALLEL) as p:
@@ -142,36 +146,38 @@ if __name__ == '__main__':
                                    name=name,
                                    **args[2])[2]
            for name, args in tasks.items()}
-    plt.plot(DT / np.array([0.5, 1, 2, 4]),
-             [rms_diff(dat['d0_dt0']['uz'], dat['d0_16_4']['uz']),
-              rms_diff(dat['d0_16_4']['uz'], dat['d0_dt2']['uz']),
-              rms_diff(dat['d0_dt2']['uz'], dat['d0_dt3']['uz']),
-              rms_diff(dat['d0_dt3']['uz'], dat['d0_dt4']['uz'])], 'bo')
+    plt.loglog(DT / np.array([0.5, 1, 2, 4, 8]),
+               [rms_diff(dat['d0_dt0']['uz'], dat['d0_dt5']['uz']),
+                rms_diff(dat['d0_16_8']['uz'], dat['d0_dt5']['uz']),
+                rms_diff(dat['d0_dt2']['uz'], dat['d0_dt5']['uz']),
+                rms_diff(dat['d0_dt3']['uz'], dat['d0_dt5']['uz']),
+                rms_diff(dat['d0_dt4']['uz'], dat['d0_dt5']['uz'])], 'bo')
     plt.xlabel('Timestep')
-    plt.ylabel('RMS difference w/ half the timestep')
+    plt.ylabel('RMS difference w/ timestep %.3f' % (DT / 16))
     plt.title('3nd order Runge-Kutta timestep convergence in u_z')
     plt.savefig('t_conv.png')
     plt.clf()
 
-    plt.semilogy(PARAMS_RAW['N_Z'] / np.array([8, 4, 2]),
-                 [rms_diff(dat['d0_16_8']['uz'], dat['d0_16_4']['uz']),
-                  rms_diff(dat['d0_16_4']['uz'], dat['d0_16_2']['uz']),
+    plt.semilogy(PARAMS_RAW['N_Z'] / np.array([16, 8, 4, 2]),
+                 [rms_diff(dat['d0_16_16']['uz'], dat['d0_16_1']['uz']),
+                  rms_diff(dat['d0_16_8']['uz'], dat['d0_16_1']['uz']),
+                  rms_diff(dat['d0_16_4']['uz'], dat['d0_16_1']['uz']),
                   rms_diff(dat['d0_16_2']['uz'], dat['d0_16_1']['uz'])], 'bo')
     plt.xlabel('Number of z points')
-    plt.ylabel('RMS difference w/ twice as many z points')
+    plt.ylabel('RMS difference from full %d z points' % PARAMS_RAW['N_Z'])
     plt.title('Convergence in uz, N_X held constant at %d' %
               (PARAMS_RAW['N_X'] / 16))
     plt.savefig('z_conv.png')
     plt.clf()
 
     plt.plot(PARAMS_RAW['N_X'] / np.array([16, 8, 4, 2]),
-             [rms_diff(dat['d0_16_4']['uz'], dat['d0_8_4']['uz']),
-              rms_diff(dat['d0_8_4']['uz'], dat['d0_4_4']['uz']),
-              rms_diff(dat['d0_4_4']['uz'], dat['d0_2_4']['uz']),
-              rms_diff(dat['d0_2_4']['uz'], dat['d0_1_4']['uz'])], 'bo')
+             [rms_diff(dat['d0_16_8']['uz'], dat['d0_1_8']['uz']),
+              rms_diff(dat['d0_8_8']['uz'], dat['d0_1_8']['uz']),
+              rms_diff(dat['d0_4_8']['uz'], dat['d0_1_8']['uz']),
+              rms_diff(dat['d0_2_8']['uz'], dat['d0_1_8']['uz'])], 'bo')
     plt.xlabel('Number of x points')
-    plt.ylabel('RMS difference w/ twice as many x points')
+    plt.ylabel('RMS difference from full/ %d x points' % PARAMS_RAW['N_X'])
     plt.title('Convergence in uz, N_Z held constant at %d' %
-              (PARAMS_RAW['N_Z'] / 4))
+              (PARAMS_RAW['N_Z'] / 8))
     plt.savefig('x_conv.png')
     plt.clf()
