@@ -51,15 +51,6 @@ def get_solver(setup_problem,
     rho0['g'] = RHO0 * np.exp(-z / H)
     problem.parameters['rho0'] = rho0
 
-    # plot rho0
-    # xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-    # plt.pcolormesh(xmesh, zmesh, rho0['g'].T)
-    # plt.xlabel('x')
-    # plt.ylabel('z')
-    # plt.title('Background rho0')
-    # plt.colorbar()
-    # plt.savefig('strat_rho0.png')
-
     setup_problem(problem, domain)
 
     # Build solver
@@ -134,7 +125,7 @@ def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vph(g, h, kx, kz):
-    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
+    norm = abs(get_omega(g, h, kx, kz)) / (kx**2 + kz**2)
     return norm * kz, norm * kz
 
 def load(setup_problem,
@@ -187,6 +178,9 @@ def load(setup_problem,
     rho0 = RHO0 * np.exp(-z / H)
     state_vars['E'] = ((rho0 + state_vars['rho']) *
                        (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    state_vars['F_z'] =  state_vars['uz'] * (
+        (rho0 + state_vars['rho']) * (state_vars['ux']**2 + state_vars['uz']**2)
+        + state_vars['P'])
     state_vars['rho0'] = rho0 * np.ones(np.shape(state_vars['E']))
     return sim_times, domain, state_vars
 
@@ -212,9 +206,9 @@ def plot(setup_problem,
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     plot_vars = ['uz', 'ux', 'rho', 'P', 'rho0']
-    z_vars = ['E'] # sum these over x
+    z_vars = ['F_z', 'E'] # sum these over x
     n_cols = 3
-    n_rows = 2
+    n_rows = 3
     plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):

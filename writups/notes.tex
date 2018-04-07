@@ -116,7 +116,7 @@ some toy problems. Recall fluid equations in the presence of a uniform
 gravitational field $\vec{g} = -g\hat{z}$:
 \begin{equation}
     \begin{split}
-        \rd{\rho}{t} + \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho}{t} + \vec{\nabla} \cdot \p*{\rho \vec{u}} &= 0,\\
         \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} - \vec{g} &= 0.
     \end{split}\label{eq:fluid_eq}
 \end{equation}
@@ -255,7 +255,7 @@ arbitrary stratification $\rho_0(z)$ first. The fluid equations to first order
 reduce to
 \begin{equation}
     \begin{split}
-        \pd{\rho_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\rho_0 &= 0,\\
+        \pd{\rho_1}{t} + \vec{u}_1 \cdot \p*{\vec{\nabla}\rho_0} &= 0,\\
         \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
         \pd{\vec{u}_1}{t} &= -\frac{\vec{\nabla}P_1}{\rho_0}
             - \frac{\rho_1 g}{\rho_0}
@@ -483,7 +483,13 @@ in Ryan and Dong's paper, is to use multiplicative factor $f(z) = \max\s*{0, 1 -
 \frac{\p*{z - z_b}^2}{\p*{z_d - z_b}^2}}$ where $z_b$ is where one begins
 supression and $z_b$ is the boundary. Then a dynamical variable $q$ can be
 supressed via $\dot{q} = (\dots) - f(z)\frac{q - q_0}{\tau}$ where $\tau$ is the
-dynamical timescale on which to damp and $q_0$ is the value to damp to.
+dynamical timescale on which to damp and $q_0$ is the value to damp to. We will
+apply this only to the velocity variables with an eye to extending this approach
+to the nonlinear regime, where the velocity variables should still be damped to
+zero but $\rho, P$ must capture the stratification and so cannot easily be
+artificially damped (maybe? Revisit if this does poorly compared to damping all
+linear variables, and damp the nonlinear variables to their
+equilibrium/stratified values).
 
 In order to compute the reflecting boundary condition, we must find a
 sequence of differential operators that well approxmiates the system of PDEs. We
@@ -498,6 +504,49 @@ to simplify):
 \end{align}
 We pick the negative sign in accordance with an outgoing wave, per the group
 velocity formulae for $k_z > k_x$.
+
+From the numerical simulations, it is clear that reflections are well supressed
+initially, but the the simulation blows up. This is because our supression is
+imperfect (differential approximation to a pseudodifferential operator) and
+since our system is dissipation free, reflection grows. Moreover, since any
+reflected components seem to have different $k_x, k_z, \omega$, the second time
+they're incident on the boundary, our above condition becomes wildly inaccurate.
+
+\section{Incompressible, Stratified w/ Gravity, Nonlinear}
+
+We consider the problem where $\rho_1 \sim \rho_0$, where we cannot make such a
+perturbative expansion. We write down thus nonlinear fluid equations
+\begin{equation}
+    \begin{split}
+        \pd{\rho}{t} + \vec{u} \cdot \p*{\vec{\nabla}\rho} &= 0,\\
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\vec{u}}{t} &= -\frac{\vec{\nabla}P}{\rho} - g\hat{z}.
+    \end{split}\label{eq:nonlin_incomp}
+\end{equation}
+Note that we cannot even subtract off hydrostatic equilibrium anymore since
+$\rho$ can deviate greatly from the normal $\rho_0e^{-z/H}$!
+
+Since Dedalus cannot handle a field quantity in the denominator, we must get rid
+of $\rho$ somehow. We choose to do this by recasting the equations in terms of
+$\rho^{-1}$, which is everywhere nonzero and finite since $\rho$ is everywhere
+nonzero and finite. But then $\pd{\rho}{t} = -\rho^2\pd{\rho^{-1}}{t}$ while
+$\vec{\nabla}\rho = -\rho^2\vec{\nabla}\rho^{-1}$, and so factoring out the
+$\rho^2$ we can simply rewrite
+\begin{equation}
+    \begin{split}
+        \pd{\rho^{-1}}{t} + \vec{u} \cdot \p*{\vec{\nabla}\rho^{-1}} &= 0,\\
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\vec{u}}{t} &= -\rho^{-1}\vec{\nabla}P - g\hat{z}.
+    \end{split}\label{eq:nonlin_incomp}
+\end{equation}
+
+We must also consider how we implement the outgoing boundary condition in this
+regime. If we use the radiative boundary condition formula, thankfully we have
+little to change, though it also doesn't do a great job of supressing
+reflections. If we instead use a sponge zone, we should be careful about how we
+damp $\rho^{-1}$, since we obviously should not try damping it to zero! This is
+why we initially chose to only apply our sponge zone to the velocity variables,
+even in the linear problem.
 
 \clearpage
 

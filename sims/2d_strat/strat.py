@@ -53,9 +53,9 @@ def dirichlet_bc(problem, *_):
     problem.add_bc('right(uz) = 0', condition='nx != 0')
 
 def rad_bc(problem, *_):
-    # TODO incorrect
+    problem.parameters['BC_PARAM'] = np.sqrt(G / (H * OMEGA ** 2) - 1)
     strat_helper.default_problem(problem)
-    problem.add_bc('right(dt(uz) + omega / KZ * dz(uz)) = 0',
+    problem.add_bc('right(dz(uz) - dx(uz) * BC_PARAM) = 0',
                    condition='nx != 0')
 
 def sponge(problem, domain):
@@ -106,8 +106,9 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 1)),
-        (sponge, zero_ic, 'sponge', build_interp_params(4, 4)),
+        (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 4)),
+        (sponge, zero_ic, 'sponge', build_interp_params(8, 8)),
+        (rad_bc, zero_ic, 'rad', build_interp_params(8, 8)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:
