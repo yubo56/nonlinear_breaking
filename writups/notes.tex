@@ -425,10 +425,10 @@ reflections off the boundary. Turns out both Dirichlet and Neumann BCs give
 strong reflections that produce standing waves in the $z$ and traveling waves in
 the $x$.
 
-\subsection{Waveform Properties, Analytical}
+\subsection{Phase/Group Velocity}
 
 Let's figure out the analytical forms for the phase, group velocity and the
-energy density/power flux. We will try to recover these from waveforms.
+energy density/power flux.
 
 Let's first consider the phase velocity. We traditionally think about the phase
 velocity in 1D $v_{ph} = \frac{\omega(k)}{k}$, but in general it is the function
@@ -442,39 +442,36 @@ $\vec{k} \cdot \vec{v}_{ph} = \omega$, and so one sensible choice is
 \end{equation}
 
 For our stratified atmosphere problem, $\omega^2 = \frac{N^2 k_x^2}{k^2 +
-\frac{1}{4H^2}}$. Plugging in our parameters $k_z = -k_x = 2pi, N^2 = 10$ we can
-find $\omega \approx 2.23\;\mathrm{Hz}$, so $\vec{v}_{ph} \approx
-0.1777\p*{-\hat{x} + \hat{z}}\;\mathrm{s^{-1}}$.
-
-Since we use a height of $5$, we should expect the initial disturbance to reach
-the top boundary at $t \sim 30\;\mathrm{s}$.
+\frac{1}{4H^2}}$. This corresponds to $\vec{v}_{ph} = \frac{Nk_x}{\sqrt{k_x^2 +
+k_z^2 + 1/4H^2}} \vec{k}$.
 
 On the other hand the group velocity is given $\vec{v}_g =
 \pd{\omega}{k_i}\hat{\imath}$. In our problem, $v_{g, z} =
--\frac{N^2k_x^2k_z}{\p*{k_x^2 + k_z^2 + 1/4H^2}^{3/2}}$ while $v_{g, x} =
-\frac{2N^2k_x}{\sqrt{k_x^2 + k_z^2 + 1/4H^2}} - \frac{N^2k_x^3}{\p*{k_x^2 +
+-\frac{Nk_xk_z}{\p*{k_x^2 + k_z^2 + 1/4H^2}^{3/2}}$ while $v_{g, x} =
+\frac{N}{\sqrt{k_x^2 + k_z^2 + 1/4H^2}} - \frac{Nk_x^2}{\p*{k_x^2 +
+k_z^2 + 1/4H^2}^{3/2}} = \frac{N\p*{k_z^2 + 1/4H^2}}{\p*{k_x^2 +
 k_z^2 + 1/4H^2}^{3/2}}$.
 
-We should note that the kinetic energy density is just $E = \frac{1}{2}\rho
-v^2$, the kinetic energy. Using then $\rd{E}{t} = 0$ shows that the
-corresponding power flux is $\vec{P} = \frac{\vec{v}}{2}\rho v^2$.
+\subsection{Energy/Power Flux}
 
-\subsection{Extracting Information from the Waveform}
-
-Let's make sure we can extract information from the linearized problem. Notable
-things we should be interested in: phase/group velocity, energy density and
-energy flux.
-
-Based on our phase velocity expression \autoref{eq:v_ph}, if we have some
-waveform $f(x, z, t)$, we can estimate its phase velocity $\vec{v}_{ph}(x, z,
-t)$ by
+To compute the energy and power flux of the wave, we recall that for a general
+fluid the energy conservation equation reads
 \begin{equation}
-    \vec{v}_{ph}(x, z, t) = \frac{\partial_t f
-        \vec{\nabla}f}{\abs{\vec{\nabla}f}^2}.\label{eq:v_ph}
+    \pd{}{t}\p*{\frac{1}{2}\rho v^2 + \rho \epsilon}
+        = \vec{\nabla} \cdot \p*{
+            \rho \vec{v}\p*{v^2 + \epsilon + \frac{P}{\rho}}
+        },
 \end{equation}
-This can be validated in the $f(x, z, t) \propto e^{i(\vec{k} \cdot \vec{x} -
-\omega t)}$ case to give $\vec{v}_{ph} = \frac{\omega \vec{k}}{k^2}$. Note the
-sign in \autoref{eq:v_ph}
+where $\epsilon$ is the internal energy. But since $P = (\gamma -
+1)\rho\epsilon$ and we take $\gamma \to \infty$ incompressible limit, $\epsilon
+= 0$, so the energy of the wave is just $\frac{1}{2}\p*{\rho_0 + \rho_1} u_1^2$
+and the power flux is $\p*{\rho_0 + \rho_1}\vec{u}_1u_1^2 + P_1\vec{u}_1$.
+
+Another formula given by Sutherland 2011 is $\pd{\expvalue{E}}{t} = v_{g, z}
+\expvalue{E}$ where we average over $x$ one wavelength. I wasn't able to show
+that these two agree in general; Sutherland's formula seems to be derived for a
+traveling wavepacket whereas we have no such thing. We do not use this
+expression since the Landau \& Lifshitz expression works well.
 
 \subsection{Supressing Reflection}
 
@@ -488,10 +485,75 @@ supression and $z_b$ is the boundary. Then a dynamical variable $q$ can be
 supressed via $\dot{q} = (\dots) - f(z)\frac{q - q_0}{\tau}$ where $\tau$ is the
 dynamical timescale on which to damp and $q_0$ is the value to damp to.
 
-This requires we compute a ton of extra points though. Ideally, we want to use
-BCs. TODO
+In order to compute the reflecting boundary condition, we must find a
+sequence of differential operators that well approxmiates the system of PDEs. We
+can get this from the dispersion relation; since our radiating boundary is along
+$z$, we should try to solve for $k_z$ in the dispersion relation to get a
+pseudodifferential operator form for $\pd{}{z}u_z$ (we take $k_xH \ll 1$ as well
+to simplify):
+\begin{align}
+    k_z^2 &= \frac{N^2}{\omega^2}k_x^2 - k_x^2 - \frac{1}{4H^2},\nonumber\\
+        &\approx k_x^2\p*{\frac{N^2}{\omega^2} - 1},\\
+    \pd{u_z}{z} &\approx -\pd{u_z}{x}\sqrt{\frac{N^2}{\omega^2} - 1}.
+\end{align}
+We pick the negative sign in accordance with an outgoing wave, per the group
+velocity formulae for $k_z > k_x$.
 
-\section{(Algebra/Optional) The Anelastic/Boussinesq Approximations}
+\clearpage
+
+\appendix
+
+\chapter{Deriving Fluids Results}
+
+\section{Equation of Energy Conservation}
+
+We follow Landau \& Lifshitz's derivation for this expression. Consider that the
+total energy stored in a wave must be the sum of its kinetic and internal energy
+$\frac{1}{2}\rho v^2 + \rho \epsilon$ where $\epsilon$ is the internal energy
+density. To obtain an equation of energy conservation, we must take the time
+derivative of this expression. First, we consider
+\begin{align}
+    \pd{}{t}\p*{\frac{1}{2}\rho v^2} &= \frac{1}{2}v^2\pd{\rho}{t}
+        + \rho \vec{v} \cdot \pd{\vec{v}}{t},\nonumber\\
+        &= -\frac{1}{2}v^2 \p*{\vec{\nabla} \cdot \rho \vec{v}}
+            - \rho \vec{v} \cdot \p*{
+                \p*{\vec{v} \cdot \vec{\nabla}}\vec{v} +
+                    \frac{\vec{\nabla}P}{\rho} - \vec{g}
+            }_{T, V},\nonumber\\
+        &= -\frac{1}{2} v^2 \p*{\vec{\nabla} \cdot \rho \vec{v}}
+            - \frac{1}{2}\rho \vec{v} \cdot \p*{\vec{\nabla} v^2}
+            - \vec{v} \cdot \p*{
+                \rho \vec{\nabla} w - \rho T \vec{\nabla}s
+            } + \rho \vec{v} \cdot \vec{g}.
+\end{align}
+We have denoted $s$ the specific internal entropy density of the fluid and
+$\mathrm{d}w = T\mathrm{d}s + \frac{\mathrm{d}P}{\rho} = T\mathrm{d}s +
+\epsilon$ the specific internal enthalpy density of the fluid.
+Recall enthalpy $\epsilon = w - Ts$ is the usual thermodynamic definition.
+
+At the same time, consider
+\begin{align}
+    \pd{}{t}\p*{\rho \epsilon} &= \epsilon \pd{\rho}{t}
+        + \rho \pd{}{t}\p*{Ts - \frac{P}{\rho}}_{T, P},\nonumber\\
+        &= \epsilon \pd{\rho}{t} + \rho T \pd{s}{t} + \frac{P}{\rho}\pd{\rho}{t}
+            ,\nonumber\\
+        &= w \pd{\rho}{t} + \rho T \pd{s}{t},\nonumber\\
+        &= -w\vec{\nabla}\p*{\rho \vec{v}} - \rho T \vec{v} \cdot \p*{
+            \vec{\nabla}s
+        }.
+\end{align}
+Summing the two, we find
+\begin{equation}
+    \pd{}{t}\p*{\frac{\rho v^2}{2} + \rho \epsilon}
+        = -\vec{\nabla} \cdot \s*{
+            \rho \vec{v}\p*{v^2 + w}
+        } = -\vec{\nabla} \cdot \s*{
+            \rho \vec{v}\p*{v^2 + \epsilon + \frac{P}{\rho}}
+        }.
+\end{equation}
+
+
+\section{The Anelastic/Boussinesq Approximations}
 
 \subsection{Developing the Anelastic/Boussinesq Approximations}
 
