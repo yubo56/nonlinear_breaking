@@ -22,7 +22,7 @@ KZ = (np.pi / 2) * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 4
+T_F = (ZMAX / VPH_Z) * 2
 DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -77,10 +77,37 @@ def sponge(problem, domain):
 
     problem.parameters['sponge'] = sponge
     problem.add_equation("dx(ux) + dz(uz) = 0")
-    problem.add_equation("dt(rho) - rho0 * uz / H + sponge * rho= 0")
-    problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux= 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H + sponge * rho = 0")
+    problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux = 0")
     problem.add_equation(
-        "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz= 0")
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0")
+
+    problem.add_bc("left(P) = 0", condition="nx == 0")
+    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+
+def sponge_part(problem, domain):
+    '''
+    sponge zone on only velocities
+    '''
+    sponge_strength = 1
+    zmax = PARAMS_RAW['ZMAX']
+    damp_start = zmax * 0.7 # start damping zone
+    z = domain.grid(1)
+
+    # sponge field
+    sponge = domain.new_field()
+    sponge.meta['x']['constant'] = True
+    sponge['g'] = sponge_strength * np.maximum(
+        1 - (z - zmax)**2 / (damp_start - zmax)**2,
+        np.zeros(np.shape(z)))
+
+    problem.parameters['sponge'] = sponge
+    problem.add_equation("dx(ux) + dz(uz) = 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
+    problem.add_equation("dt(ux) + dx(P) / rho0 + sponge * ux = 0")
+    problem.add_equation(
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0")
 
     problem.add_bc("left(P) = 0", condition="nx == 0")
     problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
@@ -108,6 +135,7 @@ if __name__ == '__main__':
     tasks = [
         (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 4)),
         (sponge, zero_ic, 'sponge', build_interp_params(8, 8)),
+        (sponge_part, zero_ic, 'sponge_part', build_interp_params(8, 8)),
         (rad_bc, zero_ic, 'rad', build_interp_params(8, 8)),
     ]
 
