@@ -22,7 +22,7 @@ KZ = (np.pi / 2) * np.pi / H
 G = 10
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 2
+T_F = (ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -134,9 +134,9 @@ def run(bc, ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (dirichlet_bc, zero_ic, 'd0', build_interp_params(8, 4)),
-        (sponge, zero_ic, 'sponge', build_interp_params(8, 8)),
-        (sponge_part, zero_ic, 'sponge_part', build_interp_params(8, 8)),
-        (rad_bc, zero_ic, 'rad', build_interp_params(8, 8)),
+        (sponge, zero_ic, 'sponge', build_interp_params(8, 4)),
+        (sponge_part, zero_ic, 'sponge_part', build_interp_params(8, 4)),
+        (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
     with Pool(processes=N_PARALLEL) as p:

@@ -193,28 +193,28 @@ $u_{1x}, u_{1z}$ are exactly $\frac{2\pi}{10}$ at $t = 1$.
     \centering
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_P_t50.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_P_t50.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_ux_t50.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_ux_t50.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_uz_t50.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_uz_t50.png}
     \end{subfigure}
 
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_P_t100.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_P_t100.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_ux_t100.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_ux_t100.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims/2d_no_g/no_g_uz_t100.png}
+        \includegraphics[width=\textwidth]{../sims/2d_0_no_g/no_g_uz_t100.png}
     \end{subfigure}
     \caption{$P, u_x, u_z$ at $t = 0.5$ and $t = 1$ for $\rho_0 = 1$. We choose
     a $L = 10$ square domain.}\label{fig:no_g}
@@ -520,33 +520,12 @@ perturbative expansion. We write down thus nonlinear fluid equations
     \begin{split}
         \pd{\rho}{t} + \vec{u} \cdot \p*{\vec{\nabla}\rho} &= 0,\\
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\vec{u}}{t} &= -\frac{\vec{\nabla}P}{\rho} - g\hat{z}.
+        \pd{\vec{u}}{t} &= -\p*{\vec{u} \cdot \vec{\nabla}} \vec{u}
+            - \frac{\vec{\nabla}P}{\rho} - g\hat{z}.
     \end{split}\label{eq:nonlin_incomp}
 \end{equation}
 Note that we cannot even subtract off hydrostatic equilibrium anymore since
 $\rho$ can deviate greatly from the normal $\rho_0e^{-z/H}$!
-
-Since Dedalus cannot handle a field quantity in the denominator, we must get rid
-of $\rho$ somehow. We choose to do this by recasting the equations in terms of
-$\rho^{-1}$, which is everywhere nonzero and finite since $\rho$ is everywhere
-nonzero and finite. But then $\pd{\rho}{t} = -\rho^2\pd{\rho^{-1}}{t}$ while
-$\vec{\nabla}\rho = -\rho^2\vec{\nabla}\rho^{-1}$, and so factoring out the
-$\rho^2$ we can simply rewrite
-\begin{equation}
-    \begin{split}
-        \pd{\rho^{-1}}{t} + \vec{u} \cdot \p*{\vec{\nabla}\rho^{-1}} &= 0,\\
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\vec{u}}{t} &= -\rho^{-1}\vec{\nabla}P - g\hat{z}.
-    \end{split}\label{eq:nonlin_incomp}
-\end{equation}
-
-We must also consider how we implement the outgoing boundary condition in this
-regime. If we use the radiative boundary condition formula, thankfully we have
-little to change, though it also doesn't do a great job of supressing
-reflections. If we instead use a sponge zone, we should be careful about how we
-damp $\rho^{-1}$, since we obviously should not try damping it to zero! This is
-why we initially chose to only apply our sponge zone to the velocity variables,
-even in the linear problem.
 
 \clearpage
 
@@ -601,6 +580,63 @@ Summing the two, we find
         }.
 \end{equation}
 
+\section{Conservative Fluid Equations}
+
+This isn't particularly useful for our work since spectral methods don't benefit
+from having the dynamical equations in conservative form, but form a useful
+exercise for the ever-so-stupid writer.
+
+The Reynolds transport theorem tells us that
+\begin{equation}
+    \rd{}{t}\int\limits_V Q\;\mathrm{d}V
+        = \int\limits_V \pd{Q}{t}\;\mathrm{d}V
+            + \int\limits_{\partial V}
+                \p*{\vec{v}\p*{\mathrm{d}A} \cdot \hat{n}} Q\;\mathrm{d}A.
+\end{equation}
+We have notated $\vec{v}\p*{\mathrm{d}A}$ the velocity of the surface element.
+In fluid mechanics, this is just the velocity field. Thus, for conserved
+quantities where $\rd{}{t}\int\limits_V Q\;\mathrm{d}V = 0$, we can apply
+divergence theorem to obtain the simple result
+\begin{equation}
+    \pd{Q}{t} + \vec{\nabla} \cdot \p*{Q\vec{v}} = 0.\label{eq:cons_eq}
+\end{equation}
+Of course, if there are any net forces etc.\ on the system, they are simply
+inserted as fileds on the right hand side of \autoref{eq:cons_eq}.
+
+The application of this to the three major conserved quantities: mass, momentum
+and energy, yield:
+\begin{description}
+    \item[Conservation of Mass] This produces simply $\pd{\rho}{t} +
+        \vec{\nabla} \cdot \p*{\rho \vec{v}} = 0$ the continuity equation.
+
+    \item[Conservation of Momentum] This produces $\pd{\rho v_i}{t} +
+        \vec{\nabla} \cdot \p*{\rho v_i \vec{v}} = 0$. To obtain the traditional
+        momentum equation, it is perhaps most clear in index notation where
+        repeated indicies denote summation:
+        \begin{align}
+            \pd{\p*{\rho v_i}}{t} + \partial_j \rho v_iv_j &= 0,\nonumber\\
+            v_i \pd{\rho}{t} + \rho \pd{v_i}{t} + v_I \partial_j \p*{\rho v_j}
+                + \rho v_j \partial_j v_i &= 0,\nonumber\\
+            v_i\p*{\pd{\rho}{t} + \partial_j \p*{\rho v_j}}
+                + \rho\p*{
+                    \pd{v_i}{t} + v_j \partial_t v_i
+                } = 0.
+        \end{align}
+        The first parenthetical term we recognize is just the continuity
+        equation though. The remainder is the traditional source-free momentum
+        equation.
+
+    \item[Conservation of Energy] This just reads $\pd{e}{t} + \vec{\nabla}
+        \cdot \p*{e \vec{v}} = 0$. It's a pretty uninteresting equation without
+        pressure and thermodynamic effects, which would arise from a more
+        careful treatment of the source terms.
+
+        In fact, pressure contributes a source term $P\vec{\nabla} \cdot
+        \vec{v}$, so the full energy equation is often written
+        \begin{equation}
+            \rd{e}{t} + \p*{e + P}\vec{\nabla} \cdot \vec{v} = 0.
+        \end{equation}
+\end{description}
 
 \section{The Anelastic/Boussinesq Approximations}
 
