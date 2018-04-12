@@ -2,7 +2,7 @@ build
 venv
 docs
 *.pyc
-.hg
+.hg*
 
 *.db
 *.c

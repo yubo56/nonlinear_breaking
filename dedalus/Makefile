@@ -1,7 +1,9 @@
 # openmpi 2.1.1-2
-setup:
-	rm -rf venv
-	virtualenv --python=python3 venv
+setup: clean
+	virtualenv --python=python3 --system-site-packages venv
 	source venv/bin/activate &&\
 		pip install --force -r requirements.txt &&\
 		python setup.py build_ext --inplace
+clean:
+	rm -rf venv
+	find . -iname *.c -delete && find . -iname *.so -delete
