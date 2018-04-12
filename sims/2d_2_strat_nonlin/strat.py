@@ -12,11 +12,11 @@ num_timesteps = 1e4
 XMAX = H
 ZMAX = 2 * H
 KX = -2 * np.pi / H
-KZ = (np.pi / 2) * np.pi / H
+KZ = -(np.pi / 2) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = (ZMAX / VPH_Z) * 4
+T_F = abs(ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
 RHO0 = 1
 
@@ -34,8 +34,8 @@ PARAMS_RAW = {'XMAX': XMAX,
               'A': 0.005,
               'NUM_SNAPSHOTS': 200}
 
-def build_interp_params(interp_x, interp_z, dt=DT):
-    params = dict(PARAMS_RAW)
+def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
+    params = {**PARAMS_RAW, **(overrides or {})}
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
@@ -81,26 +81,6 @@ def sponge_lin(problem, domain):
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
-def sponge_weak(problem, domain):
-    '''
-    sponge zone velocities w just advective terms
-    '''
-    problem.parameters['sponge'] = get_sponge(domain)
-    problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
-    problem.add_equation(
-        'dt(ux) + dx(P) / rho0 - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux = -ux * dx(ux) - uz * ux_z')
-    problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz = -ux * dx(uz) - uz * uz_z')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-
-    problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(ux) = 0')
-
 def sponge_nonlin(problem, domain):
     '''
     sponge zone velocities w nonlin terms
@@ -112,8 +92,8 @@ def sponge_nonlin(problem, domain):
         'dt(ux) - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux + dx(P) / rho0' +
         '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * ux_z')
     problem.add_equation(
-        'dt(uz) + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz + dz(P) / rho0' +
-        '= - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * uz_z')
+        'dt(uz) - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz + dz(P) / rho0' +
+        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * uz_z')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
 
@@ -156,9 +136,12 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
-        (sponge_weak, zero_ic, 'sponge_weak', build_interp_params(8, 4)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 4)),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 8)),
+        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 8)),
+        (sponge_lin, zero_ic, 'sponge_highA_lin',
+         build_interp_params(8, 8, overrides={'A': 0.04})),
+        (sponge_nonlin, bg_ic, 'sponge_highA_nonlin',
+         build_interp_params(8, 8, overrides={'A': 0.04})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 

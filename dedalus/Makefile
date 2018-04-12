@@ -1,8 +1,7 @@
 # openmpi 2.1.1-2
 setup:
 	rm -rf venv
-	virtualenv3 venv --system-site-packages ||\
-		virtualenv venv --system-site-packages
+	virtualenv --python=python3 venv
 	source venv/bin/activate &&\
-		pip install -r requirements.txt &&\
+		pip install --force -r requirements.txt &&\
 		python setup.py build_ext --inplace

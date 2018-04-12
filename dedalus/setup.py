@@ -11,11 +11,7 @@ import os
 import glob
 
 
-# Look for Mercurial tools
-try:
-    import hgapi
-except ImportError:
-    hgapi = None
+hgapi = None
 
 def check_env_var(env_var):
     path = None

@@ -134,7 +134,7 @@ def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vph(g, h, kx, kz):
-    norm = abs(get_omega(g, h, kx, kz)) / (kx**2 + kz**2)
+    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
     return norm * kz, norm * kz
 
 def load(setup_problem,
@@ -166,6 +166,7 @@ def load(setup_problem,
         setup_problem,
         XMAX=XMAX, ZMAX=ZMAX, N_X=N_X, N_Z=N_Z, T_F=T_F, KX=KX, KZ=KZ, H=H,
         RHO0=RHO0, G=G, A=A, NU=NU)
+    z = domain.grid(1, scales=INTERP_Z)
 
     with h5py.File(filename, mode='r') as dat:
         sim_times = np.array(dat['scales']['sim_time'])
@@ -184,14 +185,17 @@ def load(setup_problem,
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    z = domain.grid(1, scales=INTERP_Z)
-    rho0 = RHO0 * np.exp(-z / H)
-    state_vars['E'] = ((rho0 + state_vars['rho']) *
-                       (state_vars['ux']**2 + state_vars['uz']**2)) / 2
+    if 'nonlin' not in name:
+        state_vars['rho'] += RHO0 * np.exp(-z / H)
+        state_vars['P'] += RHO0 * (np.exp(-z / H) - 1) * G * H
+    state_vars['rho1'] = state_vars['rho'] - RHO0 * np.exp(-z / H)
+    state_vars['P1'] = state_vars['P'] - RHO0 * np.exp(-z / H)
+
+    state_vars['E'] = state_vars['rho'] * \
+                       (state_vars['ux']**2 + state_vars['uz']**2) / 2
     state_vars['F_z'] =  state_vars['uz'] * (
-        (rho0 + state_vars['rho']) * (state_vars['ux']**2 + state_vars['uz']**2)
+        state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
         + state_vars['P'])
-    state_vars['rho0'] = rho0 * np.ones(np.shape(state_vars['E']))
     return sim_times, domain, state_vars
 
 def plot(setup_problem,
@@ -212,14 +216,17 @@ def plot(setup_problem,
          INTERP_Z,
          name=None,
          **_):
+    slice_suffix = '(x=0)' # slice suffix
     SAVE_FMT_STR = 't_%d.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz', 'ux', 'rho', 'P', 'rho0']
+    plot_vars = ['uz', 'ux']
     z_vars = ['F_z', 'E'] # sum these over x
-    n_cols = 3
-    n_rows = 3
+    slice_vars = ['%s%s' % (i, slice_suffix)
+                  for i in ['uz', 'ux', 'rho1', 'P1']]
+    n_cols = 4
+    n_rows = 2
     plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
@@ -251,6 +258,8 @@ def plot(setup_problem,
 
     for var in z_vars:
         state_vars[var] = np.sum(state_vars[var], axis=1)
+    for var in slice_vars:
+        state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
@@ -267,11 +276,16 @@ def plot(setup_problem,
             axes.axis(pad_limits(xmesh, zmesh))
             fig.colorbar(p, ax=axes)
             idx += 1
-        for var in z_vars:
+        for var in z_vars + slice_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
             var_dat = state_vars[var]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(var_dat[t_idx], z_pts)
+            if var == 'uz%s' % slice_suffix:
+                p = axes.plot(
+                    A * np.exp(z_pts / (2 * H))
+                        * np.cos(KZ * z_pts - OMEGA * sim_time),
+                    z_pts)
             axes.set_xlim(var_dat.min(), var_dat.max())
             idx += 1
 
