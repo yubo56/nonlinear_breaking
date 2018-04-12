@@ -189,14 +189,28 @@ def load(setup_problem,
         state_vars['rho'] += RHO0 * np.exp(-z / H)
         state_vars['P'] += RHO0 * (np.exp(-z / H) - 1) * G * H
     state_vars['rho1'] = state_vars['rho'] - RHO0 * np.exp(-z / H)
-    state_vars['P1'] = state_vars['P'] - RHO0 * np.exp(-z / H)
+    state_vars['P1'] = state_vars['P'] - RHO0 * (np.exp(-z / H) - 1) * G * H
 
     state_vars['E'] = state_vars['rho'] * \
                        (state_vars['ux']**2 + state_vars['uz']**2) / 2
-    state_vars['F_z'] =  state_vars['uz'] * (
+    state_vars['F_z'] = state_vars['uz'] * (
         state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
         + state_vars['P'])
     return sim_times, domain, state_vars
+
+def get_analytical_sponge(name, z_pts, t, A, RHO0, OMEGA, KX, KZ, H):
+    """ gets the analytical form of the variables for radiative BCs """
+    uz_anal = A * np.exp(z_pts / (2 * H)) \
+        * np.cos(KZ * z_pts - OMEGA * t)
+    rho0 = RHO0 * np.exp(-z_pts / H)
+    analyticals = {
+        'uz': uz_anal,
+        'ux': KZ / KX * uz_anal,
+        'rho1': -rho0 * A / (H * OMEGA)* np.exp(z_pts / (2 * H)) \
+            * np.sin(KZ * z_pts - OMEGA * t),
+        'P1': -rho0 * OMEGA / KX**2 * KZ * uz_anal,
+    }
+    return analyticals[name]
 
 def plot(setup_problem,
          XMAX,
@@ -281,10 +295,11 @@ def plot(setup_problem,
             var_dat = state_vars[var]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(var_dat[t_idx], z_pts)
-            if var == 'uz%s' % slice_suffix:
+            if slice_suffix in var:
                 p = axes.plot(
-                    A * np.exp(z_pts / (2 * H))
-                        * np.cos(KZ * z_pts - OMEGA * sim_time),
+                    get_analytical_sponge(
+                        var.replace(slice_suffix, ''),
+                        z_pts, sim_time, A, RHO0, OMEGA, KX, KZ, H),
                     z_pts)
             axes.set_xlim(var_dat.min(), var_dat.max())
             idx += 1

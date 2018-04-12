@@ -11,7 +11,7 @@ num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 2 * H
-KX = -2 * np.pi / H
+KX = 2 * np.pi / H
 KZ = -(np.pi / 2) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
@@ -41,7 +41,7 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = dt
-    params['NU'] = 0.3 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
     return params
 
 def get_sponge(domain):
@@ -136,12 +136,12 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 8)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 8)),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
+        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 4)),
         (sponge_lin, zero_ic, 'sponge_highA_lin',
-         build_interp_params(8, 8, overrides={'A': 0.04})),
+         build_interp_params(8, 4, overrides={'A': 0.04})),
         (sponge_nonlin, bg_ic, 'sponge_highA_nonlin',
-         build_interp_params(8, 8, overrides={'A': 0.04})),
+         build_interp_params(8, 4, overrides={'A': 0.04})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
