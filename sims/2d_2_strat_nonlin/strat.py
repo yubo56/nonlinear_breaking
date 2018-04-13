@@ -7,7 +7,7 @@ import strat_helper
 
 N_PARALLEL = 8
 H = 1
-num_timesteps = 1e4
+num_timesteps = 5e4
 
 XMAX = H
 ZMAX = 2 * H
@@ -136,12 +136,12 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 4)),
-        (sponge_lin, zero_ic, 'sponge_highA_lin',
-         build_interp_params(8, 4, overrides={'A': 0.04})),
+#       (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(4, 2)),
+#       (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(4, 2)),
+#       (sponge_lin, zero_ic, 'sponge_highA_lin',
+#        build_interp_params(4, 2, overrides={'A': 0.03})),
         (sponge_nonlin, bg_ic, 'sponge_highA_nonlin',
-         build_interp_params(8, 4, overrides={'A': 0.04})),
+         build_interp_params(4, 2, overrides={'A': 0.01})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
