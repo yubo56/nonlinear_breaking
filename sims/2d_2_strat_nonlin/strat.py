@@ -136,10 +136,10 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-#       (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(4, 2)),
-#       (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(4, 2)),
-#       (sponge_lin, zero_ic, 'sponge_highA_lin',
-#        build_interp_params(4, 2, overrides={'A': 0.03})),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(4, 2)),
+        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(4, 2)),
+        (sponge_lin, zero_ic, 'sponge_highA_lin',
+         build_interp_params(4, 2, overrides={'A': 0.03})),
         (sponge_nonlin, bg_ic, 'sponge_highA_nonlin',
          build_interp_params(4, 2, overrides={'A': 0.01})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),

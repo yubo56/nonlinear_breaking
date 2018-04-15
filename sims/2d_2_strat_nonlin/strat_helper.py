@@ -205,7 +205,7 @@ def get_analytical_sponge(name, z_pts, t, A, RHO0, OMEGA, KX, KZ, H):
     rho0 = RHO0 * np.exp(-z_pts / H)
     analyticals = {
         'uz': uz_anal,
-        'ux': KZ / KX * uz_anal,
+        'ux': -KZ / KX * uz_anal,
         'rho1': -rho0 * A / (H * OMEGA)* np.exp(z_pts / (2 * H)) \
             * np.sin(KZ * z_pts - OMEGA * t),
         'P1': -rho0 * OMEGA / KX**2 * KZ * uz_anal,
