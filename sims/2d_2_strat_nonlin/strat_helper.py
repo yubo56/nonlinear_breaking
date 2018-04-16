@@ -58,7 +58,7 @@ def get_solver(setup_problem,
     setup_problem(problem, domain)
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.CNAB2)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = T_F
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
