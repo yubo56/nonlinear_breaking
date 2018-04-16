@@ -87,8 +87,10 @@ def sponge_nonlin(problem, domain, params):
         '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
+    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)',
+                   condition='nx != 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(uz) = 0', condition='nx == 0')
 
 def zero_ic(solver, domain, params):
     ux = solver.state['ux']
