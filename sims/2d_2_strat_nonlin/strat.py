@@ -15,7 +15,7 @@ KX = 2 * np.pi / H
 KZ = -(np.pi / 2) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
-VPH_X, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
+_, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
 T_F = abs(ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
 RHO0 = 1
@@ -26,6 +26,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'N_Z': 256,
               'T_F': T_F,
               'DT': DT,
+              'OMEGA': OMEGA,
               'KX': KX,
               'KZ': KZ,
               'H': H,
@@ -78,9 +79,9 @@ def sponge_lin(problem, domain):
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-        '* (1 - exp(-t / T0))')
+                   '* (1 - exp(-t / T0))')
     problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-        '* (1 - exp(-t / T0))')
+                   '* (1 - exp(-t / T0))')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
@@ -102,9 +103,9 @@ def sponge_nonlin(problem, domain):
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-        '* (1 - exp(-t / T0))')
+                   '* (1 - exp(-t / T0))')
     problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-        '* (1 - exp(-t / T0))')
+                   '* (1 - exp(-t / T0))')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
@@ -146,17 +147,17 @@ def bg_ic(solver, domain):
 def run(bc, ic, name, params_dict):
     assert 'INTERP_X' in params_dict and 'INTERP_Z' in params_dict,\
         'params need INTERP'
-    strat_helper.run_strat_sim(bc, ic, name=name, **params_dict)
+    strat_helper.run_strat_sim(bc, ic, name, params_dict)
     return '%s completed' % name
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin1', build_interp_params(8, 4)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin2',
-         build_interp_params(8, 4, overrides={'A': 0.005})),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin3',
-         build_interp_params(8, 4, overrides={'A': 0.05})),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 8)),
+        # (sponge_nonlin, bg_ic, 'sponge_nonlin1', build_interp_params(8, 4)),
+        # (sponge_nonlin, bg_ic, 'sponge_nonlin2',
+        #  build_interp_params(8, 4, overrides={'A': 0.005})),
+        # (sponge_nonlin, bg_ic, 'sponge_nonlin3',
+        #  build_interp_params(8, 4, overrides={'A': 0.05})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
@@ -169,4 +170,4 @@ if __name__ == '__main__':
             print(r.get())
 
     for bc, _, name, params_dict in tasks:
-        strat_helper.plot(bc, name=name, **params_dict)
+        strat_helper.plot(bc, name, params_dict)
