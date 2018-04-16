@@ -5,4 +5,6 @@ export PYTHONPATH=$PYTHONPATH:~/research/nonlinear_breaking/dedalus
 function shdeactivate () {
     export PYTHONPATH=$_PYTHONPATH
     export _PYTHONPATH=
+
+    unfunction shdeactivate
 }

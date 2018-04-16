@@ -42,7 +42,7 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = dt
-    params['NU'] = 0.01 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
     return params
 
 def get_sponge(domain):
@@ -111,6 +111,8 @@ def sponge_nonlin(problem, domain):
 def zero_ic(solver, domain):
     ux = solver.state['ux']
     uz = solver.state['uz']
+    ux_z = solver.state['ux_z']
+    uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
     gshape = domain.dist.grid_layout.global_shape(scales=1)
@@ -120,9 +122,14 @@ def zero_ic(solver, domain):
     uz['g'] = np.zeros(gshape)
     rho['g'] = np.zeros(gshape)
 
+    ux.differentiate('z', out=ux_z)
+    uz.differentiate('z', out=uz_z)
+
 def bg_ic(solver, domain):
     ux = solver.state['ux']
     uz = solver.state['uz']
+    ux_z = solver.state['ux_z']
+    uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
     gshape = domain.dist.grid_layout.global_shape(scales=1)
@@ -133,6 +140,9 @@ def bg_ic(solver, domain):
     rho['g'] = RHO0 * np.exp(-z / H)
     P['g'] = RHO0 * (np.exp(-z / H) - 1) * G * H
 
+    ux.differentiate('z', out=ux_z)
+    uz.differentiate('z', out=uz_z)
+
 def run(bc, ic, name, params_dict):
     assert 'INTERP_X' in params_dict and 'INTERP_Z' in params_dict,\
         'params need INTERP'
@@ -141,14 +151,12 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(4, 2)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin1', build_interp_params(4, 2)),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
+        (sponge_nonlin, bg_ic, 'sponge_nonlin1', build_interp_params(8, 4)),
         (sponge_nonlin, bg_ic, 'sponge_nonlin2',
-         build_interp_params(4, 2, overrides={'A': 0.005})),
+         build_interp_params(8, 4, overrides={'A': 0.005})),
         (sponge_nonlin, bg_ic, 'sponge_nonlin3',
-         build_interp_params(4, 2, overrides={'A': 0.05})),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin4',
-         build_interp_params(4, 2, overrides={'A': 0.5})),
+         build_interp_params(8, 4, overrides={'A': 0.05})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
