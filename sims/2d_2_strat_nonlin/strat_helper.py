@@ -38,9 +38,9 @@ def default_problem(problem):
     problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
 
 def get_sponge(domain, params):
-    sponge_strength = 6
+    sponge_strength = params['SPONGE_STRENGTH']
     zmax = params['ZMAX']
-    damp_start = zmax * 0.7 # start damping zone
+    damp_start = params['SPONGE_START']
     z = domain.grid(1)
 
     # sponge field
@@ -137,7 +137,6 @@ def get_solver(setup_problem, params):
     problem.parameters['KZ'] = params['KZ']
     problem.parameters['NU'] = params['NU']
     problem.parameters['RHO0'] = params['RHO0']
-    problem.parameters['T0'] = params['T0']
     problem.parameters['omega'] = params['OMEGA']
 
     # rho0 stratification
@@ -318,7 +317,9 @@ def plot(setup_problem, name, params):
                     z_pts)
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            axes.set_xlim(var_dat.min(), var_dat.max())
+            xlims = [var_dat.min(), var_dat.max()]
+            axes.set_xlim(*xlims)
+            p = axes.plot(xlims, [params['SPONGE_START']] * len(xlims), 'r-')
             idx += 1
 
         fig.suptitle(

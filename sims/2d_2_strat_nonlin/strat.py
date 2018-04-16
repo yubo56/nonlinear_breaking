@@ -18,7 +18,6 @@ OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 _, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
 T_F = abs(ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
-RHO0 = 1
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -30,10 +29,11 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KX': KX,
               'KZ': KZ,
               'H': H,
-              'RHO0': RHO0,
+              'RHO0': 1,
               'G': G,
               'A': 0.005,
-              'T0': T_F / 6,
+              'SPONGE_STRENGTH': 6,
+              'SPONGE_START': 0.7 * ZMAX,
               'NUM_SNAPSHOTS': 400}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
