@@ -32,6 +32,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'RHO0': RHO0,
               'G': G,
               'A': 0.005,
+              'T0': T_F / 6,
               'NUM_SNAPSHOTS': 200}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
@@ -41,11 +42,11 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = dt
-    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['NU'] = 0.01 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
     return params
 
 def get_sponge(domain):
-    sponge_strength = 3
+    sponge_strength = 6
     zmax = PARAMS_RAW['ZMAX']
     damp_start = zmax * 0.7 # start damping zone
     z = domain.grid(1)
@@ -76,8 +77,10 @@ def sponge_lin(problem, domain):
     problem.add_equation('dz(uz) - uz_z = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
+        '* (1 - exp(-t / T0))')
+    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
+        '* (1 - exp(-t / T0))')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
@@ -98,8 +101,10 @@ def sponge_nonlin(problem, domain):
     problem.add_equation('dz(uz) - uz_z = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
+        '* (1 - exp(-t / T0))')
+    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
+        '* (1 - exp(-t / T0))')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
@@ -136,12 +141,16 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(4, 2)),
-        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(4, 2)),
-        (sponge_lin, zero_ic, 'sponge_highA_lin',
-         build_interp_params(4, 2, overrides={'A': 0.03})),
-        (sponge_nonlin, bg_ic, 'sponge_highA_nonlin',
-         build_interp_params(4, 2, overrides={'A': 0.01})),
+        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 4)),
+        (sponge_nonlin, bg_ic, 'sponge_nonlin', build_interp_params(8, 4)),
+        (sponge_lin, zero_ic, 'sponge_highA1_lin',
+         build_interp_params(8, 4, overrides={'A': 0.01})),
+        (sponge_nonlin, bg_ic, 'sponge_highA1_nonlin',
+         build_interp_params(8, 4, overrides={'A': 0.01})),
+        (sponge_lin, zero_ic, 'sponge_highA2_lin',
+         build_interp_params(8, 4, overrides={'A': 0.05})),
+        (sponge_nonlin, bg_ic, 'sponge_highA2_nonlin',
+         build_interp_params(8, 4, overrides={'A': 0.05})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 

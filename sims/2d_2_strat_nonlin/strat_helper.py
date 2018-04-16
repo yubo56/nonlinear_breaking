@@ -29,6 +29,7 @@ def get_solver(setup_problem,
                RHO0,
                G,
                A,
+               T0,
                NU):
     # Bases and domain
     x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
@@ -45,6 +46,7 @@ def get_solver(setup_problem,
     problem.parameters['KZ'] = KZ
     problem.parameters['NU'] = NU
     problem.parameters['RHO0'] = RHO0
+    problem.parameters['T0'] = T0
     problem.parameters['omega'] = get_omega(G, H, KX, KZ)
 
     # rho0 stratification
@@ -56,7 +58,7 @@ def get_solver(setup_problem,
     setup_problem(problem, domain)
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.CNAB2)
     solver.stop_sim_time = T_F
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -77,6 +79,7 @@ def run_strat_sim(setup_problem,
                   NUM_SNAPSHOTS,
                   G,
                   A,
+                  T0,
                   NU,
                   name=None,
                   USE_CFL=True,
@@ -92,7 +95,7 @@ def run_strat_sim(setup_problem,
     solver, domain = get_solver(
         setup_problem,
         XMAX=XMAX, ZMAX=ZMAX, N_X=N_X, N_Z=N_Z, T_F=T_F, KX=KX, KZ=KZ, H=H,
-        RHO0=RHO0, G=G, A=A, NU=NU)
+        RHO0=RHO0, G=G, A=A, T0=T0, NU=NU)
 
     # Initial conditions
     set_ICs(solver, domain)
@@ -149,6 +152,7 @@ def load(setup_problem,
          H,
          G,
          A,
+         T0,
          NU,
          RHO0,
          INTERP_X,
@@ -165,7 +169,7 @@ def load(setup_problem,
     solver, domain = get_solver(
         setup_problem,
         XMAX=XMAX, ZMAX=ZMAX, N_X=N_X, N_Z=N_Z, T_F=T_F, KX=KX, KZ=KZ, H=H,
-        RHO0=RHO0, G=G, A=A, NU=NU)
+        RHO0=RHO0, G=G, A=A, T0=T0, NU=NU)
     z = domain.grid(1, scales=INTERP_Z)
 
     with h5py.File(filename, mode='r') as dat:
@@ -198,10 +202,9 @@ def load(setup_problem,
         + state_vars['P'])
     return sim_times, domain, state_vars
 
-def get_analytical_sponge(name, z_pts, t, A, RHO0, OMEGA, KX, KZ, H):
+def get_analytical_sponge(name, z_pts, t, A, T0, RHO0, OMEGA, KX, KZ, H):
     """ gets the analytical form of the variables for radiative BCs """
-    uz_anal = A * np.exp(z_pts / (2 * H)) \
-        * np.cos(KZ * z_pts - OMEGA * t)
+    uz_anal = A * np.exp(z_pts / (2 * H)) * np.cos(KZ * z_pts - OMEGA * t)
     rho0 = RHO0 * np.exp(-z_pts / H)
     analyticals = {
         'uz': uz_anal,
@@ -224,6 +227,7 @@ def plot(setup_problem,
          H,
          G,
          A,
+         T0,
          NU,
          RHO0,
          INTERP_X,
@@ -241,7 +245,7 @@ def plot(setup_problem,
                   for i in ['uz', 'ux', 'rho1', 'P1']]
     n_cols = 4
     n_rows = 2
-    plot_stride = 1
+    plot_stride = 2
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)
@@ -259,6 +263,7 @@ def plot(setup_problem,
                                          H=H,
                                          G=G,
                                          A=A,
+                                         T0=T0,
                                          NU=NU,
                                          RHO0=RHO0,
                                          INTERP_X=INTERP_X,
@@ -288,7 +293,10 @@ def plot(setup_problem,
                                 var_dat[t_idx].T,
                                 vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
-            fig.colorbar(p, ax=axes)
+            cb = fig.colorbar(p, ax=axes)
+            cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
+            plt.xticks(rotation=30)
+            plt.yticks(rotation=30)
             idx += 1
         for var in z_vars + slice_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
@@ -299,14 +307,16 @@ def plot(setup_problem,
                 p = axes.plot(
                     get_analytical_sponge(
                         var.replace(slice_suffix, ''),
-                        z_pts, sim_time, A, RHO0, OMEGA, KX, KZ, H),
+                        z_pts, sim_time, A, T0, RHO0, OMEGA, KX, KZ, H),
                     z_pts)
+            plt.xticks(rotation=30)
+            plt.yticks(rotation=30)
             axes.set_xlim(var_dat.min(), var_dat.max())
             idx += 1
 
         fig.suptitle('Config: %s (t=%.2f, kx=%.2f, kz=%.2f, omega=%.2f)' %
                      (name, sim_time, KX, KZ, OMEGA))
-        fig.subplots_adjust(hspace=0.4, wspace=0.4)
+        fig.subplots_adjust(hspace=0.3, wspace=0.9)
         savefig = SAVE_FMT_STR % (t_idx // plot_stride)
         plt.savefig('%s/%s' % (path, savefig))
         print('Saved %s/%s' % (path, savefig))
