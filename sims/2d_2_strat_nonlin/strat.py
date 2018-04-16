@@ -65,7 +65,7 @@ if __name__ == '__main__':
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin2',
-         build_interp_params(8, 4), {'A': 0.05}),
+         build_interp_params(8, 4, {'A': 0.05})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
     if len(tasks) == 1:
