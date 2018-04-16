@@ -7,7 +7,7 @@ import strat_helper
 
 N_PARALLEL = 8
 H = 1
-num_timesteps = 2e4
+num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 2 * H
@@ -16,7 +16,7 @@ KZ = -(np.pi / 2) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 _, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = abs(ZMAX / VPH_Z) * 4
+T_F = abs(ZMAX / VPH_Z) * 0.4
 DT = T_F / num_timesteps
 RHO0 = 1
 
@@ -58,20 +58,26 @@ if __name__ == '__main__':
          strat_helper.zero_ic,
          'sponge_lin',
          build_interp_params(8, 8)),
-        (strat_helper.sponge_nonlin,
-         strat_helper.bg_ic,
-         'sponge_nonlin1',
-         build_interp_params(8, 8)),
+        # (strat_helper.sponge_nonlin,
+        #  strat_helper.bg_ic,
+        #  'sponge_nonlin1',
+        #  build_interp_params(8, 4)),
+        # (strat_helper.sponge_nonlin,
+        #  strat_helper.bg_ic,
+        #  'sponge_nonlin2',
+        #  build_interp_params(8, 4), {'A': 0.05}),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
+    if len(tasks) == 1:
+        run(*tasks[0])
+    else:
+        with Pool(processes=N_PARALLEL) as p:
+            res = []
+            for task in tasks:
+                res.append(p.apply_async(run, task))
 
-    with Pool(processes=N_PARALLEL) as p:
-        res = []
-        for task in tasks:
-            res.append(p.apply_async(run, task))
-
-        for r in res:
-            print(r.get())
+            for r in res:
+                print(r.get())
 
     for bc, _, name, params_dict in tasks:
         strat_helper.plot(bc, name, params_dict)

@@ -72,10 +72,8 @@ def sponge_lin(problem, domain, params):
     problem.add_equation('dz(uz) - uz_z = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
+    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
