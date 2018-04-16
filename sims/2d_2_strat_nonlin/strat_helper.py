@@ -67,8 +67,10 @@ def sponge_lin(problem, domain, params):
         'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
+    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)',
+                   condition='nx != 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(uz) = 0', condition='nx == 0')
 
 def sponge_nonlin(problem, domain, params):
     '''
@@ -268,7 +270,7 @@ def plot(setup_problem, name, params):
                   for i in ['uz', 'ux', 'rho1', 'P1']]
     n_cols = 4
     n_rows = 2
-    plot_stride = 2
+    plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)
@@ -319,7 +321,7 @@ def plot(setup_problem, name, params):
             plt.yticks(rotation=30)
             xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
-            p = axes.plot(xlims, [params['SPONGE_START']] * len(xlims), 'r-')
+            p = axes.plot(xlims, [params['SPONGE_START']] * len(xlims), 'r--')
             idx += 1
 
         fig.suptitle(
