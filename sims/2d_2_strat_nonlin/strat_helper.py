@@ -40,14 +40,120 @@ def default_problem(problem):
     problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
     problem.add_bc("left(ux) = -KZ / KX * A * cos(KX * x - omega * t)")
 
+def get_sponge(domain, params):
+    sponge_strength = 6
+    zmax = params['ZMAX']
+    damp_start = zmax * 0.7 # start damping zone
+    z = domain.grid(1)
+
+    # sponge field
+    sponge = domain.new_field()
+    sponge.meta['x']['constant'] = True
+    sponge['g'] = sponge_strength * np.maximum(
+        1 - (z - zmax)**2 / (damp_start - zmax)**2,
+        np.zeros(np.shape(z)))
+    return sponge
+
+def sponge_lin(problem, domain, params):
+    '''
+    puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
+    is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
+
+    w/o nonlin terms
+    '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
+    problem.add_equation(
+        'dt(ux) + dx(P) / rho0 - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux = 0')
+    problem.add_equation(
+        'dt(uz) + dz(P) / rho0 + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz = 0')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
+                   '* (1 - exp(-t / T0))')
+    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
+                   '* (1 - exp(-t / T0))')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('right(ux) = 0')
+
+def sponge_nonlin(problem, domain, params):
+    '''
+    sponge zone velocities w nonlin terms
+    '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
+    problem.add_equation(
+        'dt(ux) - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux + dx(P) / rho0' +
+        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * ux_z')
+    problem.add_equation(
+        'dt(uz) - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz + dz(P) / rho0' +
+        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * uz_z')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
+                   '* (1 - exp(-t / T0))')
+    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
+                   '* (1 - exp(-t / T0))')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('right(ux) = 0')
+
+def zero_ic(solver, domain, params):
+    ux = solver.state['ux']
+    uz = solver.state['uz']
+    ux_z = solver.state['ux_z']
+    uz_z = solver.state['uz_z']
+    P = solver.state['P']
+    rho = solver.state['rho']
+    gshape = domain.dist.grid_layout.global_shape(scales=1)
+
+    P['g'] = np.zeros(gshape)
+    ux['g'] = np.zeros(gshape)
+    uz['g'] = np.zeros(gshape)
+    rho['g'] = np.zeros(gshape)
+
+    ux.differentiate('z', out=ux_z)
+    uz.differentiate('z', out=uz_z)
+
+def bg_ic(solver, domain, params):
+    ux = solver.state['ux']
+    uz = solver.state['uz']
+    ux_z = solver.state['ux_z']
+    uz_z = solver.state['uz_z']
+    P = solver.state['P']
+    rho = solver.state['rho']
+    gshape = domain.dist.grid_layout.global_shape(scales=1)
+    z = domain.grid(1)
+
+    ux['g'] = np.zeros(gshape)
+    uz['g'] = np.zeros(gshape)
+    rho['g'] = params['RHO0'] * np.exp(-z / params['H'])
+    P['g'] = params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
+        params['G'] * params['H']
+
+    ux.differentiate('z', out=ux_z)
+    uz.differentiate('z', out=uz_z)
+
 def get_solver(setup_problem, params):
     # Bases and domain
-    x_basis = de.Fourier('x', params['N_X'], interval=(0, params['XMAX']), dealias=3/2)
-    z_basis = de.Chebyshev('z', params['N_Z'], interval=(0, params['ZMAX']), dealias=3/2)
+    x_basis = de.Fourier('x',
+                         params['N_X'],
+                         interval=(0, params['XMAX']),
+                         dealias=3/2)
+    z_basis = de.Chebyshev('z',
+                           params['N_Z'],
+                           interval=(0, params['ZMAX']),
+                           dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz', 'ux_z', 'uz_z'])
+    problem = de.IVP(domain,
+                     variables=['P', 'rho', 'ux', 'uz', 'ux_z', 'uz_z'])
     problem.parameters['L'] = params['XMAX']
     problem.parameters['g'] = params['G']
     problem.parameters['H'] = params['H']
@@ -65,7 +171,7 @@ def get_solver(setup_problem, params):
     rho0['g'] = params['RHO0'] * np.exp(-z / params['H'])
     problem.parameters['rho0'] = rho0
 
-    setup_problem(problem, domain)
+    setup_problem(problem, domain, params)
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
@@ -86,7 +192,7 @@ def run_strat_sim(setup_problem, set_ICs, name, params):
     solver, domain = get_solver(setup_problem, params)
 
     # Initial conditions
-    set_ICs(solver, domain)
+    set_ICs(solver, domain, params)
 
     cfl = CFL(solver,
               initial_dt=params['DT'],
@@ -171,7 +277,8 @@ def get_analytical_sponge(name, z_pts, t, params):
         'rho1': -rho0 * params['A'] / (params['H'] * params['OMEGA']) *\
             np.exp(z_pts / (2 * params['H'])) *\
             np.sin(params['KZ'] * z_pts - params['OMEGA'] * t),
-        'P1': -rho0 * params['OMEGA'] / params['KX']**2 * params['KZ'] * uz_anal,
+        'P1': -rho0 * params['OMEGA'] / params['KX']**2 * params['KZ'] *\
+            uz_anal,
     }
     return analyticals[name]
 

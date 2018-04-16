@@ -46,104 +46,6 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
     return params
 
-def get_sponge(domain):
-    sponge_strength = 6
-    zmax = PARAMS_RAW['ZMAX']
-    damp_start = zmax * 0.7 # start damping zone
-    z = domain.grid(1)
-
-    # sponge field
-    sponge = domain.new_field()
-    sponge.meta['x']['constant'] = True
-    sponge['g'] = sponge_strength * np.maximum(
-        1 - (z - zmax)**2 / (damp_start - zmax)**2,
-        np.zeros(np.shape(z)))
-    return sponge
-
-def sponge_lin(problem, domain):
-    '''
-    puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
-    is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
-
-    w/o nonlin terms
-    '''
-    problem.parameters['sponge'] = get_sponge(domain)
-    problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
-    problem.add_equation(
-        'dt(ux) + dx(P) / rho0 - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux = 0')
-    problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz = 0')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-
-    problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(ux) = 0')
-
-def sponge_nonlin(problem, domain):
-    '''
-    sponge zone velocities w nonlin terms
-    '''
-    problem.parameters['sponge'] = get_sponge(domain)
-    problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
-    problem.add_equation(
-        'dt(ux) - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux + dx(P) / rho0' +
-        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * ux_z')
-    problem.add_equation(
-        'dt(uz) - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz + dz(P) / rho0' +
-        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * uz_z')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-
-    problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(ux) = 0')
-
-def zero_ic(solver, domain):
-    ux = solver.state['ux']
-    uz = solver.state['uz']
-    ux_z = solver.state['ux_z']
-    uz_z = solver.state['uz_z']
-    P = solver.state['P']
-    rho = solver.state['rho']
-    gshape = domain.dist.grid_layout.global_shape(scales=1)
-
-    P['g'] = np.zeros(gshape)
-    ux['g'] = np.zeros(gshape)
-    uz['g'] = np.zeros(gshape)
-    rho['g'] = np.zeros(gshape)
-
-    ux.differentiate('z', out=ux_z)
-    uz.differentiate('z', out=uz_z)
-
-def bg_ic(solver, domain):
-    ux = solver.state['ux']
-    uz = solver.state['uz']
-    ux_z = solver.state['ux_z']
-    uz_z = solver.state['uz_z']
-    P = solver.state['P']
-    rho = solver.state['rho']
-    gshape = domain.dist.grid_layout.global_shape(scales=1)
-    z = domain.grid(1)
-
-    ux['g'] = np.zeros(gshape)
-    uz['g'] = np.zeros(gshape)
-    rho['g'] = RHO0 * np.exp(-z / H)
-    P['g'] = RHO0 * (np.exp(-z / H) - 1) * G * H
-
-    ux.differentiate('z', out=ux_z)
-    uz.differentiate('z', out=uz_z)
-
 def run(bc, ic, name, params_dict):
     assert 'INTERP_X' in params_dict and 'INTERP_Z' in params_dict,\
         'params need INTERP'
@@ -152,12 +54,14 @@ def run(bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (sponge_lin, zero_ic, 'sponge_lin', build_interp_params(8, 8)),
-        # (sponge_nonlin, bg_ic, 'sponge_nonlin1', build_interp_params(8, 4)),
-        # (sponge_nonlin, bg_ic, 'sponge_nonlin2',
-        #  build_interp_params(8, 4, overrides={'A': 0.005})),
-        # (sponge_nonlin, bg_ic, 'sponge_nonlin3',
-        #  build_interp_params(8, 4, overrides={'A': 0.05})),
+        (strat_helper.sponge_lin,
+         strat_helper.zero_ic,
+         'sponge_lin',
+         build_interp_params(8, 8)),
+        (strat_helper.sponge_nonlin,
+         strat_helper.bg_ic,
+         'sponge_nonlin1',
+         build_interp_params(8, 8)),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
 
