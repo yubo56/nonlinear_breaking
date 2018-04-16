@@ -27,18 +27,15 @@ def get_vph(g, h, kx, kz):
 
 def default_problem(problem):
     """ TODO needs updating """
-    problem.add_equation("dx(ux) + uz_z = 0")
+    problem.add_equation("dx(ux) + dz(uz) = 0")
     problem.add_equation("dt(rho) - rho0 * uz / H = 0")
     problem.add_equation(
-        "dt(ux) + dx(P) / rho0 - NU * (dz(ux_z) + dx(dx(ux))) = 0")
+        "dt(ux) + dx(P) / rho0 = 0")
     problem.add_equation(
-        "dt(uz) + dz(P) / rho0 + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) = 0")
-    problem.add_equation("dz(ux) - ux_z = 0")
-    problem.add_equation("dz(uz) - uz_z = 0")
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
 
     problem.add_bc("left(P) = 0", condition="nx == 0")
     problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
-    problem.add_bc("left(ux) = -KZ / KX * A * cos(KX * x - omega * t)")
 
 def get_sponge(domain, params):
     sponge_strength = 6
@@ -62,50 +59,38 @@ def sponge_lin(problem, domain, params):
     w/o nonlin terms
     '''
     problem.parameters['sponge'] = get_sponge(domain, params)
-    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation('dt(rho) - rho0 * uz / H = 0')
     problem.add_equation(
-        'dt(ux) + dx(P) / rho0 - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux = 0')
+        'dt(ux) + dx(P) / rho0 + sponge * ux = 0')
     problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0 - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz = 0')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
+        'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(ux) = 0')
 
 def sponge_nonlin(problem, domain, params):
     '''
     sponge zone velocities w nonlin terms
     '''
     problem.parameters['sponge'] = get_sponge(domain, params)
-    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
     problem.add_equation(
-        'dt(ux) - NU * (dz(ux_z) + dx(dx(ux))) + sponge * ux + dx(P) / rho0' +
-        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * ux_z')
+        'dt(ux) + sponge * ux + dx(P) / rho0' +
+        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
-        'dt(uz) - NU * (dz(uz_z) + dx(dx(uz))) + sponge * uz + dz(P) / rho0' +
-        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * uz_z')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
+        'dt(uz) + sponge * uz + dz(P) / rho0' +
+        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
-    problem.add_bc('left(ux) = -KZ / KX * A * cos(KX * x - omega * t)' +
-                   '* (1 - exp(-t / T0))')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(ux) = 0')
 
 def zero_ic(solver, domain, params):
     ux = solver.state['ux']
     uz = solver.state['uz']
-    ux_z = solver.state['ux_z']
-    uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
     gshape = domain.dist.grid_layout.global_shape(scales=1)
@@ -115,14 +100,9 @@ def zero_ic(solver, domain, params):
     uz['g'] = np.zeros(gshape)
     rho['g'] = np.zeros(gshape)
 
-    ux.differentiate('z', out=ux_z)
-    uz.differentiate('z', out=uz_z)
-
 def bg_ic(solver, domain, params):
     ux = solver.state['ux']
     uz = solver.state['uz']
-    ux_z = solver.state['ux_z']
-    uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
     gshape = domain.dist.grid_layout.global_shape(scales=1)
@@ -133,9 +113,6 @@ def bg_ic(solver, domain, params):
     rho['g'] = params['RHO0'] * np.exp(-z / params['H'])
     P['g'] = params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
         params['G'] * params['H']
-
-    ux.differentiate('z', out=ux_z)
-    uz.differentiate('z', out=uz_z)
 
 def get_solver(setup_problem, params):
     # Bases and domain
@@ -151,7 +128,7 @@ def get_solver(setup_problem, params):
     z = domain.grid(1)
 
     problem = de.IVP(domain,
-                     variables=['P', 'rho', 'ux', 'uz', 'ux_z', 'uz_z'])
+                     variables=['P', 'rho', 'ux', 'uz'])
     problem.parameters['L'] = params['XMAX']
     problem.parameters['g'] = params['G']
     problem.parameters['H'] = params['H']
