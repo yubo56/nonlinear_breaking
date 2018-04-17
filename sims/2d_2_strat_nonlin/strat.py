@@ -84,9 +84,11 @@ if __name__ == '__main__':
          build_interp_params(8, 4, overrides={'A': 0.3})),
 
         (ns_get_solver, ns_sponge_lin, zero_ic,
-         'ns_sponge_lin_once',
-         build_interp_params(8, 8, overrides={
-             'DT': 20 * DT, 'T_F': T_F / 200, 'NUM_SNAPSHOTS': 2})),
+         'ns_sponge_lin',
+         build_interp_params(8, 4, overrides={
+             'DT': 10 * DT,
+             'T_F': T_F / 2,
+             'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
 
         (ns_get_solver, ns_sponge_lin_gradual, zero_ic,
          'ns_sponge_lin_gradual',
@@ -95,7 +97,7 @@ if __name__ == '__main__':
              'T_F': T_F / 2,
              'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
 
-        (ns_get_solver, ns_sponge_nonlin_gradual, zero_ic,
+        (ns_get_solver, ns_sponge_nonlin_gradual, bg_ic,
          'ns_sponge_nonlin_gradual',
          build_interp_params(8, 4, overrides={
              'DT': 10 * DT,

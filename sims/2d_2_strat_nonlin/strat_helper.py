@@ -191,7 +191,6 @@ def _ns_sponge_nonlin(problem, domain, params, bc):
         '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
-
     bc(problem)
 
 def ns_sponge_lin(problem, domain, params):
