@@ -111,6 +111,17 @@ def _ns_bc(problem):
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
+def _ns_bc2(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(dz(uz_z)) = -KZ**2 * A * cos(KX * x - omega * t - 1 /'
+        + '(KZ * H))', condition='nx != 0')
+    problem.add_bc(
+        'left(ux) = -KZ / KX * A * cos(KX * x - omega * t - 1 / (2 * KZ * H))')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(uz) = 0', condition='nx == 0')
+    problem.add_bc('right(ux) = 0')
+
 def _ns_bc_gradual(problem):
     ''' BCs for non-NS '''
     problem.add_bc('left(P) = 0', condition='nx == 0')
@@ -198,6 +209,9 @@ def ns_sponge_lin(problem, domain, params):
 
 def ns_sponge_lin_gradual(problem, domain, params):
     _ns_sponge_lin(problem, domain, params, _ns_bc_gradual)
+
+def ns_sponge_nonlin(problem, domain, params):
+    _ns_sponge_nonlin(problem, domain, params, _ns_bc2)
 
 def ns_sponge_nonlin_gradual(problem, domain, params):
     _ns_sponge_nonlin(problem, domain, params, _ns_bc_gradual)

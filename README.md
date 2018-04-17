@@ -24,24 +24,3 @@ Next, need to go into `dedalus/setup.py` and fix the commented out section. Fina
 cd ~/research/nonlinear_breaking/dedalus/
 MPI_PATH=~/anaconda3 FFTW_PATH=~/fftw make
 ```
-
-# NOTES
-- Pressure term: need on LHS, need a full-rank linear operator for basis by
-  which to expand nonlinear terms
-- Little wiggles = IC + BC weren't div-free!
-    - Tried to smoothly introduce, still wiggles, need to be identically ok for
-      strongly nonlin
-    - Remove dz(ux) (disp term) to free ux (no sharp spikes)
-    - Use neumann BC instead? Seems smoother
-
-- Seems incompressible + driving BC + zero ICis pathological!
-    - MHD simulations (Daniel + last week paper) use driving force instead of BC
-        - Not great for our problem! We have a wave propagating, not driving
-    - Do not streamfunction, 2D only
-    - Anelastic? Could work out nonlinear terms, no div=0 constraints
-
-- To generate:
-    - plots showing dz(ux) at small t spike
-    - video for gradual driving increase at small and large A
-- Rad BC? TODO
-- How handle non-evolution constraint in matrix elements?
