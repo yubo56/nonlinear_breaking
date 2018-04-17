@@ -58,30 +58,37 @@ if __name__ == '__main__':
          strat_helper.zero_ic,
          'sponge_lin',
          build_interp_params(8, 4)),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin1',
          build_interp_params(8, 4)),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin2',
-         build_interp_params(8, 4, overrides={'A': 0.01})),
+         build_interp_params(8, 4, overrides={'A': 0.005})),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin3',
-         build_interp_params(8, 4, overrides={'A': 0.02})),
+         build_interp_params(8, 4, overrides={'A': 0.01})),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin4',
          build_interp_params(8, 4, overrides={'A': 0.03})),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin5',
          build_interp_params(8, 4, overrides={'A': 0.04})),
+
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin6',
          build_interp_params(8, 4, overrides={'A': 0.05})),
+
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
     if len(tasks) == 1:
