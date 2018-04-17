@@ -98,6 +98,13 @@ if __name__ == '__main__':
              'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
 
         (ns_get_solver, ns_sponge_nonlin_gradual, bg_ic,
+         'ns_sponge_nonlin',
+         build_interp_params(8, 4, overrides={
+             'DT': 10 * DT,
+             'T_F': T_F / 2,
+             'A': 0.03})),
+
+        (ns_get_solver, ns_sponge_nonlin_gradual, bg_ic,
          'ns_sponge_nonlin_gradual',
          build_interp_params(8, 4, overrides={
              'DT': 10 * DT,
