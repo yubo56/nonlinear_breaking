@@ -18,6 +18,10 @@ from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 
+###
+### UTILS
+###
+
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
@@ -25,17 +29,21 @@ def get_vph(g, h, kx, kz):
     norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
     return norm * kx, norm * kz
 
-def default_problem(problem):
-    """ TODO needs updating """
-    problem.add_equation("dx(ux) + dz(uz) = 0")
-    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
-    problem.add_equation(
-        "dt(ux) + dx(P) / rho0 = 0")
-    problem.add_equation(
-        "dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
-
-    problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
+def get_analytical_sponge(name, z_pts, t, params):
+    """ gets the analytical form of the variables for radiative BCs """
+    uz_anal = params['A'] * np.exp(z_pts / (2 * params['H'])) *\
+        np.cos(params['KZ'] * z_pts - params['OMEGA'] * t)
+    rho0 = params['RHO0'] * np.exp(-z_pts / params['H'])
+    analyticals = {
+        'uz': uz_anal,
+        'ux': -params['KZ'] / params['KX'] * uz_anal,
+        'rho1': -rho0 * params['A'] / (params['H'] * params['OMEGA']) *\
+            np.exp(z_pts / (2 * params['H'])) *\
+            np.sin(params['KZ'] * z_pts - params['OMEGA'] * t),
+        'P1': -rho0 * params['OMEGA'] / params['KX']**2 * params['KZ'] *\
+            uz_anal,
+    }
+    return analyticals[name]
 
 def get_sponge(domain, params):
     sponge_strength = params['SPONGE_STRENGTH']
@@ -51,48 +59,9 @@ def get_sponge(domain, params):
         np.zeros(np.shape(z)))
     return sponge
 
-def sponge_lin(problem, domain, params):
-    '''
-    puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
-    is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
-
-    w/o nonlin terms
-    '''
-    problem.parameters['sponge'] = get_sponge(domain, params)
-    problem.add_equation('dx(ux) + dz(uz) = 0')
-    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
-    problem.add_equation(
-        'dt(ux) + dx(P) / rho0 + sponge * ux = 0')
-    problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
-
-    problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc(
-        'left(dz(uz)) = - KZ * A * sin(KX * x - omega * t - 1 / (2 * KZ * H))',
-        condition='nx != 0')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(uz) = 0', condition='nx == 0')
-
-def sponge_nonlin(problem, domain, params):
-    '''
-    sponge zone velocities w nonlin terms
-    '''
-    problem.parameters['sponge'] = get_sponge(domain, params)
-    problem.add_equation('dx(ux) + dz(uz) = 0')
-    problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
-    problem.add_equation(
-        'dt(ux) + sponge * ux + dx(P) / rho0' +
-        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * dz(ux)')
-    problem.add_equation(
-        'dt(uz) + sponge * uz + dz(P) / rho0' +
-        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
-
-    problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc(
-        'left(dz(uz)) = - KZ * A * sin(KX * x - omega * t - 1 / (2 * KZ * H))',
-        condition='nx != 0')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(uz) = 0', condition='nx == 0')
+###
+### IC
+###
 
 def zero_ic(solver, domain, params):
     ux = solver.state['ux']
@@ -120,8 +89,126 @@ def bg_ic(solver, domain, params):
     P['g'] = params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
         params['G'] * params['H']
 
-def get_solver(setup_problem, params):
-    # Bases and domain
+###
+### PROBLEM SETUP
+###
+
+def _non_ns_bc(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc(
+        'left(dz(uz)) = - KZ * A * sin(KX * x - omega * t - 1 / (2 * KZ * H))',
+        condition='nx != 0')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(uz) = 0', condition='nx == 0')
+
+def _ns_bc(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
+    problem.add_bc(
+        'left(ux) = -KZ / KX * A * cos(KX * x - omega * t - 1 / (2 * KZ * H))')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('right(ux) = 0')
+
+def _ns_bc_gradual(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = A * cos(KX * x - omega * t) * (1 - exp(-t))')
+    problem.add_bc(
+        'left(ux) = -KZ / KX * A * cos(KX * x - omega * t - 1 / (2 * KZ * H))'
+            + ' * (1 - exp(-t))')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('right(ux) = 0')
+
+def default_problem(problem):
+    """ TODO needs updating """
+    problem.add_equation("dx(ux) + dz(uz) = 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
+    problem.add_equation(
+        "dt(ux) + dx(P) / rho0 = 0")
+    problem.add_equation(
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
+
+    problem.add_bc("left(P) = 0", condition="nx == 0")
+    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
+
+def sponge_lin(problem, domain, params):
+    '''
+    puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
+    is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
+
+    w/o nonlin terms
+    '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + dz(uz) = 0')
+    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
+    problem.add_equation(
+        'dt(ux) + dx(P) / rho0 + sponge * ux = 0')
+    problem.add_equation(
+        'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
+    _non_ns_bc(problem)
+
+def sponge_nonlin(problem, domain, params):
+    ''' sponge zone velocities w nonlin terms '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + dz(uz) = 0')
+    problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
+    problem.add_equation(
+        'dt(ux) + sponge * ux + dx(P) / rho0' +
+        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * dz(ux)')
+    problem.add_equation(
+        'dt(uz) + sponge * uz + dz(P) / rho0' +
+        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
+
+    _non_ns_bc(problem)
+
+def _ns_sponge_lin(problem, domain, params, bc):
+    ''' navier-stokes sponge layer linear '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
+    problem.add_equation(
+        'dt(ux) + dx(P) / rho0 + sponge * ux - ' +
+        'NU * (dx(dx(ux)) + dz(ux_z)) = 0')
+    problem.add_equation(
+        'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz - ' +
+        'NU * (dx(dx(uz)) + dz(uz_z)) = 0')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+    bc(problem)
+
+def _ns_sponge_nonlin(problem, domain, params, bc):
+    ''' sponge zone velocities w nonlin terms '''
+    problem.parameters['sponge'] = get_sponge(domain, params)
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('dt(rho) = -ux * dx(rho) - uz * dz(rho)')
+    problem.add_equation(
+        'dt(ux) + sponge * ux + dx(P) / rho0 - NU * (dx(dx(ux)) + dz(ux_z))' +
+        '= - dx(P) / rho + dx(P) / rho0 - ux * dx(ux) - uz * dz(ux)')
+    problem.add_equation(
+        'dt(uz) + sponge * uz + dz(P) / rho0 - NU * (dx(dx(uz)) + dz(uz_z))' +
+        '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+
+    bc(problem)
+
+def ns_sponge_lin(problem, domain, params):
+    _ns_sponge_lin(problem, domain, params, _ns_bc)
+
+def ns_sponge_lin_gradual(problem, domain, params):
+    _ns_sponge_lin(problem, domain, params, _ns_bc_gradual)
+
+def ns_sponge_nonlin_gradual(problem, domain, params):
+    _ns_sponge_nonlin(problem, domain, params, _ns_bc_gradual)
+
+###
+### SOLVER SETUP
+###
+
+def _get_solver(setup_problem, params, variables):
+    ''' get solver for given variables '''
     x_basis = de.Fourier('x',
                          params['N_X'],
                          interval=(0, params['XMAX']),
@@ -133,8 +220,7 @@ def get_solver(setup_problem, params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain,
-                     variables=['P', 'rho', 'ux', 'uz'])
+    problem = de.IVP(domain, variables=variables)
     problem.parameters['L'] = params['XMAX']
     problem.parameters['g'] = params['G']
     problem.parameters['H'] = params['H']
@@ -160,7 +246,21 @@ def get_solver(setup_problem, params):
     solver.stop_iteration = np.inf
     return solver, domain
 
-def run_strat_sim(setup_problem, set_ICs, name, params):
+def get_solver(setup_problem, params):
+    return _get_solver(setup_problem,
+                       params,
+                       variables=['P', 'rho', 'ux', 'uz'])
+
+def ns_get_solver(setup_problem, params):
+    return _get_solver(setup_problem,
+                       params,
+                       variables=['P', 'rho', 'ux', 'uz', 'uz_z', 'ux_z'])
+
+###
+### ENTRY POINTS
+###
+
+def run_strat_sim(get_solver, setup_problem, set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     try:
         os.makedirs(snapshots_dir)
@@ -200,7 +300,7 @@ def run_strat_sim(setup_problem, set_ICs, name, params):
                         cfl_dt,
                         params['DT'])
 
-def load(setup_problem, name, params):
+def load(get_solver, setup_problem, name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1/{s}_s1_p0.h5'.format(s=snapshots_dir)
@@ -246,23 +346,7 @@ def load(setup_problem, name, params):
         + state_vars['P'])
     return sim_times, domain, state_vars
 
-def get_analytical_sponge(name, z_pts, t, params):
-    """ gets the analytical form of the variables for radiative BCs """
-    uz_anal = params['A'] * np.exp(z_pts / (2 * params['H'])) *\
-        np.cos(params['KZ'] * z_pts - params['OMEGA'] * t)
-    rho0 = params['RHO0'] * np.exp(-z_pts / params['H'])
-    analyticals = {
-        'uz': uz_anal,
-        'ux': -params['KZ'] / params['KX'] * uz_anal,
-        'rho1': -rho0 * params['A'] / (params['H'] * params['OMEGA']) *\
-            np.exp(z_pts / (2 * params['H'])) *\
-            np.sin(params['KZ'] * z_pts - params['OMEGA'] * t),
-        'P1': -rho0 * params['OMEGA'] / params['KX']**2 * params['KZ'] *\
-            uz_anal,
-    }
-    return analyticals[name]
-
-def plot(setup_problem, name, params):
+def plot(get_solver, setup_problem, name, params):
     slice_suffix = '(x=0)' # slice suffix
     SAVE_FMT_STR = 't_%d.png'
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -280,7 +364,7 @@ def plot(setup_problem, name, params):
         print('%s.mp4 already exists, not regenerating' % name)
         return
 
-    sim_times, domain, state_vars = load(setup_problem, name, params)
+    sim_times, domain, state_vars = load(get_solver, setup_problem, name, params)
 
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
