@@ -7,7 +7,7 @@ import strat_helper
 
 N_PARALLEL = 8
 H = 1
-num_timesteps = 3e4
+num_timesteps = 1e5
 
 XMAX = H
 ZMAX = 2.5 * H
@@ -16,7 +16,7 @@ KZ = -(np.pi / 2) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = strat_helper.get_omega(G, H, KX, KZ)
 _, VPH_Z = strat_helper.get_vph(G, H, KX, KZ)
-T_F = abs(ZMAX / VPH_Z) * 4
+T_F = abs(ZMAX / VPH_Z) * 8
 DT = T_F / num_timesteps
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -34,7 +34,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'A': 0.005,
               'SPONGE_STRENGTH': 6,
               'SPONGE_START': 0.7 * ZMAX,
-              'NUM_SNAPSHOTS': 200}
+              'NUM_SNAPSHOTS': 400}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params = {**PARAMS_RAW, **(overrides or {})}
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         (strat_helper.sponge_nonlin,
          strat_helper.bg_ic,
          'sponge_nonlin2',
-         build_interp_params(8, 4, overrides={'A': 0.05})),
+         build_interp_params(8, 4, overrides={'A': 0.02})),
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
     if len(tasks) == 1:

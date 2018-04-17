@@ -67,8 +67,7 @@ def sponge_lin(problem, domain, params):
         'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)' +\
-                   '* (1 - exp(-t))',
+    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)',
                    condition='nx != 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('left(uz) = 0', condition='nx == 0')
@@ -88,8 +87,7 @@ def sponge_nonlin(problem, domain, params):
         '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
-    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)' +\
-                   '* (1 - exp(-t))',
+    problem.add_bc('left(dz(uz)) = - KZ * A * sin(KX * x - omega * t)',
                    condition='nx != 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('left(uz) = 0', condition='nx == 0')
@@ -272,8 +270,8 @@ def plot(setup_problem, name, params):
     z_vars = ['F_z', 'E'] # sum these over x
     slice_vars = ['%s%s' % (i, slice_suffix)
                   for i in ['uz', 'ux', 'rho1', 'P1']]
-    n_cols = 4
-    n_rows = 2
+    n_cols = 3
+    n_rows = 3
     plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
@@ -331,7 +329,7 @@ def plot(setup_problem, name, params):
         fig.suptitle(
             'Config: %s (t=%.2f, kx=%.2f, kz=%.2f, omega=%.2f)' %
             (name, sim_time, params['KX'], params['KZ'], params['OMEGA']))
-        fig.subplots_adjust(hspace=0.3, wspace=0.9)
+        fig.subplots_adjust(hspace=0.5, wspace=0.6)
         savefig = SAVE_FMT_STR % (t_idx // plot_stride)
         plt.savefig('%s/%s' % (path, savefig))
         print('Saved %s/%s' % (path, savefig))
