@@ -18,5 +18,7 @@
     - Do not streamfunction, 2D only
     - Anelastic? Could work out nonlinear terms, no div=0 constraints
 
-- Rad BC? TODO
-- How handle non-evolution constraint in matrix elements?
+## TODO
+- Rad BC?
+- Check whether k dot u breaks?
+- Check w/ sutherland paper?

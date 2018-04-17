@@ -211,6 +211,9 @@ def ns_sponge_lin_gradual(problem, domain, params):
     _ns_sponge_lin(problem, domain, params, _ns_bc_gradual)
 
 def ns_sponge_nonlin(problem, domain, params):
+    _ns_sponge_nonlin(problem, domain, params, _ns_bc)
+
+def ns_sponge_nonlin2(problem, domain, params):
     _ns_sponge_nonlin(problem, domain, params, _ns_bc2)
 
 def ns_sponge_nonlin_gradual(problem, domain, params):

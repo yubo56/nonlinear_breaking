@@ -86,14 +86,6 @@ if __name__ == '__main__':
              'T_F': T_F / 2,
              'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
 
-        # try dz(uz_z) BC?
-        (ns_get_solver, ns_sponge_nonlin, bg_ic,
-         'ns_sponge_nonlin',
-         build_interp_params(8, 4, overrides={
-             'DT': 10 * DT,
-             'T_F': T_F / 2,
-             'A': 0.03})),
-
         # nonlinear gradual, still blows up
         (ns_get_solver, ns_sponge_nonlin_gradual, bg_ic,
          'ns_sponge_nonlin_gradual',
@@ -101,6 +93,31 @@ if __name__ == '__main__':
              'DT': 10 * DT,
              'T_F': T_F / 2,
              'A': 0.03})),
+
+        # try dz(uz_z) BC (force-like)
+        (ns_get_solver, ns_sponge_nonlin2, bg_ic,
+         'ns_sponge_nonlin1',
+         build_interp_params(8, 4, overrides={
+             'A': 0.03})),
+
+        # try dz(uz_z) BC at higher amplitude
+        (ns_get_solver, ns_sponge_nonlin2, bg_ic,
+         'ns_sponge_nonlin2',
+         build_interp_params(8, 4, overrides={
+             'A': 0.6})),
+
+        # try dz(uz_z) BC at higher amplitude
+        (ns_get_solver, ns_sponge_nonlin2, bg_ic,
+         'ns_sponge_nonlin3',
+         build_interp_params(8, 4, overrides={
+             'A': 0.1})),
+
+        # try dz(uz_z) BC at higher amplitude
+        (ns_get_solver, ns_sponge_nonlin2, bg_ic,
+         'ns_sponge_nonlin4',
+         build_interp_params(8, 4, overrides={
+             'A': 0.2})),
+
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 4)),
     ]
     if len(tasks) == 1:
