@@ -473,7 +473,7 @@ that these two agree in general; Sutherland's formula seems to be derived for a
 traveling wavepacket whereas we have no such thing. We do not use this
 expression since the Landau \& Lifshitz expression works well.
 
-\subsection{Supressing Reflection}
+\section{Supressing Reflection}
 
 Sourced from \url{https://people.maths.ox.ac.uk/trefethen/6all.pdf}. There are
 largely two ways to do this. The first is to add a damping zone, a region in
@@ -490,6 +490,8 @@ zero but $\rho, P$ must capture the stratification and so cannot easily be
 artificially damped (maybe? Revisit if this does poorly compared to damping all
 linear variables, and damp the nonlinear variables to their
 equilibrium/stratified values).
+
+\subsection{First Order}
 
 In order to compute the reflecting boundary condition, we must find a
 sequence of differential operators that well approxmiates the system of PDEs. We
@@ -512,10 +514,10 @@ since our system is dissipation free, reflection grows. Moreover, since any
 reflected components seem to have different $k_x, k_z, \omega$, the second time
 they're incident on the boundary, our above condition becomes wildly inaccurate.
 
-\section{Incompressible, Stratified w/ Gravity, Nonlinear}
+\section{The Difficulty of the Incompressible, Nonlinear Problem}
 
-We consider the problem where $\rho_1 \sim \rho_0$, where we cannot make such a
-perturbative expansion. We write down thus nonlinear fluid equations
+We consider the problem where both advective terms are kept and $\rho_1 \sim
+\rho_0$. We write down thus nonlinear fluid equations
 \begin{equation}
     \begin{split}
         \pd{\rho}{t} + \vec{u} \cdot \p*{\vec{\nabla}\rho} &= 0,\\
@@ -526,6 +528,170 @@ perturbative expansion. We write down thus nonlinear fluid equations
 \end{equation}
 Note that we cannot even subtract off hydrostatic equilibrium anymore since
 $\rho$ can deviate greatly from the normal $\rho_0e^{-z/H}$!
+
+\subsection{Rearrangement for Dedalus}
+
+In order to simulate this at all in a spectral program, recall the way that
+nonlinear PDEs are decomposed in a spectral code. Given a phase space $Q$,
+consider first a system of PDEs expressible in form
+\begin{equation}
+    \dot{Q} + \bm{L}Q + f(Q) = g
+\end{equation}
+where $\dot{Q}$ is the time derivative, $\bm{L}$ is some linear operator, $f(Q)$
+are nonlinear terms and $g$ is an arbitrary driving function. Spectral codes
+work by re-casting the operators to be purely algebraic in an appropriate
+spectral basis consisting of some $\varphi_i$ trial and $\xi_i$ test functions.
+The \emph{tau spectral method} that Dedalus uses considers using the trial
+functions as the test functions, so the effective decomposition that is
+performed is
+\begin{equation}
+    \bra*{\varphi_i}\dot{Q} + \bm{L}Q \ket*{\varphi_j}
+        = \dot{Q}_i + L_{ij}Q_q = \bra*{\varphi_i}-f(Q)  + g \ket*{\varphi_i}.
+\end{equation}
+It is then clear that $-f(Q) + g$ can just be treated as inhomogeneous source
+terms, and over a short $\Delta t$ it can be approximated via $-f(Q_0) + g$.
+This first-order inhomegeneous ODE then admits closed form exact solutions
+$e^{-L_{ij}t}\p*{\dots}$.
+
+One can imagine, for this matter, that $\rd{}{t}$ can be wrapped in the $L_{ij}$
+operator and the timestepping computed implicitly; I believe this is what
+Dedalus does, implicitly timestepping the left hand side and explicitly the
+inhomogeneous terms.
+
+Both of these procedures require $\bm{L}$ linear operator or $\rd{}{t} + \bm{L}$
+to be full rank, or invertible. This is enforced analytically by requiring the
+same number of BCs as derivatives, and numerically this is little different.
+This is why it is possible to have components of $Q$ that are not differentiated
+$\partial_t$ but still have well-defined time evolutions; the only condition
+required is that the linear terms of the PDE make up a full-rank operator.
+Hence, in our linear incompressible equations, we permitted use of $\vec{\nabla}
+\cdot \vec{u}_1 = 0$ in lieu of a $\pd{P}{t}$ explicit equation of motion; so
+long as the gauge for $P$ (which only appears in derivatives) is properly set,
+the operator is full rank and numerically well-defined.
+
+In the case of the full nonlinear equations though, it bears noting that $P$
+only appears in nonlinear terms! Thus, the linear terms clearly cannot have full
+rank since they fail to reference $P$ at all. We remedy this by re-casting the
+momentum equation as
+\begin{equation}
+    \pd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho_0}
+        = -\vec{\nabla}P\p*{\frac{1}{\rho} - \frac{1}{\rho_0}}
+            + \vec{g}.
+\end{equation}
+This ensures that, along with suitable gauge choice for $P$, the linear
+operators on the left hand side of the equation have full rank. The remaining
+equations
+\begin{subequations}
+    \begin{align}
+        \pd{\rho}{t} &= -\vec{u} \cdot \vec{\nabla}\rho,\\
+        \vec{\nabla} \cdot \vec{u} &= 0,
+    \end{align}
+\end{subequations}
+remain unchanged.
+
+\subsection{Pathology with $u_z$ BCs}
+
+Our problem turns out to be ill-conditioned, the pathology arising from our
+driving term in conjunction with the incompressibility constraint. Since we want
+to model the propagation of waves from where they are excited, rather than
+exciting them directly in our problem, we must drive our region of interest via
+boundary conditions rather than forcing terms.
+
+By driving via boundary conditions, we can only specify boundary conditions on
+the variables being differentiated $\partial_z$ in our equations of motion,
+since we enforce fully periodic BCs in $x$ via using a Fourier spectral
+decomposition. Thus, we are restricted to enforcing BCs on either $\vec{u}$ or
+$P$.
+
+It turns out that by using BCs on $\vec{u}$, we run into a problem: the BCs we
+specify on $u_z$ or its derivatives will in general affect grid points
+$\partial_z u_{z, 1x}$ while those specified on $u_x$ can only affect
+$\partial_x u_{x, 0x}$. This means that $\partial_x u_x$ will pick up
+sharp jerks by being coupled to the BC, producing high frequency components in
+$u_x$ as can be seen in \autoref{fig:agree_plots}. These come from enforcing the
+divergence-free condition too literally at the boundary. Not that the figure was
+produced with only a Dirichlet BC on $u_z$, no BCs on $u_x$, in a linear system
+with absorbing BCs.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../sims/2d_1_strat/agree_plots/sponge_2.png}
+    \caption{Note the jaggedness in $u_x$ induced by a Dirichlet BC on
+    $u_z$.}\label{fig:agree_plots}
+\end{figure}
+
+This problem seems to be remedied somewhat by instead enforcing Neumann BCs on
+$u_z$, or even when allowing dissipation enforcing Neumann BCs on $\partial_z
+u_z$ (the extra derivatives granted by $\nu \nabla^2 \vec{u}$ let us specify
+higher order BCs). However, in the fully nonlinear system we still observe
+divergences near $z=0$ regardless of how smooth of BCs we use on $u_z$.
+Moreover, since the discontinuities come from the nature of the BC and not its
+strength, we run into these instabilities regardless of how gradually we
+introduce the BC (e.g.\ we could consider multiplying by $1 - e^{-t/\tau}$ to
+gradually introduce the BC, but this turns out also to be unstable).
+
+There are thus three possible solutions to this:
+\begin{itemize}
+    \item Consider BCs only on $P$, the only other choice of dynamical variable.
+
+    \item Consider using a $\nabla^2 P$ equation instead of a $\vec{\nabla}
+        \cdot \vec{u} = 0$ constraint. The correct choice of BCs in this case is
+        discussed in Nordstrom et al, 2006.
+
+    \item Change the system of equations to no longer consider an incompressible
+        system; the anelastic system is an attractive alternative. This boasts
+        the advantage of not having an algebraic constraint equation.
+\end{itemize}
+
+\section{Limits of the Incompressibility and Anelasticity Assumptions}
+
+To get a better handle on the regimes of validity of the incompressible and
+anelastic approximations, we return to the full fluid equations
+\begin{equation}
+    \begin{split}
+        \pd{\rho}{t} + \vec{\nabla} \cdot \p*{\rho \vec{u}} &= 0,\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u} +
+            \frac{\vec{\nabla}P}{\rho} - \vec{g} &= 0.
+    \end{split}
+\end{equation}
+Furthermore, we assume small perturbations $\delta P = c_s^2 \delta \rho$ where
+$c_s^2$ is the sound speed, also the velocity at which an adiabatic perturbation
+is restored. We drop the $-\vec{g}$ from the analysis assuming that it is
+largely negated by an appropriate background $P$.
+
+Given these considerations, we consider in what limit we may presume the fluid
+to be incompressible. Consider if $\abs*{\vec{u}} \ll c_s$, then for some
+characteristic frequency $\omega$ and wavenumber $k$ the momentum equation
+scales as $\omega u + ku^2 + c_s^2 \delta \rho/\rho = 0$. Comparing scales it is
+thus clear that $\delta \rho \ll \rho$ in this limit. Then, considering the
+mass continuity equation, we recognize that the scalings are $\omega \delta \rho
++ \rho \vec{\nabla} \cdot \vec{u} + k\delta \rho u = 0$. Thus, $\vec{\nabla}
+\cdot \vec{u} = 0$ necessarily, since $\rho$ is much larger than the other two
+terms, and we obtain the incompressible mass continuity equation from the other
+two terms. While this is obviously not a very careful treatment, it should
+suffice to convince us that $u \ll c, \delta \rho \ll \rho, \vec{\nabla} \cdot
+\vec{u} = 0$ are all roughly equivalent conditions.
+
+On the other hand, when may we drop the total derivative terms? This seems to be
+a slightly different criterion, and indeed we may compare $\pd{\vec{u}}{t} +
+\p*{\vec{u} \cdot \vec{\nabla}} \vec{u} \sim \omega \vec{u} + ku^2$. Thus, the
+second term is dominated by the first term when $\vec{u} \ll \vec{v}_{ph}$ where
+$\vec{v}_{ph} \equiv \frac{\omega}{k}\hat{k}$ is the phase velocity. Recall that
+for our stratified waves that $\omega \leq N = \sqrt{g/H}$ as a point of
+reference. So we require $u \ll v_{ph}$ to be able to drop the total derivative
+terms.
+
+Since in general $v_{ph} \ll c_s$, we thus identify that there are three
+regimes. The first, $u \ll v_{ph}$, we solve the completely linear problem.
+Then, for $v_{ph} \lesssim u \ll c_s$, we must begin to consider the advective
+terms but are still allowed to assume $\rho_1 \ll \rho_0$, an assumption that is
+only violated when $u \sim c_s$.
+
+If we look ahead to the anelastic system derivation, we can identify that the
+anelastic approximation corresponds to assuming $c_s^2 \gg uv_{ph}$, making no
+assertion of the scale between $u, v_{ph}$. Thus, we can also consider the
+anelastic approximation with advective terms just fine in teh regime $v_{ph}
+\lesssim u$, and if this is sufficient to induce wave breaking then we may never
+need to consider the $\rho_1 \sim \rho_0$ enormous perturbations.
 
 \clearpage
 
