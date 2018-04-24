@@ -632,15 +632,20 @@ gradually introduce the BC, but this turns out also to be unstable).
 There are thus three possible solutions to this:
 \begin{itemize}
     \item Consider BCs only on $P$, the only other choice of dynamical variable.
+        This seems to also exhibit instabilities near $z = 0$.
 
     \item Consider using a $\nabla^2 P$ equation instead of a $\vec{\nabla}
         \cdot \vec{u} = 0$ constraint. The correct choice of BCs in this case is
-        discussed in Nordstrom et al, 2006.
+        discussed in Nordstrom et al, 2006. We choose not to investigate this.
 
     \item Change the system of equations to no longer consider an incompressible
         system; the anelastic system is an attractive alternative. This boasts
         the advantage of not having an algebraic constraint equation.
 \end{itemize}
+
+TODO Can taking $\rho_1 \ll \rho_0$, giving us a full rank operator w/o doing
+the janky double add thing, solve in the incompressible limit? Otherwise, go
+anelastic.
 
 \section{Limits of the Incompressibility and Anelasticity Assumptions}
 
