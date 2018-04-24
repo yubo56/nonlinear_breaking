@@ -11,5 +11,5 @@ function shdeactivate () {
     unalias rsync_from
 }
 
-alias rsync_to='rm -f *.mp4 && find . -iname *.png -delete && rsync -a --delete . yubosu@exo3.astro.cornell.edu:$(dirs)/..'
-alias rsync_from='rsync -a --delete yubosu@exo3.astro.cornell.edu:$(dirs) ..'
+alias rsync_to='rm -f *.mp4 snapshots*/**/*.png && rsync -aP --delete . yubosu@exo3.astro.cornell.edu:$(dirs)'
+alias rsync_from='rsync -aP --delete yubosu@exo3.astro.cornell.edu:$(dirs) ..'
