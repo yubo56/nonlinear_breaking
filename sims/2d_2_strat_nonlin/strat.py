@@ -99,15 +99,20 @@ if __name__ == '__main__':
         #  'ns_sponge_nonlin1',
         #  build_interp_params(8, 2)),
 
-        # use pressure to drive at boundary
-        (get_solver, sponge_nonlin_p_bc, bg_ic,
-         'sponge_p_bc',
-         build_interp_params(8, 8)),
-
-        # use pressure to drive at boundary
+        # use pressure to drive at boundary, linear
         (get_solver, sponge_lin_p_bc, zero_ic,
-         'sponge_p_bc2',
-         build_interp_params(8, 8)),
+         'sponge_p_bc',
+         build_interp_params(8, 4)),
+
+        # use pressure to drive at boundary, nonlin
+        (get_solver, sponge_nonlin_p_bc, bg_ic,
+         'sponge_p_bc_nonlin1',
+         build_interp_params(8, 4)),
+
+        # higher-A nonlin pressure drive
+        (get_solver, sponge_nonlin_p_bc, bg_ic,
+         'sponge_p_bc_nonlin2',
+         build_interp_params(8, 4, overrides={'A': 0.02})),
 
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 2)),
     ]

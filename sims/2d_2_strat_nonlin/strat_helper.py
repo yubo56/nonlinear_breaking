@@ -104,8 +104,8 @@ def _non_ns_bc(problem):
 
 def _non_ns_p_bc(problem):
     ''' BCs for non-NS '''
-    problem.add_bc('left(dz(P)) = -omega * RHO0 * A * KZ**2 / KX ** 2 *' +
-                   'sin(KX * x - omega * t)', condition='nx != 0')
+    problem.add_bc('left(dz(P)) = omega * RHO0 * A * KZ**2 / KX ** 2 *' +
+                   'sin(KX * x - omega * t + 1 / (KZ * H))', condition='nx != 0')
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('right(uz) = 0')
 
@@ -131,9 +131,12 @@ def _ns_bc2(problem):
 
 def _ns_p_bc(problem):
     ''' BCs for non-NS '''
-    problem.add_bc('left(P) = -omega * RHO0 * A * KZ / KX ** 2 * cos(KX * x - omega * t)')
-    problem.add_bc(
-        'left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
+    problem.add_bc('left(dz(P)) = omega * RHO0 * A * KZ**2 / KX ** 2 *' +
+                   'sin(KX * x - omega * t + 1 / (KZ * H))', condition='nx != 0')
+    problem.add_bc('left(dz(uz_z)) = -KZ**2 * A * cos(KX * x - omega * t - 1 /'
+        + '(KZ * H))', condition='nx != 0')
+    problem.add_bc('left(uz) = 0', condition='nx == 0')
+    problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('right(uz) = 0')
     problem.add_bc('right(ux) = 0')
 
