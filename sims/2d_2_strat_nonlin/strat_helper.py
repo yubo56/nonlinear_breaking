@@ -104,6 +104,13 @@ def _non_ns_bc(problem):
 
 def _non_ns_p_bc(problem):
     ''' BCs for non-NS '''
+    problem.add_bc('left(P) = -omega * RHO0 * A * KZ / KX ** 2 *' +
+                   'cos(KX * x - omega * t - 1 / (2 * KZ * H))', condition='nx != 0')
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('right(uz) = 0')
+
+def _non_ns_dp_bc(problem):
+    ''' BCs for non-NS '''
     problem.add_bc('left(dz(P)) = omega * RHO0 * A * KZ**2 / KX ** 2 *' +
                    'sin(KX * x - omega * t + 1 / (KZ * H))', condition='nx != 0')
     problem.add_bc('left(P) = 0', condition='nx == 0')
@@ -129,7 +136,7 @@ def _ns_bc2(problem):
     problem.add_bc('left(uz) = 0', condition='nx == 0')
     problem.add_bc('right(ux) = 0')
 
-def _ns_p_bc(problem):
+def _ns_dp_bc(problem):
     ''' BCs for NS, pressure '''
     problem.add_bc('left(dz(P)) = omega * RHO0 * A * KZ**2 / KX ** 2 *' +
                    'sin(KX * x - omega * t + 1 / (KZ * H))', condition='nx != 0')
@@ -170,6 +177,9 @@ def sponge_lin(problem, domain, params):
     _sponge_lin(problem, domain, params, _non_ns_bc)
 
 def sponge_lin_p_bc(problem, domain, params):
+    _sponge_lin(problem, domain, params, _non_ns_dp_bc)
+
+def sponge_lin_dp_bc(problem, domain, params):
     _sponge_lin(problem, domain, params, _non_ns_p_bc)
 
 def _sponge_nonlin(problem, domain, params, bc):
@@ -189,7 +199,7 @@ def _sponge_nonlin(problem, domain, params, bc):
 def sponge_nonlin(problem, domain, params):
     _sponge_nonlin(problem, domain, params, _non_ns_bc)
 
-def sponge_nonlin_p_bc(problem, domain, params):
+def sponge_nonlin_dp_bc(problem, domain, params):
     _sponge_nonlin(problem, domain, params, _non_ns_p_bc)
 
 def _ns_sponge_lin(problem, domain, params, bc):
