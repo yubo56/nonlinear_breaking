@@ -7,4 +7,9 @@ function shdeactivate () {
     export _PYTHONPATH=
 
     unfunction shdeactivate
+    unalias rsync_to
+    unalias rsync_from
 }
+
+alias rsync_to='rm -f *.mp4 && find . -iname *.png -delete && rsync -a --delete . yubosu@exo3.astro.cornell.edu:$(dirs)/..'
+alias rsync_from='rsync -a --delete yubosu@exo3.astro.cornell.edu:$(dirs) ..'

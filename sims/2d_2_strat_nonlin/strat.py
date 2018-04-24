@@ -100,14 +100,14 @@ if __name__ == '__main__':
         #  build_interp_params(8, 2)),
 
         # use pressure to drive at boundary
-        (ns_get_solver, ns_sponge_nonlin_p_bc, bg_ic,
-         'ns_sponge_p_bc',
-         build_interp_params(8, 4)),
+        (get_solver, sponge_nonlin_p_bc, bg_ic,
+         'sponge_p_bc',
+         build_interp_params(8, 8)),
 
         # use pressure to drive at boundary
-        (ns_get_solver, ns_sponge_nonlin_p_bc, bg_ic,
-         'ns_sponge_p_bc',
-         build_interp_params(8, 4, overrides={'A': 0.02})),
+        (get_solver, sponge_lin_p_bc, zero_ic,
+         'sponge_p_bc2',
+         build_interp_params(8, 8)),
 
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 2)),
     ]

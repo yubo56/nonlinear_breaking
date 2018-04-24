@@ -102,6 +102,13 @@ def _non_ns_bc(problem):
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('left(uz) = 0', condition='nx == 0')
 
+def _non_ns_p_bc(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(dz(P)) = -omega * RHO0 * A * KZ**2 / KX ** 2 *' +
+                   'sin(KX * x - omega * t)', condition='nx != 0')
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('right(uz) = 0')
+
 def _ns_bc(problem):
     ''' BCs for non-NS '''
     problem.add_bc('left(P) = 0', condition='nx == 0')
@@ -140,7 +147,7 @@ def _ns_bc_gradual(problem):
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
 
-def sponge_lin(problem, domain, params):
+def _sponge_lin(problem, domain, params, bc):
     '''
     puts a -gamma(z) * q damping on all dynamical variables, where gamma(z)
     is the sigmoid: damping * exp(steep * (z - z_sigmoid)) / (1 + exp(...))
@@ -154,9 +161,15 @@ def sponge_lin(problem, domain, params):
         'dt(ux) + dx(P) / rho0 + sponge * ux = 0')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
-    _non_ns_bc(problem)
+    bc(problem)
 
-def sponge_nonlin(problem, domain, params):
+def sponge_lin(problem, domain, params):
+    _sponge_lin(problem, domain, params, _non_ns_bc)
+
+def sponge_lin_p_bc(problem, domain, params):
+    _sponge_lin(problem, domain, params, _non_ns_p_bc)
+
+def _sponge_nonlin(problem, domain, params, bc):
     ''' sponge zone velocities w nonlin terms '''
     problem.parameters['sponge'] = get_sponge(domain, params)
     problem.add_equation('dx(ux) + dz(uz) = 0')
@@ -168,7 +181,13 @@ def sponge_nonlin(problem, domain, params):
         'dt(uz) + sponge * uz + dz(P) / rho0' +
         '= -g - dz(P) / rho + dz(P) / rho0- ux * dx(uz) - uz * dz(uz)')
 
-    _non_ns_bc(problem)
+    bc(problem)
+
+def sponge_nonlin(problem, domain, params):
+    _sponge_nonlin(problem, domain, params, _non_ns_bc)
+
+def sponge_nonlin_p_bc(problem, domain, params):
+    _sponge_nonlin(problem, domain, params, _non_ns_p_bc)
 
 def _ns_sponge_lin(problem, domain, params, bc):
     ''' navier-stokes sponge layer linear '''
