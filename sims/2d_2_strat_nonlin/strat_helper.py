@@ -110,7 +110,7 @@ def _non_ns_p_bc(problem):
     problem.add_bc('right(uz) = 0')
 
 def _ns_bc(problem):
-    ''' BCs for non-NS '''
+    ''' BCs for NS, dirichlet '''
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('left(uz) = A * cos(KX * x - omega * t)')
     problem.add_bc(
@@ -119,7 +119,7 @@ def _ns_bc(problem):
     problem.add_bc('right(ux) = 0')
 
 def _ns_bc2(problem):
-    ''' BCs for non-NS '''
+    ''' BCs for NS, dz(uz_z) '''
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('left(dz(uz_z)) = -KZ**2 * A * cos(KX * x - omega * t - 1 /'
         + '(KZ * H))', condition='nx != 0')
@@ -130,7 +130,7 @@ def _ns_bc2(problem):
     problem.add_bc('right(ux) = 0')
 
 def _ns_p_bc(problem):
-    ''' BCs for non-NS '''
+    ''' BCs for NS, pressure '''
     problem.add_bc('left(dz(P)) = omega * RHO0 * A * KZ**2 / KX ** 2 *' +
                    'sin(KX * x - omega * t + 1 / (KZ * H))', condition='nx != 0')
     problem.add_bc('left(dz(uz_z)) = -KZ**2 * A * cos(KX * x - omega * t - 1 /'
