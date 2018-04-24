@@ -122,6 +122,14 @@ def _ns_bc2(problem):
     problem.add_bc('left(uz) = 0', condition='nx == 0')
     problem.add_bc('right(ux) = 0')
 
+def _ns_p_bc(problem):
+    ''' BCs for non-NS '''
+    problem.add_bc('left(P) = -omega * RHO0 * A * KZ / KX ** 2 * cos(KX * x - omega * t)')
+    problem.add_bc(
+        'left(ux) = -KZ / KX * A * cos(KX * x - omega * t)')
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('right(ux) = 0')
+
 def _ns_bc_gradual(problem):
     ''' BCs for non-NS '''
     problem.add_bc('left(P) = 0', condition='nx == 0')
@@ -131,18 +139,6 @@ def _ns_bc_gradual(problem):
             + ' * (1 - exp(-t))')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
     problem.add_bc('right(ux) = 0')
-
-def default_problem(problem):
-    """ TODO needs updating """
-    problem.add_equation("dx(ux) + dz(uz) = 0")
-    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
-    problem.add_equation(
-        "dt(ux) + dx(P) / rho0 = 0")
-    problem.add_equation(
-        "dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
-
-    problem.add_bc("left(P) = 0", condition="nx == 0")
-    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
 
 def sponge_lin(problem, domain, params):
     '''
@@ -216,8 +212,23 @@ def ns_sponge_nonlin(problem, domain, params):
 def ns_sponge_nonlin2(problem, domain, params):
     _ns_sponge_nonlin(problem, domain, params, _ns_bc2)
 
+def ns_sponge_nonlin_p_bc(problem, domain, params):
+    _ns_sponge_nonlin(problem, domain, params, _ns_p_bc)
+
 def ns_sponge_nonlin_gradual(problem, domain, params):
     _ns_sponge_nonlin(problem, domain, params, _ns_bc_gradual)
+
+def default_problem(problem):
+    """ TODO needs updating """
+    problem.add_equation("dx(ux) + dz(uz) = 0")
+    problem.add_equation("dt(rho) - rho0 * uz / H = 0")
+    problem.add_equation(
+        "dt(ux) + dx(P) / rho0 = 0")
+    problem.add_equation(
+        "dt(uz) + dz(P) / rho0 + rho * g / rho0 = 0")
+
+    problem.add_bc("left(P) = 0", condition="nx == 0")
+    problem.add_bc("left(uz) = A * cos(KX * x - omega * t)")
 
 ###
 ### SOLVER SETUP
