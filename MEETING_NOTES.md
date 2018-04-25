@@ -18,7 +18,14 @@
     - Do not streamfunction, 2D only
     - Anelastic? Could work out nonlinear terms, no div=0 constraints
 
+# NOTES 04/24/18
+- rho1 << rho0 = incompressibility = v << c\_s, go ahead and take linear approx!
+    - think my janky prescription was introducing floating point error
+    - may need to consider the fully compressible case for astrophysical systems
+      of interest...
+- consider moving to anelastic equations? see how it compares to incompressible
+
 ## TODO
 - Rad BC?
-- Check whether k dot u breaks?
+- Analytically follow Sutherland modulationally stable/unstable proof
 - Check w/ sutherland paper?
