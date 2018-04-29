@@ -7,7 +7,7 @@ from strat_helper import *
 
 N_PARALLEL = 8
 H = 1
-num_timesteps = 1e5
+num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 3 * H
@@ -16,9 +16,9 @@ KZ = -(np.pi) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
-T_F = abs(ZMAX / VPH_Z) * 12
+T_F = abs(ZMAX / VPH_Z) * 4
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 200
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -58,66 +58,57 @@ if __name__ == '__main__':
         # linear, neumann works to drop ux waviness)
         (get_solver, sponge_lin, zero_ic,
          'sponge_lin',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # nonlin, low amplitude aite
         (get_solver, sponge_nonlin, bg_ic,
          'sponge_nonlin1',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # nonlin, how no disp = blowup
         (get_solver, sponge_nonlin, bg_ic,
          'sponge_nonlin3',
-         build_interp_params(8, 4, overrides={'A': 0.02})),
+         build_interp_params(8, 8, overrides={'A': 0.02})),
 
         # linear, n-s works (has significant ux waves)
         (ns_get_solver, ns_sponge_lin, zero_ic,
          'ns_sponge_lin',
-         build_interp_params(8, 4, overrides={
-             'DT': 10 * DT,
-             'T_F': T_F / 2,
-             'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
+         build_interp_params(8, 8)),
 
         # linear, ramps up (smaller ux waves but still)
         (ns_get_solver, ns_sponge_lin_gradual, zero_ic,
          'ns_sponge_lin_gradual',
-         build_interp_params(8, 4, overrides={
-             'DT': 10 * DT,
-             'T_F': T_F / 2,
-             'NUM_SNAPSHOTS': NUM_SNAPSHOTS / 2})),
+         build_interp_params(8, 8)),
 
         # nonlinear gradual, still blows up
         (ns_get_solver, ns_sponge_nonlin_gradual, bg_ic,
          'ns_sponge_nonlin_gradual',
-         build_interp_params(8, 4, overrides={
-             'DT': 10 * DT,
-             'T_F': T_F / 2,
-             'A': 0.03})),
+         build_interp_params(8, 8, overrides={'A': 0.03})),
 
         # dz(uz_z) BC (force-like), still blows up
         (ns_get_solver, ns_sponge_nonlin2, bg_ic,
          'ns_sponge_nonlin1',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # use pressure to drive at boundary, linear
         (get_solver, sponge_lin_p_bc, zero_ic,
          'sponge_p_bc',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # use dz(pressure) to drive at boundary, linear
         (get_solver, sponge_lin_dp_bc, zero_ic,
          'sponge_p_bc',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # use dz(pressure) to drive at boundary, nonlin
         (get_solver, sponge_nonlin_dp_bc, bg_ic,
          'sponge_p_bc_nonlin1',
-         build_interp_params(8, 4)),
+         build_interp_params(8, 8)),
 
         # higher-A nonlin pressure drive
         (get_solver, sponge_nonlin_dp_bc, bg_ic,
          'sponge_p_bc_nonlin2',
-         build_interp_params(8, 4, overrides={'A': 0.02})),
+         build_interp_params(8, 8, overrides={'A': 0.02})),
 
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 2)),
     ]
