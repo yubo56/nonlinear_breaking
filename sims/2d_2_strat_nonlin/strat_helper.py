@@ -187,7 +187,7 @@ def _sponge_nonlin(problem, domain, params, bc):
     problem.parameters['sponge'] = get_sponge(domain, params)
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
-        'dt(rho) - rho0 * uz / H = -ux * dx(rho) - uz * dz(rho)')
+        'dt(rho) - rho0 * uz / H = 0')
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
         '= - ux * dx(ux) - uz * dz(ux)')
@@ -222,7 +222,7 @@ def _ns_sponge_nonlin(problem, domain, params, bc):
     ''' sponge zone velocities w nonlin terms '''
     problem.parameters['sponge'] = get_sponge(domain, params)
     problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation('dt(rho) - rho0 * uz / H = -ux * dx(rho) - uz * dz(rho)')
+    problem.add_equation('dt(rho) - rho0 * uz / H = 0')
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0 - NU * (dx(dx(ux)) + dz(ux_z))' +
         '= - ux * dx(ux) - uz * dz(ux)')

@@ -7,7 +7,7 @@ from strat_helper import *
 
 N_PARALLEL = 20
 H = 1
-num_timesteps = 3e4
+num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 3 * H
@@ -18,7 +18,7 @@ OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
 T_F = abs(ZMAX / VPH_Z) * 6
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 200
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
