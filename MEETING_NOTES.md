@@ -25,7 +25,17 @@
       of interest...
 - consider moving to anelastic equations? see how it compares to incompressible
 
+# NOTES 05/01/18
+- still divergences when rho1 << rho!
+- Think Sutherland argument "lin sol is exact sol of nonlinear" is incorrect
+- Consider truly reduced problem, 1d wave equation
+    - zero ic, driving + rad BC, weak nonlinear term
+
 ## TODO
+- retry equations w/o rho nonlinearities? w/o velocity nonlinearities?
+- plot spatial FT as function of time
+
+# GLOBAL TODO
 - Rad BC?
 - Analytically follow Sutherland modulationally stable/unstable proof
 - Check w/ sutherland paper?
