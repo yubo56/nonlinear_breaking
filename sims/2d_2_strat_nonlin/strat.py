@@ -11,8 +11,8 @@ num_timesteps = 1e4
 
 XMAX = H
 ZMAX = 3 * H
-KX = 4 * np.pi / H
-KZ = -(np.pi) * np.pi * 2 / H
+KX = 2 * np.pi / H
+KZ = -(np.pi) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
@@ -55,55 +55,60 @@ def run(get_solver, bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        # linear, neumann works to drop ux waviness)
+        # linear, neumann works to drop ux waviness
         (get_solver, sponge_lin, zero_ic,
          'sponge_lin',
-         build_interp_params(4, 4)),
+         build_interp_params(8, 8)),
 
-        # nonlin, low amplitude aite
+        # nonlin, low amplitude
         (get_solver, sponge_nonlin, zero_ic,
-         'sponge_nonlin1',
-         build_interp_params(4, 4)),
+         'sponge_nonlin',
+         build_interp_params(8, 8)),
 
-        # nonlin, how no disp = blowup
+        # nonlin, high amplitude
         (get_solver, sponge_nonlin, zero_ic,
-         'sponge_nonlin2',
-         build_interp_params(4, 4, overrides={'A': 0.02})),
+         'sponge_nonlin_highA',
+         build_interp_params(8, 8, overrides={'A': 0.02})),
 
-        # linear, n-s works (has significant ux waves)
-        (ns_get_solver, ns_sponge_lin, zero_ic,
-         'ns_sponge_lin',
-         build_interp_params(4, 4)),
-
-        # linear, ramps up (smaller ux waves but still)
-        (ns_get_solver, ns_sponge_lin_gradual, zero_ic,
-         'ns_sponge_lin_gradual',
-         build_interp_params(4, 4)),
-
-        # nonlinear gradual, still blows up
-        (ns_get_solver, ns_sponge_nonlin_gradual, zero_ic,
-         'ns_sponge_nonlin_gradual',
-         build_interp_params(4, 4, overrides={'A': 0.02})),
-
-        # dz(uz_z) BC (force-like), still blows up
-        (ns_get_solver, ns_sponge_nonlin2, zero_ic,
-         'ns_sponge_nonlin1',
-         build_interp_params(4, 4)),
-
-        # use pressure to drive at boundary, linear
+        # linear, pressure BC
         (get_solver, sponge_lin_p_bc, zero_ic,
          'sponge_p_bc',
-         build_interp_params(4, 4)),
+         build_interp_params(8, 8)),
 
-        # use dz(pressure) to drive at boundary, nonlin
+        # linear, dz(pressure) BC
         (get_solver, sponge_nonlin_dp_bc, zero_ic,
-         'sponge_p_bc_nonlin1',
-         build_interp_params(4, 4)),
+         'sponge_p_bc_nonlin',
+         build_interp_params(8, 8)),
 
         # higher-A nonlin pressure drive
         (get_solver, sponge_nonlin_dp_bc, zero_ic,
-         'sponge_p_bc_nonlin2',
-         build_interp_params(4, 4, overrides={'A': 0.02})),
+         'sponge_p_bc_nonlin_highA',
+         build_interp_params(8, 8, overrides={'A': 0.02})),
+
+        # linear n-s
+        (ns_get_solver, ns_sponge_lin, zero_ic,
+         'ns_sponge_lin',
+         build_interp_params(8, 8)),
+
+        # plain ns nonlin
+        (ns_get_solver, ns_sponge_nonlin, zero_ic,
+         'ns_sponge_nonlin',
+         build_interp_params(8, 8)),
+
+        # ns nonlin highA
+        (ns_get_solver, ns_sponge_nonlin, zero_ic,
+         'ns_sponge_nonlin_highA',
+         build_interp_params(8, 8, overrides={'A': 0.02})),
+
+        # dz(uz_z) BC (force-like)
+        (ns_get_solver, ns_sponge_nonlin2, zero_ic,
+         'ns_sponge_nonlin_uz_zz',
+         build_interp_params(8, 8)),
+
+        # ns nonlin highA, dz(uz_z) BC
+        (ns_get_solver, ns_sponge_nonlin2, zero_ic,
+         'ns_sponge_nonlin_uz_zz_highA',
+         build_interp_params(8, 8, overrides={'A': 0.02})),
 
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 2)),
     ]
