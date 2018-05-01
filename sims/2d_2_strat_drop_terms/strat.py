@@ -7,7 +7,7 @@ from strat_helper import *
 
 N_PARALLEL = 20
 H = 1
-num_timesteps = 3e5
+num_timesteps = 1e5
 
 XMAX = H
 ZMAX = 3 * H
@@ -55,21 +55,6 @@ def run(get_solver, bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        # linear, neumann works to drop ux waviness
-        (get_solver, sponge_lin, zero_ic,
-         '0sponge_lin',
-         build_interp_params(8, 8)),
-
-        # nonlin, low amplitude
-        (get_solver, sponge_nonlin, zero_ic,
-         '1sponge_nonlin',
-         build_interp_params(8, 8)),
-
-        # nonlin, high amplitude
-        (get_solver, sponge_nonlin, zero_ic,
-         '2sponge_nonlin_highA',
-         build_interp_params(8, 8, overrides={'A': 0.02})),
-
         # linear, pressure BC
         (get_solver, sponge_lin_p_bc, zero_ic,
          '3sponge_p_bc',
@@ -98,16 +83,6 @@ if __name__ == '__main__':
         # ns nonlin highA
         (ns_get_solver, ns_sponge_nonlin, zero_ic,
          '8ns_sponge_nonlin_highA',
-         build_interp_params(8, 8, overrides={'A': 0.02})),
-
-        # dz(uz_z) BC (force-like)
-        (ns_get_solver, ns_sponge_nonlin2, zero_ic,
-         '9ns_sponge_nonlin_uz_zz',
-         build_interp_params(8, 8)),
-
-        # ns nonlin highA, dz(uz_z) BC
-        (ns_get_solver, ns_sponge_nonlin2, zero_ic,
-         '10ns_sponge_nonlin_uz_zz_highA',
          build_interp_params(8, 8, overrides={'A': 0.02})),
 
         # (rad_bc, zero_ic, 'rad', build_interp_params(8, 2)),

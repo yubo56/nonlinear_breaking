@@ -195,10 +195,10 @@ def _sponge_nonlin(problem, domain, params, bc):
         '= -ux * dx(rho) - uz * dz(rho)')
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
-        '= - ux * dx(ux) - uz * dz(ux)')
+        '= 0')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
-        '= - ux * dx(uz) - uz * dz(uz)')
+        '= 0')
 
     bc(problem)
 
@@ -237,11 +237,11 @@ def _ns_sponge_nonlin(problem, domain, params, bc):
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
         ' - NU * (dx(dx(ux)) + dz(ux_z))' +
-        '= - ux * dx(ux) - uz * ux_z')
+        '= 0')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
         ' - NU * (dx(dx(uz)) + dz(uz_z))' +
-        '= - ux * dx(uz) - uz * uz_z')
+        '= 0')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     bc(problem)
