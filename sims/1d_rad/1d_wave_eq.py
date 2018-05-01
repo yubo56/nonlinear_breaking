@@ -1,5 +1,8 @@
 '''
-driving BC on left, rad BC on right, 1D wave eq. Test problem
+Simplest 1D fluid equation in uniform medium
+
+rho_1/rho = 0.001 seems to look linear, rho_1/rho = 0.1 produces steepening!
+u << c, rho_1 << rho = linear
 '''
 
 import logging
