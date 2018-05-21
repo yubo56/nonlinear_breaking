@@ -48,43 +48,52 @@ def get_sponge(domain, params):
 ### IC
 ###
 
-def zero_ic(solver, domain, params):
+def wrapped_exp(field):
+    ''' prevent underflows '''
+    idx = np.where(field > -15)
+    res = np.ones(np.shape(field)) * 1e-15
+    res[idx] = np.exp(field[idx])
+    return res
+
+def wavepacket_ic(solver, domain, params):
     ux = solver.state['ux']
     uz = solver.state['uz']
     P = solver.state['P']
     rho = solver.state['rho']
-    gshape = domain.dist.grid_layout.global_shape(scales=1)
+    x = domain.grid(0)
+    z = domain.grid(1)
 
-    P['g'] = np.zeros(gshape)
-    ux['g'] = np.zeros(gshape)
-    uz['g'] = np.zeros(gshape)
-    rho['g'] = np.zeros(gshape)
+    z_cent = 0.25 * params['ZMAX']
+    sigma = 0.2
+    uz['g'] = 0.3 * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) * \
+        np.exp((z - z_cent) / (2 * params['H'])) * \
+        np.cos(params['KX'] * x + params['KZ'] * z)
+    ux['g'] = -params['KZ'] * uz['g'] / params['KX']
+    rho['g'] = -0.3 * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) * \
+        params['RHO0'] * np.exp(-(z - z_cent) / (2* params['H'])) / \
+        (params['H'] * params['OMEGA']) * \
+        np.sin(params['KX'] * x + params['KZ'] * z)
+    P['g'] = -params['RHO0'] * np.exp(-(z - z_cent) / params['H']) * \
+        params['OMEGA'] / params['KX']**2 * params['KZ'] * uz['g']
 
 ###
 ### PROBLEM SETUP
 ###
 
-def setup_problem(problem, domain, params):
+def setup_problem_unforced(problem, domain, params):
     ''' sponge zone velocities w nonlin terms '''
     problem.parameters['sponge'] = get_sponge(domain, params)
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) + sponge * rho - rho0 * uz / H' +
         '= -ux * dx(rho) - uz * dz(rho)'
-        # '= 0'
     )
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
-        '= - ux * dx(ux) - uz * dz(ux) +'
-        # '='
-        'F * KX / KZ * exp(-(z - 0.15 * ZMAX)**2 / (2 * 0.1**2)) *' +
-            'sin(KX * x - omega * t)')
+        '= - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
-        '= - ux * dx(uz) - uz * dz(uz) +' +
-        # '='
-        'F * exp(-(z - 0.15 * ZMAX)**2 / (2 * 0.1**2)) *' +
-            'sin(KX * x - omega * t)')
+        '= - ux * dx(uz) - uz * dz(uz)')
 
     z = domain.grid(1)
     x = domain.grid(0)
@@ -96,8 +105,8 @@ def setup_problem(problem, domain, params):
 ### SOLVER SETUP
 ###
 
-def _get_solver(setup_problem, params, variables):
-    ''' get solver for given variables '''
+def get_solver(setup_problem, params):
+    ''' get solver '''
     x_basis = de.Fourier('x',
                          params['N_X'],
                          interval=(0, params['XMAX']),
@@ -109,7 +118,7 @@ def _get_solver(setup_problem, params, variables):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=variables)
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
     problem.parameters['L'] = params['XMAX']
     problem.parameters['g'] = params['G']
     problem.parameters['H'] = params['H']
@@ -136,11 +145,6 @@ def _get_solver(setup_problem, params, variables):
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
     return solver, domain
-
-def get_solver(setup_problem, params):
-    return _get_solver(setup_problem,
-                       params,
-                       variables=['P', 'rho', 'ux', 'uz'])
 
 ###
 ### ENTRY POINTS
