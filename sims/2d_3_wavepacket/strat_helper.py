@@ -50,31 +50,45 @@ def get_sponge(domain, params):
 
 def wrapped_exp(field):
     ''' prevent underflows '''
-    idx = np.where(field > -15)
-    res = np.ones(np.shape(field)) * 1e-15
+    idx = np.where(field > -5)
+    res = np.zeros(np.shape(field))
     res[idx] = np.exp(field[idx])
     return res
+    # return np.ones(np.shape(field))
 
 def wavepacket_ic(solver, domain, params):
     ux = solver.state['ux']
+    ux_z = solver.state['ux_z']
     uz = solver.state['uz']
+    uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
     x = domain.grid(0)
     z = domain.grid(1)
 
-    z_cent = 0.25 * params['ZMAX']
-    sigma = 0.2
-    uz['g'] = 0.3 * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) * \
-        np.exp((z - z_cent) / (2 * params['H'])) * \
-        np.cos(params['KX'] * x + params['KZ'] * z)
-    ux['g'] = -params['KZ'] * uz['g'] / params['KX']
-    rho['g'] = -0.3 * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) * \
-        params['RHO0'] * np.exp(-(z - z_cent) / (2* params['H'])) / \
-        (params['H'] * params['OMEGA']) * \
+    z_cent = 0.3 * params['ZMAX']
+    sigma = 6 / params['KX']
+    A = 0.01
+    uz['g'] = A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
+        * np.exp(z / (2 * params['H'])) \
+        * np.cos(params['KX'] * x + params['KZ'] * z)
+    ux['g'] = -params['KZ'] / params['KX'] \
+        * A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
+        * np.exp(z / (2 * params['H'])) \
+        * np.cos(params['KX'] * x + params['KZ'] * z)
+    rho['g'] = -A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
+        * params['RHO0']\
+        * np.exp(-z / (2* params['H'])) \
+        / (params['H'] * params['OMEGA']) * \
         np.sin(params['KX'] * x + params['KZ'] * z)
-    P['g'] = -params['RHO0'] * np.exp(-(z - z_cent) / params['H']) * \
-        params['OMEGA'] / params['KX']**2 * params['KZ'] * uz['g']
+    P['g'] = -params['RHO0'] * np.exp(-z / params['H']) \
+        * params['OMEGA'] * params['KZ'] / params['KX']**2 \
+        * A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
+        * np.exp(z / (2 * params['H'])) \
+        * np.sin(params['KX'] * x + params['KZ'] * z)
+
+    ux.differentiate('z', out=ux_z)
+    uz.differentiate('z', out=uz_z)
 
 ###
 ### PROBLEM SETUP
@@ -83,23 +97,41 @@ def wavepacket_ic(solver, domain, params):
 def setup_problem_unforced(problem, domain, params):
     ''' sponge zone velocities w nonlin terms '''
     problem.parameters['sponge'] = get_sponge(domain, params)
-    problem.add_equation('dx(ux) + dz(uz) = 0')
+    problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
-        'dt(rho) + sponge * rho - rho0 * uz / H' +
+        'dt(rho)'
+        '+ sponge * rho'
+        '- rho0 * uz / H' +
         '= -ux * dx(rho) - uz * dz(rho)'
+        # '= 0'
     )
     problem.add_equation(
-        'dt(ux) + sponge * ux + dx(P) / rho0' +
-        '= - ux * dx(ux) - uz * dz(ux)')
+        'dt(ux)'
+        '+ sponge * ux'
+        '+ dx(P) / rho0' +
+        '- NU * (dx(dx(ux)) + dz(ux_z))' +
+        '= - ux * dx(ux) - uz * dz(ux)'
+        # '= 0'
+    )
     problem.add_equation(
-        'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
-        '= - ux * dx(uz) - uz * dz(uz)')
+        'dt(uz)'
+        '+ sponge * uz'
+        '+ dz(P) / rho0'
+        '+ rho * g / rho0' +
+        '- NU * (dx(dx(uz)) + dz(uz_z))' +
+        '= - ux * dx(uz) - uz * dz(uz)'
+        # '= 0'
+    )
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
 
     z = domain.grid(1)
     x = domain.grid(0)
     problem.add_bc('left(uz) = 0', condition='nx != 0')
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(ux) = 0')
+    problem.add_bc('right(ux) = 0')
 
 ###
 ### SOLVER SETUP
@@ -118,7 +150,7 @@ def get_solver(setup_problem, params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz', 'ux_z', 'uz_z'])
     problem.parameters['L'] = params['XMAX']
     problem.parameters['g'] = params['G']
     problem.parameters['H'] = params['H']
@@ -274,8 +306,8 @@ def plot(get_solver, setup_problem, name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -290,7 +322,8 @@ def plot(get_solver, setup_problem, name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            # xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r--')
             p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r--')

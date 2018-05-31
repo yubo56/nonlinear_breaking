@@ -6,19 +6,20 @@ import numpy as np
 from strat_helper import *
 
 N_PARALLEL = 20
-H = 1
-num_timesteps = 1e3
+XMAX = 1
+KX = 2 * np.pi / XMAX
+ZMAX = 20 * (2 * np.pi / KX)
+H = 10 / KX
+KZ = -0.4 * KX
 
-XMAX = H
-ZMAX = 4 * H
-KX = 2 * np.pi / H
-KZ = -(np.pi) * np.pi / H
-G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
+G = 1
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
+
+num_timesteps = 1e3
 T_F = abs(ZMAX / VPH_Z)
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 100
+NUM_SNAPSHOTS = 500
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -34,7 +35,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'G': G,
               'A': 0.005,
               'F': 0.1,
-              'SPONGE_STRENGTH': 20,
+              'SPONGE_STRENGTH': 50,
               'SPONGE_START_HIGH': 0.8 * ZMAX,
               'SPONGE_START_LOW': 0.2 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
@@ -46,7 +47,7 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = dt
-    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['NU'] = 0.01 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
     return params
 
 def run(get_solver, bc, ic, name, params_dict):
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     tasks = [
         (get_solver, setup_problem_unforced, wavepacket_ic,
          'wavepacket',
-         build_interp_params(4, 4)),
+         build_interp_params(8, 4)),
     ]
     if len(tasks) == 1:
         run(*tasks[0])
