@@ -31,8 +31,12 @@
 - Consider truly reduced problem, 1d wave equation
     - zero ic, driving + rad BC, weak nonlinear term
 
+# NOTES 06/04/18
+- No breaking with bulk driving, small artifacts probably related to bad
+  damping?
+- Try wavepacket, high k divergences
+
 ## TODO
-- retry equations w/o rho nonlinearities? w/o velocity nonlinearities?
 - plot spatial FT as function of time
 
 # GLOBAL TODO

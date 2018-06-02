@@ -50,9 +50,10 @@ def get_sponge(domain, params):
 
 def wrapped_exp(field):
     ''' prevent underflows '''
-    idx = np.where(field > -5)
+    cutoff = -30
+    idx = np.where(field > cutoff)
     res = np.zeros(np.shape(field))
-    res[idx] = np.exp(field[idx])
+    res[idx] = np.exp(field[idx]) - np.exp(-30)
     return res
     # return np.ones(np.shape(field))
 
@@ -63,32 +64,32 @@ def wavepacket_ic(solver, domain, params):
     uz_z = solver.state['uz_z']
     P = solver.state['P']
     rho = solver.state['rho']
-    x = domain.grid(0)
-    z = domain.grid(1)
+    x = domain.grid(0, scales=3/2)
+    z = domain.grid(1, scales=3/2)
+    uz.set_scales(3/2)
+    ux.set_scales(3/2)
+    rho.set_scales(3/2)
+    P.set_scales(3/2)
 
     z_cent = 0.3 * params['ZMAX']
-    sigma = 6 / params['KX']
+    sigma = 10 / params['KX']
     A = 0.01
+    rho0 = params['RHO0'] * np.exp(-z / params['H'])
+    shift = round(params['XMAX'] * params['KX'] / (2 * np.pi)
+                  * params['N_X'] * 3/2) // 4
+
     uz['g'] = A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
         * np.exp(z / (2 * params['H'])) \
         * np.cos(params['KX'] * x + params['KZ'] * z)
-    ux['g'] = -params['KZ'] / params['KX'] \
-        * A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
-        * np.exp(z / (2 * params['H'])) \
-        * np.cos(params['KX'] * x + params['KZ'] * z)
-    rho['g'] = -A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
-        * params['RHO0']\
-        * np.exp(-z / (2* params['H'])) \
-        / (params['H'] * params['OMEGA']) * \
-        np.sin(params['KX'] * x + params['KZ'] * z)
-    P['g'] = -params['RHO0'] * np.exp(-z / params['H']) \
-        * params['OMEGA'] * params['KZ'] / params['KX']**2 \
-        * A * wrapped_exp(-(z - z_cent)**2 / (2 * sigma**2)) \
-        * np.exp(z / (2 * params['H'])) \
-        * np.sin(params['KX'] * x + params['KZ'] * z)
-
-    ux.differentiate('z', out=ux_z)
     uz.differentiate('z', out=uz_z)
+    ux['g'] = np.roll(-uz_z['g'] / params['KX'], shift, axis=0)
+
+    rho['g'] = np.roll(-uz['g'] * rho0 / (params['OMEGA'] * params['H']),
+                       shift,
+                       axis=0)
+    P['g'] = ux['g'] * params['OMEGA'] * rho0 / params['KX']
+    ux.differentiate('z', out=ux_z)
+
 
 ###
 ### PROBLEM SETUP

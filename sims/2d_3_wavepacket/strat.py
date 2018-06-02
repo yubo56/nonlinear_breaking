@@ -60,7 +60,7 @@ if __name__ == '__main__':
     tasks = [
         (get_solver, setup_problem_unforced, wavepacket_ic,
          'wavepacket',
-         build_interp_params(8, 4)),
+         build_interp_params(4, 4)),
     ]
     if len(tasks) == 1:
         run(*tasks[0])
