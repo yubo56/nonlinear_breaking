@@ -8,7 +8,7 @@ from strat_helper import *
 N_PARALLEL = 20
 XMAX = 1
 KX = 2 * np.pi / XMAX
-ZMAX = 20 * (2 * np.pi / KX)
+ZMAX = 30 * (2 * np.pi / KX)
 H = 10 / KX
 KZ = -0.4 * KX
 
@@ -16,10 +16,10 @@ G = 1
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
 
-num_timesteps = 1e3
-T_F = abs(ZMAX / VPH_Z)
+num_timesteps = 1e4
+T_F = abs(ZMAX / VPH_Z) * 0.4
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 500
+NUM_SNAPSHOTS = 200
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -35,9 +35,9 @@ PARAMS_RAW = {'XMAX': XMAX,
               'G': G,
               'A': 0.005,
               'F': 0.1,
-              'SPONGE_STRENGTH': 50,
-              'SPONGE_START_HIGH': 0.8 * ZMAX,
-              'SPONGE_START_LOW': 0.2 * ZMAX,
+              'SPONGE_STRENGTH': 100,
+              'SPONGE_START_HIGH': 0.9 * ZMAX,
+              'SPONGE_START_LOW': 0.1 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
@@ -59,8 +59,49 @@ def run(get_solver, bc, ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (get_solver, setup_problem_unforced, wavepacket_ic,
-         'wavepacket',
-         build_interp_params(4, 4)),
+         'wavepacket_SBDF1',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.SBDF1})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_CNAB2',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.CNAB2})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_MCNAB2',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.MCNAB2})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_SBDF2',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.SBDF2})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_CNLF2',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.CNLF2})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_SBDF3',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.SBDF3})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_SBDF4',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.SBDF4})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_RK111',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.RK111})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_RK222',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.RK222})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_RK443',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.RK443})),
+        (get_solver, setup_problem_unforced, wavepacket_ic,
+         'wavepacket_RKSMR',
+         build_interp_params(4, 1, overrides={'TIMESTEPPER':
+                                              de.timesteppers.RKSMR})),
     ]
     if len(tasks) == 1:
         run(*tasks[0])

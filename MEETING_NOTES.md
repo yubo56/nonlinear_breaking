@@ -35,6 +35,8 @@
 - No breaking with bulk driving, small artifacts probably related to bad
   damping?
 - Try wavepacket, high k divergences
+- high k instabilities: due to improperly resolving the Gaussian, bad BC
+    - delta P is from nonlinear term having nonzero integral
 
 ## TODO
 - plot spatial FT as function of time

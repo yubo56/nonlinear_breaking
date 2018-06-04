@@ -53,7 +53,7 @@ def wrapped_exp(field):
     cutoff = -30
     idx = np.where(field > cutoff)
     res = np.zeros(np.shape(field))
-    res[idx] = np.exp(field[idx]) - np.exp(-30)
+    res[idx] = np.exp(field[idx])
     return res
     # return np.ones(np.shape(field))
 
@@ -71,9 +71,9 @@ def wavepacket_ic(solver, domain, params):
     rho.set_scales(3/2)
     P.set_scales(3/2)
 
-    z_cent = 0.3 * params['ZMAX']
+    z_cent = 0.35 * params['ZMAX']
     sigma = 10 / params['KX']
-    A = 0.01
+    A = 0.005
     rho0 = params['RHO0'] * np.exp(-z / params['H'])
     shift = round(params['XMAX'] * params['KX'] / (2 * np.pi)
                   * params['N_X'] * 3/2) // 4
@@ -89,6 +89,7 @@ def wavepacket_ic(solver, domain, params):
                        axis=0)
     P['g'] = ux['g'] * params['OMEGA'] * rho0 / params['KX']
     ux.differentiate('z', out=ux_z)
+
 
 
 ###
@@ -128,8 +129,7 @@ def setup_problem_unforced(problem, domain, params):
 
     z = domain.grid(1)
     x = domain.grid(0)
-    problem.add_bc('left(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(P) = 0')
     problem.add_bc('right(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
@@ -173,7 +173,7 @@ def get_solver(setup_problem, params):
     setup_problem(problem, domain, params)
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(params['TIMESTEPPER'])
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
