@@ -19,7 +19,7 @@ _, VPH_Z = get_vph(G, H, KX, KZ)
 num_timesteps = 1e3
 T_F = abs(ZMAX / VPH_Z) * 0.4
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = num_timesteps
+NUM_SNAPSHOTS = 200
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -47,7 +47,7 @@ def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = dt
-    params['NU'] = (ZMAX / params['N_Z']) / np.pi # ~ 1/k_max
+    params['NU'] = (ZMAX / params['N_Z'])**2 / np.pi**2 # ~ 1/k_max
     return params
 
 def run(get_solver, bc, ic, name, params_dict):
