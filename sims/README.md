@@ -7,3 +7,7 @@
 - `2d_2_strat_nonlin`: add nonlinear terms, interface forcing
 - `2d_2_strat_drop_terms`: try to drop some nonlinear terms to diagnose,
   interface forcing.
+
+- `2d_3_bulk_force`: bulk forcing with a force field instead of BC
+- `2d_3_wavepacket`: Sutherland wavepacket
+- `2d_3_factored`: try factoring out exp(+- z/2H) from dynamical variables
