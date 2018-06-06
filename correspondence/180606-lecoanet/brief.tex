@@ -1,0 +1,287 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\;\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\onehalfspacing
+
+\section{Problem}
+
+To the end of simulating breaking of internal gravity waves (IGW) in white
+dwarfs (WDs), we begin with the toy problem of IGW breaking in a uniformly
+stratified atmosphere in 2D. To begin with the simplest treatment, we consider
+an incompressible fluid characterized by four dynamical variables $\rho, P, u_x,
+u_z$.
+
+\subsection{Physical Description}
+
+We consider perturbations, not necessarily small, in a medium that at
+equilibrium is at rest and has uniform density stratification
+\begin{equation}
+    \rho_0(x, z) \propto e^{-z/H}.
+\end{equation}
+
+For an incompressible fluid, the density of the fluid $\rho\p*{x, z, t}$
+decomposes into this background stratification $\rho_0(x, z)$ and a small
+perturbation $\rho_1\p*{x, z, t} \ll \rho_0$ ($\rho_1 \ll \rho_0$ is a necessary
+condition for an incompressible treatment). Permitting a similar decomposition for
+$P(x, z, t) = P_0(x, z) + P_1(x, z, t)$ and using hydrostatic equilibrium
+$\rd{P_0(x, z)}{z} = -\rho g$ gives fluid equations
+\begin{subequations}\label{eq:nonlin_feq}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} - u_{1z}\frac{\rho_0}{H} &=
+            -\p*{\vec{u}_1 \cdot \vec{\nabla}} \rho_1,\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1}{\rho_0}\vec{g} &= -\p*{\vec{u}_1 \cdot \vec{\nabla}}
+            \vec{u}_1.
+    \end{align}
+\end{subequations}
+I notate $\vec{u} \equiv \vec{u_1}$ to identify that it is a perturbation
+variable even though there is no distinction between the two without a
+background flow.
+
+\subsection{Linear Description}
+
+If the perturbation is sufficiently small $u_1 \ll v_{ph}$ the phase velocity,
+then we drop terms nonlinear in the perturbation quantities. The linearized
+equations admit wave-like solutions described by
+\begin{subequations}\label{eq:lin_sol}
+    \begin{align}
+        u_{1z} &= Ae^{z/2H}e^{i\p*{\vec{k} \cdot \vec{r} - \omega t}},\\
+        \pd{u_{1x}}{x} &= -\pd{u_{1z}}{z},\\
+        \pd{\rho_1}{t} &= u_{1z}\frac{\rho_0}{H},\\
+        \pd{P}{x} &= -\rho_0 \pd{u_{1x}}{t},\\
+        \omega^2 &= \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}.
+    \end{align}
+\end{subequations}
+Note $N^2 = g/H$ the buoyancy frequency here.
+
+\section{Linear Numerical Simulation using \texttt{Dedalus}}
+
+In the WD problem, the IGW is generated deep within the WD and propagates
+outwards. Since we are only concerned with its breaking behavior, we initially
+seek to excite waves in a way agnostic of how the waves are generated. Put
+another way, we don't want to generate the wave, we just want to see how the
+wave evolves as it nears nonlinear amplitudes. We begin with the linear problem
+to see whether our mechanism produces expected results.
+
+The code described in this section is attached as \texttt{strat.py}, a minimum
+working example that saves plots to \texttt{plots/} on the fly.
+
+\subsection{Numerical Setup}
+
+To this end, we simulate the linearized fluid equations
+\begin{subequations}\label{eq:lin_feq}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} - u_{1z}\frac{\rho_0}{H} &= 0,\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1}{\rho_0}\vec{g} &= 0.
+    \end{align}
+\end{subequations}
+
+The domain of our simulation is $x \in [0, H], z \in [0, 4H]$. We use a Fourier
+basis in the $x$ and a Chebyshev in the $z$. We try with just $16$ modes in the
+$x$ and $64$ modes in the $z$. Since we choose parameters of the problem such
+that $\frac{2\pi}{k_x} = H, \frac{2\pi}{k_z} = -\frac{4H}{\pi}$\footnote{As
+seen later, $k_z$ never explicitly enters into the problem description; instead,
+we specify $\omega(k_x, k_z)$ using the desired $k_x, k_z$ values.}, this should
+be plenty of resolution to resolve the IGW (I chose $k_z$ as an irrational value
+to ensure any undesired reflections are far from any normal modes of the box).
+The timescale is set such that $N = 1$.
+
+\subsection{Reflection Suppression}
+
+To simulate a purely outgoing wave, we adopt a damping zone near the top
+boundary to suppress reflection. Specifically, we use
+\begin{subequations}\label{eq:lin_feq_sponge}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} + f(z)\rho_1 - u_{1z}\frac{\rho_0}{H} &= 0,\\
+        \pd{\vec{u}_1}{t} + f(z)\rho_1 + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1}{\rho_0}\vec{g} &= 0,
+    \end{align}
+\end{subequations}
+where
+\begin{equation}
+    f(z) = f_0 \frac{\max\p*{z - z_0, 0}^2}{\p*{z_{\max} - z_0}^2}.
+\end{equation}
+We use $f_0 = 2, z_0 = 0.7 z_{\max}$, so the damping turns on quadratically
+starting at $z_0 = 0.7z_{\max}$.
+
+\subsection{Boundary Conditions}
+
+To excite the wave, we adopt bottom boundary condition (BC)
+\begin{equation}
+    \at{\pd{u_{1z}}{z}}_{z = 0} = -Ak_z\cos\p*{k_xx - \omega t + \frac{1}{2H}}.
+\end{equation}
+The motivation for this comes from differentiating $\pd{u_{1z}}{z}$ in
+\autoref{eq:lin_sol}. The reason our BC isn't just $u_{1z}(z = 0)$ is because the
+initial condition $u_x(t = 0) = u_{1z}(t = 0) = 0$ is not divergence free.
+
+Since we have the reflection suppression term above, it turns out we need fix
+the $u_{1z}$ gauge, otherwise the $k_x = 0$ mode is numerically ill-conditioned
+and causes \texttt{Dedalus} to blow up. Thus, we enforce $u_{1z}(k_x = 0) = 0$.
+
+The remaining boundary condition (there are two $\partial_z$ terms in
+\autoref{eq:lin_feq}) need only fix the pressure gauge, so we choose $P_1(k_x =
+0) = 0$ and a throwaway $u_{1x}(k_x \neq 0) = 0$.
+
+\subsection{Initial Conditions}
+
+We initialize everything $\rho_1 = P_1 = u_{1x} = u_{1z} = 0$ everywhere.
+
+\subsection{Results}
+
+A snapshot of the simulation produced by \texttt{strat.py} is shown below in
+\autoref{fig:lin_plot}. We see reasonable agreement between the analytical
+solution and the simulation data as the wave propagates. More plots can be found
+in the \texttt{plots/} folder.
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}{0.7\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots/t_20.png}
+    \end{subfigure}
+
+    \begin{subfigure}{0.7\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots/t_70.png}
+    \end{subfigure}
+    \caption{For line plots, red line indicates beginning of damping zone, blue
+    the analytical solution and orange the simulation data. Variables are
+    $u_{1z} = uz, u_{1x} = ux$, $F_z$ the energy flux, $E$ the energy, $P_1 = P,
+    \rho_1 = rho$. Line plots of dynamical variables are slices through $x = 0$.
+    }\label{fig:lin_plot}
+\end{figure}
+
+\section{Nonlinear Numerical Simulation}
+
+\subsection{Low Amplitude}
+
+To move to the nonlinear problem, we first introduce the nonlinear terms as in
+\autoref{eq:nonlin_feq} but use small $A$ such that $u_{1z} \sim
+Ae^{z_{\max}/2H} \ll v_{ph}$. All other problem setup is kept the same. The code
+is in \texttt{strat\_nonlin\_lowA.py}. We expect agreement with the analytical
+solution to the linear problem.
+
+\subsection{Non-negligible amplitude: Instability}
+
+We now increase the amplitude, and a numerical instability seems to develop. We
+explore this with \texttt{strat\_nonlin.py}. An instability seems to grow near
+$z = 0$.
+
+\section{Attempted Solutions}
+
+It seems that the observed instability has to do with the interface driving. A
+few possible solutions have been considered:
+\begin{itemize}
+    \item I've considered other types of boundary conditions, such as
+        $\ptd{u_{1z}}{z}$ or $\pd{P}{z}$, but all of these seem to produce
+        similar behavior, instability near $z = 0$.
+
+    \item Start the simulation with a small amplitude and use $z_{\max}$ very
+        large, relying on the $u_{1z} \sim e^{-z/2H}$ to bring the wave to
+        breaking amplitudes. This will require a much larger number of spatial
+        modes to resolve the vertical wavelengths though and will be very slow.
+
+    \item Bulk forcing has also been considered, where we use a driving term in
+        the momentum equation $\pd{\vec{u}_1}{t}$ to generate IGW, then use
+        reflection-suppressing damping zones on both sides of the $z$ domain.
+        This seems to draw focus away from the focus on the breaking portion.
+
+        I was able to get bulk forcing to work, however, and the results seem
+        reasonable. It would be a less desirable entry point though, since we're
+        trying to study just the breaking irrespective of the forcing mechanism.
+\end{itemize}
+
+\end{document}
+

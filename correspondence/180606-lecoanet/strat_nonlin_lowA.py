@@ -21,7 +21,7 @@ XMAX = H
 ZMAX = 5 * H
 KX = 2 * np.pi / H
 KZ = -(np.pi / 2) * np.pi / H
-G = 10
+G = 1
 
 OMEGA = get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = get_vph(G, H, KX, KZ)
@@ -33,7 +33,7 @@ DT = T_F / num_timesteps
 N_X = 16
 N_Z = 64
 RHO0 = 1
-A = 0.05
+A = 0.00005
 NUM_SNAPSHOTS = 100
 
 def get_analytical_sponge(name, z_pts, t):
@@ -76,22 +76,23 @@ if __name__ == '__main__':
     rho0['g'] = RHO0 * np.exp(-z / H)
     problem.parameters['rho0'] = rho0
 
-    sponge_strength = 10
+    sponge_strength = 2
     z = domain.grid(1)
 
     # sponge field
     sponge = domain.new_field()
     sponge.meta['x']['constant'] = True
-    sponge['g'] = sponge_strength * np.maximum(
-        1 - (z - ZMAX)**2 / (DAMP_START - ZMAX)**2,
-        np.zeros(np.shape(z)))
+    sponge['g'] = sponge_strength * (
+        np.maximum(z - DAMP_START, 0) ** 2 / (ZMAX - DAMP_START) ** 2)
 
     problem.parameters['sponge'] = sponge
     problem.add_equation('dx(ux) + dz(uz) = 0')
-    problem.add_equation('dt(rho) - rho0 * uz / H + sponge * rho = 0')
-    problem.add_equation('dt(ux) + dx(P) / rho0 + sponge * ux = 0')
-    problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz = 0')
+    problem.add_equation('dt(rho) - rho0 * uz / H + sponge * rho'
+                         + '= -ux * dx(rho) - uz * dz(rho)')
+    problem.add_equation('dt(ux) + dx(P) / rho0 + sponge * ux'
+                         + '= -ux * dx(ux) - uz * dz(ux)')
+    problem.add_equation('dt(uz) + dz(P) / rho0 + rho * g / rho0 + sponge * uz'
+                         + '= -ux * dx(uz) - uz * dz(uz)')
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     # plot results
     matplotlib.rcParams.update({'font.size': 6})
     try:
-        os.makedirs('plots')
+        os.makedirs('plots_nonlin_lowA')
     except FileExistsError:
         pass
 
@@ -165,7 +166,7 @@ if __name__ == '__main__':
     n_cols = 3
     n_rows = 3
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-    for t_idx, sim_time in list(enumerate(sim_times)):
+    for t_idx, sim_time in list(enumerate(sim_times[:-1])):
         fig = plt.figure(dpi=200)
 
         idx = 1
@@ -205,7 +206,7 @@ if __name__ == '__main__':
         fig.suptitle('t=%.2f, kx=-2pi/H, kz=2pi/H, omega=%.2f' %
                      (sim_time, OMEGA))
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
-        savefig = 'plots/t_%d.png' % (t_idx)
+        savefig = 'plots_nonlin_lowA/t_%d.png' % (t_idx)
         plt.savefig(savefig)
         logger.info('Saved %s' % savefig)
         plt.close()
