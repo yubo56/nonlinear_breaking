@@ -76,7 +76,7 @@ if __name__ == '__main__':
     rho0['g'] = RHO0 * np.exp(-z / H)
     problem.parameters['rho0'] = rho0
 
-    sponge_strength = 2
+    sponge_strength = 1
     z = domain.grid(1)
 
     # sponge field

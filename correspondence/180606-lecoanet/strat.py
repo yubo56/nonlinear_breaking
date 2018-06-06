@@ -26,7 +26,7 @@ G = 1
 OMEGA = get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = get_vph(G, H, KX, KZ)
 
-num_timesteps = 4e2
+num_timesteps = 1e3
 DAMP_START = ZMAX * 0.7 # start damping zone
 T_F = -ZMAX / VPH_Z * 2 # VPH_Z < 0
 DT = T_F / num_timesteps
@@ -76,15 +76,14 @@ if __name__ == '__main__':
     rho0['g'] = RHO0 * np.exp(-z / H)
     problem.parameters['rho0'] = rho0
 
-    sponge_strength = 0.3
+    sponge_strength = 1
     z = domain.grid(1)
 
     # sponge field
     sponge = domain.new_field()
     sponge.meta['x']['constant'] = True
-    sponge['g'] = sponge_strength * np.maximum(
-        1 - (z - ZMAX)**2 / (DAMP_START - ZMAX)**2,
-        np.zeros(np.shape(z)))
+    sponge['g'] = sponge_strength * (
+        np.maximum(z - DAMP_START, 0) ** 2 / (ZMAX - DAMP_START) ** 2)
 
     problem.parameters['sponge'] = sponge
     problem.add_equation('dx(ux) + dz(uz) = 0')

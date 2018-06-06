@@ -174,9 +174,9 @@ $x$ and $64$ modes in the $z$. Since we choose parameters of the problem such
 that $\frac{2\pi}{k_x} = H, \frac{2\pi}{k_z} = -\frac{4H}{\pi}$\footnote{As
 seen later, $k_z$ never explicitly enters into the problem description; instead,
 we specify $\omega(k_x, k_z)$ using the desired $k_x, k_z$ values.}, this should
-be plenty of resolution to resolve the IGW (I chose $k_z$ as an irrational value
-to ensure any undesired reflections are far from any normal modes of the box).
-The timescale is set such that $N = 1$.
+be plenty of resolution to resolve the IGW\footnote{I chose $k_z$ as an
+irrational value to ensure any undesired reflections are far from any normal
+modes of the box.}. The timescale is set by $N = 1$.
 
 \subsection{Reflection Suppression}
 
@@ -194,7 +194,7 @@ where
 \begin{equation}
     f(z) = f_0 \frac{\max\p*{z - z_0, 0}^2}{\p*{z_{\max} - z_0}^2}.
 \end{equation}
-We use $f_0 = 2, z_0 = 0.7 z_{\max}$, so the damping turns on quadratically
+We use $f_0 = 1, z_0 = 0.7 z_{\max}$, so the damping turns on quadratically
 starting at $z_0 = 0.7z_{\max}$.
 
 \subsection{Boundary Conditions}
@@ -203,9 +203,10 @@ To excite the wave, we adopt bottom boundary condition (BC)
 \begin{equation}
     \at{\pd{u_{1z}}{z}}_{z = 0} = -Ak_z\cos\p*{k_xx - \omega t + \frac{1}{2H}}.
 \end{equation}
-The motivation for this comes from differentiating $\pd{u_{1z}}{z}$ in
-\autoref{eq:lin_sol}. The reason our BC isn't just $u_{1z}(z = 0)$ is because the
-initial condition $u_x(t = 0) = u_{1z}(t = 0) = 0$ is not divergence free.
+We use $A = 0.05$. The reason our BC isn't just $u_{1z}(z = 0)$ is because the
+initial condition $u_x(t = 0) = u_{1z}(t = 0) = 0$ is not divergence free and
+produces high-$k$ modes in $u_x$. We just differentiate $\pd{u_{1z}}{z}$ in
+\autoref{eq:lin_sol} and take real part.
 
 Since we have the reflection suppression term above, it turns out we need fix
 the $u_{1z}$ gauge, otherwise the $k_x = 0$ mode is numerically ill-conditioned
@@ -227,12 +228,11 @@ solution and the simulation data as the wave propagates. More plots can be found
 in the \texttt{plots/} folder.
 \begin{figure}[t]
     \centering
-    \begin{subfigure}{0.7\textwidth}
+    \begin{subfigure}{0.75\textwidth}
         \centering
         \includegraphics[width=\textwidth]{plots/t_20.png}
     \end{subfigure}
-
-    \begin{subfigure}{0.7\textwidth}
+    \begin{subfigure}{0.75\textwidth}
         \centering
         \includegraphics[width=\textwidth]{plots/t_70.png}
     \end{subfigure}
@@ -249,21 +249,56 @@ in the \texttt{plots/} folder.
 
 To move to the nonlinear problem, we first introduce the nonlinear terms as in
 \autoref{eq:nonlin_feq} but use small $A$ such that $u_{1z} \sim
-Ae^{z_{\max}/2H} \ll v_{ph}$. All other problem setup is kept the same. The code
-is in \texttt{strat\_nonlin\_lowA.py}. We expect agreement with the analytical
-solution to the linear problem.
+Ae^{z_{\max}/2H} \ll v_{ph}$; we use $A = \scinot{5}{-5}$. All other problem
+setup is kept the same. The code is in \texttt{strat\_nonlin\_lowA.py}. We
+expect agreement with the analytical solution to the linear problem, and this is
+shown well in \autoref{fig:nonlin_plot_lowA}. Further plots are available in
+\texttt{plots\_nonlin\_lowA/}.
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}{0.75\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots_nonlin_lowA/t_20.png}
+    \end{subfigure}
+    \begin{subfigure}{0.75\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots_nonlin_lowA/t_70.png}
+    \end{subfigure}
+    \caption{Same plots as \autoref{fig:lin_plot} but with nonlinear terms added
+    back to the fluid equations and very small $A = \scinot{5}{-5}$.
+    }\label{fig:nonlin_plot_lowA}
+\end{figure}
 
 \subsection{Non-negligible amplitude: Instability}
 
-We now increase the amplitude, and a numerical instability seems to develop. We
-explore this with \texttt{strat\_nonlin.py}. An instability seems to grow near
-$z = 0$.
+We now increase the amplitude back to $A = 0.05$, and a numerical instability
+seems to develop. We explore this with \texttt{strat\_nonlin.py}. An instability
+seems to grow near $z = 0$, and two plots of its evolution can be seen in
+\autoref{fig:nonlin_plot}. Further plots can be found in
+\texttt{plots\_nonlin/}.
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}{0.75\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots_nonlin/t_70.png}
+    \end{subfigure}
+    \begin{subfigure}{0.75\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{plots_nonlin/t_77.png}
+    \end{subfigure}
+    \caption{Nonlinear equations with $A = 0.05$ as it diverges near $z = 0$.
+    }\label{fig:nonlin_plot}
+\end{figure}
 
 \section{Attempted Solutions}
 
 It seems that the observed instability has to do with the interface driving. A
 few possible solutions have been considered:
 \begin{itemize}
+    \item Doubling the temporal resolution doesn't seem to change when the
+        instability sets in. Doubling the spatial resolution makes it set in
+        earlier, and halving makes it set in later.
+
     \item I've considered other types of boundary conditions, such as
         $\ptd{u_{1z}}{z}$ or $\pd{P}{z}$, but all of these seem to produce
         similar behavior, instability near $z = 0$.
