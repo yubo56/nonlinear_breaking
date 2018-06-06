@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +26,7 @@ G = 10
 OMEGA = get_omega(G, H, KX, KZ)
 VPH_X, VPH_Z = get_vph(G, H, KX, KZ)
 
-num_timesteps = 100
+num_timesteps = 2e3
 DAMP_START = ZMAX * 0.7 # start damping zone
 T_F = -ZMAX / VPH_Z # VPH_Z < 0
 DT = T_F / num_timesteps
@@ -33,7 +34,7 @@ N_X = 16
 N_Z = 64
 RHO0 = 1
 A = 0.05
-NUM_SNAPSHOTS = 50
+NUM_SNAPSHOTS = 1e3
 
 def get_analytical_sponge(name, z_pts, t):
     uz_anal = A * np.exp(z_pts / (2 * H)) *\
@@ -51,6 +52,8 @@ def get_analytical_sponge(name, z_pts, t):
     return analyticals[name]
 
 if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+
     x_basis = de.Fourier('x', N_X, interval=(0, XMAX), dealias=3/2)
     z_basis = de.Chebyshev('z', N_Z, interval=(0, ZMAX), dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
@@ -94,8 +97,9 @@ if __name__ == '__main__':
 
     problem.add_bc('left(P) = 0', condition='nx == 0')
     problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(dz(uz)) = -KZ * A * sin(KX * x - omega * t)',
-                   condition='nx != 0')
+    problem.add_bc(
+        'left(dz(uz)) = -KZ * A * sin(KX * x - omega * t + 1 / (2 * H))',
+        condition='nx != 0')
     problem.add_bc('left(uz) = 0', condition='nx == 0')
 
     # Build solver
@@ -122,28 +126,32 @@ if __name__ == '__main__':
     rho0 = RHO0 * np.exp(-z / H)
 
     # Main loop
-    print('Starting sim...')
-    while solver.ok:
-        if solver.iteration % int((T_F / DT) / NUM_SNAPSHOTS) == 0:
-            print('Reached time %f out of %f' %
-                  (solver.sim_time, solver.stop_sim_time))
-            sim_times.append(solver.sim_time)
-            for varname in dyn_vars:
-                values = solver.state[varname]
-                values.set_scales(1, keep_data=True)
-                state_vars[varname].append(np.copy(values['g']))
+    try:
+        logger.info('Starting sim...')
+        while solver.ok:
+            if solver.iteration % int((T_F / DT) / NUM_SNAPSHOTS) == 0:
+                logger.info('Reached time %f out of %f' %
+                      (solver.sim_time, solver.stop_sim_time))
+                sim_times.append(solver.sim_time)
+                for varname in dyn_vars:
+                    values = solver.state[varname]
+                    values.set_scales(1, keep_data=True)
+                    state_vars[varname].append(np.copy(values['g']))
 
-        solver.step(DT)
+            solver.step(DT)
+    except:
+        pass
 
     # plot results
     matplotlib.rcParams.update({'font.size': 6})
     try:
-        os.makedirs('plots')
+        os.makedirs('plots_nonlin')
     except FileExistsError:
         pass
 
     for varname in dyn_vars:
-        state_vars[varname] = np.array(state_vars[varname])
+        # truncate for overflow
+        state_vars[varname] = np.array(state_vars[varname])[:-1]
     state_vars['E'] = np.sum(
         ((rho0 + state_vars['rho']) *
          (state_vars['ux']**2 + state_vars['uz']**2)) / 2,
@@ -200,7 +208,7 @@ if __name__ == '__main__':
         fig.suptitle('t=%.2f, kx=-2pi/H, kz=2pi/H, omega=%.2f' %
                      (sim_time, OMEGA))
         fig.subplots_adjust(hspace=0.4, wspace=0.4)
-        savefig = 'plots/t_%d.png' % (t_idx)
+        savefig = 'plots_nonlin/t_%d.png' % (t_idx)
         plt.savefig(savefig)
-        print('Saved %s' % savefig)
+        logger.info('Saved %s' % savefig)
         plt.close()
