@@ -77,19 +77,18 @@ def setup_problem(problem, domain, params):
         'dt(ux) + sponge * ux + dx(P) / rho0' +
         '= - ux * dx(ux) - uz * dz(ux) +'
         # '='
-        'F * KX / KZ * exp(-(z - 0.15 * ZMAX)**2 / (2 * 0.1**2)) *' +
+        'F * KX * exp(-(z - 0.3 * ZMAX)**2 / (2 * 0.1**2)) *' +
             'sin(KX * x - omega * t)')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
         '= - ux * dx(uz) - uz * dz(uz) +' +
         # '='
-        'F * exp(-(z - 0.15 * ZMAX)**2 / (2 * 0.1**2)) *' +
-            'sin(KX * x - omega * t)')
+        'F * (z - 0.3 * ZMAX) / 0.1**1 * exp(-(z - 0.3 * ZMAX)**2 / (2 * 0.1**2)) *' +
+            'cos(KX * x - omega * t)')
 
     z = domain.grid(1)
     x = domain.grid(0)
-    problem.add_bc('left(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(P) = 0')
     problem.add_bc('right(uz) = 0')
 
 ###
@@ -243,7 +242,7 @@ def plot(get_solver, setup_problem, name, params):
                   for i in ['uz', 'ux', 'rho1', 'P1']]
     n_cols = 3
     n_rows = 3
-    plot_stride = 1
+    plot_stride = 2
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)

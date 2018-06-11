@@ -910,5 +910,26 @@ Taking the determinant of this matrix produces
     \frac{N^2k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}} &= \omega^2.
 \end{align}
 
+\chapter{Numerical Results}
+
+\section{Chebyshev Polynomials}
+
+Note that, unlike a Fourier basis, a Chebyshev basis has $N^2$ grid spacing near
+its boundaries. By this, we mean that for the Chebyshev polynomials $T_n(x)$,
+the spacing between zeros of $T_n(x)$ near $x = \pm 1$ scales like $n^{-2}$.
+This contrasts with Fourier series for which $\psi_n(x) = \cos n\pi x, \sin n\pi
+x$ for which the zeros are spaced $\Delta x = \frac{1}{n}$. This is important
+because the CFL condition for PDEs requires that $u\frac{\Delta t}{\Delta x} <
+C$ for some constant $C$, otherwise the simulation will move fluid elements more
+than $\Delta x$ in a single timestep, an illegal operation for the basis
+function.
+
+If we consider instead $T_n(x)$ satisfying $T_n(\cos \theta) = \cos n\theta$,
+then within some spacing of the edge of the domain $\cos\theta = 1 - \Delta x$
+then $\Delta x \approx \theta^2/2$ then the number of zeros seen is the number
+of solutions $\cos \phi = 0, \phi = n\theta = n\sqrt{2\Delta x}$ which requires
+$\sim k\pi \in [0, n\sqrt{2\Delta x}]$. Thus, for any interval $\Delta x$, the
+number of zeros contained scales with $n^2$!
+
 \end{document}
 

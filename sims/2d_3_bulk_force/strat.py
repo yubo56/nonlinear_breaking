@@ -7,7 +7,7 @@ from strat_helper import *
 
 N_PARALLEL = 20
 H = 1
-num_timesteps = 4e3
+num_timesteps = 5e2
 
 XMAX = H
 ZMAX = 3 * H
@@ -16,9 +16,9 @@ KZ = -(np.pi) * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
-T_F = abs(ZMAX / VPH_Z) * 8
+T_F = abs(ZMAX / VPH_Z) * 2
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 100
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -33,10 +33,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'RHO0': 1,
               'G': G,
               'A': 0.005,
-              'F': 0.1,
-              'SPONGE_STRENGTH': 10,
-              'SPONGE_START_HIGH': 0.7 * ZMAX,
-              'SPONGE_START_LOW': 0.3 * ZMAX,
+              'F': 0.01,
+              'SPONGE_STRENGTH': 30,
+              'SPONGE_START_HIGH': 0.8 * ZMAX,
+              'SPONGE_START_LOW': 0.2 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
@@ -61,21 +61,21 @@ if __name__ == '__main__':
         (get_solver, setup_problem, zero_ic,
          'F1',
          build_interp_params(4, 4)),
-        (get_solver, setup_problem, zero_ic,
-         'F2',
-         build_interp_params(4, 4, overrides={'F': 0.3})),
-        (get_solver, setup_problem, zero_ic,
-         'F3',
-         build_interp_params(4, 4, overrides={'F': 0.6})),
-        (get_solver, setup_problem, zero_ic,
-         'F4',
-         build_interp_params(4, 4, overrides={'F': 1.0})),
-        (get_solver, setup_problem, zero_ic,
-         'F5',
-         build_interp_params(4, 4, overrides={'F': 2.0})),
-        (get_solver, setup_problem, zero_ic,
-         'F6',
-         build_interp_params(4, 4, overrides={'F': 4.0})),
+        # (get_solver, setup_problem, zero_ic,
+        #  'F2',
+        #  build_interp_params(4, 4, overrides={'F': 0.3})),
+        # (get_solver, setup_problem, zero_ic,
+        #  'F3',
+        #  build_interp_params(4, 4, overrides={'F': 0.6})),
+        # (get_solver, setup_problem, zero_ic,
+        #  'F4',
+        #  build_interp_params(4, 4, overrides={'F': 1.0})),
+        # (get_solver, setup_problem, zero_ic,
+        #  'F5',
+        #  build_interp_params(4, 4, overrides={'F': 2.0})),
+        # (get_solver, setup_problem, zero_ic,
+        #  'F6',
+        #  build_interp_params(4, 4, overrides={'F': 4.0})),
     ]
     if len(tasks) == 1:
         run(*tasks[0])
