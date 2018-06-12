@@ -10,9 +10,9 @@ H = 1
 num_timesteps = 5e2
 
 XMAX = H
-ZMAX = 3 * H
-KX = 2 * np.pi / H
-KZ = -(np.pi) * np.pi / H
+ZMAX = 5 * H
+KX = 4 * np.pi / H
+KZ = -20 / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
@@ -33,10 +33,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'RHO0': 1,
               'G': G,
               'A': 0.005,
-              'F': 0.01,
-              'SPONGE_STRENGTH': 30,
-              'SPONGE_START_HIGH': 0.8 * ZMAX,
-              'SPONGE_START_LOW': 0.2 * ZMAX,
+              'F': 0.001,
+              'SPONGE_STRENGTH': 100,
+              'SPONGE_START_HIGH': 0.9 * ZMAX,
+              'SPONGE_START_LOW': 0.1 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         # linear, neumann works to drop ux waviness
         (get_solver, setup_problem, zero_ic,
          'F1',
-         build_interp_params(4, 4)),
+         build_interp_params(8, 4)),
         # (get_solver, setup_problem, zero_ic,
         #  'F2',
         #  build_interp_params(4, 4, overrides={'F': 0.3})),

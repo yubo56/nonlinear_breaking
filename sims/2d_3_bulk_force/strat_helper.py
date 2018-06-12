@@ -71,20 +71,17 @@ def setup_problem(problem, domain, params):
     problem.add_equation(
         'dt(rho) + sponge * rho - rho0 * uz / H' +
         '= -ux * dx(rho) - uz * dz(rho)'
-        # '= 0'
     )
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
         '= - ux * dx(ux) - uz * dz(ux) +'
-        # '='
-        'F * KX * exp(-(z - 0.3 * ZMAX)**2 / (2 * 0.1**2)) *' +
-            'sin(KX * x - omega * t)')
+        'F * KX * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+            'sin(KX * x + KZ * z - omega * t)')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
         '= - ux * dx(uz) - uz * dz(uz) +' +
-        # '='
-        'F * (z - 0.3 * ZMAX) / 0.1**1 * exp(-(z - 0.3 * ZMAX)**2 / (2 * 0.1**2)) *' +
-            'cos(KX * x - omega * t)')
+        'F * KZ * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+            'sin(KX * x + KZ * z - omega * t)')
 
     z = domain.grid(1)
     x = domain.grid(0)
@@ -120,6 +117,9 @@ def _get_solver(setup_problem, params, variables):
     problem.parameters['RHO0'] = params['RHO0']
     problem.parameters['omega'] = params['OMEGA']
     problem.parameters['ZMAX'] = params['ZMAX']
+
+    problem.parameters['Z0'] = 0.15 * params['ZMAX']
+    problem.parameters['S'] = params['H'] / 2
 
     # rho0 stratification
     rho0 = domain.new_field()
@@ -242,7 +242,7 @@ def plot(get_solver, setup_problem, name, params):
                   for i in ['uz', 'ux', 'rho1', 'P1']]
     n_cols = 3
     n_rows = 3
-    plot_stride = 2
+    plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)
