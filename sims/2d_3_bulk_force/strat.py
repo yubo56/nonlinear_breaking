@@ -10,8 +10,8 @@ H = 1
 num_timesteps = 5e2
 
 XMAX = H
-ZMAX = 5 * H
-KX = 4 * np.pi / H
+ZMAX = 10 * H
+KX = 8 * np.pi / H
 KZ = -20 / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
@@ -60,22 +60,25 @@ if __name__ == '__main__':
         # linear, neumann works to drop ux waviness
         (get_solver, setup_problem, zero_ic,
          'F1',
-         build_interp_params(8, 4)),
-        # (get_solver, setup_problem, zero_ic,
-        #  'F2',
-        #  build_interp_params(4, 4, overrides={'F': 0.3})),
-        # (get_solver, setup_problem, zero_ic,
-        #  'F3',
-        #  build_interp_params(4, 4, overrides={'F': 0.6})),
-        # (get_solver, setup_problem, zero_ic,
-        #  'F4',
-        #  build_interp_params(4, 4, overrides={'F': 1.0})),
-        # (get_solver, setup_problem, zero_ic,
-        #  'F5',
-        #  build_interp_params(4, 4, overrides={'F': 2.0})),
-        # (get_solver, setup_problem, zero_ic,
-        #  'F6',
-        #  build_interp_params(4, 4, overrides={'F': 4.0})),
+         build_interp_params(2, 1)),
+        (get_solver, setup_problem, zero_ic,
+         'F2',
+         build_interp_params(2, 1, overrides={'F': 0.01})),
+        (get_solver, setup_problem, zero_ic,
+         'F3',
+         build_interp_params(2, 1, overrides={'F': 0.03})),
+        (get_solver, setup_problem, zero_ic,
+         'F4',
+         build_interp_params(2, 1, overrides={'F': 0.1})),
+        (get_solver, setup_problem, zero_ic,
+         'F5',
+         build_interp_params(2, 1, overrides={'F': 0.3})),
+        (get_solver, setup_problem, zero_ic,
+         'F6',
+         build_interp_params(2, 1, overrides={'F': 0.8})),
+        (get_solver, setup_problem, zero_ic,
+         'F7',
+         build_interp_params(2, 1, overrides={'F': 1.3})),
     ]
     if len(tasks) == 1:
         run(*tasks[0])

@@ -130,7 +130,7 @@ def _get_solver(setup_problem, params, variables):
     setup_problem(problem, domain, params)
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.RK222)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
