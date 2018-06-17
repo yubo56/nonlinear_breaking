@@ -698,6 +698,56 @@ anelastic approximation with advective terms just fine in teh regime $v_{ph}
 \lesssim u$, and if this is sufficient to induce wave breaking then we may never
 need to consider the $\rho_1 \sim \rho_0$ enormous perturbations.
 
+\section{Volumetric Forcing}
+
+Due to the structure of \lstinline{Dedalus}, we must use Chebyshev polynomials
+in the vertical direction (to be able to enforce BCs). But as discussed in
+\autoref{s:chebyshev}, the grid spacing of the Chebyshev polynomials near
+boundaries goes as $1/N^2$, which means that interface forcing necessitates an
+extremely strict Courant condition to capture evolution near the interface; this
+is the explanation for the divergences we were seeing in earlier sections.
+
+Instead, we employ volumetric forcing. As a toy problem of seeing how this
+works, we will study the restricted 1D wave equation.
+
+\subsection{1D Wave Equation}
+
+Consider the forced 1D wave equation (we set $c = 1$)
+\begin{equation}
+    \ptd{u(x, t)}{t} - \ptd{u(x, t)}{x} = f(x, t).
+\end{equation}
+Note that the only allowed propagation modes here are $u \sim e^{iC\p*{x \pm
+t}}$ for some constant $C$.
+
+We wish to choose $f(x, t)$ such that $u\p*{x \to -\infty} = 0$ while $u\p*{x
+\to +\infty} \sim e^{i\p*{x - t}}$. It is clear that if we consider the Fourier
+transform $\tilde{f}(k, t)$, the response in $\tilde{u}(k, t)$ will also contain
+components for each of the nonzero $\tilde{f}(k, t)$ components. Thus, if we
+want a pure $e^{i(x - t)}$ outgoing wave, we should have a pure $\tilde{f}(k, t)
+\propto \delta\p*{k - 1}$. However, it is clear that driving the oscillator
+exactly on resonance produces divergent oscillation amplitudes, and moreover it
+is impossible to drive with an $f(x, t)$ that doesn't vanish as $x \to \pm
+\infty$.
+
+It is nonetheless clear that $\tilde{f}(k, t)$ should be strongly peaked at $k =
+1$ and small elsewhere. We can thus consider a form $f(x, t) \propto
+e^{-x^2/2\sigma^2} e^{i(x - t)}$ such that $\sigma \gg 1$, i.e.\ the envelope
+contains many wavelengths. The Fourier transform $\tilde{f}(k, t)$ is then a
+Gaussian with width $1/\sigma \ll 1$ centered at $k = 1$ (convolution).
+
+More precisely, consider $f(x, t) = f_0e^{-x^2/2\sigma^2} e^{i(x - t)}$ and $u(x,
+t) = u_0(x)e^{i(x - t)}$ such that $u_0(x \to \infty) = 0$. Substituting this
+into the inhomogeneous PDE gives
+\begin{equation}
+    i\pd{u_0(x)}{x} - \ptd{u_0(x)}{x} = f_0e^{-x^2/2\sigma^2}.
+\end{equation}
+We note that if $\sigma \gg 1$ then roughly $\pd{}{x} \ll 1$ or
+\begin{equation}
+    \pd{u_0(x)}{x} \approx -if_0e^{-x^2/2\sigma^2}.
+\end{equation}
+Enforcing $u_0(x \to -\infty) = 0$, then $\abs*{u_0(x \to +\infty)} =
+f_0\sigma\sqrt{2\pi}$.
+
 \clearpage
 
 \appendix
@@ -912,7 +962,7 @@ Taking the determinant of this matrix produces
 
 \chapter{Numerical Results}
 
-\section{Chebyshev Polynomials}
+\section{Chebyshev Polynomials}\label{s:chebyshev}
 
 Note that, unlike a Fourier basis, a Chebyshev basis has $N^2$ grid spacing near
 its boundaries. By this, we mean that for the Chebyshev polynomials $T_n(x)$,
