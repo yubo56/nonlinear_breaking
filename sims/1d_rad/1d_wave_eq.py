@@ -1,8 +1,6 @@
 '''
-Simplest 1D fluid equation in uniform medium
-
-rho_1/rho = 0.001 seems to look linear, rho_1/rho = 0.1 produces steepening!
-u << c, rho_1 << rho = linear
+1d radiative BCs, toy problem to understand volumetric forcing
+sigma = (1,2,3), y_max = (0.839, 2.319, 3.729)
 '''
 
 import logging
@@ -14,41 +12,30 @@ from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 logger = logging.getLogger(__name__)
 
-def plot_for_A(A):
-    C = 5
-    OMEGA = 2 * np.pi / 0.1
-
-    SCALE = 32
-    XMAX = 1
-    N_X = 16
-    T_F = (XMAX / C) * 6
+def plot_for_sigma(SIGMA):
+    SCALE = 4
+    XMAX = 30
+    N_X = 128
+    T_F = 100
     NUMSTEPS = 5e2
     DT = T_F / NUMSTEPS
 
     # Bases and domain
-    x_basis = de.Chebyshev('x', N_X, interval=(0, XMAX))
+    x_basis = de.Chebyshev('x', N_X, interval=(0, XMAX), dealias=3/2)
     domain = de.Domain([x_basis], np.float64)
 
     # Problem
-    sponge = domain.new_field()
     x = domain.grid(0)
-    # sponge['g'] = np.zeros(np.shape(x))
-    sponge['g'] = OMEGA * np.maximum(
-        1 - (x - XMAX)**2 / (0.7 * XMAX - XMAX)**2,
-        np.zeros(np.shape(x)))
 
     problem = de.IVP(domain, variables=['y', 'y_x', 'y_t'])
-    problem.parameters['c'] = C
-    problem.parameters['A'] = A
-    problem.parameters['omega'] = OMEGA
-    problem.parameters['sponge'] = sponge
 
-    problem.add_equation('dt(y_t) - c**2 * dx(y_x) + sponge * y_t' +
-                         '= 0')
+    problem.parameters['SIGMA'] = SIGMA
+    problem.add_equation('dt(y_t) - dx(y_x)' +
+                         '= cos(x - t) * exp(-(x - 10)**2 / (2 * SIGMA**2)) / SIGMA')
     problem.add_equation('dx(y) - y_x = 0')
     problem.add_equation('dt(y) - y_t = 0')
-    problem.add_bc('left(y) = A * cos(omega * t)')
-    problem.add_bc('right(y_x + y_t / c) = 0')
+    problem.add_bc('right(y_x + y_t) = 0')
+    problem.add_bc('left(y_x - y_t) = 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
@@ -87,7 +74,7 @@ def plot_for_A(A):
             yx_list.append(np.copy(y_x['g']))
             yt_list.append(np.copy(y_t['g']))
             t_list.append(solver.sim_time)
-        if solver.iteration % (NUMSTEPS // 10) == 0:
+        if solver.iteration % (NUMSTEPS // 2) == 0:
             logger.info(
                 'Iteration: %i, Time: %.3f/%3f, dt: %.3e',
                 solver.iteration,
@@ -98,44 +85,35 @@ def plot_for_A(A):
 
     # Create space-time plot
     _x = np.array(domain.grid(0, scales=SCALE))
-    trunc_len = int(len(_x) * 0.65)
-    # trunc_len = len(_x)
-    trunc_time = int((XMAX / C) * 2 / DT)
-    x = _x[ : trunc_len]
 
-    t_array = np.array(t_list)[trunc_time: ]
-    y_array = np.array(y_list)[trunc_time: ]
-    y_sub_array = y_array - np.array([
-        A * np.cos(OMEGA * (_x / C - t)) for t in t_array])
+    t_array = np.array(t_list)
+    y_array = np.array(y_list)
     yx_array = np.array(yx_list)
     yt_array = np.array(yt_list)
+    print('Max:', y_array.max())
 
-    xmesh, tmesh = quad_mesh(x=x, y=t_array)
+    xmesh, tmesh = quad_mesh(x=_x, y=t_array)
     fig = plt.figure()
 
     PLOT_CFG = True
     if PLOT_CFG:
-        axes1 = fig.add_subplot(1, 2, 1, title='y')
-        p1 = axes1.pcolormesh(xmesh, tmesh, y_array[ :, :trunc_len],
+        axes1 = fig.add_subplot(1, 1, 1, title='y')
+        p1 = axes1.pcolormesh(xmesh, tmesh, y_array,
                               cmap='YlGnBu')
         axes1.axis(pad_limits(xmesh, tmesh))
         fig.colorbar(p1, ax=axes1)
 
-        axes2 = fig.add_subplot(1, 2, 2, title='y - y_lin')
-        p2 = axes2.pcolormesh(xmesh, tmesh, y_sub_array[ :, :trunc_len],
-                              cmap='YlGnBu')
-        axes2.axis(pad_limits(xmesh, tmesh))
-        fig.colorbar(p2, ax=axes2)
-
     else:
-        print(x[0:3])
         plt.plot(t_array, y_array[:, 0], 'g-')
-        plt.plot(t_array, y_sub_array[:, 0], 'r-')
 
-    fig.suptitle('Wave Equation, rad BC, A=%.3f' % A)
+    fig.suptitle('Wave Equation, rad BC')
     fig.subplots_adjust(wspace=0.4, hspace=0.4)
-    plt.savefig('1d_rad_%.2f.png' % A, dpi=600)
+    plt.savefig('1d_rad_%d.png' % SIGMA, dpi=600)
     plt.clf()
 
 if __name__ == '__main__':
-    plot_for_A(0.1)
+    plot_for_sigma(1)
+    plot_for_sigma(2)
+    plot_for_sigma(3)
+    plot_for_sigma(4)
+    plot_for_sigma(5)
