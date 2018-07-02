@@ -118,8 +118,8 @@ def _get_solver(setup_problem, params, variables):
     problem.parameters['omega'] = params['OMEGA']
     problem.parameters['ZMAX'] = params['ZMAX']
 
-    problem.parameters['Z0'] = 0.15 * params['ZMAX']
-    problem.parameters['S'] = params['H'] / 2
+    problem.parameters['Z0'] = 0.2 * params['ZMAX']
+    problem.parameters['S'] = params['H']
 
     # rho0 stratification
     rho0 = domain.new_field()
@@ -269,8 +269,8 @@ def plot(get_solver, setup_problem, name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -285,7 +285,7 @@ def plot(get_solver, setup_problem, name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r--')
             p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r--')

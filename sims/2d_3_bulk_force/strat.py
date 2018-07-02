@@ -7,7 +7,7 @@ from strat_helper import *
 
 N_PARALLEL = 20
 H = 1
-num_timesteps = 5e2
+num_timesteps = 1e3
 
 XMAX = H
 ZMAX = 10 * H
