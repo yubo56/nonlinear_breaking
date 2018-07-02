@@ -12,11 +12,11 @@ num_timesteps = 1e3
 XMAX = H
 ZMAX = 10 * H
 KX = 8 * np.pi / H
-KZ = -20 / H
+KZ = -2 * np.pi / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
-T_F = abs(ZMAX / VPH_Z) * 2
+T_F = abs(ZMAX / VPH_Z)
 DT = T_F / num_timesteps
 NUM_SNAPSHOTS = 100
 
@@ -57,7 +57,9 @@ def run(get_solver, bc, ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        # linear, neumann works to drop ux waviness
+        (get_solver, setup_problem, zero_ic,
+         'F0',
+         build_interp_params(2, 1, overrides={'F': 0.0001})),
         (get_solver, setup_problem, zero_ic,
          'F1',
          build_interp_params(2, 1)),
