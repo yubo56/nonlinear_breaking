@@ -70,18 +70,15 @@ def setup_problem(problem, domain, params):
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) + sponge * rho - rho0 * uz / H' +
-        '= -ux * dx(rho) - uz * dz(rho)'
-    )
+        '= -ux * dx(rho) - uz * dz(rho) + ' +
+        'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+            'cos(KX * x + KZ * z - omega * t)')
     problem.add_equation(
         'dt(ux) + sponge * ux + dx(P) / rho0' +
-        '= - ux * dx(ux) - uz * dz(ux) +'
-        'F * KX * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'sin(KX * x + KZ * z - omega * t)')
+        '= - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + sponge * uz + dz(P) / rho0 + rho * g / rho0' +
-        '= - ux * dx(uz) - uz * dz(uz) +' +
-        'F * KZ * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'sin(KX * x + KZ * z - omega * t)')
+        '= - ux * dx(uz) - uz * dz(uz)')
 
     z = domain.grid(1)
     x = domain.grid(0)
@@ -119,7 +116,7 @@ def _get_solver(setup_problem, params, variables):
     problem.parameters['ZMAX'] = params['ZMAX']
 
     problem.parameters['Z0'] = 0.2 * params['ZMAX']
-    problem.parameters['S'] = np.pi / (2 * params['KZ']) # lambda = 4 * sigma
+    problem.parameters['S'] = params['H']
 
     # rho0 stratification
     rho0 = domain.new_field()
@@ -269,8 +266,8 @@ def plot(get_solver, setup_problem, name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -285,7 +282,7 @@ def plot(get_solver, setup_problem, name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r--')
             p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r--')

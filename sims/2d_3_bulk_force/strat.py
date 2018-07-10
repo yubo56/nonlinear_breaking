@@ -10,20 +10,20 @@ H = 1
 num_timesteps = 1e3
 
 XMAX = H
-ZMAX = 10 * H
+ZMAX = 15 * H
 KX = 8 * np.pi / H
-KZ = -2 * np.pi / H
+KZ = -20 / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
 _, VPH_Z = get_vph(G, H, KX, KZ)
 T_F = abs(ZMAX / VPH_Z)
 DT = T_F / num_timesteps
-NUM_SNAPSHOTS = 100
+NUM_SNAPSHOTS = 200
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
               'N_X': 128,
-              'N_Z': 256,
+              'N_Z': 512,
               'T_F': T_F,
               'DT': DT,
               'OMEGA': OMEGA,
@@ -33,10 +33,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'RHO0': 1,
               'G': G,
               'A': 0.005,
-              'F': 0.001,
-              'SPONGE_STRENGTH': 100,
-              'SPONGE_START_HIGH': 0.9 * ZMAX,
-              'SPONGE_START_LOW': 0.1 * ZMAX,
+              'F': 0.005,
+              'SPONGE_STRENGTH': 150,
+              'SPONGE_START_HIGH': 0.87 * ZMAX,
+              'SPONGE_START_LOW': 0.13 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, dt=DT, overrides=None):
@@ -59,28 +59,16 @@ if __name__ == '__main__':
     tasks = [
         (get_solver, setup_problem, zero_ic,
          'F0',
-         build_interp_params(2, 1, overrides={'F': 0.0001})),
-        (get_solver, setup_problem, zero_ic,
-         'F1',
-         build_interp_params(2, 1)),
+         build_interp_params(2, 1, overrides={'F': 0.000001})),
         (get_solver, setup_problem, zero_ic,
          'F2',
-         build_interp_params(2, 1, overrides={'F': 0.01})),
+         build_interp_params(2, 1, overrides={'F': 0.00005})),
         (get_solver, setup_problem, zero_ic,
          'F3',
-         build_interp_params(2, 1, overrides={'F': 0.03})),
+         build_interp_params(2, 1, overrides={'F': 0.0001})),
         (get_solver, setup_problem, zero_ic,
          'F4',
-         build_interp_params(2, 1, overrides={'F': 0.1})),
-        (get_solver, setup_problem, zero_ic,
-         'F5',
-         build_interp_params(2, 1, overrides={'F': 0.3})),
-        (get_solver, setup_problem, zero_ic,
-         'F6',
-         build_interp_params(2, 1, overrides={'F': 0.8})),
-        (get_solver, setup_problem, zero_ic,
-         'F7',
-         build_interp_params(2, 1, overrides={'F': 1.3})),
+         build_interp_params(2, 1, overrides={'F': 0.0002})),
     ]
     if len(tasks) == 1:
         run(*tasks[0])
