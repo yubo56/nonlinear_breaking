@@ -240,6 +240,7 @@ class UnaryGridFunction(NonlinearOperator, Future, metaclass=MultiClass):
     # Add ufuncs and shortcuts to parseables
     parseables.update(supported)
     parseables.update(aliased)
+    supported['exp'] = lambda x, out: np.exp(np.maximum(x, -100), out=out)
 
     @classmethod
     def _preprocess_args(self, func, arg, **kw):
@@ -307,7 +308,7 @@ class UnaryGridFunctionScalar(UnaryGridFunction, FutureScalar):
     argtypes = {1: (Scalar, FutureScalar)}
 
     def check_conditions(self):
-        return True
+       return True
 
     def operate(self, out):
         out.value = self.func(self.args[0].value)

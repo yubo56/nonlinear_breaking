@@ -2,7 +2,7 @@
 setup: clean
 	virtualenv --python=python3 venv
 	source venv/bin/activate &&\
-		pip install --force -r requirements.txt &&\
+		pip install -r requirements.txt &&\
 		python setup.py build_ext --inplace
 clean:
 	rm -rf venv

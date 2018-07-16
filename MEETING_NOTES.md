@@ -38,6 +38,19 @@
 - high k instabilities: due to improperly resolving the Gaussian, bad BC
     - delta P is from nonlinear term having nonzero integral
 
+# NOTES 07/13/18 Daniel call
+- Linearly increasing velocity at excitation zone? Probably can ignore
+- Damp nonlinear terms near the excitation zone
+- Explicit = RHS, use damping zone on RHS.
+    Implicit will give much higher-order Chebyshev coefficients on LHS, much
+    less sparse matricies
+- Store LU decomp!!
+- Try to factor out all exponentials?
+- Sutherland finite diff vertical?
+    - Chebyshev is more accurate especially for wave-wave.
+- Gibbs ringing when lose exponential convergence
+- Probably use sigma << 1/kz
+
 ## TODO
 - plot spatial FT as function of time
 
