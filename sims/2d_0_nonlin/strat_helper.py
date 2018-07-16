@@ -59,7 +59,7 @@ def get_solver(params):
     problem.parameters['SPONGE_HIGH'] = params['SPONGE_START_HIGH']
 
     problem.parameters['Z0'] = 0.2 * params['ZMAX']
-    problem.parameters['S'] = 0.3 / params['KZ']
+    problem.parameters['S'] = 1 / params['KZ']
 
     # rho0 stratification
     rho0 = domain.new_field()
@@ -184,13 +184,10 @@ def plot(name, params):
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     plot_vars = ['uz', 'ux']
-    z_vars = []
-    # slice_vars = []
-    # z_vars = ['F_z', 'E'] # sum these over x
-    slice_vars = ['%s%s' % (i, slice_suffix)
-                  for i in ['uz', 'ux']]
-    n_cols = 4
-    n_rows = 1
+    z_vars = ['F_z', 'E'] # sum these over x
+    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz', 'ux']]
+    n_cols = 3
+    n_rows = 2
     plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
@@ -234,7 +231,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r--')
             p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r--')

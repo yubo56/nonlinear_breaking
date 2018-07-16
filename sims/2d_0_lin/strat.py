@@ -7,20 +7,20 @@ from strat_helper import *
 
 H = 1
 XMAX = H
-ZMAX = 15 * H
+ZMAX = 10 * H
 KX = 8 * np.pi / H
 KZ = -20 / H
 G = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 OMEGA = get_omega(G, H, KX, KZ)
-_, VPH_Z = get_vph(G, H, KX, KZ)
+_, VG_Z = get_vg(G, H, KX, KZ)
 
-T_F = abs(ZMAX / VPH_Z)
-DT = 0.1
+T_F = abs(ZMAX / VG_Z)
+DT = 0.2
 NUM_SNAPSHOTS = 100
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 128,
+              'N_X': 64,
               'N_Z': 512,
               'T_F': T_F,
               'DT': DT,
@@ -56,7 +56,7 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'F0',
-         build_interp_params(4, 2, overrides={'F': 0.0001})),
+         build_interp_params(1, 1, overrides={'F': 0.00003})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
