@@ -51,7 +51,6 @@ def get_solver(params):
     problem.parameters['KX'] = params['KX']
     problem.parameters['KZ'] = params['KZ']
     problem.parameters['NU'] = params['NU']
-    problem.parameters['RHO0'] = params['RHO0']
     problem.parameters['omega'] = params['OMEGA']
     problem.parameters['ZMAX'] = params['ZMAX']
     problem.parameters['SPONGE_STRENGTH'] = params['SPONGE_STRENGTH']
@@ -75,7 +74,7 @@ def get_solver(params):
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x + KZ * z - omega * t)')
+            'cos(KX * x - omega * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '= - sponge * ux')
@@ -88,7 +87,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -215,8 +214,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
