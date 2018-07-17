@@ -22,8 +22,8 @@ SNAPSHOTS_DIR = 'snapshots_%s'
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
-def get_vph(g, h, kx, kz):
-    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
+def get_vg(g, h, kx, kz):
+    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2) * (kz / kx)
     return norm * kx, norm * kz
 
 def zero_ic(solver, domain, params):
@@ -51,7 +51,6 @@ def get_solver(params):
     problem.parameters['KX'] = params['KX']
     problem.parameters['KZ'] = params['KZ']
     problem.parameters['NU'] = params['NU']
-    problem.parameters['RHO0'] = params['RHO0']
     problem.parameters['omega'] = params['OMEGA']
     problem.parameters['ZMAX'] = params['ZMAX']
     problem.parameters['SPONGE_STRENGTH'] = params['SPONGE_STRENGTH']
@@ -75,7 +74,7 @@ def get_solver(params):
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x + KZ * z - omega * t)')
+            'cos(KX * x - omega * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
@@ -88,15 +87,11 @@ def get_solver(params):
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
     return solver, domain
-
-###
-### ENTRY POINTS
-###
 
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -170,7 +165,7 @@ def load(name, params):
         params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
         params['G'] * params['H']
 
-    state_vars['E'] = state_vars['rho'] * \
+    state_vars['E'] = params['RHO0'] * np.exp(-z / params['H']) * \
                        (state_vars['ux']**2 + state_vars['uz']**2) / 2
     state_vars['F_z'] = state_vars['uz'] * (
         state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
@@ -215,8 +210,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -233,8 +228,9 @@ def plot(name, params):
             plt.yticks(rotation=30)
             xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
-            p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r--')
-            p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r--')
+            p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r.')
+            p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r.')
+            p = axes.plot(xlims, [params['Z0']] * len(xlims), 'b--')
             idx += 1
 
         fig.suptitle(

@@ -698,6 +698,10 @@ anelastic approximation with advective terms just fine in teh regime $v_{ph}
 \lesssim u$, and if this is sufficient to induce wave breaking then we may never
 need to consider the $\rho_1 \sim \rho_0$ enormous perturbations.
 
+\chapter{Simulation Setup}
+
+We describe now some concerns that arise in setting up the simulation.
+
 \section{Volumetric Forcing}
 
 Due to the structure of \lstinline{Dedalus}, we must use Chebyshev polynomials
@@ -705,12 +709,14 @@ in the vertical direction (to be able to enforce BCs). But as discussed in
 \autoref{s:chebyshev}, the grid spacing of the Chebyshev polynomials near
 boundaries goes as $1/N^2$, which means that interface forcing necessitates an
 extremely strict Courant condition to capture evolution near the interface; this
-is the explanation for the divergences we were seeing in earlier sections.
+is the explanation for the divergences we were seeing in earlier sections. In
+fact, in the literature, the spectral CFL condition meets a $\Delta t_{\max}
+\sim 1/N^2$ scaling thanks to poor bounds near the boundary.
 
 Instead, we employ volumetric forcing. As a toy problem of seeing how this
 works, we will study the restricted 1D wave equation.
 
-\subsection{1D Wave Equation}
+\subsection{1D Wave Equation (Deprecated)}
 
 Consider the forced 1D wave equation (we set $c = 1$)
 \begin{equation}
@@ -747,6 +753,60 @@ We note that if $\sigma \gg 1$ then roughly $\pd{}{x} \ll 1$ or
 \end{equation}
 Enforcing $u_0(x \to -\infty) = 0$, then $\abs*{u_0(x \to +\infty)} =
 f_0\sigma\sqrt{2\pi}$.
+
+\subsection{Narrow-band forcing}
+
+Instead of doing this on-frequency forcing, we choose instead to use a narrow
+forcing zone $f(x, t) \sim N_{\sigma}(z)e^{it}$ where $\sigma$ is not large.
+Specifically, we need $\sigma$ to be well-resolved spectrally, but we need
+$\tilde{f}(k_z, t)$ not to be small. Thus, since $1/k_z$ must be resolved by the
+simulation, choosing $\sigma = 1/k_z$ is a natural choice.
+
+Note that this implies that waves will be excited going both upwards and
+downwards, as $\tilde{f}(k_z) = \tilde{f}(-k_z)$. We can however place the
+forcing zone near the bottom boundary so that downwards-propagating waves will
+be attenuated by damping zones.
+
+\section{Timestepping}
+
+\subsection{Signatures of Insufficient Temporal Resolution}
+
+When running these simulations, it can occasionally be seen that the waves do
+not grow in amplitude like $e^{z/2H}$, such that the energy and flux are not
+constant (or the waves will grow too quickly; this is dependent on the exact
+timestepping used). This is caused by using an overly-long timestep, as can be
+seen with the below illustration.
+
+We study the 1D advection equation $\psi_t = c\psi_x$ corresponding to
+rightwards propagating waves. Consider first order implicit Euler timestepping
+for wave mode $\psi_x = ik\psi$, then
+\begin{equation}
+    \psi_{i + 1} - \psi_i = ick\Delta t\psi_{i + 1}.
+\end{equation}
+Solving yields
+\begin{align}
+    \psi_{i + 1} &= \p*{1 - ick\Delta t}^{-1}\psi_i,\nonumber\\
+        &= \p*{1 - i\omega \Delta t}^{-1}\psi_i.
+\end{align}
+If we then want to step forwards for some total time $T$, with $N \Delta t = T$
+the number of timesteps taken, then we approximate
+\begin{align}
+    \psi(t_0 + T) \approx \p*{1 - i\omega \frac{T}{N}}^{-N}\psi(t_0).
+\end{align}
+It is worth noting that in the $N \to \infty$ limit we recover $\psi(t_0 + T) =
+e^{i\omega T}\psi(t_0)$.
+
+However, consider if $\omega \Delta t \lesssim 1$, then we should see the wave
+amplitude decrease over time like
+\begin{equation}
+    \abs*{\psi(t_0 + T)} \approx \p*{1 + \omega^2 \Delta t^2}^{-N/2}\psi(t_0).
+\end{equation}
+Thus, since we have an implicit first order scheme, the wave amplitude
+\emph{decreases} over time spuriously. An explicit method would produce an
+increase, but \lstinline{Dedalus} uses implicit timestepping. The exact rate of
+decrease depends on the timestepper used, but it is clear that $\omega \Delta t
+\ll 1$ is necessary to avoid this spurious decrease (in numerics language, ``the
+oscillation must be well-resolved'').
 
 \clearpage
 
