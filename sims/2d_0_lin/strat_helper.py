@@ -185,6 +185,14 @@ def plot(name, params):
     for var in slice_vars:
         state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
 
+    # we estimate the analytical envelope by picking a z value, finding the
+    # median over time of the max amplitude over x, then extrapolating a
+    # exp(z/2H) profile.
+    z_est_loc = params['Z0'] + 20 * params['S']
+    z_est_idx = int(z_est_loc / params['ZMAX'] * z.size)
+    uz_maxes = np.max(state_vars['uz'][:, :, z_est_idx], 1)
+    uz_est = np.max(uz_maxes)
+
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
 
@@ -207,20 +215,33 @@ def plot(name, params):
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
             var_dat = state_vars[var]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
-            p = axes.plot(var_dat[t_idx], z_pts)
+            p = axes.plot(var_dat[t_idx],
+                          z_pts,
+                          linewidth=0.5)
+            if var == 'uz%s' % slice_suffix:
+                p = axes.plot(
+                    uz_est * np.exp((z_pts - z_est_loc) / (2 * params['H'])),
+                    z_pts,
+                    linewidth=0.5)
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
             xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
-            p = axes.plot(xlims, [params['SPONGE_LOW']] * len(xlims), 'r:')
-            p = axes.plot(xlims, [params['SPONGE_HIGH']] * len(xlims), 'r:')
             p = axes.plot(xlims,
-                          [params['Z0'] + 2 * params['S']] * len(xlims),
+                          [params['SPONGE_LOW']] * len(xlims),
+                          'r:',
+                          linewidth=0.5)
+            p = axes.plot(xlims,
+                          [params['SPONGE_HIGH']] * len(xlims),
+                          'r:',
+                          linewidth=0.5)
+            p = axes.plot(xlims,
+                          [params['Z0'] + 3 * params['S']] * len(xlims),
                           'b--',
                           linewidth=0.5)
             p = axes.plot(xlims,
-                          [params['Z0'] - 2 * params['S']] * len(xlims),
+                          [params['Z0'] - 3 * params['S']] * len(xlims),
                           'b--',
                           linewidth=0.5)
             idx += 1
