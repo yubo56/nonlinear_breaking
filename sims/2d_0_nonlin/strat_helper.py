@@ -137,6 +137,7 @@ def load(name, params):
             values.set_scales((params['INTERP_X'], params['INTERP_Z']),
                               keep_data=True)
             state_vars[varname].append(np.copy(values['g']))
+            state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
@@ -158,16 +159,18 @@ def load(name, params):
     return sim_times, domain, state_vars
 
 def plot(name, params):
-    slice_suffix = '(x=0)' # slice suffix
+    slice_suffix = '(x=0)'
     SAVE_FMT_STR = 't_%d.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz', 'ux']
-    z_vars = ['F_z', 'E'] # sum these over x
-    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz', 'ux']]
+    plot_vars = ['uz']
+    c_vars = ['uz_c']
+    # z_vars = ['F_z', 'E'] # sum these over x
+    z_vars = []
+    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
     n_cols = 3
-    n_rows = 2
+    n_rows = 1
     plot_stride = 1
 
     if os.path.exists('%s.mp4' % name):
@@ -244,6 +247,17 @@ def plot(name, params):
                           [params['Z0'] - 3 * params['S']] * len(xlims),
                           'b--',
                           linewidth=0.5)
+            idx += 1
+        for var in c_vars:
+            axes = fig.add_subplot(n_rows,
+                                   n_cols,
+                                   idx,
+                                   title='%s (kx=kx_d)' % var)
+            var_dat = state_vars[var]
+            kx_idx = round(params['KX'] / (2 * np.pi / params['H']))
+            p = axes.semilogx(var_dat[t_idx][kx_idx],
+                              range(len(var_dat[t_idx][kx_idx])),
+                              linewidth=0.5)
             idx += 1
 
         fig.suptitle(
