@@ -78,10 +78,6 @@ def get_solver(params):
     solver.stop_iteration = np.inf
     return solver, domain
 
-###
-### ENTRY POINTS
-###
-
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     logger = logging.getLogger(name)
@@ -199,8 +195,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -217,9 +213,16 @@ def plot(name, params):
             plt.yticks(rotation=30)
             xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
-            p = axes.plot(xlims, [params['SPONGE_LOW']] * len(xlims), 'r.')
-            p = axes.plot(xlims, [params['SPONGE_HIGH']] * len(xlims), 'r.')
-            p = axes.plot(xlims, [params['Z0']] * len(xlims), 'b--')
+            p = axes.plot(xlims, [params['SPONGE_LOW']] * len(xlims), 'r:')
+            p = axes.plot(xlims, [params['SPONGE_HIGH']] * len(xlims), 'r:')
+            p = axes.plot(xlims,
+                          [params['Z0'] + 2 * params['S']] * len(xlims),
+                          'b--',
+                          linewidth=0.5)
+            p = axes.plot(xlims,
+                          [params['Z0'] - 2 * params['S']] * len(xlims),
+                          'b--',
+                          linewidth=0.5)
             idx += 1
 
         fig.suptitle(

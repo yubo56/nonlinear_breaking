@@ -43,22 +43,7 @@ def get_solver(params):
     z = domain.grid(1)
 
     problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
-    problem.parameters['L'] = params['XMAX']
-    problem.parameters['g'] = params['G']
-    problem.parameters['H'] = params['H']
-    problem.parameters['A'] = params['A']
-    problem.parameters['F'] = params['F']
-    problem.parameters['KX'] = params['KX']
-    problem.parameters['KZ'] = params['KZ']
-    problem.parameters['NU'] = params['NU']
-    problem.parameters['omega'] = params['OMEGA']
-    problem.parameters['ZMAX'] = params['ZMAX']
-    problem.parameters['SPONGE_STRENGTH'] = params['SPONGE_STRENGTH']
-    problem.parameters['SPONGE_LOW'] = params['SPONGE_START_LOW']
-    problem.parameters['SPONGE_HIGH'] = params['SPONGE_START_HIGH']
-
-    problem.parameters['Z0'] = 0.2 * params['ZMAX']
-    problem.parameters['S'] = 1 / params['KZ']
+    problem.parameters.update(params)
 
     # rho0 stratification
     rho0 = domain.new_field()
@@ -74,7 +59,7 @@ def get_solver(params):
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - omega * t)')
+            'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
@@ -158,12 +143,12 @@ def load(name, params):
 
     state_vars['rho'] += params['RHO0'] * np.exp(-z / params['H'])
     state_vars['P'] += params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['G'] * params['H']
+        params['g'] * params['H']
     state_vars['rho1'] = state_vars['rho'] - params['RHO0'] *\
         np.exp(-z / params['H'])
     state_vars['P1'] = state_vars['P'] -\
         params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['G'] * params['H']
+        params['g'] * params['H']
 
     state_vars['E'] = params['RHO0'] * np.exp(-z / params['H']) * \
                        (state_vars['ux']**2 + state_vars['uz']**2) / 2
@@ -228,9 +213,16 @@ def plot(name, params):
             plt.yticks(rotation=30)
             xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
-            p = axes.plot(xlims, [params['SPONGE_START_LOW']] * len(xlims), 'r.')
-            p = axes.plot(xlims, [params['SPONGE_START_HIGH']] * len(xlims), 'r.')
-            p = axes.plot(xlims, [params['Z0']] * len(xlims), 'b--')
+            p = axes.plot(xlims, [params['SPONGE_LOW']] * len(xlims), 'r:')
+            p = axes.plot(xlims, [params['SPONGE_HIGH']] * len(xlims), 'r:')
+            p = axes.plot(xlims,
+                          [params['Z0'] + 2 * params['S']] * len(xlims),
+                          'b--',
+                          linewidth=0.5)
+            p = axes.plot(xlims,
+                          [params['Z0'] - 2 * params['S']] * len(xlims),
+                          'b--',
+                          linewidth=0.5)
             idx += 1
 
         fig.suptitle(
