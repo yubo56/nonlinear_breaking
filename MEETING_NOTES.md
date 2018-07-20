@@ -51,8 +51,13 @@
 - Gibbs ringing when lose exponential convergence
 - Probably use sigma << 1/kz
 
-## TODO
-- plot spatial FT as function of time
+# NOTES 07/20/18 Daniel call
+- Add Navier-Stokes viscosity
+- Use larger Lx so can use larger kx, physical
+- Try to increase/decrease kz to reproduce Sutherland paper
+
+- Try to analytically predict when code breaks down? Floquet theory
+- Ultimate goal is to get the width and distribution of "breaking layer"
 
 # GLOBAL TODO
 - Rad BC?
