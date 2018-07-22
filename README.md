@@ -4,6 +4,8 @@
 
 # Anaconda install notes (need to relog after updating virtualenv?):
 ```
+conda update -n base conda
+conda install -c activisiongamescience zsh
 conda install virtualenv
 conda install -c cryoem openmpi=2.0.2-0
 conda install -c conda-forge pyfftw
