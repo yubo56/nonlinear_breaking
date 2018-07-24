@@ -1,5 +1,5 @@
 '''
-2d_1_strat + Navier-Stokes dissipation
+2d code with navier stokes dissipation
 '''
 import numpy as np
 import sys
@@ -47,7 +47,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = params['T_F'] / num_timesteps
-    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['NU'] = OMEGA / np.sqrt(KX**2 + KZ**2)
     return params
 
 def run(ic, name, params_dict):
@@ -58,21 +58,8 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'nonlinear_1',
-         build_interp_params(1, 1)),
-        (zero_ic, 'nonlinear_2',
-         build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H})),
-        (zero_ic, 'nonlinear_3',
-         build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H})),
-
-        (zero_ic, 'linear_1',
-         build_interp_params(1, 1, overrides={'F': 0.00001})),
-        (zero_ic, 'linear_2',
-         build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-                                              'F': 0.00001})),
-        (zero_ic, 'linear_3',
-         build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
-                                              'F': 0.00001})),
+        (zero_ic, 'nonlinear_ns_1',
+         build_interp_params(4, 4, overrides={'KX': 8 * np.pi / H})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
