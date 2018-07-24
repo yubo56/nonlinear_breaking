@@ -26,12 +26,14 @@ def get_vg(g, h, kx, kz):
     norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2) * (kz / kx)
     return norm * kx, norm * kz
 
-def get_vph(g, h, kx, kz):
-    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2)
-    return norm * kx, norm * kz
-
 def zero_ic(solver, domain, params):
     pass
+
+def get_uz_f_ratio(params):
+    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
+            params['KX']**2) * np.exp(-1/2) / (
+                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+                * params['OMEGA']**2 * params['KZ'])
 
 def get_solver(params):
     ''' sets up solver '''
@@ -46,7 +48,9 @@ def get_solver(params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz', 'ux_z', 'uz_z'])
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
+                                        'ux_z', 'uz_z',
+                                        ])
     problem.parameters.update(params)
 
     # rho0 stratification
@@ -66,20 +70,20 @@ def get_solver(params):
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- NU * (dx(dx(ux))) + dz(ux_z)' +
+        '- NU * (dx(dx(ux)) + dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- NU * (dx(dx(uz))) + dz(uz_z)' +
+        '- NU * (dx(dx(uz)) + dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
 
 
     problem.add_bc('left(uz) = 0')
-    problem.add_bc('right(ux) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(uz) = 0')
+    problem.add_bc('right(ux) = 0')
     problem.add_bc('right(P) = 0')
 
     # Build solver
@@ -199,13 +203,7 @@ def plot(name, params):
     for var in slice_vars:
         state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
 
-    # we estimate the analytical envelope by picking a z value, finding the
-    # median over time of the max amplitude over x, then extrapolating a
-    # exp(z/2H) profile.
-    z_est_loc = params['Z0'] + 20 * params['S']
-    z_est_idx = int(z_est_loc / params['ZMAX'] * z.size)
-    uz_maxes = np.max(state_vars['uz'][:, :, z_est_idx], 1)
-    uz_est = np.max(uz_maxes)
+    uz_est = params['F'] * get_uz_f_ratio(params)
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
@@ -234,8 +232,14 @@ def plot(name, params):
                           linewidth=0.5)
             if var == 'uz%s' % slice_suffix:
                 p = axes.plot(
-                    uz_est * np.exp((z_pts - z_est_loc) / (2 * params['H'])),
+                    uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
                     z_pts,
+                    'orange',
+                    linewidth=0.5)
+                p = axes.plot(
+                    -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                    z_pts,
+                    'orange',
                     linewidth=0.5)
 
             plt.xticks(rotation=30)

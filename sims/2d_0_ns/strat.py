@@ -53,13 +53,14 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 def run(ic, name, params_dict):
     try:
         run_strat_sim(ic, name, params_dict)
-    except FloatingPointError:
+    except FloatingPointError as e:
+        print(e)
         pass
 
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'nonlinear_ns_1',
-         build_interp_params(4, 4, overrides={'KX': 8 * np.pi / H})),
+         build_interp_params(1, 1, overrides={'KX': 8 * np.pi / H})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
