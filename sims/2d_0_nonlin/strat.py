@@ -9,8 +9,9 @@ H = 1
 XMAX = 4 * H
 ZMAX = 10 * H
 
-num_timesteps = 2e3
+NUM_TIMESTEPS = 2e3
 NUM_SNAPSHOTS = 200
+TARGET_UZ = 0.01 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -21,7 +22,6 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'A': 0.005,
-              'F': 0.002,
               'Z0': 0.15 * ZMAX,
               'SPONGE_STRENGTH': 2,
               'SPONGE_HIGH': 0.9 * ZMAX,
@@ -46,8 +46,9 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = params['T_F'] / num_timesteps
-    params['NU'] = 0.1 * (ZMAX / params['N_Z'])**2 / np.pi**2 # smallest wavenumber
+    params['DT'] = params['T_F'] / NUM_TIMESTEPS
+    if not params.get('F'): # default value
+        params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     return params
 
 def run(ic, name, params_dict):

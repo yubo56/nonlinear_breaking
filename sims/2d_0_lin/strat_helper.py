@@ -29,6 +29,12 @@ def get_vg(g, h, kx, kz):
 def zero_ic(solver, domain, params):
     pass
 
+def get_uz_f_ratio(params):
+    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
+            params['KX']**2) * np.exp(-1/2) / (
+                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+                * params['OMEGA']**2 * params['KZ'])
+
 def get_solver(params):
     ''' sets up solver '''
     x_basis = de.Fourier('x',
@@ -188,13 +194,7 @@ def plot(name, params):
     for var in slice_vars:
         state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
 
-    # we estimate the analytical envelope by picking a z value, finding the
-    # median over time of the max amplitude over x, then extrapolating a
-    # exp(z/2H) profile.
-    z_est_loc = params['Z0'] + 20 * params['S']
-    z_est_idx = int(z_est_loc / params['ZMAX'] * z.size)
-    uz_maxes = np.max(state_vars['uz'][:, :, z_est_idx], 1)
-    uz_est = np.max(uz_maxes)
+    uz_est = params['F'] * get_uz_f_ratio(params)
 
     for t_idx, sim_time in list(enumerate(sim_times))[::plot_stride]:
         fig = plt.figure(dpi=200)
@@ -223,8 +223,14 @@ def plot(name, params):
                           linewidth=0.5)
             if var == 'uz%s' % slice_suffix:
                 p = axes.plot(
-                    uz_est * np.exp((z_pts - z_est_loc) / (2 * params['H'])),
+                    uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
                     z_pts,
+                    'orange',
+                    linewidth=0.5)
+                p = axes.plot(
+                    -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                    z_pts,
+                    'orange',
                     linewidth=0.5)
 
             plt.xticks(rotation=30)

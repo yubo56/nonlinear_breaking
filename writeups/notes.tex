@@ -30,22 +30,17 @@
     \usepackage[font=scriptsize]{subcaption} % subfigures
 
     \newcommand*{\scinot}[2]{#1\times10^{#2}}
-    \newcommand*{\bra}[1]{\left<#1\right|}
-    \newcommand*{\ket}[1]{\left|#1\right>}
     \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
     \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
     \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
     \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
     \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
     \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
-    \newcommand*{\norm}[1]{\left|\left|#1\right|\right|}
-    \newcommand*{\abs}[1]{\left|#1\right|}
     \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
     \newcommand*{\svec}[1]{\vec{#1}\;\!}
     \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
-    \newcommand*{\expvalue}[1]{\left<#1\right>}
-    \newcommand*{\ang}[0]{\text{\AA}}
-    \newcommand*{\mum}[0]{\upmu \mathrm{m}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\;\upmu \mathrm{m}}
     \newcommand*{\at}[1]{\left.#1\right|}
 
     \newtheorem{theorem}{Theorem}[section]
@@ -65,6 +60,10 @@
     \DeclareMathOperator{\sgn}{sgn}
     \DeclareMathOperator{\diag}{diag\;}
 
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
     \DeclarePairedDelimiter\p{\lparen}{\rparen}
     \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
     \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
@@ -467,8 +466,8 @@ where $\epsilon$ is the internal energy. But since $P = (\gamma -
 = 0$, so the energy of the wave is just $\frac{1}{2}\p*{\rho_0 + \rho_1} u_1^2$
 and the power flux is $\p*{\rho_0 + \rho_1}\vec{u}_1u_1^2 + P_1\vec{u}_1$.
 
-Another formula given by Sutherland 2011 is $\pd{\expvalue{E}}{t} = v_{g, z}
-\expvalue{E}$ where we average over $x$ one wavelength. I wasn't able to show
+Another formula given by Sutherland 2011 is $\pd{\ev*{E}}{t} = v_{g, z}
+\ev*{E}$ where we average over $x$ one wavelength. I wasn't able to show
 that these two agree in general; Sutherland's formula seems to be derived for a
 traveling wavepacket whereas we have no such thing. We do not use this
 expression since the Landau \& Lifshitz expression works well.
@@ -553,12 +552,12 @@ terms, and over a short $\Delta t$ it can be approximated via $-f(Q_0) + g$.
 This first-order inhomegeneous ODE then admits closed form exact solutions
 $e^{-L_{ij}t}\p*{\dots}$.
 
-One can imagine, for this matter, that $\rd{}{t}$ can be wrapped in the $L_{ij}$
+One can imagine, for this matter, that $\pd{}{t}$ can be wrapped in the $L_{ij}$
 operator and the timestepping computed implicitly; I believe this is what
 Dedalus does, implicitly timestepping the left hand side and explicitly the
 inhomogeneous terms.
 
-Both of these procedures require $\bm{L}$ linear operator or $\rd{}{t} + \bm{L}$
+Both of these procedures require $\bm{L}$ linear operator or $\pd{}{t} + \bm{L}$
 to be full rank, or invertible. This is enforced analytically by requiring the
 same number of BCs as derivatives, and numerically this is little different.
 This is why it is possible to have components of $Q$ that are not differentiated
@@ -702,6 +701,27 @@ need to consider the $\rho_1 \sim \rho_0$ enormous perturbations.
 
 We describe now some concerns that arise in setting up the simulation.
 
+\section{Damping Zone}
+
+Since our code is a spectral code, instead of using the quadratic damping zone
+presented from before (whose second derivative is discontinuous over the entire
+domain), we prefer instead an $\arctan$ profile, such that
+\begin{equation}
+    \Gamma(z) \propto 0.5 * \p*{
+        2 + \tanh C\p*{\frac{z - z_t}{L_z - z_t}}
+            + \tanh C\p*{\frac{z - z_b}{z_b}}}.
+\end{equation}
+This is a profile that mostly vanishes $z \in [z_b, z_t]$ but is unity for $z
+\lesssim z_b, z \gtrsim z_t$, with steepness of transition governed by factor
+$C$. While this profile may have reflection issues if $C$ is chosen to be too
+steep, it is smooth and so has exponentially convergent spectral expansion and
+empirically seems to do alright.
+
+It is moreover prudent to note that, since implicit calculations are expensive,
+as long as the damping timescale $\Gamma^{-1}$ is everywhere resolved it is
+cheaper to put $\Gamma \rho_1, \Gamma \vec{u}_1$ on the right hand sides of
+their equations in Dedalus, which is timestepped explicitly.
+
 \section{Volumetric Forcing}
 
 Due to the structure of \lstinline{Dedalus}, we must use Chebyshev polynomials
@@ -766,6 +786,82 @@ Note that this implies that waves will be excited going both upwards and
 downwards, as $\tilde{f}(k_z) = \tilde{f}(-k_z)$. We can however place the
 forcing zone near the bottom boundary so that downwards-propagating waves will
 be attenuated by damping zones.
+
+Let us derive the resultant equations of motion. In the interest of maintaining
+a divergence-free velocity field, we place the driving term on the density
+equation. Since the forcing is purely to excite waves and not physical (for the
+time being), it should not worry us that driving the density equation is
+ill-justifiable physically.
+
+Consider the linearized system of equations (to examine the excited perturbation
+in the linear legime)
+\begin{subequations}\label{se:vol_drive}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P}{\rho_0}
+            + \frac{\rho_1 \vec{g}}{\rho_0}
+            &= 0,\\
+        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H}
+            &= F(x, z, t),\\
+        F(x, z, t) &= \Re Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+            e^{i\p*{k_xx - \omega t}}.
+    \end{align}
+\end{subequations}
+For the linearized system, we can immediately substitute $\pd{}{t} \to -i\omega,
+\pd{}{x} \to ik_x$, giving
+\begin{align*}
+    \pd{u_{1z}}{z} + ik_xu_x &= 0,\\
+    -i\omega u_x + \frac{ik_xP}{\rho_0} &= 0,\\
+    -i\omega u_{1z} + \frac{1}{\rho_0}\pd{P}{z} + \frac{\rho_1 g}{\rho_0} &= 0,\\
+    -i\omega \rho_1 - \frac{u_{1z}\rho_0}{H} &= F.
+\end{align*}
+This can be recast solely in terms of $u_{1z}$ as
+\begin{align*}
+    -i\omega u_{1z} + \frac{\omega}{k_x}\p*{-\frac{1}{ik_x}\ptd{u_{1z}}{z}
+        + \frac{1}{ik_xH}\pd{u_{1z}}{z}} - \frac{u_{1z}g}{Hi\omega}
+        - \frac{Fg}{i\omega \rho_0} = 0,\\
+    \omega^2\p*{
+        k_x^2u_{1z} + \frac{1}{H}\pd{u_{1z}}{z} - \ptd{u_{1z}}{z}
+    } - u_{1z}N^2k_x^2 - \frac{Fgk_x^2}{\rho_0} = 0.
+\end{align*}
+Note that if $\pd{}{z} \to 1/2H, F = 0$ then this simplifies to the expected
+dispersion relation $\omega^2 = \frac{N^2k_x^2}{k_x^2 + k_z^2 +
+\frac{1}{4H^2}}$.
+
+If we approximate $F(x, z, t) \approx F_0\delta\p*{z - z_0} e^{i(k_xx - \omega t)}$
+for the time being, then clearly the only term that can be equally singluar is
+the $\ptd{}{z}$ term, leaving us with
+\begin{equation}
+    -\omega^2 \ptd{u_{1z}}{z} - \frac{Fgk_x^2}{\rho_0} = 0.
+\end{equation}
+Since $u_{1z}$ both above and below $z_0$ satisfy the homogeneous PDE, which has
+plane wave solutions with an $e^{z/2H}$ envelope where $k_zH \gg 1$, we can
+integrate about a small domain around $z_0$ and obtain
+\begin{equation}
+    \at{\pd{u_{1z}}{z}}_{z > z_0} - \at{\pd{u_{1z}}{z}}_{z < z_0}
+        = -F_0\frac{gk_x^2}{\rho_0\omega^2}e^{i(k_xx - \omega t)}.
+\end{equation}
+It should then be apparent that the $u_{1z}$ solution is
+\begin{equation}
+    u_{1z} = \frac{F_0gk_x^2}{\rho_0(z = z_0)\omega^2}\frac{1}{2ik_z} \times
+    \begin{cases}
+        -e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z > z_0\\
+        e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z < z_0\\
+    \end{cases}.
+\end{equation}
+
+Given that we are actually using a Gaussian $F(x, z, t) \propto F_0e^{-\frac{(z
+- z_0)^2}{2\sigma^2}}$, the integral under $F(z)$ is actually
+$F_0\sqrt{2\pi}\sigma$ rather than just $F_0$. Finally, since a delta function
+is flat in spatial frequency space while a Gaussian tapers off with width
+$1/\sigma$ ($\sigma$ is the spatial width, so $1/\sigma$ is the spatial
+frequency width), we should expect an overall multiplicative factor of
+$e^{-k_z^2\sigma^2 / 2}$ in the $k_z$ spatial component of $F(x, z, t)$ compared
+to the delta function case. Thus, we finally obtain
+\begin{equation}
+    \abs*{u_{1z}(z = z_0)} = \frac{F_0\sqrt{2\pi}\sigma gk_x^2}{
+        2\rho_0\p*{z = z_0}\omega^2 k_z}e^{-k_z^2\sigma^2/2}.
+\end{equation}
 
 \section{Timestepping}
 
@@ -1040,6 +1136,13 @@ then $\Delta x \approx \theta^2/2$ then the number of zeros seen is the number
 of solutions $\cos \phi = 0, \phi = n\theta = n\sqrt{2\Delta x}$ which requires
 $\sim k\pi \in [0, n\sqrt{2\Delta x}]$. Thus, for any interval $\Delta x$, the
 number of zeros contained scales with $n^2$!
+
+Note: There exist papers on the Courant stability condition of Chebyshev
+spectral methods which cite exactly the $N^{-2}$ minimum timestep scaling we can
+infer from the above. But if our field is small near the boundaries and is only
+interesting in a region isolated from the boundary (e.g.\ with our damping
+zones) then the bound used in the papers scales more like $N^{-1}$, which is
+much more desirable.
 
 \end{document}
 
