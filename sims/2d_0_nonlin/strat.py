@@ -45,7 +45,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = params['T_F'] / NUM_TIMESTEPS
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.01) # omega * DT << 1
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     return params
