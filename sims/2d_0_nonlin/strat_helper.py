@@ -22,9 +22,8 @@ SNAPSHOTS_DIR = 'snapshots_%s'
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
-def get_vg(g, h, kx, kz):
-    norm = get_omega(g, h, kx, kz) / (kx**2 + kz**2) * (kz / kx)
-    return norm * kx, norm * kz
+def get_vgz(g, h, kx, kz):
+    return get_omega(g, h, kx, kz) / (kx**2 + kz**2) * kz
 
 def zero_ic(solver, domain, params):
     pass
@@ -260,7 +259,7 @@ def plot(name, params):
                                    idx,
                                    title='%s (kx=kx_d)' % var)
             var_dat = state_vars[var]
-            kx_idx = round(params['KX'] / (2 * np.pi / params['H']))
+            kx_idx = round(params['KX'] / (2 * np.pi / params['XMAX']))
             p = axes.semilogx(var_dat[t_idx][kx_idx],
                               range(len(var_dat[t_idx][kx_idx])),
                               linewidth=0.5)

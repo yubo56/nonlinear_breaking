@@ -11,17 +11,16 @@ ZMAX = 10 * H
 
 NUM_TIMESTEPS = 2e3
 NUM_SNAPSHOTS = 200
-TARGET_UZ = 0.01 # target uz at forcing zone
+TARGET_UZ = 0.02 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
+              'N_X': 128,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'A': 0.005,
               'Z0': 0.15 * ZMAX,
               'SPONGE_STRENGTH': 2,
               'SPONGE_HIGH': 0.9 * ZMAX,
@@ -35,7 +34,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     g = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 
     OMEGA = get_omega(g, H, KX, KZ)
-    _, VG_Z = get_vg(g, H, KX, KZ)
+    VG_Z = get_vgz(g, H, KX, KZ)
     T_F = abs(ZMAX / VG_Z) * 1.2
 
     params['T_F'] = T_F
