@@ -904,6 +904,30 @@ decrease depends on the timestepper used, but it is clear that $\omega \Delta t
 \ll 1$ is necessary to avoid this spurious decrease (in numerics language, ``the
 oscillation must be well-resolved'').
 
+\section{Algebraic Manipulations}
+
+\subsection{Factoring out the exponential dependence}
+
+I've had to do this algebra too many times now, so let's just consider if we
+factor out the $e^{z/2H}$ exponential scaling on the dynamical variables and the
+$e^{-z/H}$ scaling on $\rho_0$. This leaves us with:
+\begin{subequations}\label{se:nonlin_factored}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 + \frac{u_{1z}}{2H} &= 0,\\
+        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H} &= -e^{z/2H}\s*{
+            \p*{\vec{u}_1 \cdot \vec{\nabla} \rho_1} + \frac{u_{1z}\rho_1}{2H}
+        },\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P}{\rho_0}
+            + \frac{P}{2H\rho_0}\hat{z} + \frac{\rho_1\vec{g}}{\rho_0}
+            &= -e^{z/2H}\s*{
+            \p*{\vec{u} \cdot \vec{\nabla} \vec{u}_1}
+                + \frac{u_{1z}\vec{u}_1}{2H}
+        }.
+    \end{align}
+\end{subequations}
+I'm too lazy to re-notate my variables, so all of them are constant amplitude
+over $z$ now.
+
 \clearpage
 
 \appendix

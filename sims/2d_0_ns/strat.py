@@ -9,19 +9,18 @@ H = 1
 XMAX = 4 * H
 ZMAX = 10 * H
 
-num_timesteps = 2e3
+NUM_TIMESTEPS = 2e3
 NUM_SNAPSHOTS = 200
+TARGET_UZ = 0.02 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
+              'N_X': 128,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'A': 0.005,
-              'F': 0.002,
               'Z0': 0.15 * ZMAX,
               'SPONGE_STRENGTH': 2,
               'SPONGE_HIGH': 0.9 * ZMAX,
@@ -35,7 +34,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     g = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
 
     OMEGA = get_omega(g, H, KX, KZ)
-    _, VG_Z = get_vg(g, H, KX, KZ)
+    VG_Z = get_vgz(g, H, KX, KZ)
     T_F = abs(ZMAX / VG_Z) * 1.2
 
     params['T_F'] = T_F
@@ -46,7 +45,9 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = params['T_F'] / num_timesteps
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.01) # omega * DT << 1
+    if not params.get('F'): # default value
+        params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     params['NU'] = OMEGA / np.sqrt(KX**2 + KZ**2)
     return params
 
@@ -60,7 +61,7 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'nonlinear_ns_1',
-         build_interp_params(1, 1, overrides={'KX': 8 * np.pi / H})),
+         build_interp_params(1, 1)),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
