@@ -45,10 +45,10 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.01) # omega * DT << 1
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.003) # omega * DT << 1
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
-    params['NU'] = OMEGA / np.sqrt(KX**2 + KZ**2)
+    params['NU'] = params['ZMAX'] / params['N_Z'] # L_min * V / nu ~ 1
     return params
 
 def run(ic, name, params_dict):
