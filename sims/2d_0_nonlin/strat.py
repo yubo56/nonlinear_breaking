@@ -11,18 +11,18 @@ ZMAX = 10 * H
 
 NUM_TIMESTEPS = 2e3
 NUM_SNAPSHOTS = 200
-TARGET_UZ = 0.02 # target uz at forcing zone
+TARGET_UZ = 0.01 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 128,
+              'N_X': 256,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
               'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 2,
+              'SPONGE_STRENGTH': 1,
               'SPONGE_HIGH': 0.9 * ZMAX,
               'SPONGE_LOW': 0.1 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
@@ -66,14 +66,14 @@ if __name__ == '__main__':
         (zero_ic, 'nonlinear_3',
          build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H})),
 
-        (zero_ic, 'linear_1',
-         build_interp_params(1, 1, overrides={'F': 0.00001})),
-        (zero_ic, 'linear_2',
-         build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-                                              'F': 0.00001})),
-        (zero_ic, 'linear_3',
-         build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
-                                              'F': 0.00001})),
+        # (zero_ic, 'linear_1',
+        #  build_interp_params(1, 1, overrides={'F': 0.00001})),
+        # (zero_ic, 'linear_2',
+        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
+        #                                       'F': 0.00001})),
+        # (zero_ic, 'linear_3',
+        #  build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
+        #                                       'F': 0.00001})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
