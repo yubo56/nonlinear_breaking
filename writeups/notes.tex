@@ -928,6 +928,95 @@ $e^{-z/H}$ scaling on $\rho_0$. This leaves us with:
 I'm too lazy to re-notate my variables, so all of them are constant amplitude
 over $z$ now.
 
+\chapter{Stability Analysis}
+
+\section{Modulational Instability of NLSE}
+
+We study the nonlinear Schr\"odinger Equation (NLSE)
+\begin{equation}
+    i\psi_t + \psi_{xx} + \nu \abs*{\psi}^2\psi = 0.
+\end{equation}
+Sutherland's paper demonstrates an interaction between the wave and the
+wave-induced mean flow ($\propto \abs*{\psi}^2$) that reduces the IGW system to
+the NLSE\@. Here we follow Whitham's textbook in rederiving the modulational
+instability criterion.
+
+Consider for some fixed value $k_0$, then the linear SE (LSE) admits a plane
+wave solution $\psi = e^{i(k_0x - \omega(k_0)t)}$ for some dispersion relation
+$\omega(k)$. If instead we permit $\psi$ to be distributed in frequency space
+near $k_0$, then we may notate
+\begin{equation}
+    \psi = \psi_0 \varphi = e^{i(k_0x - \omega(k_0) t)} \int\limits
+        \exp\s*{i\p*{k' x - k'\pd{\omega}{k}t -
+            \frac{1}{2}k'^2 \ptd{\omega}{k}t}}\;\mathrm{d}k',
+\end{equation}
+where $k' = k - k_0$ denotes the deviation from the central $k_0$
+wavenumber. Defining $\omega' = \omega - \omega_0$, we may observe
+\begin{equation}
+    \omega' = k' \pd{\omega}{k} + \frac{1}{2}k'^2 \ptd{\omega}{k}.
+\end{equation}
+Making correspondence $-i\omega' \to \partial_t, ik' \to \partial_x$, we see
+that $\varphi$ obeys dispersion relation
+\begin{equation}
+    i\p*{\varphi_t + \pd{\omega}{k}\varphi_x}
+        + \frac{1}{2}\ptd{\omega}{k}\varphi_{xx} = 0.
+\end{equation}
+Thus, the modulation $\varphi$ translates at the group velocity, and we find
+that $\varphi$ obeys a modified LSE in a comoving frame.
+
+If we reintroduce the nonlinearity, we observe that $\nu \abs*{\psi}^2\psi = \nu
+\abs*{\varphi}^2 \psi_0\varphi$, and so the nonlinearity modifies the LSE as
+\begin{align}
+    i\p*{\varphi_t + \pd{\omega}{k}\varphi_x}
+        + \frac{1}{2}\ptd{\omega}{k}\varphi_{xx}
+        + \nu \abs*{\varphi^2}\varphi &= 0,\\
+    \omega' = k' \pd{\omega}{k} + \frac{1}{2}k'^2 \ptd{\omega}{k}
+        - \nu a^2.\label{eq:nlse_disp}
+\end{align}
+
+Armed with this dispersion relation, we can apply the method of characteristics
+to the system of equations describing any wavetrain
+\begin{subequations}\label{eq:wavetrain}
+    \begin{align}
+        \pd{k}{t} + \pd{\omega}{x} &= 0,\label{eq:wavetrain_1}\\
+        \pd{A^2}{t} + \pd{}{x}\p*{c_gA^2} &= 0.\label{eq:wavetrain_2}
+    \end{align}
+\end{subequations}
+We denote $A$ the wave amplitude and $c_g$ the group velocity. In a nonlinear
+system, $\omega = \omega(A, k)$, and to leading order in $A$ we expect $\omega =
+\omega_0 + \omega_2A^2$, i.e.\ the dispersion should not depend on the sign of
+$A$. Thus we may rewrite \autoref{eq:wavetrain} as
+\begin{subequations}\label{eq:wavetrain_mod}
+    \begin{align}
+        \pd{k}{t} + \p*{\pd{\omega_{0}}{k} + \pd{\omega_2}{k}A^2}\pd{k}{x}
+            + \omega_2 \pd{A^2}{x} &= 0,\\
+        \pd{A^2}{t} + \pd{A^2}{x}\pd{\omega_0}{k} + A^2\ptd{\omega_0}{k}\pd{k}{x}
+            &= 0.
+    \end{align}
+\end{subequations}
+We first note that, in $A \to 0$, the equations decouple and both equations
+describe propagation at the group velocity (they are already in characteristic
+form $Q_{,t} + cQ_{,x} = 0$). With some foresight, we anticipate that the
+$\pd{A^2}{x}$ term in the first equation will provide a $\mathcal{O}(A)$
+correction to the group velocity, while the $\pd{\omega_2}{k}A^2\pd{k}{x}$ term
+provides an $\mathcal{O}(A^2)$ correction, so we drop it.
+
+The method of characteristics then requires we seek linear combinations of the
+two equations such that all equations are in characteristic form. The Whitham
+prescription says that if the original system is of form $A_{ij}q_{j, t} +
+B_{ij}q_{j, x} = 0$, then the characteristic curves $X(T)$ satisfy $A_{ij}X +
+B_{ij}T = 0$. Here, this yields
+\begin{equation}
+    X(T) = \p*{\pd{\omega_0}{x} \pm A\sqrt{\omega_2 \ptd{\omega_0}{k}}}T.
+\end{equation}
+
+Comparing to the NLSE dispersion relation \autoref{eq:nlse_disp}, we identify
+that $\sqrt{-q \ptd{\omega_0}{k}}A$ is the correction to the group velocity.
+Thus, if $q\ptd{\omega_0}{k} > 0$, we obtain a \emph{complex} group velocity,
+which is identified with \emph{modulational instability}. Naively, this might
+imply a steepening $k = c_{g, 0}t - i\sqrt{q\omega_0''}t$ with timescale
+$\Gamma \sim A\p*{q\omega_0''}^{-1/2}$.
+
 \clearpage
 
 \appendix
