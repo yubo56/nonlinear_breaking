@@ -23,7 +23,7 @@ def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vgz(g, h, kx, kz):
-    return get_omega(g, h, kx, kz) / (kx**2 + kz**2) * kz
+    return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
 
 def zero_ic(solver, domain, params):
     pass
