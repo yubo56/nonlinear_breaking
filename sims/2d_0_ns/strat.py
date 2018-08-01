@@ -64,7 +64,9 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'nonlinear_ns_1',
+        (zero_ic, 'linear_ns',
+         build_interp_params(1, 1, overrides={'F': 0.00001})),
+        (zero_ic, 'nonlinear_ns',
          build_interp_params(1, 1)),
     ]
     if '-plot' not in sys.argv:
