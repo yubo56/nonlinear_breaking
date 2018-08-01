@@ -15,7 +15,7 @@ TARGET_UZ = 0.01 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
+              'N_X': 128,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
@@ -31,7 +31,8 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params = {**PARAMS_RAW, **(overrides or {})}
     KX = params['KX']
     KZ = params['KZ']
-    g = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
+    # g = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
+    g = H # N^2 = 1
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
@@ -45,7 +46,8 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.01) # omega * DT << 1
+    # omega * DT << 1 is required
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.01 / OMEGA)
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     return params
@@ -59,21 +61,21 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
+        (zero_ic, 'linear_1',
+         build_interp_params(1, 1, overrides={'F': 0.00001})),
+        (zero_ic, 'linear_2',
+         build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
+                                              'F': 0.00001})),
+        (zero_ic, 'linear_3',
+         build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
+                                              'F': 0.00001})),
+
         (zero_ic, 'nonlinear_1',
          build_interp_params(1, 1)),
         (zero_ic, 'nonlinear_2',
          build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H})),
         (zero_ic, 'nonlinear_3',
          build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H})),
-
-        # (zero_ic, 'linear_1',
-        #  build_interp_params(1, 1, overrides={'F': 0.00001})),
-        # (zero_ic, 'linear_2',
-        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-        #                                       'F': 0.00001})),
-        # (zero_ic, 'linear_3',
-        #  build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
-        #                                       'F': 0.00001})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
