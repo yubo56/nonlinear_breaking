@@ -77,7 +77,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.CNAB2)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -122,6 +122,7 @@ def load(name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    start_idx = 0
 
     post.merge_analysis(snapshots_dir, cleanup=False)
 
@@ -129,13 +130,13 @@ def load(name, params):
     z = domain.grid(1, scales=params['INTERP_Z'])
 
     with h5py.File(filename, mode='r') as dat:
-        sim_times = np.array(dat['scales']['sim_time'])
+        sim_times = np.array(dat['scales']['sim_time'])[start_idx: ]
     # we let the file close before trying to reopen it again in load
 
     # load into state_vars
     state_vars = defaultdict(list)
     for idx in range(len(sim_times)):
-        solver.load_state(filename, idx)
+        solver.load_state(filename, idx + start_idx)
 
         for varname in dyn_vars:
             values = solver.state[varname]
