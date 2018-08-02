@@ -62,13 +62,15 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'linear_1',
-         build_interp_params(1, 1, overrides={'F': 0.00001})),
+         build_interp_params(1, 1, overrides={'F': 0.00001, 'N_X': 128})),
         (zero_ic, 'linear_2',
          build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-                                              'F': 0.00001})),
+                                              'F': 0.00001,
+                                              'N_X': 128})),
         (zero_ic, 'linear_3',
          build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
-                                              'F': 0.00001})),
+                                              'F': 0.00001,
+                                              'N_X': 128})),
 
         (zero_ic, 'nonlinear_1',
          build_interp_params(1, 1)),
