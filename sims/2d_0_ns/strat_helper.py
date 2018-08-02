@@ -86,7 +86,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.CNAB2)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
