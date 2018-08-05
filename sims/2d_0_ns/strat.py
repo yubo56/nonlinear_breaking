@@ -21,8 +21,8 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 1,
+              'Z0': 0.25 * ZMAX,
+              'SPONGE_STRENGTH': 4,
               'SPONGE_HIGH': 0.9 * ZMAX,
               'SPONGE_LOW': 0.1 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
@@ -51,7 +51,8 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     # NU / (kmax/2)^2 ~ omega
-    params['NU'] = OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
+    if not params.get('NU'): # default value
+        params['NU'] = OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
     print(params['NU'])
     return params
 
@@ -68,6 +69,11 @@ if __name__ == '__main__':
         #  build_interp_params(1, 1, overrides={'F': 0.00001})),
         (zero_ic, 'nonlinear_ns',
          build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H})),
+        # (zero_ic, 'nonlinear_ns_highnu',
+        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
+        #                                       'NU': 4 * OMEGA * (params['ZMAX']
+        #                                             / (np.pi * params['N_Z']))**2
+        #                                       })),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

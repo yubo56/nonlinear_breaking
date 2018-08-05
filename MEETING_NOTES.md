@@ -59,6 +59,13 @@
 - Try to analytically predict when code breaks down? Floquet theory
 - Ultimate goal is to get the width and distribution of "breaking layer"
 
+# NOTES 08/06
+- Mask nonlinear terms in no-NS? Need to be able to run low kx models
+    - Alt: gradually turn on driving force
+- Triple check all timescales in NS... wtf
+    - Consider correct damping timescales?
+- Consider artificial regularization
+
 # GLOBAL TODO
 - Rad BC?
 - Analytically follow Sutherland modulationally stable/unstable proof

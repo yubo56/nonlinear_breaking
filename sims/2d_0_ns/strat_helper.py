@@ -59,8 +59,8 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (0.6 * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (0.6 * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
@@ -131,7 +131,6 @@ def load(name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
-    start_idx = 0
 
     post.merge_analysis(snapshots_dir, cleanup=False)
 
@@ -139,13 +138,13 @@ def load(name, params):
     z = domain.grid(1, scales=params['INTERP_Z'])
 
     with h5py.File(filename, mode='r') as dat:
-        sim_times = np.array(dat['scales']['sim_time'])[start_idx: ]
+        sim_times = np.array(dat['scales']['sim_time'])
     # we let the file close before trying to reopen it again in load
 
     # load into state_vars
     state_vars = defaultdict(list)
     for idx in range(len(sim_times)):
-        solver.load_state(filename, idx + start_idx)
+        solver.load_state(filename, idx)
 
         for varname in dyn_vars:
             values = solver.state[varname]
