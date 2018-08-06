@@ -51,9 +51,8 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     # NU / (kmax/2)^2 ~ omega
-    if not params.get('NU'): # default value
-        params['NU'] = OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
-    print(params['NU'])
+    params['NU'] = params.get('NU_MULT', 1) * \
+        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
     return params
 
 def run(ic, name, params_dict):
@@ -68,12 +67,9 @@ if __name__ == '__main__':
         # (zero_ic, 'linear_ns',
         #  build_interp_params(1, 1, overrides={'F': 0.00001})),
         (zero_ic, 'nonlinear_ns',
-         build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H})),
-        # (zero_ic, 'nonlinear_ns_highnu',
-        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-        #                                       'NU': 4 * OMEGA * (params['ZMAX']
-        #                                             / (np.pi * params['N_Z']))**2
-        #                                       })),
+         build_interp_params(1, 1)),
+        (zero_ic, 'nonlinear_ns_highnu',
+         build_interp_params(1, 1, overrides={'NU_MULT': 4})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
