@@ -47,7 +47,9 @@ def get_solver(params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
+                                        'ux_z', 'uz_z',
+                                        ])
     problem.parameters.update(params)
 
     # rho0 stratification
@@ -57,24 +59,31 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (0.6 * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (0.6 * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        'tanh(t / 5) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        'tanh(t / 200) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
+        '- NU * (dx(dx(ux)) + dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
+        '- NU * (dx(dx(uz)) + dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+
 
     problem.add_bc('left(uz) = 0')
-    problem.add_bc('right(uz) = 0', condition = 'nx != 0')
-    problem.add_bc('right(P) = 0', condition = 'nx == 0')
+    problem.add_bc('left(ux) = 0')
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('right(ux) = 0')
+    problem.add_bc('right(P) = 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
