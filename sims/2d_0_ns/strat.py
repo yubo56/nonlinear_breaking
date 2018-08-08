@@ -22,9 +22,9 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'Z0': 0.25 * ZMAX,
-              'SPONGE_STRENGTH': 4,
-              'SPONGE_HIGH': 0.9 * ZMAX,
-              'SPONGE_LOW': 0.1 * ZMAX,
+              'SPONGE_STRENGTH': 1,
+              'SPONGE_HIGH': 0.93 * ZMAX,
+              'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
@@ -66,9 +66,9 @@ if __name__ == '__main__':
     tasks = [
         # (zero_ic, 'linear_ns',
         #  build_interp_params(1, 1, overrides={'F': 0.00001})),
-        (zero_ic, 'nonlinear_ns',
+        (zero_ic, 'nonlinear_ns_lowk',
          build_interp_params(1, 1)),
-        (zero_ic, 'nonlinear_ns_highnu',
+        (zero_ic, 'nonlinear_ns_highnu_lowk',
          build_interp_params(1, 1, overrides={'NU_MULT': 4})),
     ]
     if '-plot' not in sys.argv:

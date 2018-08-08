@@ -1,5 +1,5 @@
 '''
-2d_1_strat + Navier-Stokes dissipation
+2d code with navier stokes dissipation
 '''
 import numpy as np
 import sys
@@ -21,10 +21,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.15 * ZMAX,
+              'Z0': 0.25 * ZMAX,
               'SPONGE_STRENGTH': 1,
-              'SPONGE_HIGH': 0.9 * ZMAX,
-              'SPONGE_LOW': 0.1 * ZMAX,
+              'SPONGE_HIGH': 0.93 * ZMAX,
+              'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
@@ -46,10 +46,13 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    # omega * DT << 1 is required
-    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.1 / OMEGA)
+    # omega * DT << 1 is required, as is DT << 1/N = 1
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.1 / OMEGA, 0.05)
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
+    # NU / (kmax/2)^2 ~ omega
+    params['NU'] = params.get('NU_MULT', 1) * \
+        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
     return params
 
 def run(ic, name, params_dict):
@@ -61,21 +64,10 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        # (zero_ic, 'linear_1',
-        #  build_interp_params(1, 1, overrides={'F': 0.00001})),
-        # (zero_ic, 'linear_2',
-        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H,
-        #                                       'F': 0.00001})),
-        # (zero_ic, 'linear_3',
-        #  build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H,
-        #                                       'F': 0.00001})),
-
-        (zero_ic, 'nonlinear_1',
+        (zero_ic, 'nonlinear_ns_gradual',
          build_interp_params(1, 1)),
-        # (zero_ic, 'nonlinear_2',
-        #  build_interp_params(1, 1, overrides={'KX': 4 * np.pi / H})),
-        # (zero_ic, 'nonlinear_3',
-        #  build_interp_params(1, 1, overrides={'KX': 16 * np.pi / H})),
+        (zero_ic, 'nonlinear_ns_highnu_gradual',
+         build_interp_params(1, 1, overrides={'NU_MULT': 4})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
