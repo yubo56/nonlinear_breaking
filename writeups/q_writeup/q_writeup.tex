@@ -151,7 +151,7 @@ inside the WD\@.
 Internal gravity wave breaking is a nonlinear hydrodynamic phenomenon. Such
 phenomena are known to require numerical simulation to study in detail.
 
-\section{Work Accomplished}
+\section{Work Accomplished: Theory and Numerics}
 
 To begin our numerical study of IGW breaking, we first considered 2D IGW
 breaking in a plane-parallel, uniformly stratified, incompressible atmosphere.
@@ -228,7 +228,15 @@ the community are:
         show that for certain values of $\vec{k}$, the wave propagates with a
         weakly split group velocity that acts to reduce the amplitude and delay
         breaking, while for other values the group velocity is complex and
-        exhibits breaking at lower amplitudes.
+        exhibits breaking at lower amplitudes. An exmaple of a modulationally
+        unstable Gaussian wavepacket is shown in \autoref{fig:modinstab}.
+        \begin{figure}[t]
+            \centering
+            \includegraphics[width=\textwidth]{figs/sutherland_modinstab.png}
+            \caption{Modulationally unstable wavepacket breaking before the
+            height predicted by linear theory (thick black
+            line).}\label{fig:modinstab}
+        \end{figure}
 
     \item[Parametric Subharmonic Instability] If a triad of modes with
         wavevectors $\vec{k}_1, \vec{k}_2, \vec{k}_3$ satisfies the triad
@@ -454,9 +462,114 @@ We discuss the simulation setup and its various considerations below:
                 too strong by our tests. Because results are still pending, the
                 exact hyperviscosity procedure is yet to be determined.
         \end{description}
+
+    \item[Gradual Forcing] One last trick that we are considering is to turn on
+        the forcing term gradually; \autoref{fig:plots} shows many examples
+        where ringing from turning the forcing term on immediately excites
+        ringing that generates spurious nonlinear interactions. We choose to
+        effect this by $F(t) \tanh 10\omega_0t$, so over the course of about
+        twenty periods the forcing will reach full amplitude. Results are
+        pending.
 \end{description}
+
 $N^{-1}$ is the unit of time and $H$ the unit of distance in our computations,
-both of which are set to $1$.
+both of which are set to $1$. Some snapshots from our simulation can be seen in
+\autoref{fig:plots}. Note the smooth
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/linear.png}
+        \caption{Linear simulation. Note the close agreement of the analytically
+        predicted excitement amplitude and the actual waveform. The spectrum is
+        broader than a pure Fourier spectrum due to the waveforms being
+        sinusoidal and the basis being Chebyshev.}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/nonlin_psi.png}
+        \caption{Nonlinear simulation without regularization. The mismatch of
+        the analytical envelope is not significant. Note the significant
+        amplitude in higher Chebyshev modes. The simulation breaks soon after
+        this point, seemingly due to parametric subharmonic instability.}
+    \end{subfigure}
+
+    \begin{subfigure}{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/nonlin_ns.png}
+        \caption{Nonlinear simulation with Navier-Stokes regularization. The
+        mismatch of the analytical envelope is again not significant. The
+        supposed PSI from the non-regularized system is clearly just ringing
+        from starting the forcing in discontinuous fashion.}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.47\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figs/nonlin_driving_blowup.png}
+        \caption{Another consequence of starting the forcing in discontinuous
+        fashion, nonlinear terms amplify the waveform in the driving zone and
+        produces nonphysical shocks.}\label{fig:blowup}
+    \end{subfigure}
+    \caption{The four simulation snapshots above include the following notation:
+        the left plot is a simple 2D plot of the $u_{1z}(x, z)$ field, the
+        middle plot is a slice $u_{1z}(x=0, z)$ and the right plot plots the
+        Chebyshev spectral expansion at the driving $k_x$. In the middle plots,
+        the two dashed red lines indicate the damping zones, the dashed blue
+        lines indicate the forcing zone $\pm 3\sigma$ and the orange solid lines
+        indicate the analytically predicted envelope.}\label{fig:plots}
+\end{figure}
+
+\section{Future Work}
+
+Mercifully omitted from this writeup are all of the misguided efforts that were
+slowly revised out over time. Nevertheless, against all odds we find ourselves
+very near conquering the 2D toy problem, with a few remaining difficulties to be
+elaborated below.
+
+\subsection{Remaining 2D Work}
+
+We are very close to having a full working simulation of 2D wave breaking
+without numerical singularities. The largest further obstacle that stands in our
+way is computational expense, which is being rectified presently within the
+group. Compounding our difficulties are that, in the $k_x \ll k_z$ limit that
+most astrophysical IGWs find themselves in, the group velocity is extremely
+slow, and so requiring resolving $N^{-1}$ timescales results in a very slow
+simulation. Even so, we should soon understand where the dissipation in these
+excited IGWs occurs as they break via nonlinear processes.
+
+\subsection{3D Work}
+
+\lstinline{Dedalus} has been adapted for 3D work, using spherical harmonics and
+Chebyshev polynomials, so the software package is sufficiently up-to-date for
+our problem. Nevertheless, 3D calculations will be even more expensive and will
+likely carry with them another host of instabilities to sort out. Armed with our
+understanding of these 2D difficulties, however, it should be much easier to
+tackle.
+
+We also intend to extend our 3D calculations to realstic WD equations of state
+and density profiles\cite{fullerI}, such as those in \autoref{fig:eos}.
+These will all have to be adapted somewhat to fit the requirements of
+\lstinline{Dedalus}.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figs/fuller_eos.png}
+    \caption{Dynamical variables for a realistic WD model. The thick line is the
+    density and the thin line is $N^2$. The dashed line is the square of the
+    Lamb frequency, not discussed in this paper but important to 3D
+    waves.}\label{fig:eos}
+\end{figure}.
+
+\section{Conclusion and Acknowledgements}
+
+In conclusion, we are very close to a numerical solution to the 2D plane
+parallel atmosphere IGW breaking problem, with only a few more kinks to sort
+out. With this, we should be able to interpret our results within the framework
+of existing theory and, after having understood this thoroughly, generalize our
+approach to the full realistic 3D problem.
+
+I would like to thank Professor Dong Lai for advising me both as a lab member
+and as a first year graduate student during the past year. I would also like to
+thank Daniel Lecoanet for explaining his unending back of numerical tricks for
+using \lstinline{Dedalus} to me.
 
 \clearpage
 \bibliographystyle{plainnat}
