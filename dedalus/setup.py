@@ -124,9 +124,9 @@ extensions = [
         extra_compile_args=["-Wno-error=declaration-after-statement"],
         extra_link_args=["-Xlinker",
                          "-Bsymbolic",
-                         "/home/astrosun/yubosu/fftw/lib/libfftw3.a",
-                         "/home/astrosun/yubosu/fftw/lib/libfftw3_omp.a",
-                         "/home/astrosun/yubosu/fftw/lib/libfftw3_mpi.a"]),
+                         "/home/yubo/fftw/lib/libfftw3.a",
+                         "/home/yubo/fftw/lib/libfftw3_omp.a",
+                         "/home/yubo/fftw/lib/libfftw3_mpi.a"]),
     Extension(
         name='dedalus.core.transposes',
         sources=['dedalus/core/transposes.pyx'],
