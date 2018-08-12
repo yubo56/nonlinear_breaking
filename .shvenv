@@ -1,10 +1,14 @@
 #!/bin/zsh
 export _PYTHONPATH=$PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:~/research/nonlinear_breaking/dedalus
+export _LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=~/fftw/lib
 
 function shdeactivate () {
     export PYTHONPATH=$_PYTHONPATH
     export _PYTHONPATH=
+    export LD_LIBRARY_PATH=$_LD_LIBRARY_PATH
+    export _LD_LIBRARY_PATH=
 
     unfunction shdeactivate
     unalias rsync_to
