@@ -15,7 +15,7 @@ TARGET_UZ = 0.002 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 128,
+              'N_X': 256,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
