@@ -11,7 +11,7 @@ ZMAX = 10 * H
 
 NUM_TIMESTEPS = 2e3
 NUM_SNAPSHOTS = 200
-TARGET_UZ = 0.01 # target uz at forcing zone
+TARGET_UZ = 0.002 # target uz at forcing zone
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -21,7 +21,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.25 * ZMAX,
+              'Z0': 0.2 * ZMAX,
               'SPONGE_STRENGTH': 1,
               'SPONGE_HIGH': 0.93 * ZMAX,
               'SPONGE_LOW': 0.07 * ZMAX,
@@ -36,7 +36,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 1.2
+    T_F = abs(ZMAX / VG_Z) * 0.3
 
     params['T_F'] = T_F
     params['g'] = g
@@ -47,12 +47,13 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.1 / OMEGA, 0.05)
+    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.1 / OMEGA, 0.25)
     if not params.get('F'): # default value
         params['F'] = TARGET_UZ / get_uz_f_ratio(params)
     # NU / (kmax/2)^2 ~ omega
     params['NU'] = params.get('NU_MULT', 1) * \
         OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
+    print(params)
     return params
 
 def run(ic, name, params_dict):
@@ -64,10 +65,10 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
+        (zero_ic, 'linear_ns_gradual',
+         build_interp_params(1, 1, overrides={'F': 1e-5})),
         (zero_ic, 'nonlinear_ns_gradual',
          build_interp_params(1, 1)),
-        (zero_ic, 'nonlinear_ns_highnu_gradual',
-         build_interp_params(1, 1, overrides={'NU_MULT': 4})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
