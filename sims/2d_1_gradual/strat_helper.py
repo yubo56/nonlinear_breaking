@@ -84,7 +84,8 @@ def get_solver(params):
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(P) = 0')
+    problem.add_bc('right(uz) = 0', condition='nx != 0')
+    problem.add_bc('right(P) = 0', condition='nx == 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.CNAB2)
