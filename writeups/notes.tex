@@ -845,8 +845,8 @@ It should then be apparent that the $u_{1z}$ solution is
 \begin{equation}
     u_{1z} = \frac{F_0gk_x^2}{\rho_0(z = z_0)\omega^2}\frac{1}{2ik_z} \times
     \begin{cases}
-        -e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z > z_0\\
-        e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z < z_0\\
+        e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z > z_0\\
+        e^{(z - z_0)/2H}e^{i(k_xx - k_z(z - z_0) - \omega t)} & z < z_0\\
     \end{cases}.
 \end{equation}
 
@@ -1016,6 +1016,50 @@ Thus, if $\nu\ptd{\omega_0}{k} > 0$, we obtain a \emph{complex} group velocity,
 which is identified with \emph{modulational instability}. Naively, this might
 imply a steepening $k = c_{g, 0}t - i\sqrt{\nu\omega_0''}At$ with timescale
 $\Gamma \sim \p*{A^2\nu\omega_0''}^{-1/2}$.
+
+\chapter{Stratified Flow}
+
+\section{Linear Breaking Criterion}
+
+Since we're having numerical difficulties, we will simultaneously consider
+\emph{corotation resonances} as a pathway to instability. This corresponds in
+the 2D case to a shear flow $\vec{u}_0 = u_0(z)\hat{x}$. We can do the math for
+this out, but the end result produces dispersion relation
+\begin{equation}
+    \p*{\omega - u_0k_x}^2 = \frac{k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}
+        \p*{N^2 - \omega \pd{u_0}{z}}.
+\end{equation}
+Since our fluid is generally not stratified strongly and $\omega \ll N$ in the
+IGW regime, we can drop the $\pd{u_0}{z}$ term and the shear flow becomes a
+simple Doppler shift of $\omega$. Denote $\omega_{cr}(z) = \omega - u_0(z)k_x$
+the corotating frequency. A singularity is obvious at $\omega_{cr} = 0$, exactly
+the \emph{corotation resonance}, and one expects that as
+\begin{equation}
+    k_z(z) \approx \frac{k_xN}{\omega_{cr}(z)} \sim \frac{\omega_{cr}}{u_{1z}},
+        \label{eq:corot_nonlin_cond}
+\end{equation}
+that nonlinear effects should kick in.
+
+One advantage of a shear flow is that, instead of requiring $2H$ of vertical
+height for amplitude growth, we can just choose $u_0 =
+\frac{\omega}{k_x}\frac{z}{z_{\max}}$ to meet the corotation citerion at $z =
+z_{\max}$. As $\pd{u_0}{z} \sim \frac{\omega}{k_xz_{\max}} \approx
+\frac{N}{k_zz_{\max}}$, to meet the $N^2 \gg \omega \pd{u_0}{z}$ criterion we
+require $N \gg \frac{\omega}{k_zz_{\max}}$ which is always true. We can even
+induce the corotation resonance well below $z_{\max}$ and still be perfectly
+within the regime of validity of our assumption.
+
+A second advantage of a shear flow is that we can force at very small amplitudes
+and still observe resonances, since the resonance is driven by the convergence
+of $\omega_{cr} \to 0$ (purely coordinate driven) instead of $u_{1z} \sim
+v_{ph}$ (dependent on wave amplitude).
+
+The width of the dissipation zone can be estimated by noticing $u_0k_x = \omega
+- \sqrt{k_xNu_{1z}}$ from the nonlinearity criterion
+\autoref{eq:corot_nonlin_cond}. Thus, the width is roughly of order
+$2\sqrt{k_xNu_{1z}}$, which has the right scaling behavior (a stronger
+perturbation should be resonant farther away). Note however that, since $\omega$
+is small, this width can easily be large compared to $\omega$!
 
 \clearpage
 
