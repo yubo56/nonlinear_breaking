@@ -63,7 +63,7 @@ def get_solver(params):
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        'tanh(t / 1000) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
@@ -105,16 +105,21 @@ def run_strat_sim(set_ICs, name, params):
 
     # Main loop
     logger.info('Starting sim...')
+    slices = domain.dist.coeff_layout.slices(scales=1)
+    z_mask = None
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
         solver.step(cfl_dt)
         curr_iter = solver.iteration
         for field in solver.state.fields:
-            (len_x, len_z) = np.shape(field['c'])
-            z_mask = np.concatenate((
-                np.ones(len_z // 2),
-                np.exp(-np.arange(len_z // 2) / (len_z // 2) * 10)))
-            field['c'] *= np.outer(np.ones(len_x), z_mask)
+            if z_mask is None: # cache this computation
+                (len_x, len_z) = np.shape(field['c'][slices])
+                # mask kicks in 1/3 of the way, gaussian decay
+                len_damp = len_z - (len_z // 3)
+                z_mask = np.concatenate((
+                    np.ones(len_z // 3),
+                    np.exp(-4 * np.arange(len_damp)**2 / len_damp**2)))
+            field['c'][slices] *= np.outer(np.ones(len_x), z_mask)
 
         if curr_iter % int((params['T_F'] / params['DT']) /
                            params['NUM_SNAPSHOTS']) == 0:
