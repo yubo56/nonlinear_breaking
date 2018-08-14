@@ -9,9 +9,9 @@ from collections import defaultdict
 
 import h5py
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-matplotlib.use('Agg')
 plt.style.use('ggplot')
 
 from dedalus import public as de
@@ -50,7 +50,7 @@ def get_solver(params):
     z = domain.grid(1)
 
     problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
-                                        'ux_z', 'uz_z', 'rho_z'
+                                        'ux_z', 'uz_z',
                                         ])
     problem.parameters.update(params)
 
@@ -61,12 +61,11 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.6 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.6 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- NU * (dx(dx(rho)) + dz(rho_z))' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
@@ -80,7 +79,6 @@ def get_solver(params):
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
-    problem.add_equation('dz(rho) - rho_z = 0')
 
 
     problem.add_bc('left(uz) = 0')
@@ -220,8 +218,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -249,7 +247,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),
