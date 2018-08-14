@@ -9,8 +9,10 @@ from collections import defaultdict
 
 import h5py
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+plt.style.use('ggplot')
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -47,7 +49,9 @@ def get_solver(params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
+                                        'ux_z', 'uz_z',
+                                        ])
     problem.parameters.update(params)
 
     # rho0 stratification
@@ -57,29 +61,38 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.4 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.4 * (SPONGE_LOW))))'
-    problem.add_equation('dx(ux) + dz(uz) = 0')
+        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
+    problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '= - sponge * rho -' +
-        'OMEGA * z / (KX * ZMAX) * dx(rho) + ' +
-        'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        '= - sponge * rho ' +
+        '- UZ_STRAT * z * dx(rho)' +
+        '- ux * dx(rho) - uz * dz(rho)' +
+        '+ (t / 500)**2 / ((t / 500)**2 + 1)' +
+            '* F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '= - sponge * ux - OMEGA * z / (KX * ZMAX) * dx(ux)')
+        '- NU * (dx(dx(ux)) + dz(ux_z))' +
+        '= - sponge * ux - UZ_STRAT * z * dx(ux)' +
+        '- ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '= - sponge * uz - OMEGA * z / (KX * ZMAX) * dx(uz) -' +
-        'uz * OMEGA / (KX * ZMAX)')
+        '- NU * (dx(dx(uz)) + dz(uz_z))' +
+        '= - sponge * uz - UZ_STRAT * z * dx(uz) - uz * UZ_STRAT' +
+        '- ux * dx(uz) - uz * dz(uz)')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
 
     problem.add_bc('left(uz) = 0')
+    problem.add_bc('left(ux) = 0')
+    problem.add_bc('right(ux) = 0')
     problem.add_bc('right(uz) = 0', condition = 'nx != 0')
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.RK222)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -207,8 +220,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -236,7 +249,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),
@@ -261,7 +274,7 @@ def plot(name, params):
                                    idx,
                                    title='%s (kx=kx_d)' % var)
             var_dat = state_vars[var]
-            kx_idx = round(params['KX'] / (params['XMAX'] / params['H']))
+            kx_idx = round(params['KX'] / (2 * np.pi / params['XMAX']))
             p = axes.semilogx(var_dat[t_idx][kx_idx],
                               range(len(var_dat[t_idx][kx_idx])),
                               linewidth=0.5)
