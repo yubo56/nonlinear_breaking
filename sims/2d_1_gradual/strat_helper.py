@@ -61,8 +61,8 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
@@ -84,8 +84,7 @@ def get_solver(params):
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(P) = 0', condition='nx == 0')
+    problem.add_bc('right(P) = 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.CNAB2)
