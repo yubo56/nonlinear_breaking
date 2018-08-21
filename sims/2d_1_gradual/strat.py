@@ -21,7 +21,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'Z0': 0.2 * ZMAX,
-              'SPONGE_STRENGTH': 0.5,
+              'SPONGE_STRENGTH': 0.6,
               'SPONGE_WIDTH': 0.5,
               'SPONGE_HIGH': 0.9 * ZMAX,
               'SPONGE_LOW': 0.1 * ZMAX,
@@ -66,7 +66,7 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'nonlinear_ns_gradual',
-         build_interp_params(1, 1)),
+         build_interp_params(1, 1, overrides={'NU_MULT': 0.25})),
         # (zero_ic, 'linear_ns_gradual',
         #  build_interp_params(2, 1, overrides={'F': 1e-6})),
     ]
