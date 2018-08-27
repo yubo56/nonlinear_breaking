@@ -87,7 +87,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.CNAB2)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -181,10 +181,11 @@ def plot(name, params):
     matplotlib.rcParams.update({'font.size': 6})
     plot_vars = ['uz']
     c_vars = ['uz_c']
+    f_vars = ['uz_f']
     # z_vars = ['F_z', 'E'] # sum these over x
     z_vars = []
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
-    n_cols = 3
+    n_cols = 4
     n_rows = 1
     plot_stride = 1
 
@@ -273,6 +274,16 @@ def plot(name, params):
             p = axes.semilogx(var_dat[t_idx][kx_idx],
                               range(len(var_dat[t_idx][kx_idx])),
                               linewidth=0.5)
+            idx += 1
+
+        for var in f_vars:
+            axes = fig.add_subplot(n_rows,
+                                   n_cols,
+                                   idx,
+                                   title='%s (Cheb. summed)' % var)
+            var_dat = state_vars[var.replace('_f', '_c')]
+            summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
+            p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
             idx += 1
 
         fig.suptitle(
