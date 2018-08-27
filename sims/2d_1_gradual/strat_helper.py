@@ -106,6 +106,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=params['DT'],
               cadence=10,
               max_dt=params['DT'],
+              safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
     snapshots = solver.evaluator.add_file_handler(

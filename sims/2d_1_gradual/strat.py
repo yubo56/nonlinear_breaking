@@ -6,7 +6,7 @@ import sys
 from strat_helper import *
 
 H = 1
-XMAX = 3 * H
+XMAX = 2.5 * H
 ZMAX = 10 * H
 
 NUM_SNAPSHOTS = 300
@@ -46,7 +46,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(0.1 / OMEGA, 0.1)
+    params['DT'] = min(0.1 / OMEGA, 0.5)
     if not params.get('F'): # default value
         params['F'] = (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
             * np.exp(-params['Z0'] / (2 * H))
@@ -67,10 +67,12 @@ if __name__ == '__main__':
     tasks = [
         # (zero_ic, 'nonlinear_ns_gradual2',
         #  build_interp_params(1, 1, overrides={'NU_MULT': 4})),
-        (zero_ic, 'nonlinear_ns_gradual3',
-         build_interp_params(1, 1, overrides={'NU_MULT': 0.25})),
-        (zero_ic, 'nonlinear_ns_gradual_smallx',
-         build_interp_params(1, 1)),
+        # (zero_ic, 'nonlinear_ns_gradual3',
+        #  build_interp_params(1, 1, overrides={'NU_MULT': 0.25})),
+        # (zero_ic, 'nonlinear_ns_gradual_smallx',
+        #  build_interp_params(1, 1)),
+        (zero_ic, 'nonlinear_ns_gradual_smallx_cfl',
+         build_interp_params(1, 1, overrides={'USE_CFL': True})),
         # (zero_ic, 'linear_ns_gradual',
         #  build_interp_params(2, 1, overrides={'F': 1e-6})),
     ]
