@@ -1019,23 +1019,75 @@ $\Gamma \sim \p*{A^2\nu\omega_0''}^{-1/2}$.
 
 \chapter{Stratified Flow}
 
-\section{Linear Breaking Criterion}
+\section{Linear Equations}
 
-Since we're having numerical difficulties, we will simultaneously consider
-\emph{corotation resonances} as a pathway to instability. This corresponds in
-the 2D case to a shear flow $\vec{u}_0 = u_0(z)\hat{x}$. We can do the math for
-this out, but the end result produces dispersion relation
+We largely follow Booker \& Bretherton from 1966 though do not adopt the
+Boussinesq approximation. Consider background shear flow $\vec{u}_0 =
+u_0(z)\hat{x}$ and vertical stratification $\rho_0 \propto e^{-z/H}$, then
+\begin{subequations}\label{se:shear_eq}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+            - u_{1z}\frac{\rho_0}{H} &= 0,\\
+        \pd{u_{1x}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\p*{u_{1x} + u_0}
+            + \frac{1}{\rho_0}\pd{P}{x} &= 0,\\
+        \pd{u_{1z}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_{1z}
+            + \frac{1}{\rho_0}\pd{P}{z} + \frac{\rho_1 g}{\rho_0} &= 0.
+    \end{align}
+\end{subequations}
+Note that $\vec{u} \cdot \vec{\nabla} = \p*{\vec{u}_0 + \vec{u}_1} \cdot
+\vec{\nabla}$.
+
+We again assume plane waves in $x, t$ such that $u_{1z}(x, z, t) =
+u_{1z}(z)e^{i(k_xx - \omega t)}$. We bracket second-order terms below and set
+them to zero in the ensuing calculations
+\begin{subequations}
+    \begin{align}
+        \pd{u_{1z}}{z} + ik_xu_{1x} &= 0,\\
+        -i\omega \rho_1 + u_0ik_x\rho_1
+            - u_{1z}\frac{\rho_0}{H}
+            + \s*{\p*{\vec{u}_1 \cdot \vec{\nabla}} \rho_1} &= 0,\\
+        -i\omega u_{1x} + u_0ik_x u_{1x}
+            + \frac{1}{\rho_0}ik_xP + u_{1z}\pd{u_0}{z}
+            + \s*{\vec{u}_1 \cdot \vec{\nabla} u_{1x}} &= 0,\\
+        -i\omega u_{1z} + u_0ik_x u_{1z}
+            + \frac{1}{\rho_0}\pd{P}{z} + \frac{\rho_1 g}{\rho_0}
+            + \s*{\vec{u}_1 \cdot \vec{\nabla} u_{1z}} &= 0.\\
+    \end{align}
+\end{subequations}
+Denote $\omega_{cr}(z) = \omega - u_0(z)k_x$ the corotating frequency. Using
+then that $u_{1x} = \frac{i}{k_x}\pd{u_{1z}}{z}$, $\rho_1 = \frac{i
+\rho_0}{H\omega_{cr}} u_{1z}$ and $P = \s*{i\omega_{cr}u_{1x} - u_{1z
+\pd{u_0}{z}}} \frac{\rho_0}{ik_x}$, we can finally arrive at linearized equation
 \begin{equation}
-    \p*{\omega - u_0k_x}^2 = \frac{k_x^2}{k_x^2 + k_z^2 + \frac{1}{4H^2}}
-        \p*{N^2 - \omega \pd{u_0}{z}}.
+    \ptd{u_{1z}}{z} - \frac{1}{H}\pd{u_{1z}}{z} + \s*{
+        \frac{k_x^2N^2}{\omega_{cr}^2}
+            - k_x^2
+            - \frac{k_x}{\omega_{cr}H}\pd{u_0}{z}
+            + \frac{k_x}{\omega_{cr}} \ptd{u_0}{z}
+    } u_{1z} = 0. \label{eq:shear_lin_uz}
 \end{equation}
-Since our fluid is generally not stratified strongly and $\omega \ll N$ in the
-IGW regime, we can drop the $\pd{u_0}{z}$ term and the shear flow becomes a
-simple Doppler shift of $\omega$. Denote $\omega_{cr}(z) = \omega - u_0(z)k_x$
-the corotating frequency. A singularity is obvious at $\omega_{cr} = 0$, exactly
-the \emph{corotation resonance}, and one expects that as
+Note that if we make correspondences $ik_x \to \partial_x, i\omega_{cr} \to
+\partial_t + u_0\partial_x$ and take $H \to \infty$ while holding $N^2$
+constant, we recover Equation 2.1 of Booker \& Bretherton. We can also note that
+if we take constant $u_0$ we recover the expected dispersion relation
+\autoref{eq:strat_disp} for $\omega = \omega_{cr}$.
+
+\section{Linear Amplification}
+
+One can solve \autoref{eq:shear_lin_uz}
+
+\section{Breaking Criterion}
+
+If the fluid is not strongly stratified $\ptd{u_0}{z}, \pd{u_0}{z}\frac{1}{H}
+\ll \frac{k_xN^2}{\omega_{cr}}$ then the singularity is largely induced by
+$\omega_{cr} \to 0$ (note that the condition becomes easier to satisfy as we
+approach the singularity). $\omega_{cr} = 0$, is exactly the \emph{corotation
+resonance}, and one expects that as (note that if $k_z \gg k_x$ then the
+dispersion relation is $\omega_{cr} \approx Nk_x/k_z$):
 \begin{equation}
-    k_z(z) \approx \frac{k_xN}{\omega_{cr}(z)} \sim \frac{\omega_{cr}}{u_{1z}},
+    k_z(z) \approx \frac{Nk_x}{\omega_{cr}(z)}
+        \sim \frac{\omega_{cr}(z)}{\abs*{u_{1z}}},
         \label{eq:corot_nonlin_cond}
 \end{equation}
 that nonlinear effects should kick in.
@@ -1043,11 +1095,12 @@ that nonlinear effects should kick in.
 One advantage of a shear flow is that, instead of requiring $2H$ of vertical
 height for amplitude growth, we can just choose $u_0 =
 \frac{\omega}{k_x}\frac{z}{z_{\max}}$ to meet the corotation citerion at $z =
-z_{\max}$. As $\pd{u_0}{z} \sim \frac{\omega}{k_xz_{\max}} \approx
-\frac{N}{k_zz_{\max}}$, to meet the $N^2 \gg \omega \pd{u_0}{z}$ criterion we
-require $N \gg \frac{\omega}{k_zz_{\max}}$ which is always true. We can even
-induce the corotation resonance well below $z_{\max}$ and still be perfectly
-within the regime of validity of our assumption.
+z_{\max}$. Consider $\pd{u_0}{z} \sim \frac{\omega}{k_xz_{\max}} \approx
+\frac{N}{k_zz_{\max}}$. This both satisfies $\pd{u_0}{z} \frac{1}{H} =
+\frac{N}{k_zz_{\max}H} \ll \frac{k_xN^2}{\omega_{cr}}$ (as $k_z^2z_{\max}H \ll
+1$), and $\ptd{u_0}{z} = 0 \ll \frac{k_xN^2}{\omega_{cr}}$. We can even induce
+the corotation resonance well below $z_{\max}$ and still be perfectly within the
+regime of validity of our assumption.
 
 A second advantage of a shear flow is that we can force at very small amplitudes
 and still observe resonances, since the resonance is driven by the convergence
@@ -1055,11 +1108,10 @@ of $\omega_{cr} \to 0$ (purely coordinate driven) instead of $u_{1z} \sim
 v_{ph}$ (dependent on wave amplitude).
 
 The width of the dissipation zone can be estimated by noticing $u_0k_x = \omega
-- \sqrt{k_xNu_{1z}}$ from the nonlinearity criterion
-\autoref{eq:corot_nonlin_cond}. Thus, the width is roughly of order
-$2\sqrt{k_xNu_{1z}}$, which has the right scaling behavior (a stronger
-perturbation should be resonant farther away). Note however that, since $\omega$
-is small, this width can easily be large compared to $\omega$!
+\pm \sqrt{k_xNu_{1z}}$ from the nonlinearity criterion
+\autoref{eq:corot_nonlin_cond}. Thus, the width of $u_0$ that incurs nonlinear
+effects is roughly of order $2\sqrt{Nu_{1z} / k_x}$, which has the right scaling
+behavior (a stronger perturbation should be resonant farther away).
 
 \clearpage
 
