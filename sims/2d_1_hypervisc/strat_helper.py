@@ -9,8 +9,10 @@ from collections import defaultdict
 
 import h5py
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+plt.style.use('ggplot')
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -57,13 +59,13 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.5 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.5 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        'tanh(t / 1000) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
@@ -77,7 +79,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.CNAB2)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -96,6 +98,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=params['DT'],
               cadence=10,
               max_dt=params['DT'],
+              safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
     snapshots = solver.evaluator.add_file_handler(
@@ -182,10 +185,11 @@ def plot(name, params):
     matplotlib.rcParams.update({'font.size': 6})
     plot_vars = ['uz']
     c_vars = ['uz_c']
+    f_vars = ['uz_f']
     # z_vars = ['F_z', 'E'] # sum these over x
     z_vars = []
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
-    n_cols = 3
+    n_cols = 4
     n_rows = 1
     plot_stride = 1
 
@@ -216,8 +220,8 @@ def plot(name, params):
             var_dat = state_vars[var]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
@@ -245,7 +249,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),
@@ -274,6 +278,16 @@ def plot(name, params):
             p = axes.semilogx(var_dat[t_idx][kx_idx],
                               range(len(var_dat[t_idx][kx_idx])),
                               linewidth=0.5)
+            idx += 1
+
+        for var in f_vars:
+            axes = fig.add_subplot(n_rows,
+                                   n_cols,
+                                   idx,
+                                   title='%s (Cheb. summed)' % var)
+            var_dat = state_vars[var.replace('_f', '_c')]
+            summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
+            p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
             idx += 1
 
         fig.suptitle(

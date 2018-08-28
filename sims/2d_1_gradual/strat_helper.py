@@ -50,7 +50,7 @@ def get_solver(params):
     z = domain.grid(1)
 
     problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
-                                        'ux_z', 'uz_z',
+                                        'ux_z', 'uz_z', 'rho_z',
                                         ])
     problem.parameters.update(params)
 
@@ -66,6 +66,7 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
+        '- NU * (dx(dx(rho)) + dz(rho_z))' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
@@ -79,12 +80,15 @@ def get_solver(params):
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
+    problem.add_equation('dz(rho) - rho_z = 0')
 
 
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
     problem.add_bc('right(P) = 0')
+    problem.add_bc('right(rho) = 0')
+    problem.add_bc('left(rho_z) = 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)

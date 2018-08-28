@@ -9,9 +9,8 @@ H = 1
 XMAX = 4 * H
 ZMAX = 10 * H
 
-NUM_TIMESTEPS = 2e3
-NUM_SNAPSHOTS = 200
-TARGET_UZ = 0.01 # target uz at forcing zone
+NUM_SNAPSHOTS = 300
+TARGET_DISP_RAT = 0.07 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -21,17 +20,17 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.25 * ZMAX,
-              'SPONGE_STRENGTH': 1,
-              'SPONGE_HIGH': 0.93 * ZMAX,
-              'SPONGE_LOW': 0.07 * ZMAX,
+              'Z0': 0.2 * ZMAX,
+              'SPONGE_STRENGTH': 0.6,
+              'SPONGE_WIDTH': 0.5,
+              'SPONGE_HIGH': 0.9 * ZMAX,
+              'SPONGE_LOW': 0.1 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
     params = {**PARAMS_RAW, **(overrides or {})}
     KX = params['KX']
     KZ = params['KZ']
-    # g = (KX**2 + KZ**2 + 1 / (4 * H**2)) / KX**2 * (2 * np.pi)**2 * H # omega = 2pi
     g = H # N^2 = 1
 
     OMEGA = get_omega(g, H, KX, KZ)
@@ -47,9 +46,14 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(params['T_F'] / NUM_TIMESTEPS, 0.1 / OMEGA, 0.02)
+    params['DT'] = min(0.1 / OMEGA, 0.5)
     if not params.get('F'): # default value
-        params['F'] = TARGET_UZ / get_uz_f_ratio(params)
+        params['F'] = (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
+            * np.exp(-params['Z0'] / (2 * H))
+    # NU / (kmax/2)^2 ~ omega
+    params['NU'] = params.get('NU_MULT', 1) * \
+        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
+    print(params)
     return params
 
 def run(ic, name, params_dict):
@@ -61,8 +65,8 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'nonlinear_1',
-         build_interp_params(1, 1)),
+        (zero_ic, 'nonlinear_cfl',
+         build_interp_params(1, 1, overrides={'USE_CFL': True})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
