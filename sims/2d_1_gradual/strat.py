@@ -6,7 +6,7 @@ import sys
 from strat_helper import *
 
 H = 1
-XMAX = 2.5 * H
+XMAX = 4 * H
 ZMAX = 10 * H
 
 NUM_SNAPSHOTS = 300
@@ -65,14 +65,12 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
+        (zero_ic, 'nonlinear_ns_gradual_cfl',
+         build_interp_params(1, 1, overrides={'USE_CFL': True})),
         # (zero_ic, 'nonlinear_ns_gradual2',
         #  build_interp_params(1, 1, overrides={'NU_MULT': 4})),
         # (zero_ic, 'nonlinear_ns_gradual3',
         #  build_interp_params(1, 1, overrides={'NU_MULT': 0.25})),
-        # (zero_ic, 'nonlinear_ns_gradual_smallx',
-        #  build_interp_params(1, 1)),
-        (zero_ic, 'nonlinear_ns_gradual_smallx_cfl',
-         build_interp_params(1, 1, overrides={'USE_CFL': True})),
         # (zero_ic, 'linear_ns_gradual',
         #  build_interp_params(2, 1, overrides={'F': 1e-6})),
     ]
