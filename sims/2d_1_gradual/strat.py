@@ -10,21 +10,21 @@ XMAX = 4 * H
 ZMAX = 12 * H
 
 NUM_SNAPSHOTS = 300
-TARGET_DISP_RAT = 0.07 # k_z * u_z / omega at base
+TARGET_DISP_RAT = 0.2 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 128,
-              'N_Z': 512,
+              'N_X': 256,
+              'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.2 * ZMAX,
+              'Z0': 0.15 * ZMAX,
               'SPONGE_STRENGTH': 0.6,
               'SPONGE_WIDTH': 0.5,
-              'SPONGE_HIGH': 0.9 * ZMAX,
-              'SPONGE_LOW': 0.1 * ZMAX,
+              'SPONGE_HIGH': 0.93 * ZMAX,
+              'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
@@ -52,7 +52,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
             * np.exp(-params['Z0'] / (2 * H))
     # NU / (kmax/2)^2 ~ omega
     params['NU'] = params.get('NU_MULT', 1) * \
-        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z']))**2
+        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z'] * interp_z))**2
     print(params)
     return params
 
@@ -65,14 +65,17 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'nonlinear_ns_gradual_cfl',
-         build_interp_params(1, 1, overrides={'USE_CFL': True})),
-        # (zero_ic, 'nonlinear_ns_gradual2',
-        #  build_interp_params(1, 1, overrides={'NU_MULT': 4})),
-        # (zero_ic, 'nonlinear_ns_gradual3',
-        #  build_interp_params(1, 1, overrides={'NU_MULT': 0.25})),
-        # (zero_ic, 'linear_ns_gradual',
-        #  build_interp_params(2, 1, overrides={'F': 1e-6})),
+        (zero_ic, 'linear_ns',
+         build_interp_params(2, 2, overrides={'USE_CFL': True, 'F': 1e-7})),
+        (zero_ic, 'linear_ns_lownu',
+         build_interp_params(2, 2, overrides={'USE_CFL': True,
+                                              'F': 1e-7,
+                                              'NU_MULT': 1 / 16,
+                                              })),
+        (zero_ic, 'nonlinear_ns_lowres',
+         build_interp_params(2, 2, overrides={'USE_CFL': True})),
+        (zero_ic, 'nonlinear_ns',
+         build_interp_params(2, 1, overrides={'USE_CFL': True})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
