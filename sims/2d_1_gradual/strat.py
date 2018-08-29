@@ -7,15 +7,15 @@ from strat_helper import *
 
 H = 1
 XMAX = 4 * H
-ZMAX = 10 * H
+ZMAX = 12 * H
 
 NUM_SNAPSHOTS = 300
-TARGET_DISP_RAT = 0.05 # k_z * u_z / omega at base
+TARGET_DISP_RAT = 0.07 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
-              'N_Z': 1024,
+              'N_X': 128,
+              'N_Z': 512,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,

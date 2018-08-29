@@ -16,7 +16,7 @@ plt.style.use('ggplot')
 
 from dedalus import public as de
 from dedalus.tools import post
-from dedalus.extras.flow_tools import CFL
+from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 SNAPSHOTS_DIR = 'snapshots_%s'
@@ -95,16 +95,21 @@ def run_strat_sim(set_ICs, name, params):
     set_ICs(solver, domain, params)
 
     cfl = CFL(solver,
-              initial_dt=params['DT'],
+              initial_dt=5,
               cadence=10,
-              max_dt=params['DT'],
+              max_dt=5,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
+    cfl.add_frequency(params['DT'])
     snapshots = solver.evaluator.add_file_handler(
         snapshots_dir,
         sim_dt=params['T_F'] / params['NUM_SNAPSHOTS'])
     snapshots.add_system(solver.state)
+
+    # Flow properties
+    flow = GlobalFlowProperty(solver, cadence=10)
+    flow.add_property("sqrt(ux*ux + uz*uz) / NU", name='Re')
 
     # Main loop
     logger.info('Starting sim...')
@@ -131,6 +136,7 @@ def run_strat_sim(set_ICs, name, params):
                         solver.stop_sim_time,
                         cfl_dt,
                         params['DT'])
+            logger.info('Max Re = %f' %flow.max('Re'))
 
 def load(name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
