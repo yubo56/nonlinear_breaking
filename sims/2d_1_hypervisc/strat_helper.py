@@ -98,6 +98,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=5,
               cadence=10,
               max_dt=5,
+              min_dt=0.005,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
@@ -114,20 +115,25 @@ def run_strat_sim(set_ICs, name, params):
     # Main loop
     logger.info('Starting sim...')
     slices = domain.dist.coeff_layout.slices(scales=1)
-    z_mask = None
+    mask = None
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
         solver.step(cfl_dt)
         curr_iter = solver.iteration
         for field in solver.state.fields:
-            if z_mask is None: # cache this computation
-                (len_x, len_z) = np.shape(field['c'][slices])
+            if mask is None: # cache this computation
+                (len_x, len_z) = np.shape(field['c'])
                 # mask kicks in 1/3 of the way, gaussian decay
-                len_damp = len_z - (len_z // 3)
+                len_x_damp = len_x - (len_x // 3)
+                len_z_damp = len_z - (len_z // 3)
+                x_mask = np.concatenate((
+                    np.ones(len_x // 3),
+                    np.exp(-4 * np.arange(len_x_damp)**2 / len_x_damp**2)))
                 z_mask = np.concatenate((
                     np.ones(len_z // 3),
-                    np.exp(-4 * np.arange(len_damp)**2 / len_damp**2)))
-            field['c'][slices] *= np.outer(np.ones(len_x), z_mask)
+                    np.exp(-4 * np.arange(len_z_damp)**2 / len_z_damp**2)))
+                mask = np.outer(x_mask, z_mask)[slices]
+            field['c'][slices] *= mask
 
         if curr_iter % int((params['T_F'] / params['DT']) /
                            params['NUM_SNAPSHOTS']) == 0:
