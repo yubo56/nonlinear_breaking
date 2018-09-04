@@ -66,17 +66,17 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- NU * (dx(dx(rho)) + dz(rho_z))' +
+        '- NU_X * dx(dx(rho)) - NU_Z * dz(rho_z)' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- NU * (dx(dx(ux)) + dz(ux_z))' +
+        '- NU_X * dx(dx(ux)) - NU_Z * dz(ux_z)' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- NU * (dx(dx(uz)) + dz(uz_z))' +
+        '- NU_X * dx(dx(uz)) - NU_Z * dz(uz_z)' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
@@ -121,7 +121,7 @@ def run_strat_sim(set_ICs, name, params):
 
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
-    flow.add_property("sqrt(ux*ux + uz*uz) / NU", name='Re')
+    flow.add_property('sqrt((ux / NU_X)**2 + (uz / NU_Z)**2)', name='Re')
 
     # Main loop
     logger.info('Starting sim...')
@@ -144,7 +144,8 @@ def load(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
-    post.merge_analysis(snapshots_dir, cleanup=False)
+    if not os.path.exists(filename):
+        post.merge_analysis(snapshots_dir, cleanup=True)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
