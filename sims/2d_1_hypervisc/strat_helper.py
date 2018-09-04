@@ -152,7 +152,8 @@ def load(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
-    post.merge_analysis(snapshots_dir, cleanup=False)
+    if not os.path.exists(filename):
+        post.merge_analysis(snapshots_dir, cleanup=True)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
