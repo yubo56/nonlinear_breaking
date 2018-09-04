@@ -46,7 +46,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(0.1 / OMEGA, 0.5)
+    params['DT'] = min(0.1 / OMEGA, 1)
     if not params.get('F'): # default value
         params['F'] = (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
             * np.exp(-params['Z0'] / (2 * H))

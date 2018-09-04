@@ -79,7 +79,7 @@ def get_solver(params):
     problem.add_bc('right(P) = 0', condition = 'nx == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.CNAB2)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -121,19 +121,22 @@ def run_strat_sim(set_ICs, name, params):
         solver.step(cfl_dt)
         curr_iter = solver.iteration
         for field in solver.state.fields:
-            if mask is None: # cache this computation
-                (len_x, len_z) = np.shape(field['c'])
+            (len_x, len_z) = np.shape(field['c'])
+            if mask is None:
+                mask = np.zeros((len_x, len_z))
                 # mask kicks in 1/3 of the way, gaussian decay
-                len_x_damp = len_x - (len_x // 3)
-                len_z_damp = len_z - (len_z // 3)
+                len_x_damp = len_x - (len_x // 2)
+                len_z_damp = len_z - (len_z // 2)
                 x_mask = np.concatenate((
-                    np.ones(len_x // 3),
-                    np.exp(-4 * np.arange(len_x_damp)**2 / len_x_damp**2)))
+                    np.ones(len_x // 2),
+                    np.exp(-4 * np.arange(len_x_damp)**2 / len_x_damp**2)
+                ))[slices[0]]
                 z_mask = np.concatenate((
-                    np.ones(len_z // 3),
-                    np.exp(-4 * np.arange(len_z_damp)**2 / len_z_damp**2)))
-                mask = np.outer(x_mask, z_mask)[slices]
-            field['c'][slices] *= mask
+                    np.ones(len_z // 2),
+                    np.exp(-4 * np.arange(len_z_damp)**2 / len_z_damp**2)
+                ))[slices[1]]
+                mask[slices] = np.outer(x_mask, z_mask)
+            field['c'][slices] *= mask[slices]
 
         if curr_iter % int((params['T_F'] / params['DT']) /
                            params['NUM_SNAPSHOTS']) == 0:
