@@ -93,12 +93,15 @@ def run_strat_sim(set_ICs, name, params):
 
     # Initial conditions
     set_ICs(solver, domain, params)
+    # filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    # write, dt = solver.load_state(filename, -30)
+    # print("=====strat_helper.py=====", "loaded", write)
 
     cfl = CFL(solver,
-              initial_dt=5,
+              initial_dt=params['DT'],
               cadence=10,
               max_dt=5,
-              min_dt=0.005,
+              min_dt=0.01,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
@@ -115,28 +118,24 @@ def run_strat_sim(set_ICs, name, params):
     # Main loop
     logger.info('Starting sim...')
     slices = domain.dist.coeff_layout.slices(scales=1)
-    mask = None
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
         solver.step(cfl_dt)
         curr_iter = solver.iteration
         for field in solver.state.fields:
             (len_x, len_z) = np.shape(field['c'])
-            if mask is None:
-                mask = np.zeros((len_x, len_z))
-                # mask kicks in 1/3 of the way, gaussian decay
-                len_x_damp = len_x - (len_x // 2)
-                len_z_damp = len_z - (len_z // 2)
-                x_mask = np.concatenate((
-                    np.ones(len_x // 2),
-                    np.exp(-4 * np.arange(len_x_damp)**2 / len_x_damp**2)
-                ))[slices[0]]
-                z_mask = np.concatenate((
-                    np.ones(len_z // 2),
-                    np.exp(-4 * np.arange(len_z_damp)**2 / len_z_damp**2)
-                ))[slices[1]]
-                mask[slices] = np.outer(x_mask, z_mask)
-            field['c'][slices] *= mask[slices]
+            # mask kicks in 1/3 of the way, gaussian decay
+            len_x_damp = len_x - (len_x // 3)
+            len_z_damp = len_z - (len_z // 3)
+            x_mask = np.concatenate((
+                np.ones(len_x // 2),
+                np.exp(-16 * np.arange(len_x_damp)**2 / len_x_damp**2)
+            ))
+            z_mask = np.concatenate((
+                np.ones(len_z // 2),
+                np.exp(-16 * np.arange(len_z_damp)**2 / len_z_damp**2)
+            ))
+            field['c'][slices] *= np.outer(x_mask, z_mask)[slices]
 
         if curr_iter % int((params['T_F'] / params['DT']) /
                            params['NUM_SNAPSHOTS']) == 0:
