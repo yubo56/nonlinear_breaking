@@ -14,7 +14,7 @@ TARGET_DISP_RAT = 0.2 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
+              'N_X': 128,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
@@ -52,7 +52,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
             * np.exp(-params['Z0'] / (2 * H))
     # NU / (kmax/2)^2 ~ omega
     params['NU_X'] = params.get('NU_MULT', 1) * \
-        OMEGA * (params['XMAX'] / (np.pi * params['N_X'] * interp_z))**2
+        OMEGA * (params['XMAX'] / (np.pi * params['N_X'] * interp_x))**2
     params['NU_Z'] = params.get('NU_MULT', 1) * \
         OMEGA * (params['ZMAX'] / (np.pi * params['N_Z'] * interp_z))**2
     print(params)
@@ -68,16 +68,16 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'linear_ns',
-         build_interp_params(2, 2, overrides={'USE_CFL': True, 'F': 1e-7})),
+         build_interp_params(1, 2, overrides={'USE_CFL': True, 'F': 1e-7})),
         (zero_ic, 'linear_ns_lownu',
-         build_interp_params(2, 2, overrides={'USE_CFL': True,
+         build_interp_params(1, 2, overrides={'USE_CFL': True,
                                               'F': 1e-7,
                                               'NU_MULT': 1 / 16,
                                               })),
         (zero_ic, 'nonlinear_ns_lowres',
-         build_interp_params(2, 2, overrides={'USE_CFL': True})),
+         build_interp_params(1, 2, overrides={'USE_CFL': True})),
         (zero_ic, 'nonlinear_ns',
-         build_interp_params(2, 1, overrides={'USE_CFL': True})),
+         build_interp_params(1, 1, overrides={'USE_CFL': True})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

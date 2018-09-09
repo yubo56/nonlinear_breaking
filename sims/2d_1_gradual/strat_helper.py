@@ -110,6 +110,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=5,
               cadence=10,
               max_dt=5,
+              min_dt=0.01,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
