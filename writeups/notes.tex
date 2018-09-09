@@ -1073,45 +1073,74 @@ constant, we recover Equation 2.1 of Booker \& Bretherton. We can also note that
 if we take constant $u_0$ we recover the expected dispersion relation
 \autoref{eq:strat_disp} for $\omega = \omega_{cr}$.
 
-\section{Linear Amplification}
+\section{Reflection/Transmission in Linear Theory}
 
-One can solve \autoref{eq:shear_lin_uz}
-
-\section{Breaking Criterion}
-
-If the fluid is not strongly stratified $\ptd{u_0}{z}, \pd{u_0}{z}\frac{1}{H}
-\ll \frac{k_xN^2}{\omega_{cr}}$ then the singularity is largely induced by
-$\omega_{cr} \to 0$ (note that the condition becomes easier to satisfy as we
-approach the singularity). $\omega_{cr} = 0$, is exactly the \emph{corotation
-resonance}, and one expects that as (note that if $k_z \gg k_x$ then the
-dispersion relation is $\omega_{cr} \approx Nk_x/k_z$):
+One can solve \autoref{eq:shear_lin_uz} via \emph{Frobenius Theory}, but if we
+consider only $\omega_{cr} \to 0$, we obtain a very simple power series
+solution. In $\omega_{cr} \to 0$, we have only leading order contributions
 \begin{equation}
-    k_z(z) \approx \frac{Nk_x}{\omega_{cr}(z)}
-        \sim \frac{\omega_{cr}(z)}{\abs*{u_{1z}}},
-        \label{eq:corot_nonlin_cond}
+    \ptd{u_{1z}}{z} + \frac{k_x^2N^2}{\omega_{cr}^2}u_{1z} = 0.
 \end{equation}
-that nonlinear effects should kick in.
+Consider a power series solution $u_{1z} \propto \omega_{cr}^\alpha$, where
+$\omega_{cr}(z) = \omega - k_xu_0(z)$. Note that very near the critical level,
+$\pd{u_0}{z}\delta z k_x$ where $\delta z = z - z_c, \omega_{cr}(z_c) = 0$. We
+thus have
+\begin{align}
+    \p*{\pd{\omega_{cr}}{z}}^2 \alpha\p*{\alpha - 1} + k_x^2N^2 &= 0,\\
+    \alpha &= \frac{1}{2}\pm i\sqrt{\frac{N^2}{\p*{\pd{u_0}{z}}^2} -
+        \frac{1}{4}}.
+\end{align}
+The classic Booker \& Bretherton paper notates this result $u_{1z} \propto
+\p*{\omega_{cr}(z)}^{\frac{1}{2} \pm i\mu} \propto (\delta z)^{\frac{1}{2} \pm
+i\mu}$.
 
-One advantage of a shear flow is that, instead of requiring $2H$ of vertical
-height for amplitude growth, we can just choose $u_0 =
-\frac{\omega}{k_x}\frac{z}{z_{\max}}$ to meet the corotation citerion at $z =
-z_{\max}$. Consider $\pd{u_0}{z} \sim \frac{\omega}{k_xz_{\max}} \approx
-\frac{N}{k_zz_{\max}}$. This both satisfies $\pd{u_0}{z} \frac{1}{H} =
-\frac{N}{k_zz_{\max}H} \ll \frac{k_xN^2}{\omega_{cr}}$ (as $k_z^2z_{\max}H \ll
-1$), and $\ptd{u_0}{z} = 0 \ll \frac{k_xN^2}{\omega_{cr}}$. We can even induce
-the corotation resonance well below $z_{\max}$ and still be perfectly within the
-regime of validity of our assumption.
+Now, consistent with a perturbation that vanishes as $t \to -\infty$
+(alternatively, this is just the Landau prescription for deforming below a
+singularity on the real line), we must interpret $\omega_{cr}$ as having a
+slight positive imaginary component. Given this, the expression for $u_{1z}(z)$
+is multivalued, and we must specify a branch cut. For $\Arg\p*{z - z_c} = 0$, or
+intuitively when we are above the critical layer, choose branch such that
+\begin{equation}
+    \p*{z - z_c}^{\frac{1}{2} \pm i\mu} \equiv
+        \abs*{z - z_c}^{1/2\pm i\mu}.
+\end{equation}
+It is then clear that for $\Arg\p*{z - z_c} = -\pi$, intuitively corresponding
+to being below the critical layer (note the arg is $-\pi$ since $z_c$ is
+infinitesimally above the real axis), our branch cut enforces
+\begin{equation}
+    \p*{z - z_c}^{\frac{1}{2} \pm i\mu} =
+        \abs*{z - z_c}^{\frac{1}{2} \pm i\mu}e^{-\frac{i\pi}{2}}e^{\mp \mu \pi}.
+\end{equation}
+Lastly, we interpret $\abs*{z - z_c}^{\pm i\mu} = e^{\pm i\mu \ln \abs*{z -
+z_c}}$ to have the form of a positive/negative $k_z$ value. Interestingly, this
+means that $e^{-i\mu \ln \abs*{z - z_c}}$ corresponds to the \emph{positive
+group velocity}, which is $e^{\mu \pi}$ magnified compared to the $\Arg\p*{z -
+z_c} = 0$ case, and $e^{2\mu \pi}$ magnified over the negative group velocity
+component below $z_c$.
 
-A second advantage of a shear flow is that we can force at very small amplitudes
-and still observe resonances, since the resonance is driven by the convergence
-of $\omega_{cr} \to 0$ (purely coordinate driven) instead of $u_{1z} \sim
-v_{ph}$ (dependent on wave amplitude).
+The interpretation we choose for this is that an incoming wavepacket moving with
+positive group velocity inbound on $z_c$ is transmitted with amplitude $e^{-\mu
+\pi}$ and reflected with amplitude $e^{-2\mu \pi}$. The remainder is interpreted
+as being \emph{absorbed} by the critical layer.
 
-The width of the dissipation zone can be estimated by noticing $u_0k_x = \omega
-\pm \sqrt{k_xNu_{1z}}$ from the nonlinearity criterion
-\autoref{eq:corot_nonlin_cond}. Thus, the width of $u_0$ that incurs nonlinear
-effects is roughly of order $2\sqrt{Nu_{1z} / k_x}$, which has the right scaling
-behavior (a stronger perturbation should be resonant farther away).
+\section{Validity of the Linear Approximation}
+
+The real physics is expected to deviate from our computation near the critical
+layer owing primarily to two effects: nonlinear advective terms and diffusivity.
+Hazel 1967 found numerically that including diffusive tersm in the equations of
+motion does not change the attenuation factor; even in the presence of
+dissipation no reflection/transimission are observed. This makes sense;
+examining the equations of motion, the effect of an extra $\pd{}{t} \to \pd{}{t}
+- \nu \nabla^2$ is to take $\omega_{cr} \to \omega_{cr} + i\nu k_x^2 - i\nu
+\ptd{}{z}$, giving the singularity at $\omega_{cr} + i\nu k_x^2 = 0$ the
+positive imaginary component we before asserted.
+
+On the other hand, other studies e.g.\ Brown \& Stewartson 1980, Winters \&
+d'Asaro 1994, find that once the wave amplitude becomes nonnegligible, sizable
+reflection can be found. In contrast, Ogilvie \& Barker 2010 find that in
+geometrically focused breaking, no reflection is observed, despite the nonlinear
+effects being stronger than the dissipitive ones. The study of how nonlinear and
+diffusive effects compete is then nontrivial.
 
 \clearpage
 
