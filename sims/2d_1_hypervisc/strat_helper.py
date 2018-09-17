@@ -101,7 +101,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=params['DT'],
               cadence=10,
               max_dt=5,
-              min_dt=0.005,
+              min_dt=0.01,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
@@ -119,15 +119,15 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     slices = domain.dist.coeff_layout.slices(scales=1)
     (len_x, len_z) = domain.dist.coeff_layout.global_shape(scales=1)
-    # mask kicks in 1/2 of the way, gaussian decay
-    len_x_damp = len_x - (len_x // 2)
-    len_z_damp = len_z - (len_z // 2)
+    # mask kicks in 1/3 of the way, gaussian decay
+    len_x_damp = len_x - (len_x // 3)
+    len_z_damp = len_z - (len_z // 3)
     x_mask = np.concatenate((
-        np.ones(len_x // 2),
+        np.ones(len_x // 3),
         np.exp(-16 * np.arange(len_x_damp)**2 / len_x_damp**2)
     ))
     z_mask = np.concatenate((
-        np.ones(len_z // 2),
+        np.ones(len_z // 3),
         np.exp(-16 * np.arange(len_z_damp)**2 / len_z_damp**2)
     ))
     mask = np.outer(x_mask, z_mask)
@@ -265,7 +265,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),

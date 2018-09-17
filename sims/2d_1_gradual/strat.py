@@ -50,11 +50,11 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     if not params.get('F'): # default value
         params['F'] = (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
             * np.exp(-params['Z0'] / (2 * H))
-    # NU / (kmax/2)^2 ~ omega
-    params['NU_X'] = params.get('NU_MULT_X', 1) * \
-        OMEGA * (params['XMAX'] / (np.pi * params['N_X'] * interp_x))**2
-    params['NU_Z'] = params.get('NU_MULT_Z', 1) * \
-        OMEGA * (params['ZMAX'] / (np.pi * params['N_Z'] * interp_z))**2
+    # NU / (kmax)^2 ~ omega
+    params['NU_X'] = params.get('NU_MULT_X', 0.5) * \
+        OMEGA * (params['XMAX'] / (2 * np.pi * params['N_X']))**2
+    params['NU_Z'] = params.get('NU_MULT_Z', 0.5) * \
+        OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**2
     print(params)
     return params
 
@@ -67,19 +67,22 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        # (zero_ic, 'linear_ns',
-        #  build_interp_params(2, 1, overrides={'USE_CFL': True, 'F': 1e-7})),
-        # (zero_ic, 'linear_ns_lownu',
-        #  build_interp_params(2, 1, overrides={'USE_CFL': True,
-        #                                       'F': 1e-7,
-        #                                       'NU_MULT_X': 1 / 16,
-        #                                       'NU_MULT_Z': 1 / 16,
-        #                                       })),
         # (zero_ic, 'nonlinear_ns_lowres',
         #  build_interp_params(2, 1, overrides={'USE_CFL': True})),
-        (zero_ic, 'nonlinear_ns',
-         build_interp_params(1, 1, overrides={'USE_CFL': True})),
-        (zero_ic, 'nonlinear_ns_highnu',
+        # (zero_ic, 'nonlinear_ns',
+        #  build_interp_params(1, 1, overrides={'USE_CFL': True})),
+
+        (zero_ic, 'nonlinear_ns_lowres1',
+         build_interp_params(1, 1, overrides={'USE_CFL': True,
+                                              'NU_MULT_X': 1})),
+        (zero_ic, 'nonlinear_ns_lowres2',
+         build_interp_params(1, 1, overrides={'USE_CFL': True,
+                                              'NU_MULT_X': 2})),
+        (zero_ic, 'nonlinear_ns_lowres3',
+         build_interp_params(1, 1, overrides={'USE_CFL': True,
+                                              'NU_MULT_X': 1,
+                                              'NU_MULT_Z': 1/8})),
+        (zero_ic, 'nonlinear_ns_lowres4',
          build_interp_params(1, 1, overrides={'USE_CFL': True,
                                               'NU_MULT_X': 4})),
     ]

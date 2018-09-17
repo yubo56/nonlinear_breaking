@@ -6,7 +6,7 @@ import sys
 from strat_helper import *
 
 H = 1
-XMAX = 6 * H
+XMAX = 4 * H
 ZMAX = 12 * H
 
 NUM_SNAPSHOTS = 300
@@ -14,8 +14,8 @@ TARGET_DISP_RAT = 0.2 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 256,
-              'N_Z': 1024,
+              'N_X': 128,
+              'N_Z': 512,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
@@ -65,9 +65,6 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'linear_cfl',
-         build_interp_params(2, 4, overrides={'USE_CFL': True,
-                                              'F': 1e-7})),
         (zero_ic, 'nonlinear_cfl',
          build_interp_params(1, 1, overrides={'USE_CFL': True})),
     ]
