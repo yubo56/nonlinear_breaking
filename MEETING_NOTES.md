@@ -66,7 +66,15 @@
     - Consider correct damping timescales?
 - Consider artificial regularization
 
+# NOTES 09/17
+- Solve linear corotation resonance for cylindrical/spherical geometry (Dong
+  thinks spherical might be too hard)
+    - Possibly think about when nonlinear effects kick in?
+- Use smaller kz, such that nu/dz^2 << w << nu kz^2
+- Plot uz(kx, z, t), see what height does uz spread out and dissipate.
+- Eventual goal, recall, is dP/dz, d^2(px)/dzdt, gives timescale of formation of
+  critical layer, upon which our previous work becomes usable.
+
 # GLOBAL TODO
 - Rad BC?
-- Analytically follow Sutherland modulationally stable/unstable proof
-- Check w/ sutherland paper?
+- hypervisc should regularize in x as well
