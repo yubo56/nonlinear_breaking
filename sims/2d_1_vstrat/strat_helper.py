@@ -16,7 +16,7 @@ plt.style.use('ggplot')
 
 from dedalus import public as de
 from dedalus.tools import post
-from dedalus.extras.flow_tools import CFL
+from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 
 SNAPSHOTS_DIR = 'snapshots_%s'
@@ -50,7 +50,7 @@ def get_solver(params):
     z = domain.grid(1)
 
     problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
-                                        'ux_z', 'uz_z',
+                                        'ux_z', 'uz_z', 'rho_z',
                                         ])
     problem.parameters.update(params)
 
@@ -61,35 +61,37 @@ def get_solver(params):
     problem.parameters['rho0'] = rho0
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (0.3 * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (0.3 * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '= - sponge * rho ' +
-        '- UZ_STRAT * z * dx(rho)' +
-        '- ux * dx(rho) - uz * dz(rho)' +
-        '+ (t / 500)**2 / ((t / 500)**2 + 1)' +
-            '* F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - OMEGA * t)')
+        '- NU_X * dx(dx(rho)) - NU_Z * dz(rho_z)' +
+        '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
+        '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+            'cos(KX * x - OMEGA * t)' +
+        '- UZ_STRAT * z * dx(rho)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- NU * (dx(dx(ux)) + dz(ux_z))' +
-        '= - sponge * ux - UZ_STRAT * z * dx(ux)' +
-        '- ux * dx(ux) - uz * dz(ux)')
+        '- NU_X * dx(dx(ux)) - NU_Z * dz(ux_z)' +
+        '= - sponge * ux - ux * dx(ux) - uz * dz(ux)' +
+        '- UZ_STRAT * z * dx(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- NU * (dx(dx(uz)) + dz(uz_z))' +
-        '= - sponge * uz - UZ_STRAT * z * dx(uz) - uz * UZ_STRAT' +
-        '- ux * dx(uz) - uz * dz(uz)')
+        '- NU_X * dx(dx(uz)) - NU_Z * dz(uz_z)' +
+        '= - sponge * uz - ux * dx(uz) - uz * dz(uz)' +
+        '- UZ_STRAT * z * dx(uz) - uz * UZ_STRAT')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
+    problem.add_equation('dz(rho) - rho_z = 0')
+
 
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(uz) = 0', condition = 'nx != 0')
-    problem.add_bc('right(P) = 0', condition = 'nx == 0')
+    problem.add_bc('right(P) = 0')
+    problem.add_bc('right(rho) = 0')
+    problem.add_bc('left(rho) = 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)
@@ -100,6 +102,10 @@ def get_solver(params):
 
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
+    if os.path.exists(snapshots_dir):
+        print('%s already ran, not rerunning' % name)
+        return
+
     logger = logging.getLogger(name)
 
     solver, domain = get_solver(params)
@@ -108,15 +114,22 @@ def run_strat_sim(set_ICs, name, params):
     set_ICs(solver, domain, params)
 
     cfl = CFL(solver,
-              initial_dt=params['DT'],
+              initial_dt=5,
               cadence=10,
-              max_dt=params['DT'],
+              max_dt=5,
+              min_dt=0.01,
+              safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
+    cfl.add_frequency(params['DT'])
     snapshots = solver.evaluator.add_file_handler(
         snapshots_dir,
         sim_dt=params['T_F'] / params['NUM_SNAPSHOTS'])
     snapshots.add_system(solver.state)
+
+    # Flow properties
+    flow = GlobalFlowProperty(solver, cadence=10)
+    flow.add_property('sqrt((ux / NU_X)**2 + (uz / NU_Z)**2)', name='Re')
 
     # Main loop
     logger.info('Starting sim...')
@@ -132,13 +145,15 @@ def run_strat_sim(set_ICs, name, params):
                         solver.stop_sim_time,
                         cfl_dt,
                         params['DT'])
+            logger.info('Max Re = %f' %flow.max('Re'))
 
 def load(name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
-    post.merge_analysis(snapshots_dir, cleanup=False)
+    if not os.path.exists(filename):
+        post.merge_analysis(snapshots_dir, cleanup=True)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
@@ -186,10 +201,11 @@ def plot(name, params):
     matplotlib.rcParams.update({'font.size': 6})
     plot_vars = ['uz']
     c_vars = ['uz_c']
+    f_vars = ['uz_f']
     # z_vars = ['F_z', 'E'] # sum these over x
     z_vars = []
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
-    n_cols = 3
+    n_cols = 4
     n_rows = 1
     plot_stride = 1
 
@@ -267,6 +283,11 @@ def plot(name, params):
                           [params['Z0'] - 3 * params['S']] * len(xlims),
                           'b--',
                           linewidth=0.5)
+            p = axes.plot(xlims,
+                          [params['ZMAX'] / params['UZ_STRAT_MULT']]
+                            * len(xlims),
+                          'g--',
+                          linewidth=0.5)
             idx += 1
         for var in c_vars:
             axes = fig.add_subplot(n_rows,
@@ -278,6 +299,16 @@ def plot(name, params):
             p = axes.semilogx(var_dat[t_idx][kx_idx],
                               range(len(var_dat[t_idx][kx_idx])),
                               linewidth=0.5)
+            idx += 1
+
+        for var in f_vars:
+            axes = fig.add_subplot(n_rows,
+                                   n_cols,
+                                   idx,
+                                   title='%s (Cheb. summed)' % var)
+            var_dat = state_vars[var.replace('_f', '_c')]
+            summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
+            p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
             idx += 1
 
         fig.suptitle(
