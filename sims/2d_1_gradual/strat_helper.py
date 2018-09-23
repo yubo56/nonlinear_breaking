@@ -107,9 +107,9 @@ def run_strat_sim(set_ICs, name, params):
     set_ICs(solver, domain, params)
 
     cfl = CFL(solver,
-              initial_dt=5,
+              initial_dt=params['DT'],
               cadence=10,
-              max_dt=5,
+              max_dt=params['DT'],
               min_dt=0.01,
               safety=0.5,
               threshold=0.10)
