@@ -52,9 +52,9 @@ def build_interp_params(interp_x, interp_z, overrides=None):
         * np.exp(-params['Z0'] / (2 * H))
     # NU / (kmax)^2 ~ omega
     params['NU_X'] = params.get('NU_MULT', 1) * \
-        OMEGA * (params['XMAX'] / (2 * np.pi * params['N_X']))**2
+        OMEGA * params['XMAX'] / (2 * np.pi * params['N_X']) / KX
     params['NU_Z'] = params.get('NU_MULT', 1) * \
-        OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**2
+        OMEGA * params['ZMAX'] / (2 * np.pi * params['N_Z']) / KZ
     print(params)
     return params
 
@@ -68,7 +68,7 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (zero_ic, 'linear',
-         build_interp_params(1, 1, overrides={'F': 1e-2,
+         build_interp_params(1, 1, overrides={'F_MULT': 1e-4,
                                               'USE_CFL': True})),
         (zero_ic, 'nonlinear_ns1',
          build_interp_params(1, 1, overrides={'USE_CFL': True})),
