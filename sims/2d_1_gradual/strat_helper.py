@@ -66,17 +66,17 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- NU_X * dx(dx(rho)) - NU_Z * dz(rho_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- NU_X * dx(dx(ux)) - NU_Z * dz(ux_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- NU_X * dx(dx(uz)) - NU_Z * dz(uz_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')

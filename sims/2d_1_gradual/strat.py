@@ -35,7 +35,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 1.5
+    T_F = abs(ZMAX / VG_Z) * 3
 
     params['T_F'] = T_F
     params['g'] = g
@@ -69,15 +69,11 @@ if __name__ == '__main__':
     tasks = [
         (zero_ic, 'linear',
          build_interp_params(1, 1, overrides={'F_MULT': 1e-4,
+                                              'NU_MULT': 0.1,
                                               'USE_CFL': True})),
-        (zero_ic, 'nonlinear_ns1',
-         build_interp_params(1, 1, overrides={'USE_CFL': True})),
-        (zero_ic, 'nonlinear_ns2',
-         build_interp_params(1, 1, overrides={'F_MULT': 2,
-                                              'USE_CFL': True})),
-        (zero_ic, 'nonlinear_ns3',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
-                                              'USE_CFL': True})),
+        (zero_ic, 'nonlinear',
+         build_interp_params(1, 1, overrides={'USE_CFL': True,
+                                              'NU_MULT': 0.1})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
