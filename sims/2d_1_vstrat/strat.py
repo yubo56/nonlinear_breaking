@@ -15,7 +15,7 @@ TARGET_DISP_RAT = 0.005 # k_z * u_z / omega at base
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
               'N_X': 128,
-              'N_Z': 256,
+              'N_Z': 512,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
@@ -40,23 +40,22 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['T_F'] = T_F
     params['g'] = g
     params['OMEGA'] = OMEGA
-    params['S'] = abs(1 / KZ)
+    params['S'] = params['ZMAX'] / 512 * 4
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    # omega * DT << 1 is required, as is DT << 1/N = 1
     params['DT'] = min(0.1 / OMEGA, 1)
-    if not params.get('F'): # default value
-        params['F'] = (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
-            * np.exp(-params['Z0'] / (2 * H))
-    # NU / (kmax)^2 ~ omega
-    params['NU_X'] = params.get('NU_MULT_X', 0.5) * \
-        OMEGA * (params['XMAX'] / (2 * np.pi * params['N_X']))**2
-    params['NU_Z'] = params.get('NU_MULT_Z', 0.5) * \
-        OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**2
-    # break below top
-    params['UZ_STRAT'] = params.get('UZ_STRAT_MULT', 1.2) * OMEGA / (KX * ZMAX)
+    params['F'] = params.get('F_MULT', 1) * \
+        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
+        * np.exp(-params['Z0'] / (2 * H))
+    params['NU_X'] = params.get('NU_MULT', 1) * \
+        OMEGA * params['XMAX'] / (2 * np.pi * params['N_X']) / KX
+    params['NU_Z'] = params.get('NU_MULT', 1) * \
+        OMEGA * params['ZMAX'] / (2 * np.pi * params['N_Z']) / KZ
+
+    # Ri = 1/4 gives instability + weird reflection
+    params['DUZ_DZ'] = np.sqrt((g / H) / params.get('Ri', 1/8))
     print(params)
     return params
 
@@ -69,15 +68,12 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'vstrat_lin',
-         build_interp_params(1, 1, overrides={'F': 1e-8,
-                                              'NU_MULT_X': 1e-4,
-                                              'NU_MULT_Z': 1e-4})),
         (zero_ic, 'vstrat',
          build_interp_params(1, 1)),
-        (zero_ic, 'vstrat_nonu',
-         build_interp_params(1, 1, overrides={'NU_MULT_X': 1e-4,
-                                              'NU_MULT_Z': 1e-4})),
+        (zero_ic, 'vstrat2',
+         build_interp_params(1, 1, overrides={'Ri': 1/16})),
+        (zero_ic, 'vstrat2',
+         build_interp_params(1, 1, overrides={'Ri': 1/200})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

@@ -75,6 +75,18 @@
 - Eventual goal, recall, is dP/dz, d^2(px)/dzdt, gives timescale of formation of
   critical layer, upon which our previous work becomes usable.
 
+# NOTES 09/31
+- Meeting plan:
+    - NSF
+    - `2d_1_gradual`: Show off correct regularization, had to mask NS plus
+      increased width driving zone
+    - Hopefully show off critical layer transmission over different Ri?
+    - Analytical work:
+        - Differ from David's b/c assumed |mu - 0.5| >> 1. Verify our two
+          expressions agree otherwise
+        - Repeated David's analysis for plane parallel, also have a log term!
+        - Ask what Dong thinks about dispersion relation shortcut?
+
 # GLOBAL TODO
 - Rad BC?
 - hypervisc should regularize in x as well

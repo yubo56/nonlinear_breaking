@@ -54,42 +54,40 @@ def get_solver(params):
                                         ])
     problem.parameters.update(params)
 
-    # rho0 stratification
-    rho0 = domain.new_field()
-    rho0.meta['x']['constant'] = True
-    rho0['g'] = params['RHO0'] * np.exp(-z / params['H'])
-    problem.parameters['rho0'] = rho0
-
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+    problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
+    problem.substitutions['t_s'] = 'T_F / 10'
+    problem.substitutions['UZ_STRAT'] = 'OMEGA / KX +' +\
+        'DUZ_DZ * (Z / ZMAX - 0.7)'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- NU_X * dx(dx(rho)) - NU_Z * dz(rho_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
         '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)' +
-        '- UZ_STRAT * z * dx(rho)')
+        '- UZ_STRAT * dx(rho)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- NU_X * dx(dx(ux)) - NU_Z * dz(ux_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)' +
-        '- UZ_STRAT * z * dx(ux)')
+        '- UZ_STRAT * dx(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- NU_X * dx(dx(uz)) - NU_Z * dz(uz_z)' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)' +
-        '- UZ_STRAT * z * dx(uz) - uz * UZ_STRAT')
+        '- UZ_STRAT * dx(uz) - uz * DUZ_DZ')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
 
 
+    problem.add_bc('right(P) = 0')
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(P) = 0')
     problem.add_bc('right(rho) = 0')
     problem.add_bc('left(rho) = 0')
 
@@ -114,9 +112,9 @@ def run_strat_sim(set_ICs, name, params):
     set_ICs(solver, domain, params)
 
     cfl = CFL(solver,
-              initial_dt=5,
+              initial_dt=params['DT'],
               cadence=10,
-              max_dt=5,
+              max_dt=params['DT'],
               min_dt=0.01,
               safety=0.5,
               threshold=0.10)
