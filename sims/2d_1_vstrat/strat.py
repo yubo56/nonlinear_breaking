@@ -1,5 +1,5 @@
 '''
-2d code with navier stokes dissipation
+TODO too much weird stuff happens atop the critical layer, what to doO?
 '''
 import numpy as np
 import sys
@@ -9,13 +9,13 @@ H = 1
 XMAX = 4 * H
 ZMAX = 4 * H
 
-NUM_SNAPSHOTS = 200
+NUM_SNAPSHOTS = 1000
 TARGET_DISP_RAT = 0.005 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
               'N_X': 128,
-              'N_Z': 512,
+              'N_Z': 384,
               'KX': 2 * np.pi / XMAX,
               'KZ': -20 / H,
               'H': H,
@@ -46,7 +46,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     params['DT'] = min(0.1 / OMEGA, 1)
-    params['F'] = params.get('F_MULT', 1) * \
+    params['F'] = params.get('F_MULT', 0.1) * \
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
         * np.exp(-params['Z0'] / (2 * H))
     params['NU_X'] = params.get('NU_MULT', 1) * \
@@ -70,10 +70,10 @@ if __name__ == '__main__':
     tasks = [
         (zero_ic, 'vstrat',
          build_interp_params(1, 1)),
-        (zero_ic, 'vstrat2',
-         build_interp_params(1, 1, overrides={'Ri': 1/16})),
-        (zero_ic, 'vstrat2',
-         build_interp_params(1, 1, overrides={'Ri': 1/200})),
+        # (zero_ic, 'vstrat2',
+        #  build_interp_params(1, 1, overrides={'Ri': 1/16})),
+        # (zero_ic, 'vstrat2',
+        #  build_interp_params(1, 1, overrides={'Ri': 1/200})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

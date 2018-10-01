@@ -59,26 +59,27 @@ def get_solver(params):
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     problem.substitutions['t_s'] = 'T_F / 10'
-    problem.substitutions['UZ_STRAT'] = 'OMEGA / KX +' +\
-        'DUZ_DZ * (Z / ZMAX - 0.7)'
+    problem.substitutions['UZ_STRAT'] = 'OMEGA / KX *' +\
+        '(arctan((z - 0.7 * ZMAX) * KX / OMEGA * DUZ_DZ) + 1)'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
-        '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
+        '= -sponge * rho - (SPONGE_STRENGTH - sponge) * ' +
+            '(ux * dx(rho) + uz * dz(rho) + UZ_STRAT * dx(rho)) +' +
         '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - OMEGA * t)' +
-        '- UZ_STRAT * dx(rho)')
+            'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
-        '= - sponge * ux - ux * dx(ux) - uz * dz(ux)' +
-        '- UZ_STRAT * dx(ux)')
+        '= - sponge * ux - (SPONGE_STRENGTH - sponge) *' +
+            '(ux * dx(ux) + uz * dz(ux) + UZ_STRAT * dx(ux))')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
-        '= - sponge * uz - ux * dx(uz) - uz * dz(uz)' +
-        '- UZ_STRAT * dx(uz) - uz * DUZ_DZ')
+        '= -sponge * uz - (SPONGE_STRENGTH - sponge) *' +
+        # TODO  (+ uz * DUZ_DZ)
+            '(ux * dx(uz) + uz * dz(uz) + UZ_STRAT * dx(uz))')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
@@ -282,8 +283,7 @@ def plot(name, params):
                           'b--',
                           linewidth=0.5)
             p = axes.plot(xlims,
-                          [params['ZMAX'] / params['UZ_STRAT_MULT']]
-                            * len(xlims),
+                          [0.7 * params['ZMAX']] * len(xlims),
                           'g--',
                           linewidth=0.5)
             idx += 1
