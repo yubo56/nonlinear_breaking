@@ -54,44 +54,45 @@ def get_solver(params):
                                         ])
     problem.parameters.update(params)
 
-    # rho0 stratification
-    rho0 = domain.new_field()
-    rho0.meta['x']['constant'] = True
-    rho0['g'] = params['RHO0'] * np.exp(-z / params['H'])
-    problem.parameters['rho0'] = rho0
-
+    # problem.substitutions['sponge'] = '0'
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+    problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
+    problem.substitutions['t_s'] = 'T_F / 10'
     problem.add_equation('dx(ux) + uz_z = 0')
+    # problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
-        '= - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        '(t / 500)**2 / ((t / 500)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        # '= - sponge * rho +'
+        ' = - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
+        '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
+        # ' = - sponge * ux')
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
+        # ' = - sponge * uz')
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
 
 
+    problem.add_bc('right(P) = 0')
     problem.add_bc('left(uz) = 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(P) = 0')
     problem.add_bc('right(rho) = 0')
     problem.add_bc('left(rho) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.RK222)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf

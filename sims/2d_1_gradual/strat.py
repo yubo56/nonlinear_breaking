@@ -9,13 +9,13 @@ H = 1
 XMAX = 3 * H
 ZMAX = 12 * H
 
-NUM_SNAPSHOTS = 300
+NUM_SNAPSHOTS = 100
 TARGET_DISP_RAT = 0.2 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 128,
-              'N_Z': 512,
+              'N_X': 256,
+              'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -2 * np.pi / H,
               'H': H,
@@ -35,12 +35,12 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 3
+    T_F = abs(ZMAX / VG_Z) * 1.2
 
     params['T_F'] = T_F
     params['g'] = g
     params['OMEGA'] = OMEGA
-    params['S'] = params['ZMAX'] / params['N_Z'] * 2.5
+    params['S'] = params['ZMAX'] / 512 * 4
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
@@ -67,13 +67,26 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'linear',
-         build_interp_params(1, 1, overrides={'F_MULT': 1e-4,
-                                              'NU_MULT': 0.1,
+        # (zero_ic, 'linear',
+        #  build_interp_params(1, 1, overrides={'F_MULT': 0.05,
+        #                                       'NU_MULT': 1,
+        #                                       'USE_CFL': True})),
+        (zero_ic, 'nl1_lowres',
+         build_interp_params(2, 2, overrides={'F_MULT': 2,
+                                              'NU_MULT': 1,
                                               'USE_CFL': True})),
-        (zero_ic, 'nonlinear',
-         build_interp_params(1, 1, overrides={'USE_CFL': True,
-                                              'NU_MULT': 0.1})),
+        (zero_ic, 'nl1',
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
+                                              'NU_MULT': 1,
+                                              'USE_CFL': True})),
+        (zero_ic, 'nl2',
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
+                                              'NU_MULT': 0.7,
+                                              'USE_CFL': True})),
+        (zero_ic, 'nl3',
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
+                                              'NU_MULT': 1.4,
+                                              'USE_CFL': True})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:
