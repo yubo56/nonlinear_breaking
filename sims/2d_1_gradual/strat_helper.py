@@ -62,17 +62,17 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) + NU_Z * dz(rho_z))' +
         ' = - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) + NU_Z * dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) + NU_Z * dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
@@ -95,10 +95,6 @@ def get_solver(params):
 
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
-    if os.path.exists(snapshots_dir):
-        print('%s already ran, not rerunning' % name)
-        return
-
     logger = logging.getLogger(name)
 
     solver, domain = get_solver(params)
@@ -146,7 +142,7 @@ def load(name, params):
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(filename):
-        post.merge_analysis(snapshots_dir, cleanup=True)
+        post.merge_analysis(snapshots_dir)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
@@ -195,12 +191,18 @@ def plot(name, params):
     plot_vars = ['uz']
     c_vars = ['uz_c']
     f_vars = ['uz_f']
-    # z_vars = ['F_z', 'E'] # sum these over x
-    z_vars = []
+    z_vars = ['E'] # sum these over x
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
+    # c_vars = []
+    # f_vars = []
+    # z_vars = []
+    # slice_vars = []
     n_cols = 4
     n_rows = 1
     plot_stride = 1
+    N_Z = params['N_Z'] * params['INTERP_Z']
+    # z_b = N_Z // 4
+    z_b = 0
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)
@@ -209,7 +211,7 @@ def plot(name, params):
     sim_times, domain, state_vars = load(name, params)
 
     x = domain.grid(0, scales=params['INTERP_X'])
-    z = domain.grid(1, scales=params['INTERP_Z'])
+    z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
 
     for var in z_vars:
@@ -226,7 +228,7 @@ def plot(name, params):
         for var in plot_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
-            var_dat = state_vars[var]
+            var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
                                 var_dat[t_idx].T)
@@ -239,7 +241,7 @@ def plot(name, params):
             idx += 1
         for var in z_vars + slice_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
-            var_dat = state_vars[var]
+            var_dat = state_vars[var][:, z_b:]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(var_dat[t_idx],
                           z_pts,
@@ -260,6 +262,7 @@ def plot(name, params):
             plt.yticks(rotation=30)
             xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
+            axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),
                           'r:',
