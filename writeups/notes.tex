@@ -904,29 +904,47 @@ decrease depends on the timestepper used, but it is clear that $\omega \Delta t
 \ll 1$ is necessary to avoid this spurious decrease (in numerics language, ``the
 oscillation must be well-resolved'').
 
-\section{Algebraic Manipulations}
+\section{Navier-Stokes Regularization}
 
-\subsection{Factoring out the exponential dependence}
+This was a major tripping point for quite a while. As the wave breaks to higher
+wavenumbers, it is expected that energy will accumulate in the higher $k$
+spectral modes, and so some numerical viscosity must be added. This is not a
+physical viscosity but a numerical one (since spectral codes have no numerical
+viscosity of their own), and so the viscous term is added to all dynamical
+equations $\rd{}{t} \to \pd{}{t} + \vec{u} \cdot \vec{\nabla} - \nu \nabla^2$.
+This makes the equations resemble the Navier-Stokes equations, but since $\nu$
+is not grounded in any physical process, it is not helpful to think of it as a
+Navier-Stokes equation.
 
-I've had to do this algebra too many times now, so let's just consider if we
-factor out the $e^{z/2H}$ exponential scaling on the dynamical variables and the
-$e^{-z/H}$ scaling on $\rho_0$. This leaves us with:
-\begin{subequations}\label{se:nonlin_factored}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u}_1 + \frac{u_{1z}}{2H} &= 0,\\
-        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H} &= -e^{z/2H}\s*{
-            \p*{\vec{u}_1 \cdot \vec{\nabla} \rho_1} + \frac{u_{1z}\rho_1}{2H}
-        },\\
-        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P}{\rho_0}
-            + \frac{P}{2H\rho_0}\hat{z} + \frac{\rho_1\vec{g}}{\rho_0}
-            &= -e^{z/2H}\s*{
-            \p*{\vec{u} \cdot \vec{\nabla} \vec{u}_1}
-                + \frac{u_{1z}\vec{u}_1}{2H}
-        }.
-    \end{align}
-\end{subequations}
-I'm too lazy to re-notate my variables, so all of them are constant amplitude
-over $z$ now.
+We choose the $\nu \nabla^2$ term, which scales $\sim k^2$, such that it becomes
+strong in the same regime that nonlinearity $\p*{\vec{u} \cdot \vec{\nabla}}$
+becomes important. Consider some $k_{turb}$ turbulent wavenumber, then we will
+want $\nu k_{turb}^2 \sim uk_{turb}$. We can get an idea of what $u$ will be
+when turbulence sets in using the wave breaking criterion, that breaking sets in
+when $u \sim \omega/k$ where $k$ is the base wavelength of the wave. This
+substitution suggests we should use $\nu = \frac{\omega}{k_{turb}k}$. We can
+choose $k_{turb} = \frac{2\pi L}{N}$ the grid spacing, so that at this turbulent
+wavelength the regularization kicks in. If we then take $k, \omega$ to be the
+parent wave's properties, we have a prescription for $\nu$.
+
+This turns out to be insufficient for regularization, we need roughly $\nu \sim
+\frac{3\omega_0}{k_zk_{turb}}$.
+
+This is because we performed the naive substitution $k, \omega$ from the parent
+wave. Instead, it is advisable to scale $k, \omega$ to the same $k_{turb}$
+length scale. We make ansatz that the cascade is roughly Kolmogorov, and so
+(TODO work this out) we obtain that we should choose $\frac{\omega_0}{k_z^2 \nu}
+\sim \p*{\frac{k_{turb}}{k_z}}^{4/3}$; this comes from scaling $\omega, k$ per
+the Kolmogorov prescription $\omega_l u_l^2$ is approximately constant over
+length scale $l$.
+
+\subsection{Gotcha: $\nu_x, \nu_z$ and Grid Spacing}
+
+If the grid resolution is uneven in the $x, z$ directions, it might be tempting
+to use different $\nu_x, \nu_z$ per the above criteria, since their $k_{turb} =
+k_{\max}$ differ. This is dangerous however, since $\nu \nabla^2 \vec{u}_1$ has
+to be divergenceless! Thus, it is more advisable to choose an equal grid spacing
+in the two directions.
 
 \chapter{Stability Analysis}
 
@@ -1381,6 +1399,30 @@ infer from the above. But if our field is small near the boundaries and is only
 interesting in a region isolated from the boundary (e.g.\ with our damping
 zones) then the bound used in the papers scales more like $N^{-1}$, which is
 much more desirable.
+
+\section{Algebraic Manipulations}
+
+\subsection{Factoring out the exponential dependence}
+
+I've had to do this algebra too many times now, so let's just consider if we
+factor out the $e^{z/2H}$ exponential scaling on the dynamical variables and the
+$e^{-z/H}$ scaling on $\rho_0$. This leaves us with:
+\begin{subequations}\label{se:nonlin_factored}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 + \frac{u_{1z}}{2H} &= 0,\\
+        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H} &= -e^{z/2H}\s*{
+            \p*{\vec{u}_1 \cdot \vec{\nabla} \rho_1} + \frac{u_{1z}\rho_1}{2H}
+        },\\
+        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P}{\rho_0}
+            + \frac{P}{2H\rho_0}\hat{z} + \frac{\rho_1\vec{g}}{\rho_0}
+            &= -e^{z/2H}\s*{
+            \p*{\vec{u} \cdot \vec{\nabla} \vec{u}_1}
+                + \frac{u_{1z}\vec{u}_1}{2H}
+        }.
+    \end{align}
+\end{subequations}
+I'm too lazy to re-notate my variables, so all of them are constant amplitude
+over $z$ now.
 
 \end{document}
 

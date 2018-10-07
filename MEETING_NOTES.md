@@ -86,6 +86,7 @@
           expressions agree otherwise
         - Repeated David's analysis for plane parallel, also have a log term!
         - Ask what Dong thinks about dispersion relation shortcut?
+- Try plane parallel for finite sound speed?
 
 # GLOBAL TODO
 - Rad BC?
