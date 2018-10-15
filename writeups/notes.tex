@@ -932,11 +932,19 @@ This turns out to be insufficient for regularization, we need roughly $\nu \sim
 
 This is because we performed the naive substitution $k, \omega$ from the parent
 wave. Instead, it is advisable to scale $k, \omega$ to the same $k_{turb}$
-length scale. We make ansatz that the cascade is roughly Kolmogorov, and so
-(TODO work this out) we obtain that we should choose $\frac{\omega_0}{k_z^2 \nu}
-\sim \p*{\frac{k_{turb}}{k_z}}^{4/3}$; this comes from scaling $\omega, k$ per
-the Kolmogorov prescription $\omega_l u_l^2$ is approximately constant over
-length scale $l$.
+length scale. We first make ansatz that the cascade is roughly Kolmogorov, in
+which case we do the hand-wavy argument that energy $u_l^2$ at a certain length
+scale $l$ is dissipated on timescale $\omega_l = u_l / l$, and so the total
+energy dissipated from the original flow $\epsilon = u_l^3/l$. Thus, $\nu k_l^2
+\sim u_lk_l$ gives $\frac{\omega_0}{\nu k_0^2}\p*{\frac{k_0}{k_{turb}}}^{4/3} =
+1$. This isn't quite right though, as per comparison.
+
+My hypothesis is currently two fold: first, the turbulent cascade is not
+instantaneous, so we can solve a diffusion equation in $k$ space to figure out
+how far the wave can propagate (and grow in amplitude) before the Kolmogorov
+spectrum is obtained. Second, the turbulence causes some energy to be reflected
+in higher $k$ modes, which interact nonlinearly with the flow at lower
+amplitudes.
 
 \subsection{Gotcha: $\nu_x, \nu_z$ and Grid Spacing}
 
@@ -1141,24 +1149,45 @@ positive group velocity inbound on $z_c$ is transmitted with amplitude $e^{-\mu
 \pi}$ and reflected with amplitude $e^{-2\mu \pi}$. The remainder is interpreted
 as being \emph{absorbed} by the critical layer.
 
-\section{Validity of the Linear Approximation}
+\section{Competition between Viscous and Nonlinear Forces}
 
-The real physics is expected to deviate from our computation near the critical
-layer owing primarily to two effects: nonlinear advective terms and diffusivity.
-Hazel 1967 found numerically that including diffusive tersm in the equations of
-motion does not change the attenuation factor; even in the presence of
-dissipation no reflection/transimission are observed. This makes sense;
-examining the equations of motion, the effect of an extra $\pd{}{t} \to \pd{}{t}
-- \nu \nabla^2$ is to take $\omega_{cr} \to \omega_{cr} + i\nu k_x^2 - i\nu
-\ptd{}{z}$, giving the singularity at $\omega_{cr} + i\nu k_x^2 = 0$ the
-positive imaginary component we before asserted.
+As we zoom in on the critical layer, we expect to be able to take Boussinesq
+approximation $H \to \infty$ within the immediate vicinity of the critical
+layer.
 
-On the other hand, other studies e.g.\ Brown \& Stewartson 1980, Winters \&
-d'Asaro 1994, find that once the wave amplitude becomes nonnegligible, sizable
-reflection can be found. In contrast, Ogilvie \& Barker 2010 find that in
-geometrically focused breaking, no reflection is observed, despite the nonlinear
-effects being stronger than the dissipitive ones. The study of how nonlinear and
-diffusive effects compete is then nontrivial.
+In this limit, the group velocity is just $v_{g,z} = -\frac{Nk_xk_z}{\p*{k_x^2 +
+k_z^2}^{3/2}} = -\omega\frac{k_z}{k_x^2 + k_z^2}$. As we approach corotation,
+$\omega \to 0, \omega \approx \frac{Nk_x}{k_z}, k_z \to \infty$, and so $v_{g,
+z} \to 0$. Then considering an energy flux incident on the critical layer
+clearly shows that energy must accumulate near the critical layer, and must be
+dissipated somehow. This must be either via viscous forces or nonlinear
+cascades.
+
+The characteristic strength of the viscous force $\nu \nabla^2$ is $\nu k_z^2$,
+while the nonlinear advective term has characteristic strength $u_{1z}k_z$. Note
+that in the Boussinesq approximation $\abs*{u_{1z}}$ is constant during
+propagation. Thus, the ratio of forces $R = \frac{f_{\nu}}{f_{adv}} \sim
+\frac{\nu k_z}{u_{1z}}$. Note that this ratio varies spatially. Qualitatively,
+$R$ is important since it dictates whether the wave is damped viscously before
+it needs to be treated in nonlinear fashion or whether a full
+nonlinear/hydrodynamic treatment is necessary.
+
+We want to understand for what viscosity we expect linear behavior to dominate.
+Thus, at critical $z_{c}$ where nonlinear effects become important, we want $R
+\gtrsim 1$. Shifting to coordinate system $\delta z$ where $\delta z = 0$ is the
+corotation resonance, we can write $\abs*{\omega_{cr}} = k_xu_0' \delta z$ where
+$u_0' = \at{\pd{u_0}{z}}_{\delta z = 0}$, and $k_z = \frac{N}{u_0' \delta z}$.
+Then the breaking criterion is $\frac{u_{1z}k_z(z)}{\omega_{cr}(z)} \sim 1$, or
+$\delta z_{c} \sim \sqrt{\frac{u_{1z}N}{k_xu_0'^2}}$. We can then evaluate
+\begin{equation}
+    R\p*{z_{c}} = \frac{\nu k_z}{u_{1z}} = \nu \sqrt{\frac{Nk_x}{u_{1z}^3}}.
+\end{equation}
+
+It is helpful also to write this down for any arbitrary hyperviscosity $f_{visc}
+= \nu^{(n)} \nabla^{(n)}$, which is cited without proof
+\begin{equation}
+    R\p*{z_c} = \nu^{(n)} \sqrt{\frac{N^{n - 1}k_x^{n - 1}}{u_{1z}^{n + 1}}}.
+\end{equation}
 
 \clearpage
 

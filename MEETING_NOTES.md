@@ -89,5 +89,4 @@
 - Try plane parallel for finite sound speed?
 
 # GLOBAL TODO
-- Rad BC?
-- hypervisc should regularize in x as well
+- Try radial 2D setup?

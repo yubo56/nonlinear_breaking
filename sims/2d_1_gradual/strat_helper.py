@@ -191,11 +191,11 @@ def plot(name, params):
     plot_vars = ['uz']
     c_vars = ['uz_c']
     f_vars = ['uz_f']
-    z_vars = ['E'] # sum these over x
+    # z_vars = ['E'] # sum these over x
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
     # c_vars = []
     # f_vars = []
-    # z_vars = []
+    z_vars = []
     # slice_vars = []
     n_cols = 4
     n_rows = 1
