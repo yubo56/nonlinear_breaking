@@ -153,7 +153,7 @@ def load(name, params):
 
     # load into state_vars
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times))[-3: ]:
+    for idx in range(len(sim_times)):
         solver.load_state(filename, idx)
 
         for varname in dyn_vars:
@@ -217,7 +217,7 @@ def load(name, params):
     state_vars['F_z'] = state_vars['uz'] * (
         state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
         + state_vars['P'])
-    return sim_times[-3: ], domain, state_vars
+    return sim_times, domain, state_vars
 
 def plot(name, params):
     slice_suffix = '(x=0)'
