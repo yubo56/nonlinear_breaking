@@ -165,40 +165,40 @@ def load(name, params):
 
         # get dissipation, use solver.state['P'] as temp var
         temp = solver.state['P']
-        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                        keep_data=True)
 
-        disp = np.zeros(np.shape(temp['g']))
+        disp_x = np.zeros(np.shape(temp['g']))
+        disp_z = np.zeros(np.shape(temp['g']))
 
         ux = solver.state['ux']
         ux.differentiate('x', out=temp)
-        temp.differentiate('x')
+        temp.differentiate('x', out=temp)
         temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
                         keep_data=True)
-        disp += temp['g'] * params['NU']
+        disp_x += temp['g'] * params['NU']
 
-        ux = solver.state['ux']
-        ux.differentiate('z', out=temp)
-        temp.differentiate('z')
+        ux_z = solver.state['ux_z']
+        ux_z.differentiate('z', out=temp)
         temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
                         keep_data=True)
-        disp += temp['g'] * params['NU']
+        disp_x += temp['g'] * params['NU']
 
         uz = solver.state['uz']
         uz.differentiate('x', out=temp)
-        temp.differentiate('x')
+        temp.differentiate('x', out=temp)
         temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
                         keep_data=True)
-        disp += temp['g'] * params['NU']
+        disp_z += temp['g'] * params['NU']
 
-        uz = solver.state['uz']
-        uz.differentiate('z', out=temp)
-        temp.differentiate('z')
+        uz_z = solver.state['uz_z']
+        uz_z.differentiate('z', out=temp)
         temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
                         keep_data=True)
-        disp += temp['g'] * params['NU']
+        disp_z += temp['g'] * params['NU']
 
-        state_vars['NS-nu'].append(disp)
+        ux.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
+        uz.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
+        state_vars['NS-nu'].append(params['RHO0'] * np.exp(-z / params['H']) * (
+            temp['g'] * ux['g'] + disp_z * uz['g']))
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
@@ -225,18 +225,18 @@ def plot(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz', 'NS-nu']
+    plot_vars = ['uz', 'ux']
     # c_vars = ['uz_c']
     # f_vars = ['uz_f']
     f2_vars = ['uz']
-    # z_vars = ['E'] # sum these over x
-    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
+    # z_vars = ['NS-nu'] # sum these over x
+    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
     c_vars = []
     f_vars = []
     # f2_vars = []
     z_vars = []
-    slice_vars = []
-    n_cols = 3
+    # slice_vars = []
+    n_cols = 4
     n_rows = 1
     plot_stride = 1
     N_Z = params['N_Z'] * params['INTERP_Z']
