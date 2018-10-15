@@ -42,55 +42,48 @@ def get_solver(params):
                          params['N_X'],
                          interval=(0, params['XMAX']),
                          dealias=3/2)
-    z_basis = de.Chebyshev('z',
-                           params['N_Z'],
-                           interval=(0, params['ZMAX']),
-                           dealias=3/2)
+    z_basis = de.Fourier('z',
+                         params['N_Z'],
+                         interval=(0, params['ZMAX']),
+                         dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
-    z = domain.grid(1)
 
-    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz',
-                                        'ux_z', 'uz_z', 'rho_z',
-                                        ])
+    problem = de.IVP(domain, variables=['P', 'rho', 'ux', 'uz'])
     problem.parameters.update(params)
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
-    problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     problem.substitutions['t_s'] = 'T_F / 10'
-    problem.substitutions['UZ_STRAT'] = 'OMEGA / KX *' +\
-        '(arctan((z - 0.7 * ZMAX) * KX / OMEGA * DUZ_DZ) + 1)'
-    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.substitutions['UZ0'] = 'OMEGA / KX * 0.25 * (1 - cos(KX * (z - Z0)))'
+    problem.substitutions['DUZ_DZ'] = 'OMEGA * 0.25 * sin(KX * (z - Z0))'
+
+    problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
-        'dt(rho) - rho0 * uz / H' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) - NU_Z * dz(rho_z))' +
-        '= -sponge * rho - (SPONGE_STRENGTH - sponge) * ' +
-            '(ux * dx(rho) + uz * dz(rho) + UZ_STRAT * dx(rho)) +' +
+        'dt(rho) - RHO0 * uz / H' +
+        '- NU_X * dx(dx(dx(dx(dx(dx(rho))))))' +
+        '- NU_Z * dz(dz(dz(dz(dz(dz(rho))))))' +
+        '= -sponge * rho - (ux * dx(rho) + uz * dz(rho) + UZ0 * dx(rho)) +' +
         '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - OMEGA * t)')
+            'cos(KX * x - OMEGA * t)',
+        condition='nx != 0 or nz != 0')
     problem.add_equation(
-        'dt(ux) + dx(P) / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) - NU_Z * dz(ux_z))' +
-        '= - sponge * ux - (SPONGE_STRENGTH - sponge) *' +
-            '(ux * dx(ux) + uz * dz(ux) + UZ_STRAT * dx(ux))')
+        'dt(ux) + dx(P) / RHO0' +
+        '- NU_X * dx(dx(dx(dx(dx(dx(ux))))))' +
+        '- NU_Z * dz(dz(dz(dz(dz(dz(ux))))))' +
+        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux) + UZ0 * dx(ux))',
+        condition='nx != 0 or nz != 0')
     problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) - NU_Z * dz(uz_z))' +
-        '= -sponge * uz - (SPONGE_STRENGTH - sponge) *' +
-        # TODO  (+ uz * DUZ_DZ)
-            '(ux * dx(uz) + uz * dz(uz) + UZ_STRAT * dx(uz))')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-    problem.add_equation('dz(rho) - rho_z = 0')
-
-
-    problem.add_bc('right(P) = 0')
-    problem.add_bc('left(uz) = 0')
-    problem.add_bc('left(ux) = 0')
-    problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(rho) = 0')
-    problem.add_bc('left(rho) = 0')
+        'dt(uz) + dz(P) / RHO0 + rho * g / RHO0' +
+        '- NU_X * dx(dx(dx(dx(dx(dx(uz))))))' +
+        '- NU_Z * dz(dz(dz(dz(dz(dz(uz))))))' +
+        '= -sponge * uz - (ux * dx(uz) + uz * dz(uz) + UZ0 * dx(uz)' +
+            '+ uz * DUZ_DZ)',
+        condition='nx != 0 or nz != 0')
+    problem.add_equation('P = 0', condition='nx == 0 and nz == 0')
+    problem.add_equation('rho = 0', condition='nx == 0 and nz == 0')
+    problem.add_equation('ux = 0', condition='nx == 0 and nz == 0')
+    problem.add_equation('uz = 0', condition='nx == 0 and nz == 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)
@@ -250,17 +243,6 @@ def plot(name, params):
             p = axes.plot(var_dat[t_idx],
                           z_pts,
                           linewidth=0.5)
-            if var == 'uz%s' % slice_suffix:
-                p = axes.plot(
-                    uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
-                    z_pts,
-                    'orange',
-                    linewidth=0.5)
-                p = axes.plot(
-                    -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
-                    z_pts,
-                    'orange',
-                    linewidth=0.5)
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
@@ -283,7 +265,7 @@ def plot(name, params):
                           'b--',
                           linewidth=0.5)
             p = axes.plot(xlims,
-                          [0.7 * params['ZMAX']] * len(xlims),
+                          [params['Z0'] + params['ZMAX'] / 2] * len(xlims),
                           'g--',
                           linewidth=0.5)
             idx += 1
