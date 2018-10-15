@@ -51,9 +51,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
         * np.exp(-params['Z0'] / (2 * H))
     # NU / (kmax)^2 ~ omega
-    params['NU_X'] = params.get('NU_MULT', 1) * \
-        OMEGA * params['XMAX'] / (2 * np.pi * params['N_X']) / abs(KZ)
-    params['NU_Z'] = params.get('NU_MULT', 1) * \
+    params['NU'] = params.get('NU_MULT', 1) * \
         OMEGA * params['ZMAX'] / (2 * np.pi * params['N_Z']) / abs(KZ)
     print(params)
     return params

@@ -62,17 +62,17 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(rho)) + NU_Z * dz(rho_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(rho)) + NU * dz(rho_z))' +
         ' = - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
         '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - OMEGA * t)')
+        'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(ux)) + NU_Z * dz(ux_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(ux)) + NU * dz(ux_z))' +
         '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
-        '- (SPONGE_STRENGTH - sponge) * (NU_X * dx(dx(uz)) + NU_Z * dz(uz_z))' +
+        '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(uz)) + NU * dz(uz_z))' +
         '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
@@ -118,7 +118,7 @@ def run_strat_sim(set_ICs, name, params):
 
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
-    flow.add_property('sqrt((ux / NU_X)**2 + (uz / NU_Z)**2)', name='Re')
+    flow.add_property('sqrt((ux / NU)**2 + (uz / NU)**2)', name='Re')
 
     # Main loop
     logger.info('Starting sim...')
@@ -153,7 +153,7 @@ def load(name, params):
 
     # load into state_vars
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times)):
+    for idx in range(len(sim_times))[-3: ]:
         solver.load_state(filename, idx)
 
         for varname in dyn_vars:
@@ -162,6 +162,43 @@ def load(name, params):
                               keep_data=True)
             state_vars[varname].append(np.copy(values['g']))
             state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+
+        # get dissipation, use solver.state['P'] as temp var
+        temp = solver.state['P']
+        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                        keep_data=True)
+
+        disp = np.zeros(np.shape(temp['g']))
+
+        ux = solver.state['ux']
+        ux.differentiate('x', out=temp)
+        temp.differentiate('x')
+        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                        keep_data=True)
+        disp += temp['g'] * params['NU']
+
+        ux = solver.state['ux']
+        ux.differentiate('z', out=temp)
+        temp.differentiate('z')
+        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                        keep_data=True)
+        disp += temp['g'] * params['NU']
+
+        uz = solver.state['uz']
+        uz.differentiate('x', out=temp)
+        temp.differentiate('x')
+        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                        keep_data=True)
+        disp += temp['g'] * params['NU']
+
+        uz = solver.state['uz']
+        uz.differentiate('z', out=temp)
+        temp.differentiate('z')
+        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                        keep_data=True)
+        disp += temp['g'] * params['NU']
+
+        state_vars['NS-nu'].append(disp)
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
@@ -176,11 +213,11 @@ def load(name, params):
         params['g'] * params['H']
 
     state_vars['E'] = params['RHO0'] * np.exp(-z / params['H']) * \
-                       (state_vars['ux']**2 + state_vars['uz']**2) / 2
+        (state_vars['ux']**2 + state_vars['uz']**2) / 2
     state_vars['F_z'] = state_vars['uz'] * (
         state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
         + state_vars['P'])
-    return sim_times, domain, state_vars
+    return sim_times[-3: ], domain, state_vars
 
 def plot(name, params):
     slice_suffix = '(x=0)'
@@ -188,16 +225,18 @@ def plot(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz']
-    c_vars = ['uz_c']
-    f_vars = ['uz_f']
+    plot_vars = ['uz', 'NS-nu']
+    # c_vars = ['uz_c']
+    # f_vars = ['uz_f']
+    f2_vars = ['uz']
     # z_vars = ['E'] # sum these over x
-    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
-    # c_vars = []
-    # f_vars = []
+    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
+    c_vars = []
+    f_vars = []
+    # f2_vars = []
     z_vars = []
-    # slice_vars = []
-    n_cols = 4
+    slice_vars = []
+    n_cols = 3
     n_rows = 1
     plot_stride = 1
     N_Z = params['N_Z'] * params['INTERP_Z']
@@ -213,6 +252,7 @@ def plot(name, params):
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+    x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
 
     for var in z_vars:
         state_vars[var] = np.sum(state_vars[var], axis=1)
@@ -239,6 +279,26 @@ def plot(name, params):
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
             idx += 1
+
+        for var in f2_vars:
+            axes = fig.add_subplot(n_rows, n_cols, idx,
+                                   title='log %s (x-FT)' % var)
+
+            var_dat = state_vars[var][:, : , z_b:]
+            var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
+            var_dat_shaped = np.log(np.abs(
+                2 * var_dat_t.real[:params['N_X'] // 2, :]))
+            p = axes.pcolormesh(x2mesh,
+                                z2mesh,
+                                var_dat_shaped.T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
+            axes.axis(pad_limits(x2mesh, z2mesh))
+            cb = fig.colorbar(p, ax=axes)
+            cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
+            plt.xticks(rotation=30)
+            plt.yticks(rotation=30)
+            idx += 1
+
         for var in z_vars + slice_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
             var_dat = state_vars[var][:, z_b:]
