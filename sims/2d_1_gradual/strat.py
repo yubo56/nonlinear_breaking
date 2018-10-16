@@ -35,7 +35,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 1.2
+    T_F = abs(ZMAX / VG_Z) * 1.5
 
     params['T_F'] = T_F
     params['g'] = g
@@ -67,8 +67,7 @@ if __name__ == '__main__':
     tasks = [
         (zero_ic, 'linear',
          build_interp_params(2, 2, overrides={'F_MULT': 0.05,
-                                              'NU_MULT': 1,
-                                              'USE_CFL': True})),
+                                              'NU_MULT': 4})),
         (zero_ic, 'nl1_lowres',
          build_interp_params(2, 2, overrides={'F_MULT': 2,
                                               'NU_MULT': 1,
@@ -86,23 +85,23 @@ if __name__ == '__main__':
                                               'NU_MULT': 4,
                                               'USE_CFL': True})),
         (zero_ic, 'nl0',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
                                               'NU_MULT': 1,
                                               'USE_CFL': True})),
         (zero_ic, 'nl1',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
                                               'NU_MULT': 2,
                                               'USE_CFL': True})),
         (zero_ic, 'nl2',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
                                               'NU_MULT': 3,
                                               'USE_CFL': True})),
         (zero_ic, 'nl3',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
                                               'NU_MULT': 4,
                                               'USE_CFL': True})),
         (zero_ic, 'nl4',
-         build_interp_params(1, 1, overrides={'F_MULT': 4,
+         build_interp_params(1, 1, overrides={'F_MULT': 2,
                                               'NU_MULT': 6,
                                               'USE_CFL': True})),
     ]

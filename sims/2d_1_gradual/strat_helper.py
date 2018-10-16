@@ -64,8 +64,8 @@ def get_solver(params):
         'dt(rho) - rho0 * uz / H' +
         '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(rho)) + NU * dz(rho_z))' +
         ' = - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
-        '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-        'cos(KX * x - OMEGA * t)')
+        'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+            'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(ux)) + NU * dz(ux_z))' +
@@ -87,7 +87,7 @@ def get_solver(params):
     problem.add_bc('left(rho) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -106,7 +106,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=params['DT'],
               cadence=10,
               max_dt=params['DT'],
-              min_dt=0.01,
+              min_dt=0.005,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
@@ -124,6 +124,8 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
+        if cfl_dt < params['DT'] / 4: # small step sizes if strongly cfl limited
+            cfl_dt /= 4
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
