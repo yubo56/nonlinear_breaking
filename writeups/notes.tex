@@ -1081,48 +1081,57 @@ them to zero in the ensuing calculations
             + \s*{\vec{u}_1 \cdot \vec{\nabla} u_{1z}} &= 0.\\
     \end{align}
 \end{subequations}
-Denote $\omega_{cr}(z) = \omega - u_0(z)k_x$ the corotating frequency. Using
+Denote $\tilde{\omega}(z) = \omega - u_0(z)k_x$ the corotating frequency. Using
 then that $u_{1x} = \frac{i}{k_x}\pd{u_{1z}}{z}$, $\rho_1 = \frac{i
-\rho_0}{H\omega_{cr}} u_{1z}$ and $P = \s*{i\omega_{cr}u_{1x} - u_{1z
-\pd{u_0}{z}}} \frac{\rho_0}{ik_x}$, we can finally arrive at linearized equation
+\rho_0}{H\tilde{\omega}} u_{1z}$ and $P = \s*{i\tilde{\omega}u_{1x} - u_{1z}
+\pd{u_0}{z}} \frac{\rho_0}{ik_x}$, we can finally arrive at linearized equation
 \begin{equation}
     \ptd{u_{1z}}{z} - \frac{1}{H}\pd{u_{1z}}{z} + \s*{
-        \frac{k_x^2N^2}{\omega_{cr}^2}
+        \frac{k_x^2N^2}{\tilde{\omega}^2}
             - k_x^2
-            - \frac{k_x}{\omega_{cr}H}\pd{u_0}{z}
-            + \frac{k_x}{\omega_{cr}} \ptd{u_0}{z}
+            - \frac{k_x}{\tilde{\omega}H}\pd{u_0}{z}
+            + \frac{k_x}{\tilde{\omega}} \ptd{u_0}{z}
     } u_{1z} = 0. \label{eq:shear_lin_uz}
 \end{equation}
-Note that if we make correspondences $ik_x \to \partial_x, i\omega_{cr} \to
+Note that if we make correspondences $ik_x \to \partial_x, i\tilde{\omega} \to
 \partial_t + u_0\partial_x$ and take $H \to \infty$ while holding $N^2$
 constant, we recover Equation 2.1 of Booker \& Bretherton. We can also note that
 if we take constant $u_0$ we recover the expected dispersion relation
-\autoref{eq:strat_disp} for $\omega = \omega_{cr}$.
+\autoref{eq:strat_disp} for $\omega = \tilde{\omega}$.
+
+As a brief exercise, we can take the $H \to \infty$ limit and compute the
+resultant shear-induced splitting; this is akin to rotational mode splitting,
+and is given without proof from $-k_z^2 - k_x^2 + \frac{k_x^2N^2}{\omega^2} +
+\frac{k_x}{\omega}\ptd{u_0}{z} = 0$ as
+\begin{equation}
+    \omega^2 = \frac{k_x^2 N^2}{k_x^2 + k_z^2}\s*{1 + \frac{1}{\sqrt{k_x^2 +
+        k_z^2}} \ptd{u_0}{z}}.
+\end{equation}
 
 \section{Reflection/Transmission in Linear Theory}
 
 One can solve \autoref{eq:shear_lin_uz} via \emph{Frobenius Theory}, but if we
-consider only $\omega_{cr} \to 0$, we obtain a very simple power series
-solution. In $\omega_{cr} \to 0$, we have only leading order contributions
+consider only $\tilde{\omega} \to 0$, we obtain a very simple power series
+solution. In $\tilde{\omega} \to 0$, we have only leading order contributions
 \begin{equation}
-    \ptd{u_{1z}}{z} + \frac{k_x^2N^2}{\omega_{cr}^2}u_{1z} = 0.
+    \ptd{u_{1z}}{z} + \frac{k_x^2N^2}{\tilde{\omega}^2}u_{1z} = 0.
 \end{equation}
-Consider a power series solution $u_{1z} \propto \omega_{cr}^\alpha$, where
-$\omega_{cr}(z) = \omega - k_xu_0(z)$. Note that very near the critical level,
-$\pd{u_0}{z}\delta z k_x = \omega_{cr}$ where $\delta z = z - z_c,
-\omega_{cr}(z_c) = 0$. We thus have
+Consider a power series solution $u_{1z} \propto \tilde{\omega}^\alpha$, where
+$\tilde{\omega}(z) = \omega - k_xu_0(z)$. Note that very near the critical level,
+$\pd{u_0}{z}\delta z k_x = \tilde{\omega}$ where $\delta z = z - z_c,
+\tilde{\omega}(z_c) = 0$. We thus have
 \begin{align}
-    \p*{\pd{\omega_{cr}}{z}}^2 \alpha\p*{\alpha - 1} + k_x^2N^2 &= 0,\\
+    \p*{\pd{\tilde{\omega}}{z}}^2 \alpha\p*{\alpha - 1} + k_x^2N^2 &= 0,\\
     \alpha &= \frac{1}{2}\pm i\sqrt{\frac{N^2}{\p*{\pd{u_0}{z}}^2} -
         \frac{1}{4}}.
 \end{align}
 The classic Booker \& Bretherton paper notates this result $u_{1z} \propto
-\p*{\omega_{cr}(z)}^{\frac{1}{2} \pm i\mu} \propto (\delta z)^{\frac{1}{2} \pm
+\p*{\tilde{\omega}(z)}^{\frac{1}{2} \pm i\mu} \propto (\delta z)^{\frac{1}{2} \pm
 i\mu}$.
 
 Now, consistent with a perturbation that vanishes as $t \to -\infty$
 (alternatively, this is just the Landau prescription for deforming below a
-singularity on the real line), we must interpret $\omega_{cr}$ as having a
+singularity on the real line), we must interpret $\tilde{\omega}$ as having a
 slight positive imaginary component. Given this, the expression for $u_{1z}(z)$
 is multivalued, and we must specify a branch cut. For $\Arg\p*{z - z_c} = 0$, or
 intuitively when we are above the critical layer, choose branch such that
@@ -1175,9 +1184,9 @@ nonlinear/hydrodynamic treatment is necessary.
 We want to understand for what viscosity we expect linear behavior to dominate.
 Thus, at critical $z_{c}$ where nonlinear effects become important, we want $R
 \gtrsim 1$. Shifting to coordinate system $\delta z$ where $\delta z = 0$ is the
-corotation resonance, we can write $\abs*{\omega_{cr}} = k_xu_0' \delta z$ where
+corotation resonance, we can write $\abs*{\tilde{\omega}} = k_xu_0' \delta z$ where
 $u_0' = \at{\pd{u_0}{z}}_{\delta z = 0}$, and $k_z = \frac{N}{u_0' \delta z}$.
-Then the breaking criterion is $\frac{u_{1z}k_z(z)}{\omega_{cr}(z)} \sim 1$, or
+Then the breaking criterion is $\frac{u_{1z}k_z(z)}{\tilde{\omega}(z)} \sim 1$, or
 $\delta z_{c} \sim \sqrt{\frac{u_{1z}N}{k_xu_0'^2}}$. We can then evaluate
 \begin{equation}
     R\p*{z_{c}} = \frac{\nu k_z}{u_{1z}} = \nu \sqrt{\frac{Nk_x}{u_{1z}^3}}.
@@ -1188,6 +1197,180 @@ It is helpful also to write this down for any arbitrary hyperviscosity $f_{visc}
 \begin{equation}
     R\p*{z_c} = \nu^{(n)} \sqrt{\frac{N^{n - 1}k_x^{n - 1}}{u_{1z}^{n + 1}}}.
 \end{equation}
+
+\chapter{Cylindrical Stratified Flow}
+
+We fearlessly tackle the cylindrical coordinate problem, using Tsang \& Lai 2008
+non-barotropic flows as a guide but reproducing all algebra. We show that in an
+appropriate limit it recovers \autoref{eq:shear_lin_uz}.
+
+First, we take $\vec{\nabla} \cdot \vec{u}_0 = 0$, which we can define $u_0 =
+u_0(r)\hat{\phi} = r\Omega(r) \hat{\phi}$. Furthermore, under hydrostatic
+equilibrium if we assume a thin atmosphere (such that $\vec{\nabla}\Phi$ does
+not vary much) then $\frac{\vec{\nabla}P_0}{\rho_0} = -g\hat{r}$. We assume
+stratification $\rho \propto e^{-r/a_0}$, which gives buoyancy frequency $N^2 =
+g/a_0$ in the incompressible fluid limit. Finally, we make plane wave
+substitution $\propto e^{i\p*{m\phi - \omega t}}$ and begin
+\begin{align}
+    0 ={}& \frac{1}{r}\pd{\p*{u_{1r}}}{r} + \frac{im}{r}u_{1\phi},\\
+    0 ={}& -i\omega \rho_1 - u_{1r}\frac{\rho_0}{a_0} + im\Omega\rho_1
+        \z*{+ u_{1r}\pd{\rho_1}{r} + \frac{u_{1\phi}r}{r}\pd{\rho_1}{\phi}}
+            ,\\
+    0 ={}& -i\omega \vec{u}_1
+            + \s*{\Omega im u_{1r} - 2\Omega u_{1\phi}} \hat{r}
+            +\s*{u_{1r}\rd{\p*{r\Omega}}{r} + \Omega imu_{1\phi}
+                + \Omega u_{1r}}\hat{\phi}
+            + \frac{1}{\rho_0}\s*{\pd{P_1}{r}\hat{r} + \frac{imP_1}{r}
+                \hat{\phi}} + \frac{\rho_1 g}{\rho_0}\hat{r}\nonumber\\
+        &+ \z*{\s*{u_{1r}\pd{u_{1r}}{r} + \frac{u_{1\phi}}{r}
+            \pd{u_{1r}}{\phi} - \frac{u_{1\phi}^2}{r}}\hat{r}
+            + \s*{u_{1r}\pd{u_{1\phi}}{r}
+                + \frac{u_{1\phi}}{r}\pd{u_{1\phi}}{\phi}
+                + \frac{u_{1\phi} u_{1r}}{r}}\hat{\phi}}.
+\end{align}
+We have bracketed nonlinear terms in curly braces. The natural definition
+$\tilde{\omega} = \omega - m\Omega$ and common definition $\frac{\kappa^2}{2\Omega}
+= \Omega + \rd{(r\Omega)}{r}$ may be used, which agrees with Tsang \& Lai.
+Dropping bracketed nonlinear terms allows us to manipulate
+\begin{align}
+    u_{1\theta} ={}& \frac{i}{m} \pd{ru_{1r}}{r},\\
+    \rho_1 ={}& u_{1r}\frac{\rho_0}{a_0}\frac{1}{-i\tilde{\omega}},\\
+    P_1 ={}& \frac{i\rho_0 r}{m}\s*{-i\tilde{\omega}u_{1\theta}
+        + u_{1r}\frac{\kappa^2}{2\Omega}},\\
+    0 ={}& -i\tilde{\omega}u_{1r} - 2\Omega\p*{\frac{i}{m}\pd{(ru_{1r})}{r}}
+        + \frac{1}{\rho_0}\pd{}{r}\s*{\frac{i\rho_0 r}{m}\s*{
+            -i\tilde{\omega} \frac{i}{m}\pd{(ru_{1r})}{r}
+            +u_{1r}\frac{\kappa^2}{2\Omega}}}
+        + \frac{iu_{1r}g}{a_0\tilde{\omega}}.
+\end{align}
+Expanding the rather ugly derivative gives
+\begin{align}
+    0 ={}& -i\tilde{\omega}u_{1r} - \frac{2i\Omega}{m}\s*{r\pd{u_{1r}}{r}
+        + u_{1r}} + \p*{\frac{i}{m} - \frac{ir}{a_0m}}
+            \s*{\frac{\tilde{\omega}}{m}
+            \p*{r\pd{u_{1r}}{r} + u_{1r}} + u_{1r}\frac{\kappa^2}{2\Omega}}
+            \nonumber\\
+        &+ \frac{ir}{m}\s*{\frac{\tilde{\omega}}{m}\p*{r\ptd{u_{1r}}{r}
+            + 2\pd{u_{1r}}{r}} + \frac{\kappa^2}{2\Omega}\pd{u_{1r}}{r}
+            + u_{1r}\pd{}{r}\p*{\frac{\kappa^2}{2\Omega}}}
+            \nonumber\\
+        &+ \frac{r}{m}\pd{\tilde{\omega}}{r}\frac{i}{m}\p*{r\pd{u_{1r}}{r}
+            + u_{1r}} + \frac{iu_{1r}g}{a_0\tilde{\omega}}.
+\end{align}
+Let's group terms to find
+\begin{align}
+    \frac{\tilde{\omega}r^2}{m^2}\ptd{u_{1r}}{r} + &
+        \pd{u_{1r}}{r}\s*{-\frac{2\Omega r}{m}
+            + \frac{r\tilde{\omega}}{m} \p*{\frac{1}{m} - \frac{r}{a_0m}}
+            + \frac{2r\tilde{\omega}}{m^2}
+            + \frac{r}{m}\frac{\kappa^2}{2\Omega}
+            + \frac{r^2}{m^2}\pd{\tilde{\omega}}{r}}\nonumber\\
+        & +u_{1r}\s*{-\frac{2\Omega}{m}
+            + \frac{\tilde{\omega}}{m} \p*{\frac{1}{m} - \frac{r}{a_0m}}
+            + \p*{\frac{1}{m} - \frac{r}{a_0m}}\frac{\kappa^2}{2\Omega}
+            + \frac{r}{m}\pd{}{r}\p*{\frac{\kappa^2}{2\Omega}}
+            + \frac{r}{m^2}\pd{\tilde{\omega}}{r}
+            + \frac{N^2}{\tilde{\omega}} - \tilde{\omega}} = 0.
+\end{align}
+One small simplification can be made: observe that $\frac{\kappa^2}{2\Omega} =
+\Omega + \pd{(r\Omega)}{r} = 2\Omega + r\pd{\Omega}{r}$, so
+\begin{equation}
+    \frac{\tilde{\omega}r^2}{m^2}\ptd{u_{1r}}{r}
+        + \pd{u_{1r}}{r}
+            \frac{r\tilde{\omega}}{m^2} \p*{3 - \frac{r}{a_0}}
+        + u_{1r}\s*{
+            \frac{\tilde{\omega}}{m} \p*{\frac{1}{m} - \frac{r}{a_0m}}
+            - \frac{r}{a_0m}\frac{\kappa^2}{2\Omega}
+            + \frac{r}{m}\pd{}{r}\p*{\frac{\kappa^2}{2\Omega}}
+            + \frac{N^2}{\tilde{\omega}} - \tilde{\omega}} = 0.
+\end{equation}
+I think that the $3$ actually makes sense, it's basically
+$\pd{}{r}r\pd{(ru_r)}{r} = \dots + 2r\pd{u_r}{r}$ and $\pd{(ru_r)}{r} =
+r\pd{u_r}{r} + u_r$, which also explains the $1$.
+
+\section{Comparison to Plane Parallel}
+
+\subsection{Reduction in $r \to \infty$}
+
+First, let's consider the limit where $r \to \infty$, so we should have a plane
+parallel waveform. In this limit, $\frac{m}{r} \to k_x$ can be identified (and
+so $m$ must also be taken to be infinitely large to have finite wavelengths),
+and of course $\Omega \to \frac{u_0}{r}$ in line with our plane parallel
+definitions. We need one last identification, that $\pd{\tilde{\omega}}{r} =
+-m\rd{\Omega}{r} \approx -k_x\rd{u_0}{r}$ also per the plane parallel result.
+These identifications allow us to write, approximating $\frac{\kappa^2}{2\Omega}
+\approx \rd{u_0}{r}$:
+\begin{equation}
+    \ptd{u_{1r}}{r} - \pd{u_{1r}}{r}\frac{1}{a_0} +
+        u_{1r}\s*{\frac{N^2k_x^2}{\tilde{\omega}^2}
+            + \frac{k_x}{\omega} \rtd{u_0}{r} - \frac{k_x}{a_0\tilde{\omega}}
+            \rd{u_0}{r} - k_x^2}u_{1r} = 0.
+\end{equation}
+This can be seen to agree with \autoref{eq:shear_lin_uz}, which is no small
+miracle for my usual algebra skills.
+
+\subsection{Boundary Matching at $\tilde{\omega} = 0$}
+
+Again, there is nothing more singular than a $\tilde{\omega}^{-2}$ coefficient
+on $u_{1r}$, after dividing out the leading coefficient, and so we may simply
+analyze
+\begin{equation}
+    \ptd{u_{1r}}{r} + u_{1r}\frac{N^2m^2}{\tilde{\omega}^2r^2} = 0.
+\end{equation}
+Using the usual $u_{1r} = (r - r_c)^\alpha = \delta r^\alpha$ and
+$\tilde{\omega} = -m\at{\pd{\Omega}{r}}_{r_c}\delta r \equiv -m\Omega'_c \delta
+r$ gives
+\begin{equation}
+    \alpha(\alpha - 1) + \frac{N^2}{(\Omega'_c)^2r^2} = 0.\label{eq:cylin_crit}
+\end{equation}
+This solves to $\alpha = \frac{1}{2} \pm
+i\sqrt{\frac{N^2}{(\Omega'_c)^2r^2} - \frac{1}{4}}$. This agrees with
+the exponent derived in the Tsang \& Lai paper. Thus, in the linear theory,
+transmission/reflection are attenuated by factor
+$\exp\s*{-\pi\sqrt{\frac{N^2}{(\Omega'_c)^2 r^2} - \frac{1}{4}}}$.
+
+It can be observed in passing that if $N \sim \Omega'_c r$ then the scenario
+reduces to that considered in Tsang \& Lai, where some variable such as $\zeta$
+can induce superreflection. We don't compute it here, but it bears mentioning
+that the corresponding analysis for Tsang \& Lai in plane parallel gives $\nu =
+-4\rd{\ln u_0'}{r}$, and so $u_0'$ plays the role of $\zeta$.
+
+Note that the H\o iland Criteria, such as given in Balbus \& Hawley 1998, states
+that disks are hydrodynamically stable if
+\begin{equation}
+    N^2 + \frac{1}{R^3}\pd{R^4 \Omega^2}{R} > 0.
+\end{equation}
+We may compare this to our transmission/reflection criterion by computing at
+critical $\Omega_c$, where
+\begin{equation}
+    R^2 \p*{\Omega_c'}^2 = \p*{\frac{N^2 + 4\Omega^2}{2\Omega}}^2.
+\end{equation}
+This was never going to agree with \autoref{eq:cylin_crit}, since it doesn't
+depend simply on $\Omega_c'$. This reinforces Booker \& Bretherton's conclusion
+that the agreement of their calculation with convective stability was pure
+coincidence.
+
+\section{Wave Properties}
+
+Let's compute dispersion relation. I'm too lazy to sort out $u_{1r} \propto
+e^{r/2a_0}$ nonsense, so we will take Boussinesq approximation $a_0 \to \infty$,
+and so
+\begin{equation}
+    \ptd{u_{1r}}{r} + \pd{u_{1r}}{r}\p*{\frac{3}{r} - \frac{1}{a_0}}
+        + u_{1r}\s*{\p*{\frac{1}{r^2} - \frac{1}{a_0r}}
+            + \frac{m}{r\tilde{\omega}} \pd{}{r}\p*{\frac{\kappa^2}{2\Omega}}
+            + \frac{N^2m^2}{r^2\tilde{\omega}^2} - \frac{m^2}{r^2}} = 0.
+\end{equation}
+We've been a bit hand-wavy about what terms to drop, but we can identify now
+that some of the terms can come together to form (we have to drop the
+$\pd{u_{1r}}{r}$ coefficient, otherwise we'll have $ik_r$ terms\dots ugh)
+\begin{equation}
+    \tilde{\omega}^2 \simeq \frac{N^2\p*{m^2/r^2}}{k_r^2 + \frac{m^2}{r^2}}.
+\end{equation}
+Thus, in a nutshell, we should expect the group velocity to largely vanish in
+cylindrical coordinates once the WKB regime is hit (where we're reasonably far
+away that we don't have to worry about the non-wave-like distortion of the
+geometry; is this the same as the plane wave limit though?).
 
 \clearpage
 
