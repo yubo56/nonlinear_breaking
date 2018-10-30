@@ -1198,6 +1198,90 @@ It is helpful also to write this down for any arbitrary hyperviscosity $f_{visc}
     R\p*{z_c} = \nu^{(n)} \sqrt{\frac{N^{n - 1}k_x^{n - 1}}{u_{1z}^{n + 1}}}.
 \end{equation}
 
+\section{Traveling Breaking Front}
+
+Motivated by simulations, we posit the existence of a hydraulic jump, similar to
+shocks in nature. We thus need to develop jump conditions, similar to the
+Rankine-Huginot jump conditions for shocks.
+
+The R-H jump conditions take the conservation equations and integrate over a
+control volume. Since in a hydrodynamic shock, all fluid quantities are
+advected, all conservation equations are necessary. A simpler treatment is
+merited for IGW breaking, since very few quantities are advected (notably,
+vertical momentum and density are not).
+
+Let's consider first the advection of horizontal momentum $\rho_0 u_{1x}$ to
+leading order. This satisfies conservation equation
+\begin{equation}
+    \pd{P_x}{t} + \vec{\nabla} \cdot \p*{\rho_0 u_{1x}\vec{u}_1} = 0.
+\end{equation}
+Integrating over control volume $V = \s*{-\infty, \infty} \times \s*{z < z_b, z
+> z_b}$ the full horizontal domain times the breaking zone, we require the total
+horizontal momentum of the zone be constant in time, if we permit $z_b$ to move
+with velocity $u_b$ the breaking front velocity. This equates to
+\begin{equation}
+    \Delta P_x - \s*{\rho_0 u_{1x}u_b}_{z > z_b}
+        + \s*{\rho_0 u_{1x}\p*{u_{1z} - u_b}}_{z < z_b} = 0.
+\end{equation}
+We've called $\Delta P_x$ the change in horizontal momentum in the breaking zone
+(so the boundary integral over the endcaps of the domain, effectively). Now,
+based on simulations, we identify that $u_{1x}\p*{z > z_c} = B\cos \kappa z$
+seems to form a standing wave pattern. Note that since this is a pure shear
+flow, it is consistent with an incompressible fluid and $u_{1z}\p*{z > z_c} =
+0$.
+
+Permitting such a flow above the breaking zone, then we substitute our known
+linear solution $u_{1x} \approx \frac{k_z}{k_x} u_{1z} \propto Ae^{z / 2H}\cos
+\omega_0 t$ and $\rho_0 = \tilde{\rho}e^{-z/H}$ and evaluate harmonics of $\cos
+\omega_0 t$ to obtain
+\begin{align}
+    \Delta P_x\p*{\omega = 0} &= \tilde{\rho}\frac{A^2}{2}\frac{k_z}{k_x},\\
+    \Delta P_x\p*{\omega = \omega_0}
+        &= u_b Ae^{-z/2H}\tilde{\rho}\cos \omega_0 t,\\
+    \Delta P_k(\omega = 2\omega_0) &=
+        -u_b \cos (\kappa u_bt)
+            + \frac{k_z}{k_x}\frac{A^2}{2B}e^{z/H} \cos 2 \omega_0 t.
+\end{align}
+We can easily interpret $\Delta P_x(0)$ to be the deposition of the horizontal
+momentum of the wave, and $\Delta P_x\p*{\omega = \omega_0}$ to be just the wave
+flowing through the deposition zone; it time averages to zero anyways, so it's
+not super interesting.
+
+Instead, if we dare make identification $u_b = \frac{2\omega_0}{\kappa}$ (the
+only way $u_b \neq 0$), then the deposition to
+\begin{equation}
+    \Delta P_k\p*{\omega = 2\omega_0} = \p*{\frac{A^2}{2B}e^{z/H} -
+        \frac{2\omega_0}{\kappa}}\cos 2\omega_0 t,
+\end{equation}
+i.e.\ the standing wave pattern above can sap some $2\omega_0$ frequency $P_x$
+out of the mean flow via a breaking front.
+
+\subsection{Finding and Explaining the Breaking Front}
+
+It is a bit tricky to interpret this, so I'll just jot down some ideas lest I
+forget them in my sleep-deprived state. If we require that the breaking front
+only sap momentum from the wave (and not from the mean flow), then the breaking
+front shuts of when $\frac{A^2}{2B}e^{z/H} \sim \frac{2\omega_0}{\kappa}$. It's
+also unclear how $\kappa$ is chosen as well. But based on preliminary
+simulations, this is actually pretty accurate for observed $\kappa, u_b$!
+
+Encouragingly, we can guess at where $\kappa$ comes from. Since the waveform
+above the breaking zone has to lose its $k_x$ component, we may guess that the
+incoming wave $\cos \p*{k_xx + k_zz}$ must interact nonlinearly  with another
+wave to knock out the $k_xx$ contribution. One possible candidate would have a
+$\cos \p*{-k_xx + k_zz}$ such that their product $\cos 2k_zz$, in which case
+$\kappa = 2k_z$. This also seems to be reasonable from a few of our simulations,
+but this requires thus that $2k_z$ be much longer than the viscous length scale;
+this would explain why we don't see it on our low-resolution simulations at $z
+\in [0, 12H], N_Z = 512$ but only on $N_Z = 1024$. The desired $\cos \p*{-k_xx +
+k_zz}$ is just a reflected wave in the $x$ direction, so I guess it can come
+from the viscous subscales pushing against the horizontal momentum/mean flow?
+In any case it's not inconceivable it would exist, and it should be the dominant
+$-k_xx$ term compared e.g.\ to $-k_xx + 0z, -k_xx + 2k_zz$.
+
+TODO We need simulations next of the front breaking down, to understand where it
+would stop, since we don't have a criterion for it yet.
+
 \chapter{Cylindrical Stratified Flow}
 
 We fearlessly tackle the cylindrical coordinate problem, using Tsang \& Lai 2008
