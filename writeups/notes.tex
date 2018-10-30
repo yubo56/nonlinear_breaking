@@ -1636,5 +1636,185 @@ $e^{-z/H}$ scaling on $\rho_0$. This leaves us with:
 I'm too lazy to re-notate my variables, so all of them are constant amplitude
 over $z$ now.
 
+\section{Hydraulic Jumps in Surface Waves}
+
+We originally got started on this since it seems like a dimensionally-restricted
+version of what we're seeing in simulations, but presently unclear whether
+really the case. Also, Faber's book for fluids \emph{Fluid Dynamics for
+Physicists} cites a critical breaking jump height of $1.3$ which is markedly
+false; papers such as Chanson's 2009 hydraulic jumps review in Euro.\ J.\ Mech\
+B/Fluids shows that undular jumps (instead of turbulent jumps) can be found
+easily up to $3.5/4$.
+
+\subsection{1D Hydraulic Jump}
+
+This is one of the OG papers; B\'elanger solved this as early as in 1838 but
+Rayleigh's work in 1916 is also pretty famous. Consider the 1D nonlinear Euler
+equations for a body of water whose surface can move $h(x)$, then give it
+velocity $u(x, z)$. The problem is really 2D, but we can integrate along the $z$
+direction, in which case $\pd{P(x, z)}{x} = \frac{\rho g h(x, z)}{x}$ simply
+integrates to $\frac{\rho g h(x)^2}{2} = \frac{g\Sigma(x)^2}{2\rho}$. Assuming
+also the velocity is uniform $u(x, z) = u(x)$ gives equations of motion
+\begin{align}
+    \pd{\Sigma}{t} + \pd{(\Sigma u)}{x} &= 0,\\
+    \pd{u}{t} + u\pd{u}{x} &=
+        -\frac{1}{\Sigma}\pd{}{x}\p*{\frac{g\Sigma^2}{2\rho}},\nonumber\\
+        &= -\frac{g}{\rho}\pd{\Sigma}{x}.
+\end{align}
+It proves easier to divide the density equation by $\rho$ so that we can replace
+$\frac{\Sigma}{\rho} = h(x)$ in the above. A specific momentum conservation
+equation can be obtained
+\begin{equation}
+    \pd{(hu)}{t} + \pd{}{x}\p*{hu^2 + \frac{gh^2}{2}} = 0.
+\end{equation}
+
+Now, consider a hydraulic jump $u_1, h_1 \to u_2, h_2$ such that the
+discontinuity is fixed (we've shifted to the jump front frame), so that
+$\s*{uh}, \s*{hu^2 + gh^2/2}$ bracketed quantities are continuous across the jump.
+This results in
+\begin{align}
+    h_1u_1^2 - h_2u_2^2 = h_1u_1^2\p*{1 - \frac{u_2}{u_1}}
+        &= h_1u_1^2\p*{1 - \frac{h_1}{h_2}},\nonumber\\
+        &= \frac{g\p*{h_2^2 - h_1^2}}{2},\nonumber\\
+    u_1^2 &= \frac{h_2}{h_1}\frac{g\p*{h_1 + h_2}}{2}.
+\end{align}
+Customarily one defines $a_1^2 = gh_1, \mathrm{Fr} =
+\frac{u_1}{a_1}$ and $\gamma = \frac{h_2}{h_1}$ which gives simplification
+\begin{align}
+    2\mathrm{Fr}^2 &= \gamma(1 + \gamma)\nonumber\\
+    \gamma = \frac{-1 + \sqrt{1 + 8\mathrm{Fr}^2}}{2}.
+\end{align}
+Note now that $\mathrm{Fr}^2 > 1$ produces a $\gamma > 1$, so $h_2 > h_1$.
+Noting moreover that $\frac{u_1}{u_2} = \gamma$ and so $u_1 > u_2$. If we have a
+picture of a jet incident on a medium at rest, $u_2$ is just the velocity of the
+jump.
+
+\subsection{1D Viscous Theory}
+
+We follow Bohr's paper from J.\ Fluid Mech.\ in 1993 (also done by Tani in 1949
+to some extent) but in 1D first so that the equations are a bit easier to
+intuit. It's completely unnecessary but illustrates some features of the
+approach.
+
+Consider the same 2D equations as before (before integrating along $z$), but now
+permit a viscosity term. In the boundary layer approximation, the usual
+assumptions are that flow largely varies horizontally but variations are
+stronger vertically (i.e.\ we only consider the $x$ velocity equation but only
+consider the $z$ viscosity). We make one small modification, it seems that we
+permit an incompressibility assumption since $\rd{h(x, z, t)}{t} = 0$; this is
+just $\Delta P = \rho g h = $ the Lagrangian pressure boundary condition. Thus,
+the equations of motion are
+\begin{align}
+    \pd{u_x}{x} + \pd{u_z}{z} &= 0,\\
+    u_x \pd{u_x}{x} + u_z \pd{u_x}{z} &= -g\pd{h}{x} + \nu \ptd{u_x}{z}.
+\end{align}
+Integration along $z$ of the momentum equation can be done with appropriate BCs:
+no-slip/penetration at the bottom $u_x(z = 0) = u_z(z = 0) = 0$, while no shear
+at the surface $\pd{u_x}{z}(z = h) = 0$. We handle the integral of $u_z u_{x,
+z}$ by integrating by parts, dropping the boundary term and continuity equation,
+giving
+\begin{equation}
+    2u_x \int\limits_0^h u_x\rd{u_x}{x}\;\mathrm{d}z
+        = -g\pd{h}{x}h - \nu\at{\pd{u_x}{z}}_{z = 0}.
+\end{equation}
+We make a few handwavy substitutions for representative values $\partial_z u_x(z
+= 0) \sim u_x / h$ and $\partial_x u_x^2 \sim \partial_x \bar{u}_x^2$ average
+value. This averaging procedure and dropping the factor of $2$ (the two papers
+seem to disagree on this coefficient, I think Bohr's paper has an error) lets
+us examine
+\begin{equation}
+    \bar{u}_x \pd{\bar{u}_x}{x} + g\pd{h}{x} \sim -\frac{\bar{u}_x}{h^2}.
+\end{equation}
+Next, let's identify $\bar{u}_xh \equiv q$ volume flux constant in $x$, which
+leaves us with
+\begin{equation}
+    \pd{\bar{u}_x}{x}\p*{\bar{u}_x - \frac{gq}{\bar{u}_x^2}}
+        \sim -\nu\frac{\bar{u}_x^3}{q^2}.
+\end{equation}
+Let's study in terms of $\mathrm{Fr}^2 = \frac{\bar{u}_x^2}{gh} =
+\frac{\bar{u}_x^3}{gq}$ again, albeit a bit messier, which takes a bit of work
+but eventually lets us rearrange
+\begin{equation}
+    \pd{\mathrm{Fr}}{x} = \frac{\p*{gq}^{1/3}\nu}{q^2}\frac{
+        \mathrm{Fr}^{5/3}}{1 - \mathrm{Fr}^2}.
+\end{equation}
+Note that the units work here, as $\frac{\p*{gq}^{1/3}\nu}{q^2} \equiv L_\nu$
+has units of length.
+
+Let's interpret the equation we have now: we have exactly how the inbound
+$\mathrm{Fr}\p*{x = -\infty}$ evolves over $x$, which should describe (extremely
+coarsely, owing to our approximations) the boundary layer of the jump.
+
+Qualitatively, we can use a parameterization $\mathrm{Fr}(s), x(s)$ such that
+$\dot{\mathrm{Fr}}(s) = -\mathrm{Fr}^{5/3}, \dot{x}(s) = L_\nu \p*{\mathrm{Fr}^2
+- 1}$ where we define $L_\nu \equiv a_0h^2/\nu$ and we've absorbed the negative
+sign into $\dot{\mathrm{Fr}}(s)$. I'm too lazy to plot this, but if we start at
+a point $\mathrm{Fr} > 1$, it's clear that $\mathrm{Fr}$ increases and $x$
+decreases until $\mathrm{Fr} = 1$. Since the sign convention on the parametric
+is arbitrary, we can flip the sign and see that the parameterized curve formally
+follows decreasing $\dot{\mathrm{Fr}}(s) \propto -1/s$ while $\dot{x}(s) \propto
+-L$. This is double-valued with the solution $\mathrm{Fr} > 1$ though, so with
+some physical intuition we discard this and consider what values of
+$\mathrm{Fr}$ can take on beyond its intersection with $\mathrm{Fr} = 1$.
+
+It must discontinuously jump to another family of curves. But any nonzero value
+of $\mathrm{Fr}$ will live on another one of these such trajectories and
+increase without bound; indeed the only reasonable asymptotic solution is
+$\mathrm{Fr} = 0$. This completes the picture: for an inbound $\mathrm{Fr} \gg
+1$, it follows roughly $\pd{\mathrm{Fr}}{x} \gtrsim -\mathrm{Fr}^{-1/3}$ until
+it reaches $\mathrm{Fr} = 1$, then it discontinously disappears. This is the
+upstream flow, and so by mass conservation the location of the discontinuity
+must travel.
+
+This is exactly the picture we derived above: for an incoming $\mathrm{Fr}
+\gtrsim 1$, the upstream flow has zero velocity and the jump travels.
+
+\subsection{2D Hydraulic Jump}
+
+This is the case worked out in detail in Bohr's paper. Following much the same
+approach but in cylindrical coordinates we may write down equations of motion
+\begin{align}
+    u_r \pd{u_r}{r} + u_z \pd{u_r}{z} &= -g\pd{h}{r} + \nu
+        \ptd{u_r}{z},\nonumber\\
+    \frac{1}{r}\pd{(ru_r)}{r} + \pd{u_z}{z} &= 0.
+\end{align}
+Note the slight difference here due to the $\vec{\nabla} \cdot$ in cylindrical
+coordinates. Interestingly, as a consequence of this $\pd{P_r}{t} +
+\frac{1}{r}\partial_r \p*{hu_r^2 + gh^2/2} \neq 0$, since one term is a
+$\vec{\nabla} \cdot (hu_r)$ and the other is a $\vec{\nabla}gh^2/2$! Radial
+momentum is not conserved as the flow spreads out. Averaging using the same
+techniques as above gives
+\begin{align}
+    \bar{u}_r\pd{\bar{u}_r}{r} + g\pd{h}{r} &= -\nu \frac{\bar{u}_r}{h^2},\nonumber\\
+    \bar{u}_rhr &= q.
+\end{align}
+Combining the two gives
+\begin{align}
+    \pd{\bar{u}_r}{r}\p*{\bar{u}_r - \frac{gq}{\bar{u}_r^2r}}
+        &= \frac{gq}{\bar{u}_rr^2} - \nu\frac{\bar{u}_r^3r^2}{q^2}.
+        \label{eq:2d_hjump}
+\end{align}
+It's not very worth converting into dimensionless $\mathrm{Fr}$ number since it
+would carry an $r$ dependence (if we are to hold $q$ constant) and we need to
+study the $r$ dependence.
+
+It may be observed that \autoref{eq:2d_hjump} has only a single fixed point,
+$u_r^3r = gq, u_r^4r^4 = gq^3/\nu$. Call this point $r_c$ the critical radius,
+then it turns out that the two parametric solutions (as we analyzed in the
+previous section) both spiral around this point. This has a few important
+properties:
+\begin{itemize}
+    \item No asymptotic solutions: the solution for $r > r_c$ always diverges
+        at some finite $r_s < \infty$. We can try an approximate solution in the
+        form $u_r = y / r$; this is done in Bohr's paper.
+
+    \item For a fixed $r_s \gg r_c, < \infty$, we can require the usual jump
+        condition which takes the slightly modified form
+\end{itemize}
+
+Edit: Looks like Bhagat 2018 J.\ Fluid.\ Mech.\ does this more correctly, they
+find that surface tension is the proper term to invoke after performing this
+boundary layer analysis. I'm not going to finish reworking the rest of Bohr's
+paper here, since it's up through the boundary layer equations that is reusable.
 \end{document}
 
