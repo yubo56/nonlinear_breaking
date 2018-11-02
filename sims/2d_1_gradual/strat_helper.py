@@ -124,8 +124,8 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
-        if cfl_dt < params['DT'] / 4: # small step sizes if strongly cfl limited
-            cfl_dt /= 4
+        if cfl_dt < params['DT'] / 8: # small step sizes if strongly cfl limited
+            cfl_dt /= 2
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 

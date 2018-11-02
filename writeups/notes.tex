@@ -1766,7 +1766,7 @@ Customarily one defines $a_1^2 = gh_1, \mathrm{Fr} =
 \frac{u_1}{a_1}$ and $\gamma = \frac{h_2}{h_1}$ which gives simplification
 \begin{align}
     2\mathrm{Fr}^2 &= \gamma(1 + \gamma)\nonumber\\
-    \gamma = \frac{-1 + \sqrt{1 + 8\mathrm{Fr}^2}}{2}.
+    \gamma &= \frac{-1 + \sqrt{1 + 8\mathrm{Fr}^2}}{2}.
 \end{align}
 Note now that $\mathrm{Fr}^2 > 1$ produces a $\gamma > 1$, so $h_2 > h_1$.
 Noting moreover that $\frac{u_1}{u_2} = \gamma$ and so $u_1 > u_2$. If we have a
@@ -1855,8 +1855,29 @@ This is exactly the picture we derived above: for an incoming $\mathrm{Fr}
 
 \subsection{2D Hydraulic Jump}
 
-This is the case worked out in detail in Bohr's paper. Following much the same
-approach but in cylindrical coordinates we may write down equations of motion
+This is the case worked out in detail in Bohr's paper. First, perhaps the
+easiest thing to do is to enforce jump conditions $[rhu], [hu^2 + gh^2/2]$
+subject to $q = 2\pi rh_iu_{ri}$ conserved total flow. This gives us
+\begin{align}
+    h_1u_{r1}^2 - h_2u_{r2}^2 = \frac{q}{2\pi r}(u_{r1} - u_{r2})
+        &= \frac{gh_1^2}{2} - \frac{gh_2^2}{2},\\
+        &= \frac{gq^2}{8\pi r^2u_{r1}^2} - \frac{gq^2}{8\pi r^2u_{r2}^2}
+            ,\nonumber\\
+    2u_{r1}^2 u_{r2}^2 &= \frac{gq}{2\pi r}\p*{u_{r2} + u_{r1}},\nonumber\\
+    u_{r1} &= \frac{gq}{8\pi u_{r2}^2r} \p*{1 +
+        \sqrt{1 + 16\frac{\pi u_{r2}^3r}{gq}}},\\
+    \frac{u_{r1}}{u_{r2}} &= \frac{1}{4\mathrm{Fr}^2}\p*{1 +
+        \sqrt{1 + 8\mathrm{Fr}^2}}.
+\end{align}
+We've defined $\mathrm{Fr}^2 \equiv \frac{2\pi r u_r^3}{gq} = \frac{u_r^2}{gh}$.
+Note that this is in agreement with $\gamma = \frac{h_1}{h_2} = \frac{u_2}{u_1}$
+from the plane parallel theory. The major difference is that now $\mathrm{Fr}^2
+= \mathrm{Fr}^2(r)$, and so the location of the hydraulic jump can be pinned.
+One might expect that once $\mathrm{Fr}(r) > 1$ that the jump occurs, but this
+turns out not to be the case.
+
+We now perform the boundary layer analysis. Following much the same approach but
+in cylindrical coordinates we may write down equations of motion
 \begin{align}
     u_r \pd{u_r}{r} + u_z \pd{u_r}{z} &= -g\pd{h}{r} + \nu
         \ptd{u_r}{z},\nonumber\\
