@@ -1,0 +1,196 @@
+    \documentclass[dvipsnames]{beamer}
+    \usetheme{Madrid}
+    \usefonttheme{professionalfonts}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\\;upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\title{Quick Research Review}
+\author{Yubo Su}
+\date{Nov. 06, 2018}
+
+\maketitle
+
+\begin{frame}
+    \frametitle{Objectives}
+
+    \begin{itemize}
+        \item Continuous train of IGW excited in stratified WD atmosphere by
+            binary companion, grows due to stratification, reaches nonlinear
+            amplitudes $\xi_z k_z \gtrsim 1$ before the peak of the envelope.
+
+        \item Seek long-term behavior of nonlinear dissipation, whether
+            steady-state or periodic.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Numerical Simulations, No Shear}
+    \framesubtitle{Setup}
+
+    \begin{itemize}
+        \item 2D, Fourier $\times$ Chebyshev, damping zones, ran at both $128
+            \times 512$ and $256 \times 1024$ over $3H \times 12H$ grid, where
+            $H$ is scale height.
+
+        \item Target waves $k_x = \frac{2\pi}{3H}, k_z = \frac{2\pi}{H}, \omega
+            \approx 0.32N$, $N$ B-V frequency.
+
+        \item Wave is excited by volumetric forcing
+            $e^{-z^2/2\sigma^2}\cos\p*{k_xx - \omega t}$ with $\sigma =
+            \frac{3H}{32} \lesssim \frac{1}{k_z}$.
+
+        \item Regularized by numerical viscosity $\nu \gtrsim
+            \frac{\omega}{k_{\max}k_z}$.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Numerical Simulations, No Shear}
+    \framesubtitle{Results}
+
+    \begin{itemize}
+        \item High resolution ($\nu = 4\frac{\omega}{k_{\max}k_z}$):
+            \lstinline{nl3.mp4}. Note that mean flow starts to build up at the
+            outgoing damping zone, and once it hits criticality it starts to
+            move down while continuing to steepen. Eventually, it stops moving
+            and produces reflection below, while leaving behind a sinusoidal
+            mean flow above.
+
+        \item Low resolution ($\nu = 3\frac{\omega}{k_{\max}k_z}$):
+            \lstinline{nl3_lowres.mp4}. Qualitatively similar, but the mean flow
+            forms later.
+
+        \item Two hypotheses:
+            \begin{itemize}
+                \item Damping layer is causing mean flow to begin building up
+                    like Daniel said; how can we fix? Seems like low $k_z$ modes
+                    (which have higher $v_{ph}$).
+
+                \item Further growth/propagation is critical layer absorption?
+                    Eventual reflection might build up when shear flow is too
+                    steep $\mathrm{Ri} \gtrsim 1/2$ or WKB breaks down
+                    $\pd{k_z}{z} \sim \frac{k_z}{\lambda_z}$.
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Numerical Simulations, Shear Flow}
+    \framesubtitle{Setup}
+
+    \begin{itemize}
+        \item 2D, Fourier $\times$ Fourier, damping zones, running at $64 \times
+            256$. No height stratification, domain is $ H \times H$ (though $H$
+            is now physically meaningless).
+
+        \item Target waves $k_x = \frac{2\pi}{H}, k_z = \frac{20\pi}{H}, \omega
+            \approx 0.1N$, $N$ B-V frequency. Volumetric forcing.
+
+        \item Regularized by $\nabla^6$ hyperviscosity.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Numerical Simulations, Shear Flow}
+    \framesubtitle{Results}
+
+    \begin{itemize}
+        \item Initialize w/ shear flow and let evolve. Try both narrow and wide
+            profiles (\lstinline{vstrat*.mp4}).
+
+        \item Conclusion: attenuated transmission when thin, barely-critical
+            layer, smooth WKB-like wavelength shortening when broad, critical
+            flow, but steep $\pd{U_0}{z}$ gives reflection!
+
+        \item Recall Booker \& Bretherton result
+            \begin{align}
+                T &\sim \exp\s*{-\pi \sqrt{\frac{N^2}{(U_0')^2} - \frac{1}{4}}}
+                & R &\sim
+                    \exp\s*{-2\pi \sqrt{\frac{N^2}{(U_0')^2} - \frac{1}{4}}}.
+            \end{align}
+            WKB criterion $\Rightarrow \frac{k_z^2}{N}U_0' \frac{\lambda^2}{2}
+            \ll 1$.
+
+        \item Winters d'Asaro had a local $\mathrm{Ri} \sim 0.5$.
+    \end{itemize}
+\end{frame}
+
+\end{document}
+
