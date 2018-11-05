@@ -223,24 +223,29 @@ def load(name, params):
 
 def plot(name, params):
     slice_suffix = '(x=0)'
+    sum_suffix = '(mean)'
+    sub_suffix = ' (- mean)'
     SAVE_FMT_STR = 't_%d.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz', 'ux']
+    plot_vars = ['ux']
     # c_vars = ['uz_c']
     # f_vars = ['uz_f']
-    f2_vars = ['uz']
-    # z_vars = ['NS-nu'] # sum these over x
-    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
+    f2_vars = ['ux']
+    z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
+    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
+    sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
     c_vars = []
     f_vars = []
     # f2_vars = []
-    z_vars = []
-    # slice_vars = []
+    # z_vars = []
+    slice_vars = []
+    # sub_vars = []
     n_cols = 4
     n_rows = 1
     plot_stride = 1
+    N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     # z_b = N_Z // 4
     z_b = 0
@@ -257,9 +262,19 @@ def plot(name, params):
     x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
 
     for var in z_vars:
-        state_vars[var] = np.sum(state_vars[var], axis=1)
+        state_vars[var] = np.sum(state_vars[var.replace(sum_suffix, '')],
+                                 axis=1) / N_X
     for var in slice_vars:
-        state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
+        state_vars[var] = np.copy(
+            state_vars[var.replace(slice_suffix, '')][:, 0, :])
+
+    for var in sub_vars:
+        # can't figure out how to numpy this together
+        means = state_vars[var.replace(sub_suffix, sum_suffix)]
+        state_vars[var] = np.copy(state_vars[var.replace(sub_suffix, '')])
+        for idx, _ in enumerate(state_vars[var]):
+            mean = state_vars[var.replace(sub_suffix, sum_suffix)][idx]
+            state_vars[var][idx] -= np.tile(mean, (N_X, 1))
 
     uz_est = params['F'] * get_uz_f_ratio(params)
 
@@ -267,17 +282,16 @@ def plot(name, params):
         fig = plt.figure(dpi=200)
 
         idx = 1
-        for var in plot_vars:
+        for var in plot_vars + sub_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
             var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
-            cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
             idx += 1
@@ -292,11 +306,10 @@ def plot(name, params):
                 2 * var_dat_t.real[:params['N_X'] // 2, :]))
             p = axes.pcolormesh(x2mesh,
                                 z2mesh,
-                                var_dat_shaped.T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat_shaped.T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(x2mesh, z2mesh))
             cb = fig.colorbar(p, ax=axes)
-            cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
             idx += 1
@@ -322,7 +335,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
             axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,
