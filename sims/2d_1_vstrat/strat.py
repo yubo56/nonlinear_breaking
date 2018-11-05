@@ -5,24 +5,24 @@ import numpy as np
 import sys
 from strat_helper import *
 
-H = 1e3
+H = 1
 XMAX = H
 ZMAX = H
 
-NUM_SNAPSHOTS = 100
-TARGET_DISP_RAT = 0.005 # k_z * u_z / omega at base
+NUM_SNAPSHOTS = 400
+TARGET_DISP_RAT = 0.7
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 512,
-              'N_Z': 512,
+              'N_X': 64,
+              'N_Z': 256,
               'KX': 2 * np.pi / H,
-              'KZ': -12 * np.pi / H,
+              'KZ': -20 * np.pi / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 2,
-              'SPONGE_WIDTH': 0.5,
+              'Z0': 0.2 * ZMAX,
+              'SPONGE_STRENGTH': 1,
+              'SPONGE_WIDTH': 0.8,
               'SPONGE_HIGH': 0.93 * ZMAX,
               'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
@@ -35,7 +35,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 3
+    T_F = abs(ZMAX / VG_Z) * 6
 
     params['T_F'] = T_F
     params['g'] = g
@@ -45,18 +45,15 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
-    params['DT'] = min(0.1 / OMEGA, 0.05)
+    params['DT'] = min(0.1 / OMEGA, 0.1)
     params['F'] = params.get('F_MULT', 0.1) * \
-        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
-        * np.exp(-params['Z0'] / (2 * H))
+        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params)
     # for nabla^n visc, u / (nu * kx^{n-1}) = 1
-    params['NU_X'] = params.get('NU_MULT', 1) * \
-        OMEGA * (params['XMAX'] / (2 * np.pi * params['N_X']))**5 / abs(KZ)
-    params['NU_Z'] = params.get('NU_MULT', 1) * \
+    params['NU'] = params.get('NU_MULT', 1) * \
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
-    # Ri = 1/4 gives instability + weird reflection
-    # params['DUZ_DZ'] = np.sqrt((g / H) / params.get('Ri', 1/8))
+    params['UZ0_COEFF'] = params.get('UZ0_COEFF', 2)
+    params['WIDTH'] = params.get('WIDTH', 1)
     print(params)
     return params
 
@@ -69,10 +66,16 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (zero_ic, 'vstrat',
-         build_interp_params(1, 1)),
-        (zero_ic, 'vstrat2',
-         build_interp_params(1, 1, overrides={'NU_MULT': 8})),
+        (ic, 'vstrat1',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1})),
+        (ic, 'vstrat2',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2})),
+        (ic, 'vstrat3',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1,
+                                              'WIDTH': 8})),
+        (ic, 'vstrat4',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2,
+                                              'WIDTH': 8})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

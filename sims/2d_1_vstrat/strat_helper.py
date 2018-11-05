@@ -18,6 +18,8 @@ from dedalus import public as de
 from dedalus.tools import post
 from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
+from mpi4py import MPI
+CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 
@@ -27,14 +29,17 @@ def get_omega(g, h, kx, kz):
 def get_vgz(g, h, kx, kz):
     return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
 
-def zero_ic(solver, domain, params):
-    pass
+def ic(solver, domain, params):
+    ux = solver.state['ux']
+    z = domain.grid(1)
+    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
+        np.exp(-(z - params['Z0'] - params['ZMAX'] / 2)**2 /
+               (2 * (params['WIDTH'] * np.pi / (2 * params['KZ']))**2))
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
             params['KX']**2) * np.exp(-1/2) / (
-                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
-                * params['OMEGA']**2 * params['KZ'])
+                2 * params['RHO0'] * params['OMEGA']**2 * params['KZ'])
 
 def get_solver(params):
     ''' sets up solver '''
@@ -55,30 +60,38 @@ def get_solver(params):
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['t_s'] = 'T_F / 10'
-    problem.substitutions['UZ0'] = 'OMEGA / KX * 0.25 * (1 - cos(KX * (z - Z0)))'
-    problem.substitutions['DUZ_DZ'] = 'OMEGA * 0.25 * sin(KX * (z - Z0))'
+    # KX is conveniently 2pi / XMAX = 2pi / ZMAX
+    # problem.substitutions['UZ0'] =\
+    #     'OMEGA / KX * UZ0_COEFF * exp(-(z - Z0 + ZMAX / 2)**2 / (2 * 0.5**2))'
+    # problem.substitutions['DUZ_DZ'] =\
+    #     'OMEGA / KX * UZ0_COEFF * (-(z - Z0 + ZMAX / 2) / 0.5**2)' + \
+    #     '* exp(-(z - Z0)**2 / (2 * 0.5**2))'
+    problem.substitutions['UZ0'] = '0'
+    problem.substitutions['DUZ_DZ'] = '0'
 
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(rho) - RHO0 * uz / H' +
-        '- NU_X * dx(dx(dx(dx(dx(dx(rho))))))' +
-        '- NU_Z * dz(dz(dz(dz(dz(dz(rho))))))' +
-        '= -sponge * rho - (ux * dx(rho) + uz * dz(rho) + UZ0 * dx(rho)) +' +
-        '(t / t_s)**2 / ((t / t_s)**2 + 1) * F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
-            'cos(KX * x - OMEGA * t)',
+        '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(rho))))))' +
+        '- NU * dz(dz(dz(dz(dz(dz(rho))))))' +
+        '= -sponge * rho' +
+        '- (ux * dx(rho) + uz * dz(rho) + UZ0 * dx(rho))' +
+        '+ F * exp(-(z - Z0)**2 / (2 * S**2)) *cos(KX * x - OMEGA * t)',
+            # '* (t / t_s)**2 / ((t / t_s)**2 + 1)',
         condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(ux) + dx(P) / RHO0' +
-        '- NU_X * dx(dx(dx(dx(dx(dx(ux))))))' +
-        '- NU_Z * dz(dz(dz(dz(dz(dz(ux))))))' +
-        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux) + UZ0 * dx(ux))',
+        '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(ux))))))' +
+        '- NU * dz(dz(dz(dz(dz(dz(ux))))))' +
+        '= - sponge * ux - UZ0 * dx(ux)' +
+        '- (ux * dx(ux) + uz * dz(ux))',
         condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(uz) + dz(P) / RHO0 + rho * g / RHO0' +
-        '- NU_X * dx(dx(dx(dx(dx(dx(uz))))))' +
-        '- NU_Z * dz(dz(dz(dz(dz(dz(uz))))))' +
-        '= -sponge * uz - (ux * dx(uz) + uz * dz(uz) + UZ0 * dx(uz)' +
-            '+ uz * DUZ_DZ)',
+        '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(uz))))))' +
+        '- NU * dz(dz(dz(dz(dz(dz(uz))))))' +
+        '= -sponge * uz - UZ0 * dx(uz) - uz * DUZ_DZ' +
+        '- (ux * dx(uz) + uz * dz(uz))',
         condition='nx != 0 or nz != 0')
     problem.add_equation('P = 0', condition='nx == 0 and nz == 0')
     problem.add_equation('rho = 0', condition='nx == 0 and nz == 0')
@@ -121,7 +134,7 @@ def run_strat_sim(set_ICs, name, params):
 
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
-    flow.add_property('sqrt((ux / NU_X)**2 + (uz / NU_Z)**2)', name='Re')
+    flow.add_property('sqrt((ux / NU)**2 + (uz / NU)**2)', name='Re')
 
     # Main loop
     logger.info('Starting sim...')
@@ -145,7 +158,7 @@ def load(name, params):
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(filename):
-        post.merge_analysis(snapshots_dir, cleanup=True)
+        post.merge_analysis(snapshots_dir)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
@@ -187,19 +200,32 @@ def load(name, params):
 
 def plot(name, params):
     slice_suffix = '(x=0)'
+    sum_suffix = '(mean)'
+    sub_suffix = ' (- mean)'
     SAVE_FMT_STR = 't_%d.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['uz']
-    c_vars = ['uz_c']
-    f_vars = ['uz_f']
-    # z_vars = ['F_z', 'E'] # sum these over x
-    z_vars = []
-    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
+    plot_vars = ['ux']
+    # c_vars = ['uz_c']
+    # f_vars = ['uz_f']
+    f2_vars = ['ux']
+    z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
+    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
+    sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
+    c_vars = []
+    f_vars = []
+    # f2_vars = []
+    # z_vars = []
+    slice_vars = []
+    # sub_vars = []
     n_cols = 4
     n_rows = 1
     plot_stride = 1
+    N_X = params['N_X'] * params['INTERP_X']
+    N_Z = params['N_Z'] * params['INTERP_Z']
+    # z_b = N_Z // 4
+    z_b = 0
 
     if os.path.exists('%s.mp4' % name):
         print('%s.mp4 already exists, not regenerating' % name)
@@ -208,13 +234,24 @@ def plot(name, params):
     sim_times, domain, state_vars = load(name, params)
 
     x = domain.grid(0, scales=params['INTERP_X'])
-    z = domain.grid(1, scales=params['INTERP_Z'])
+    z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+    x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
 
     for var in z_vars:
-        state_vars[var] = np.sum(state_vars[var], axis=1)
+        state_vars[var] = np.sum(state_vars[var.replace(sum_suffix, '')],
+                                 axis=1) / N_X
     for var in slice_vars:
-        state_vars[var] = state_vars[var.replace(slice_suffix, '')][:, 0, :]
+        state_vars[var] = np.copy(
+            state_vars[var.replace(slice_suffix, '')][:, 0, :])
+
+    for var in sub_vars:
+        # can't figure out how to numpy this together
+        means = state_vars[var.replace(sub_suffix, sum_suffix)]
+        state_vars[var] = np.copy(state_vars[var.replace(sub_suffix, '')])
+        for idx, _ in enumerate(state_vars[var]):
+            mean = state_vars[var.replace(sub_suffix, sum_suffix)][idx]
+            state_vars[var][idx] -= np.tile(mean, (N_X, 1))
 
     uz_est = params['F'] * get_uz_f_ratio(params)
 
@@ -222,32 +259,62 @@ def plot(name, params):
         fig = plt.figure(dpi=200)
 
         idx = 1
-        for var in plot_vars:
+        for var in plot_vars + sub_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
-            var_dat = state_vars[var]
+            var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
-            cb.ax.set_yticklabels(cb.ax.get_yticklabels(), rotation=30)
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
             idx += 1
+
+        for var in f2_vars:
+            axes = fig.add_subplot(n_rows, n_cols, idx,
+                                   title='log %s (x-FT)' % var)
+
+            var_dat = state_vars[var][:, : , z_b:]
+            var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
+            var_dat_shaped = np.log(np.abs(
+                2 * var_dat_t.real[:params['N_X'] // 2, :]))
+            p = axes.pcolormesh(x2mesh,
+                                z2mesh,
+                                var_dat_shaped.T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
+            axes.axis(pad_limits(x2mesh, z2mesh))
+            cb = fig.colorbar(p, ax=axes)
+            plt.xticks(rotation=30)
+            plt.yticks(rotation=30)
+            idx += 1
+
         for var in z_vars + slice_vars:
             axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
-            var_dat = state_vars[var]
+            var_dat = state_vars[var][:, z_b:]
             z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
             p = axes.plot(var_dat[t_idx],
                           z_pts,
                           linewidth=0.5)
+            if var == 'uz%s' % slice_suffix:
+                p = axes.plot(
+                    uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                    z_pts,
+                    'orange',
+                    linewidth=0.5)
+                p = axes.plot(
+                    -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                    z_pts,
+                    'orange',
+                    linewidth=0.5)
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
+            axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,
                           [params['SPONGE_LOW']] * len(xlims),
                           'r:',
