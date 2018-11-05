@@ -18,6 +18,8 @@ from dedalus import public as de
 from dedalus.tools import post
 from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
+from mpi4py import MPI
+CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 
@@ -27,17 +29,19 @@ def get_omega(g, h, kx, kz):
 def get_vgz(g, h, kx, kz):
     return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
 
-def zero_ic(name, solver, domain, params):
+def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(snapshots_dir):
-        return
+        print('No snapshots found, no IC loaded')
+        return 0, params['DT']
 
     # snapshots exist, merge if need and then load
-    if not os.path.exists(filename):
-        post.merge_analysis(snapshots_dir)
-    solver.load_state(filename, -1)
+    print('Attempting to load snapshots')
+    write, dt = solver.load_state(filename, -1)
+    print('Loaded snapshots')
+    return write, dt
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -104,15 +108,17 @@ def get_solver(params):
 
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
+    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
     logger = logging.getLogger(name)
 
     solver, domain = get_solver(params)
 
     # Initial conditions
-    set_ICs(name, solver, domain, params)
+    dt = params['DT']
+    _, dt = set_ICs(name, solver, domain, params)
 
     cfl = CFL(solver,
-              initial_dt=params['DT'],
+              initial_dt=dt,
               cadence=10,
               max_dt=params['DT'],
               min_dt=0.01,
