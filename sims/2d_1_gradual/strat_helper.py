@@ -27,8 +27,17 @@ def get_omega(g, h, kx, kz):
 def get_vgz(g, h, kx, kz):
     return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
 
-def zero_ic(solver, domain, params):
-    pass
+def zero_ic(name, solver, domain, params):
+    snapshots_dir = SNAPSHOTS_DIR % name
+    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+
+    if not os.path.exists(snapshots_dir):
+        return
+
+    # snapshots exist, merge if need and then load
+    if not os.path.exists(filename):
+        post.merge_analysis(snapshots_dir)
+    solver.load_state(filename, -1)
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -100,13 +109,13 @@ def run_strat_sim(set_ICs, name, params):
     solver, domain = get_solver(params)
 
     # Initial conditions
-    set_ICs(solver, domain, params)
+    set_ICs(name, solver, domain, params)
 
     cfl = CFL(solver,
               initial_dt=params['DT'],
               cadence=10,
               max_dt=params['DT'],
-              min_dt=0.005,
+              min_dt=0.01,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
