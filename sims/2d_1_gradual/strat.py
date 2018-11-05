@@ -11,7 +11,7 @@ H = 1
 XMAX = 3 * H
 ZMAX = 12 * H
 
-NUM_SNAPSHOTS = 100
+NUM_SNAPSHOTS = 200
 TARGET_DISP_RAT = 0.2 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -37,7 +37,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 1.5
+    T_F = abs(ZMAX / VG_Z) * 2.5
 
     params['T_F'] = T_F
     params['g'] = g
@@ -104,10 +104,14 @@ if __name__ == '__main__':
         #                                       'NU_MULT': 4,
         #                                       'USE_CFL': True})),
     ]
-    if '-plot' not in sys.argv:
-        for task in tasks:
-            run(*task)
-
-    else:
+    if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
             plot(name, params_dict)
+
+    elif '-merge' in sys.argv:
+        for _, name, _ in tasks:
+            merge(name)
+
+    else:
+        for task in tasks:
+            run(*task)

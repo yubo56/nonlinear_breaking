@@ -153,13 +153,19 @@ def run_strat_sim(set_ICs, name, params):
                         params['DT'])
             logger.info('Max Re = %f' %flow.max('Re'))
 
-def load(name, params):
-    dyn_vars = ['uz', 'ux', 'rho', 'P']
+def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
+
+def load(name, params):
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    snapshots_dir = SNAPSHOTS_DIR % name
+    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+
+    merge(name)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
