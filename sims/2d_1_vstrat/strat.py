@@ -18,7 +18,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
               'N_X': 64,
               'N_Z': 256,
-              'KX': 2 * np.pi / H,
+              'KX': 2 * np.pi / XMAX,
               'KZ': -20 * np.pi / H,
               'H': H,
               'RHO0': 1,
@@ -55,7 +55,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
     params['UZ0_COEFF'] = params.get('UZ0_COEFF', 2)
-    params['WIDTH'] = params.get('WIDTH', 1)
+    params['STEEP'] = params.get('STEEP', True)
     print(params)
     return params
 
@@ -68,16 +68,16 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (ic, 'vstrat1',
+        (set_ic, 'vstrat1',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1})),
-        (ic, 'vstrat2',
+        (set_ic, 'vstrat2',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2})),
-        (ic, 'vstrat3',
+        (set_ic, 'vstrat3',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1,
-                                              'WIDTH': 8})),
-        (ic, 'vstrat4',
+                                              'STEEP': False})),
+        (set_ic, 'vstrat4',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2,
-                                              'WIDTH': 8})),
+                                              'STEEP': False})),
     ]
     if '-plot' not in sys.argv:
         for task in tasks:

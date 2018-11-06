@@ -29,12 +29,17 @@ def get_omega(g, h, kx, kz):
 def get_vgz(g, h, kx, kz):
     return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
 
-def ic(solver, domain, params):
+def set_ic(solver, domain, params):
     ux = solver.state['ux']
     z = domain.grid(1)
-    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
-        np.exp(-(z - params['Z0'] - params['ZMAX'] / 2)**2 /
-               (2 * (params['WIDTH'] * np.pi / (2 * params['KZ']))**2))
+    if params['STEEP']:
+        ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
+            np.exp(-(z - params['Z0'] - params['ZMAX'] / 2)**2 /
+                   (2 * (np.pi / (2 * params['KZ']))**2))
+    else:
+    # KX is conveniently 2pi / XMAX = 2pi / ZMAX
+        ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
+            (1 - np.cos(params['KX'] * (z - params['Z0']))) / 2
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -60,14 +65,6 @@ def get_solver(params):
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['t_s'] = 'T_F / 10'
-    # KX is conveniently 2pi / XMAX = 2pi / ZMAX
-    # problem.substitutions['UZ0'] =\
-    #     'OMEGA / KX * UZ0_COEFF * exp(-(z - Z0 + ZMAX / 2)**2 / (2 * 0.5**2))'
-    # problem.substitutions['DUZ_DZ'] =\
-    #     'OMEGA / KX * UZ0_COEFF * (-(z - Z0 + ZMAX / 2) / 0.5**2)' + \
-    #     '* exp(-(z - Z0)**2 / (2 * 0.5**2))'
-    problem.substitutions['UZ0'] = '0'
-    problem.substitutions['DUZ_DZ'] = '0'
 
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
@@ -75,28 +72,21 @@ def get_solver(params):
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(rho))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(rho))))))' +
         '= -sponge * rho' +
-        '- (ux * dx(rho) + uz * dz(rho) + UZ0 * dx(rho))' +
-        '+ F * exp(-(z - Z0)**2 / (2 * S**2)) *cos(KX * x - OMEGA * t)',
-            # '* (t / t_s)**2 / ((t / t_s)**2 + 1)',
-        condition='nx != 0 or nz != 0')
+        '- (ux * dx(rho) + uz * dz(rho))' +
+        '+ F * exp(-(z - Z0)**2 / (2 * S**2)) *cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / RHO0' +
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(ux))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(ux))))))' +
-        '= - sponge * ux - UZ0 * dx(ux)' +
-        '- (ux * dx(ux) + uz * dz(ux))',
-        condition='nx != 0 or nz != 0')
+        '= - sponge * ux' +
+        '- (ux * dx(ux) + uz * dz(ux))')
     problem.add_equation(
         'dt(uz) + dz(P) / RHO0 + rho * g / RHO0' +
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(uz))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(uz))))))' +
-        '= -sponge * uz - UZ0 * dx(uz) - uz * DUZ_DZ' +
-        '- (ux * dx(uz) + uz * dz(uz))',
-        condition='nx != 0 or nz != 0')
+        '= -sponge * uz' +
+        '- (ux * dx(uz) + uz * dz(uz))')
     problem.add_equation('P = 0', condition='nx == 0 and nz == 0')
-    problem.add_equation('rho = 0', condition='nx == 0 and nz == 0')
-    problem.add_equation('ux = 0', condition='nx == 0 and nz == 0')
-    problem.add_equation('uz = 0', condition='nx == 0 and nz == 0')
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK222)
