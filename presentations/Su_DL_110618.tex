@@ -137,17 +137,26 @@
             \lstinline{nl3_lowres.mp4}. Qualitatively similar, but the mean flow
             forms later.
 
-        \item Two hypotheses:
-            \begin{itemize}
-                \item Damping layer is causing mean flow to begin building up
-                    like Daniel said; how can we fix? Seems like low $k_z$ modes
-                    (which have higher $v_{ph}$).
+        \item Tried masking nonlinear terms near damping zones,
+            \lstinline{nl3_lowres_test.mp4}. Still mean flow interaction!
+    \end{itemize}
+\end{frame}
 
-                \item Further growth/propagation is critical layer absorption?
-                    Eventual reflection might build up when shear flow is too
-                    steep $\mathrm{Ri} \gtrsim 1/2$ or WKB breaks down
-                    $\pd{k_z}{z} \sim \frac{k_z}{\lambda_z}$.
-            \end{itemize}
+\begin{frame}
+    \frametitle{Numerical Simulations, No Shear}
+    \framesubtitle{Hypotheses}
+    \begin{itemize}
+        \item Damping layer is causing mean flow to begin building up
+            like Daniel said; is removing nonlinear terms near damping layer a
+            good idea?
+
+        \item Further growth/propagation is critical layer absorption?
+            Eventual reflection might build up when shear flow is too
+            steep $\mathrm{Ri} \gtrsim 1/2$ or WKB breaks down
+            $\pd{k_z}{z} \sim \frac{k_z}{\lambda_z}$.
+
+            The sign of the flow is
+            wrong though, $\sim -\frac{1}{c_{gz}}\ev*{u_xu_z}_x$!
     \end{itemize}
 \end{frame}
 
