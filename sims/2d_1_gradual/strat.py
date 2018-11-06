@@ -11,7 +11,7 @@ H = 1
 XMAX = 3 * H
 ZMAX = 12 * H
 
-NUM_SNAPSHOTS = 200
+NUM_SNAPSHOTS = 100
 TARGET_DISP_RAT = 1 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -37,7 +37,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 2.5
+    T_F = abs(ZMAX / VG_Z) * 2
 
     params['T_F'] = T_F
     params['g'] = g
@@ -68,41 +68,50 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (set_ic, 'linear',
+        (set_ic, 'linear1',
+         build_interp_params(2, 2, overrides={'F_MULT': 0.05,
+                                              'NU_MULT': 0.05})),
+        (set_ic, 'linear2',
+         build_interp_params(2, 2, overrides={'F_MULT': 0.05,
+                                              'NU_MULT': 1})),
+        (set_ic, 'linear3',
+         build_interp_params(2, 2, overrides={'F_MULT': 0.05,
+                                              'NU_MULT': 2})),
+        (set_ic, 'linear4',
          build_interp_params(2, 2, overrides={'F_MULT': 0.05,
                                               'NU_MULT': 4})),
-        (set_ic, 'nl1_lowres',
-         build_interp_params(2, 2, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 1,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl2_lowres',
-         build_interp_params(2, 2, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 2,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl3_lowres_test',
-         build_interp_params(2, 2, overrides={'F_MULT': 1,
-                                              'NU_MULT': 3,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl4_lowres',
-         build_interp_params(2, 2, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 4,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl0',
-         build_interp_params(1, 1, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 1,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl1',
-         build_interp_params(1, 1, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 2,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl2',
-         build_interp_params(1, 1, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 3,
-                                              'USE_CFL': True})),
-        (set_ic, 'nl3',
-         build_interp_params(1, 1, overrides={'F_MULT': 0.4,
-                                              'NU_MULT': 4,
-                                              'USE_CFL': True})),
+        # (set_ic, 'nl1_lowres',
+        #  build_interp_params(2, 2, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 1,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl2_lowres',
+        #  build_interp_params(2, 2, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 2,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl3_lowres_test',
+        #  build_interp_params(2, 2, overrides={'F_MULT': 1,
+        #                                       'NU_MULT': 3,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl4_lowres',
+        #  build_interp_params(2, 2, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 4,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl0',
+        #  build_interp_params(1, 1, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 1,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl1',
+        #  build_interp_params(1, 1, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 2,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl2',
+        #  build_interp_params(1, 1, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 3,
+        #                                       'USE_CFL': True})),
+        # (set_ic, 'nl3',
+        #  build_interp_params(1, 1, overrides={'F_MULT': 0.4,
+        #                                       'NU_MULT': 4,
+                                              # 'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
