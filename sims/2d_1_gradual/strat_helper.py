@@ -70,23 +70,29 @@ def get_solver(params):
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+    problem.substitutions['mask'] = '0.5 * ' +\
+        '(-tanh((z - 9.5 * H) /' + \
+            '(SPONGE_WIDTH * (ZMAX - 9.5 * H))) + ' +\
+        'tanh((z - (SPONGE_LOW + SPONGE_WIDTH)) /' + \
+            '(SPONGE_WIDTH * (SPONGE_LOW + SPONGE_WIDTH))))'
+    # problem.substitutions['mask'] = '0'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     problem.substitutions['t_s'] = 'T_F / 10'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(rho)) + NU * dz(rho_z))' +
-        ' = - sponge * rho - ux * dx(rho) - uz * dz(rho) +' +
+        ' = - sponge * rho - mask * (ux * dx(rho) + uz * dz(rho)) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '= - sponge * ux - ux * dx(ux) - uz * dz(ux)')
+        '= - sponge * ux - mask * (ux * dx(ux) + uz * dz(ux))')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (SPONGE_STRENGTH - sponge) * (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '= - sponge * uz - ux * dx(uz) - uz * dz(uz)')
+        '= - sponge * uz - mask * (ux * dx(uz) + uz * dz(uz))')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
@@ -139,8 +145,8 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
-        if cfl_dt < params['DT'] / 8: # small step sizes if strongly cfl limited
-            cfl_dt /= 2
+        # if cfl_dt < params['DT'] / 8: # small step sizes if strongly cfl limited
+        #     cfl_dt /= 2
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
@@ -309,8 +315,8 @@ def plot(name, params):
             var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -327,8 +333,8 @@ def plot(name, params):
                 2 * var_dat_t.real[:params['N_X'] // 2, :]))
             p = axes.pcolormesh(x2mesh,
                                 z2mesh,
-                                var_dat_shaped.T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat_shaped.T)
+                                # vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(x2mesh, z2mesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -356,7 +362,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
+            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
             axes.set_xlim(*xlims)
             axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,

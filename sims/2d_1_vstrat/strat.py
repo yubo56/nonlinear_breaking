@@ -1,6 +1,6 @@
 '''
 TODO too much weird stuff happens atop the critical layer, what to do?
-for i in {1..4}; do rm -f *.png && rsync exo15c:~/research/nonlinear_breaking/sims/2d_1_vstrat/snapshots_vstrat$i/*.png . && ffmpeg -y -framerate 12 -i 't_%d.png' vstrat$i.mp4; done
+for i in {1..4}; do rm -f *.png && rsync exo15c:~/research/nonlinear_breaking/sims/2d_1_vstrat/snapshots_vstrat$i/*.png . && ffmpeg -y -framerate 12 -i 't_%d.png' vstrat$i.mp4; done; rm -f *.png
 
 '''
 import numpy as np
