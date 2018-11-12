@@ -296,11 +296,11 @@ into~\eqref{eq:lin.mom_z} give
 Finally, we multiply~\eqref{eq:lin.eq1} with $\rho_0$ and differentiate
 $\mathrm{d}z$ and combine with~\eqref{eq:lin.eq2} to give
 \begin{equation}
-    \rtd{u_{1z}}{z} + \frac{1}{\rho_0}\pd{\rho_0}{z}\pd{u_{1z}}{z}
+    \ptd{u_{1z}}{z} + \frac{1}{\rho_0}\pd{\rho_0}{z}\pd{u_{1z}}{z}
         + k_x^2\p*{\frac{N^2}{\omega^2} - 1}u_{1z} = 0.\label{eq:lin.incomp.gen}
 \end{equation}
 
-Let's now pick stratification $\rho \propto e^{-z/H}$
+Let's now pick stratification $\rho_0 \propto e^{-z/H}$
 \autoref{eq:lin.incomp.gen} clearly has exponential solutions $e^{\kappa z}$ for
 \begin{equation}
     \kappa^2 - \frac{\kappa}{H} + k_x^2\p*{\frac{N^2}{\omega^2} - 1} = 0.
@@ -1445,7 +1445,7 @@ equation, which immediately leaves us with
     \pd{\vec{u}_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
         + \vec{\nabla} \p*{\frac{P_1}{\rho_0}} - \frac{g}{c_p}S_1 \hat{z}
             &= 0,\\
-    \pd{S_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}S_1
+    \pd{S_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}(S_0 + S_1)
         &= 0.
 \end{align}
 Note that when accounting for $N^2 = \frac{g}{c_p}\rd{S_0}{z}$ so $c_p = S_0$
@@ -1454,15 +1454,11 @@ immediately gives us Sutherland's equations from his 2011 paper.
 We now make one further approximation: we have already taken the low Mach number
 approximation, so we will approximate $\rho_1 = \frac{\rho_0}{\gamma P_0}P_1 -
 \frac{\rho_0}{S_0}S_1 \approx -\frac{\rho_0}{S_0}S_1$, which allows us to
-eliminate $S$. We must be careful in taking this approximation (and indeed, it
-may be unjustified), since the difference term $\vec{\nabla}\frac{P_1}{\rho_0} -
-\frac{\vec{\nabla}P_1}{\rho_0} = -\frac{P_1 \vec{\nabla}\rho_0}{\rho_0^2}$ is
-now small as well. What to do with it is dictated by the requirement that
-horizontal momentum be conserved. With this in mind, the momentum equation
-must be
+eliminate $S$. With this in mind, the momentum equation can be rewritten
 \begin{equation}
     \pd{\vec{u}_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
-        + \frac{\vec{\nabla}P_1}{\rho_0} + \frac{\rho_1}{\rho_0}g\hat{z} = 0.
+        + \vec{\nabla}\p*{\frac{P_1}{\rho_0}}
+        + \frac{\rho_1}{\rho_0}g\hat{z} = 0.
 \end{equation}
 We may verify that horizontal momentum is conserved by multiplying through with
 $\rho_0$ again.
@@ -1590,9 +1586,13 @@ and energy, yield:
         \end{equation}
 \end{description}
 
-\section{The Anelastic/Boussinesq Approximations (old)}
+\section{The Anelastic/Boussinesq Approximations}
 
 \subsection{Developing the Anelastic/Boussinesq Approximations}
+
+This follows a step by step derivation of the usual anelastic approximation that
+is used in atmospheric sciences. It's not the most careful treatment but should
+give some intuition as to how the equation of state is handled.
 
 Let's relax the incompressibility constraint (we will expand the continuity
 equation to first order, but the momentum equation will merit a separate
@@ -1630,7 +1630,7 @@ For the momentum equation, we instead first manipulate to first order
 We now have three equations for four variables, $\vec{u}_1, \rho_1, P_1$. We
 must introduce a fourth equation, a thermodynamic equation. For an adiabatic
 process $P\rho^{-\gamma} \propto P^{1-\gamma}T^\gamma$ is constant. We thus
-introduce the concept of the \emph{potential temperature}
+introduce the concept of the \emph{potential temperature} (just the entropy)
 \begin{equation}
     \theta = T\p*{\frac{P_0}{P}}^\kappa.
         \label{eq:pot_temp}
@@ -1638,7 +1638,7 @@ introduce the concept of the \emph{potential temperature}
 For an adiabatic process, $\rd{\theta}{t} = 0$. Motivated by this, we use
 \begin{equation}
     \begin{split}
-        \pd{1}{\rho_0}\pd{\rho_0}{z} &= \frac{1}{\gamma P_0}\pd{P_0}{z}
+        \frac{1}{\rho_0}\pd{\rho_0}{z} &= \frac{1}{\gamma P_0}\pd{P_0}{z}
             - \frac{1}{\theta_0}\pd{\theta_0}{z},\\
         \frac{\rho_1}{\rho_0} &= \frac{1}{\gamma} \frac{P_1}{P_0}
             - \frac{\theta_1}{\theta_0},
@@ -1659,7 +1659,7 @@ so as $N^2 \ll \frac{g}{D}$ the freefall time we neglect the second term.
 The anelastic fluid equations thus read
 \begin{equation}
     \begin{split}
-        \vec{\nabla} \cdot \p*{\rho_0\vec{u}} &= 0,\\
+        \vec{\nabla} \cdot \p*{\rho_0\vec{u}_1} &= 0,\\
         \pd{\vec{u}_1}{t} + \vec{\nabla}\p*{\frac{P_1}{\rho_0}}
             - \vec{g}\frac{\theta_1}{\theta_0} &= 0,\\
         \pd{\theta_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\theta_0 &= 0.
