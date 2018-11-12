@@ -1198,90 +1198,6 @@ It is helpful also to write this down for any arbitrary hyperviscosity $f_{visc}
     R\p*{z_c} = \nu^{(n)} \sqrt{\frac{N^{n - 1}k_x^{n - 1}}{u_{1z}^{n + 1}}}.
 \end{equation}
 
-\section{Traveling Breaking Front}
-
-Motivated by simulations, we posit the existence of a hydraulic jump, similar to
-shocks in nature. We thus need to develop jump conditions, similar to the
-Rankine-Huginot jump conditions for shocks.
-
-The R-H jump conditions take the conservation equations and integrate over a
-control volume. Since in a hydrodynamic shock, all fluid quantities are
-advected, all conservation equations are necessary. A simpler treatment is
-merited for IGW breaking, since very few quantities are advected (notably,
-vertical momentum and density are not).
-
-Let's consider first the advection of horizontal momentum $\rho_0 u_{1x}$ to
-leading order. This satisfies conservation equation
-\begin{equation}
-    \pd{P_x}{t} + \vec{\nabla} \cdot \p*{\rho_0 u_{1x}\vec{u}_1} = 0.
-\end{equation}
-Integrating over control volume $V = \s*{-\infty, \infty} \times \s*{z < z_b, z
-> z_b}$ the full horizontal domain times the breaking zone, we require the total
-horizontal momentum of the zone be constant in time, if we permit $z_b$ to move
-with velocity $u_b$ the breaking front velocity. This equates to
-\begin{equation}
-    \Delta P_x - \s*{\rho_0 u_{1x}u_b}_{z > z_b}
-        + \s*{\rho_0 u_{1x}\p*{u_{1z} - u_b}}_{z < z_b} = 0.
-\end{equation}
-We've called $\Delta P_x$ the change in horizontal momentum in the breaking zone
-(so the boundary integral over the endcaps of the domain, effectively). Now,
-based on simulations, we identify that $u_{1x}\p*{z > z_c} = B\cos \kappa z$
-seems to form a standing wave pattern. Note that since this is a pure shear
-flow, it is consistent with an incompressible fluid and $u_{1z}\p*{z > z_c} =
-0$.
-
-Permitting such a flow above the breaking zone, then we substitute our known
-linear solution $u_{1x} \approx \frac{k_z}{k_x} u_{1z} \propto Ae^{z / 2H}\cos
-\omega_0 t$ and $\rho_0 = \tilde{\rho}e^{-z/H}$ and evaluate harmonics of $\cos
-\omega_0 t$ to obtain
-\begin{align}
-    \Delta P_x\p*{\omega = 0} &= \tilde{\rho}\frac{A^2}{2}\frac{k_z}{k_x},\\
-    \Delta P_x\p*{\omega = \omega_0}
-        &= u_b Ae^{-z/2H}\tilde{\rho}\cos \omega_0 t,\\
-    \Delta P_k(\omega = 2\omega_0) &=
-        -u_b \cos (\kappa u_bt)
-            + \frac{k_z}{k_x}\frac{A^2}{2B}e^{z/H} \cos 2 \omega_0 t.
-\end{align}
-We can easily interpret $\Delta P_x(0)$ to be the deposition of the horizontal
-momentum of the wave, and $\Delta P_x\p*{\omega = \omega_0}$ to be just the wave
-flowing through the deposition zone; it time averages to zero anyways, so it's
-not super interesting.
-
-Instead, if we dare make identification $u_b = \frac{2\omega_0}{\kappa}$ (the
-only way $u_b \neq 0$), then the deposition to
-\begin{equation}
-    \Delta P_k\p*{\omega = 2\omega_0} = \p*{\frac{A^2}{2B}e^{z/H} -
-        \frac{2\omega_0}{\kappa}}\cos 2\omega_0 t,
-\end{equation}
-i.e.\ the standing wave pattern above can sap some $2\omega_0$ frequency $P_x$
-out of the mean flow via a breaking front.
-
-\subsection{Finding and Explaining the Breaking Front}
-
-It is a bit tricky to interpret this, so I'll just jot down some ideas lest I
-forget them in my sleep-deprived state. If we require that the breaking front
-only sap momentum from the wave (and not from the mean flow), then the breaking
-front shuts of when $\frac{A^2}{2B}e^{z/H} \sim \frac{2\omega_0}{\kappa}$. It's
-also unclear how $\kappa$ is chosen as well. But based on preliminary
-simulations, this is actually pretty accurate for observed $\kappa, u_b$!
-
-Encouragingly, we can guess at where $\kappa$ comes from. Since the waveform
-above the breaking zone has to lose its $k_x$ component, we may guess that the
-incoming wave $\cos \p*{k_xx + k_zz}$ must interact nonlinearly  with another
-wave to knock out the $k_xx$ contribution. One possible candidate would have a
-$\cos \p*{-k_xx + k_zz}$ such that their product $\cos 2k_zz$, in which case
-$\kappa = 2k_z$. This also seems to be reasonable from a few of our simulations,
-but this requires thus that $2k_z$ be much longer than the viscous length scale;
-this would explain why we don't see it on our low-resolution simulations at $z
-\in [0, 12H], N_Z = 512$ but only on $N_Z = 1024$. The desired $\cos \p*{-k_xx +
-k_zz}$ is just a reflected wave in the $x$ direction, so I guess it can come
-from the viscous subscales pushing against the horizontal momentum/mean flow?
-In any case it's not inconceivable it would exist, and it should be the dominant
-$-k_xx$ term compared e.g.\ to $-k_xx + 0z, -k_xx + 2k_zz$.
-
-TODO We need simulations next of the front breaking down, to understand where it
-would stop, since we don't have a criterion for it yet.
-
 \chapter{Cylindrical Stratified Flow}
 
 We fearlessly tackle the cylindrical coordinate problem, using Tsang \& Lai 2008
@@ -1456,6 +1372,113 @@ cylindrical coordinates once the WKB regime is hit (where we're reasonably far
 away that we don't have to worry about the non-wave-like distortion of the
 geometry; is this the same as the plane wave limit though?).
 
+\chapter{Anelastic Fluid Equations}
+
+\section{Inadequacy of Incompressible Stratified Equations}
+
+To perform simulations up to $u \sim c_p \ll c_s$ and include the advective
+terms but no sound-speed-order terms, we need to make sure our equations
+qualitatively match the fully nonlinear (including sound speed) equations.
+In a stratified atmosphere, the incompressible equations are qualitatively
+wrong. The full fluid equations consist of conservation equations plus an
+equation of state, so our reduced equations must conserve the same quantities.
+The equations which we simulated above, the incompressible nonlinear equations,
+must themselves also conserve the same quantities.
+
+Our system, which drops its energy conservation equation, consists of momentum
+conservation, mass conservation and an incompressible equation of state
+$\rd{\rho}{t} = 0$. Note however that the horizontally averaged horizontal
+momentum $\ev*{\rho u_{1x}} = \ev*{\rho_0 u_{1x}}$ is \emph{not} conserved by
+our above equations:
+\begin{equation}
+    \rho_0 \pd{u_{1x}}{t} + \rho_0 \p*{\vec{u}_1 \cdot \vec{\nabla}} u_{1x}
+        + \vec{\nabla}P_1 = 0.
+\end{equation}
+Since $\pd{\rho_0}{t} = 0$, we may try to put this into flux conservative form
+via
+\begin{equation}
+    \pd{(\rho_0 u_{1x})}{t} + \vec{\nabla} \cdot
+        \p*{\rho_0 \vec{u}_1 u_{1x} + \bm{P}_1}
+        = u_{1x} \vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1}.
+\end{equation}
+We combine some scalar gradients into tensors, but it's clear that there is an
+extra term that \emph{is not} cancelled by the usual incompressibility criterion
+$\vec{\nabla} \cdot \vec{u}_1 = 0$. It bears noting this term only cancels
+\emph{in the Boussinesq approximation} where $\rho_0$ is held constant.
+
+\section{Anelastic Fluid Equations}
+
+The anelastic fluid equations replace incompressibility with the obvious
+$\vec{\nabla} \cdot (\rho_0\vec{u}_1) = 0$ to conserve momentum $\rho_0 u_{1x}$
+exactly. There are however many flavors of anelastic approximations however, the
+large majority of which reintroduce a temperature/entropy variable. This
+probably comes about because most uses of the anelastic equations examine
+convective systems, for which thermal diffusivity is important. For us, where
+all fluid motion is fairly local, it seems reasonable to only permit fluid
+advection and simplify our model, so we can stay with only two state variables
+$P, \rho$ along with the flow $\vec{u}$. We still use numerical viscosities, but
+these are more so a subgrid model and not physical, so we will just reintroduce
+them before simulating.
+
+From here, it's a simple matter of taking limits of existing anelastic
+approximations. We will start with the full system from Glatzmaier's book:
+\begin{align}
+    0 &= \vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1},\\
+    \rho_1 &= \frac{\rho_0}{\gamma P_0}P_1 - \frac{\rho_0}{c_p}S_1
+        = \at{\pd{\rho_0}{P_0}}_S P_1 + \at{\pd{\rho_0}{S_0}}_P S_1,\\
+    N^2 &= \frac{g}{c_p}\rd{S_0}{z},\\
+    0 &= \pd{\vec{u}_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
+        + \vec{\nabla}\p*{\frac{P_1}{\rho_0} + \Phi_1}
+        + \at{\pd{\rho_0}{S_0}}P \frac{g}{\rho_0}S\hat{z}
+        - \nu \p*{\nabla^2 \vec{u}_1 + \frac{1}{3}\vec{\nabla}\p*{\vec{\nabla}
+            \cdot \vec{u}_1}},\\
+    0 &= \pd{S_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}S_1
+        + u_{1z}\rd{S_0}{z}
+        - \frac{1}{\rho_0 T_0} \vec{\nabla} \cdot \p*{\kappa \rho_0 T_0
+            \vec{\nabla} S_1}.
+\end{align}
+We obviously take $\Phi_1 = 0$ the Cowling approximation. Of course, in our
+problem, we may drop all the viscous terms from the momentum equation and energy
+equation, which immediately leaves us with
+\begin{align}
+    \vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1} &= 0,\\
+    \pd{\vec{u}_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
+        + \vec{\nabla} \p*{\frac{P_1}{\rho_0}} - \frac{g}{c_p}S_1 \hat{z}
+            &= 0,\\
+    \pd{S_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}S_1
+        &= 0.
+\end{align}
+Note that when accounting for $N^2 = \frac{g}{c_p}\rd{S_0}{z}$ so $c_p = S_0$
+immediately gives us Sutherland's equations from his 2011 paper.
+
+We now make one further approximation: we have already taken the low Mach number
+approximation, so we will approximate $\rho_1 = \frac{\rho_0}{\gamma P_0}P_1 -
+\frac{\rho_0}{S_0}S_1 \approx -\frac{\rho_0}{S_0}S_1$, which allows us to
+eliminate $S$. We must be careful in taking this approximation (and indeed, it
+may be unjustified), since the difference term $\vec{\nabla}\frac{P_1}{\rho_0} -
+\frac{\vec{\nabla}P_1}{\rho_0} = -\frac{P_1 \vec{\nabla}\rho_0}{\rho_0^2}$ is
+now small as well. What to do with it is dictated by the requirement that
+horizontal momentum be conserved. With this in mind, the momentum equation
+must be
+\begin{equation}
+    \pd{\vec{u}_1}{t} + \p*{\vec{u}_1 \cdot \vec{\nabla}}\vec{u}_1
+        + \frac{\vec{\nabla}P_1}{\rho_0} + \frac{\rho_1}{\rho_0}g\hat{z} = 0.
+\end{equation}
+We may verify that horizontal momentum is conserved by multiplying through with
+$\rho_0$ again.
+
+The entropy equation takes a bit more work, but we may show that
+\begin{align}
+    -\frac{c_p}{\rho_0}\pd{\rho_1}{t} - c_p \vec{u}_1 \cdot
+        \vec{\nabla}\p*{\frac{\rho_1}{\rho_0}} - \frac{u_1 c_p N^2}{g} &= 0,\\
+    \pd{\rho_1}{t} + \vec{u}_1 \cdot \vec{\nabla}\rho_1
+        - \frac{\rho_1\vec{u}_1 \cdot \vec{\nabla}\rho_0}{\rho_0}
+        - \frac{u_{1z}\rho_0}{H} &= 0,\nonumber\\
+    \pd{\rho_1}{t} + \vec{\nabla}\p*{\rho_1 \vec{u}_1} - \frac{u_{1z}\rho_0}{H}
+        &= 0.
+\end{align}
+We have used $\vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1} = 0$.
+
 \clearpage
 
 \appendix
@@ -1567,7 +1590,7 @@ and energy, yield:
         \end{equation}
 \end{description}
 
-\section{The Anelastic/Boussinesq Approximations}
+\section{The Anelastic/Boussinesq Approximations (old)}
 
 \subsection{Developing the Anelastic/Boussinesq Approximations}
 
@@ -1721,6 +1744,94 @@ I'm too lazy to re-notate my variables, so all of them are constant amplitude
 over $z$ now.
 
 \section{Hydraulic Jumps in Surface Waves}
+
+This seems to be largely dated now, we believe that the sharp jump in the
+nonlinear simulations we are seeing are mean flow interactions, rather than
+hydraulic jumps.
+
+\subsection{Traveling Breaking Front}
+
+Motivated by simulations, we posit the existence of a hydraulic jump, similar to
+shocks in nature. We thus need to develop jump conditions, similar to the
+Rankine-Huginot jump conditions for shocks.
+
+The R-H jump conditions take the conservation equations and integrate over a
+control volume. Since in a hydrodynamic shock, all fluid quantities are
+advected, all conservation equations are necessary. A simpler treatment is
+merited for IGW breaking, since very few quantities are advected (notably,
+vertical momentum and density are not).
+
+Let's consider first the advection of horizontal momentum $\rho_0 u_{1x}$ to
+leading order. This satisfies conservation equation
+\begin{equation}
+    \pd{P_x}{t} + \vec{\nabla} \cdot \p*{\rho_0 u_{1x}\vec{u}_1} = 0.
+\end{equation}
+Integrating over control volume $V = \s*{-\infty, \infty} \times \s*{z < z_b, z
+> z_b}$ the full horizontal domain times the breaking zone, we require the total
+horizontal momentum of the zone be constant in time, if we permit $z_b$ to move
+with velocity $u_b$ the breaking front velocity. This equates to
+\begin{equation}
+    \Delta P_x - \s*{\rho_0 u_{1x}u_b}_{z > z_b}
+        + \s*{\rho_0 u_{1x}\p*{u_{1z} - u_b}}_{z < z_b} = 0.
+\end{equation}
+We've called $\Delta P_x$ the change in horizontal momentum in the breaking zone
+(so the boundary integral over the endcaps of the domain, effectively). Now,
+based on simulations, we identify that $u_{1x}\p*{z > z_c} = B\cos \kappa z$
+seems to form a standing wave pattern. Note that since this is a pure shear
+flow, it is consistent with an incompressible fluid and $u_{1z}\p*{z > z_c} =
+0$.
+
+Permitting such a flow above the breaking zone, then we substitute our known
+linear solution $u_{1x} \approx \frac{k_z}{k_x} u_{1z} \propto Ae^{z / 2H}\cos
+\omega_0 t$ and $\rho_0 = \tilde{\rho}e^{-z/H}$ and evaluate harmonics of $\cos
+\omega_0 t$ to obtain
+\begin{align}
+    \Delta P_x\p*{\omega = 0} &= \tilde{\rho}\frac{A^2}{2}\frac{k_z}{k_x},\\
+    \Delta P_x\p*{\omega = \omega_0}
+        &= u_b Ae^{-z/2H}\tilde{\rho}\cos \omega_0 t,\\
+    \Delta P_k(\omega = 2\omega_0) &=
+        -u_b \cos (\kappa u_bt)
+            + \frac{k_z}{k_x}\frac{A^2}{2B}e^{z/H} \cos 2 \omega_0 t.
+\end{align}
+We can easily interpret $\Delta P_x(0)$ to be the deposition of the horizontal
+momentum of the wave, and $\Delta P_x\p*{\omega = \omega_0}$ to be just the wave
+flowing through the deposition zone; it time averages to zero anyways, so it's
+not super interesting.
+
+Instead, if we dare make identification $u_b = \frac{2\omega_0}{\kappa}$ (the
+only way $u_b \neq 0$), then the deposition to
+\begin{equation}
+    \Delta P_k\p*{\omega = 2\omega_0} = \p*{\frac{A^2}{2B}e^{z/H} -
+        \frac{2\omega_0}{\kappa}}\cos 2\omega_0 t,
+\end{equation}
+i.e.\ the standing wave pattern above can sap some $2\omega_0$ frequency $P_x$
+out of the mean flow via a breaking front.
+
+\subsection{Finding and Explaining the Breaking Front}
+
+It is a bit tricky to interpret this, so I'll just jot down some ideas lest I
+forget them in my sleep-deprived state. If we require that the breaking front
+only sap momentum from the wave (and not from the mean flow), then the breaking
+front shuts of when $\frac{A^2}{2B}e^{z/H} \sim \frac{2\omega_0}{\kappa}$. It's
+also unclear how $\kappa$ is chosen as well. But based on preliminary
+simulations, this is actually pretty accurate for observed $\kappa, u_b$!
+
+Encouragingly, we can guess at where $\kappa$ comes from. Since the waveform
+above the breaking zone has to lose its $k_x$ component, we may guess that the
+incoming wave $\cos \p*{k_xx + k_zz}$ must interact nonlinearly  with another
+wave to knock out the $k_xx$ contribution. One possible candidate would have a
+$\cos \p*{-k_xx + k_zz}$ such that their product $\cos 2k_zz$, in which case
+$\kappa = 2k_z$. This also seems to be reasonable from a few of our simulations,
+but this requires thus that $2k_z$ be much longer than the viscous length scale;
+this would explain why we don't see it on our low-resolution simulations at $z
+\in [0, 12H], N_Z = 512$ but only on $N_Z = 1024$. The desired $\cos \p*{-k_xx +
+k_zz}$ is just a reflected wave in the $x$ direction, so I guess it can come
+from the viscous subscales pushing against the horizontal momentum/mean flow?
+In any case it's not inconceivable it would exist, and it should be the dominant
+$-k_xx$ term compared e.g.\ to $-k_xx + 0z, -k_xx + 2k_zz$.
+
+TODO We need simulations next of the front breaking down, to understand where it
+would stop, since we don't have a criterion for it yet.
 
 We originally got started on this since it seems like a dimensionally-restricted
 version of what we're seeing in simulations, but presently unclear whether
