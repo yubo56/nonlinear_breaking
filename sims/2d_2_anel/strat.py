@@ -22,10 +22,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -2 * np.pi / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 6,
-              'SPONGE_WIDTH': 0.5,
-              'SPONGE_HIGH': 0.93 * ZMAX,
+              'Z0': 0.2 * ZMAX,
+              'SPONGE_STRENGTH': 10,
+              'SPONGE_WIDTH': 0.3,
+              'SPONGE_HIGH': 0.9 * ZMAX,
               'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
@@ -48,7 +48,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(0.1 / OMEGA, 1)
+    params['DT'] = min(0.1 / OMEGA, 0.1)
     params['F'] = params.get('F_MULT', 1) * \
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
         * np.exp(-params['Z0'] / (2 * H))
@@ -69,21 +69,27 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
        (set_ic, 'linear1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
+        build_interp_params(2, 2, overrides={'F_MULT': 0.00005,
                                              'Re': 0.05})),
-       (set_ic, 'linear2',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
-                                             'Re': 0.2})),
+       # (set_ic, 'nl1',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 0.5,
+       #                                       'Re': 0.2,
+       #                                       'USE_CFL': True})),
        (set_ic, 'nl1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.5,
+        build_interp_params(2, 2, overrides={'F_MULT': 0.1 / 15,
+                                             'Re': 0.2,
+                                             'USE_CFL': True})),
+       (set_ic, 'nl2',
+        build_interp_params(2, 2, overrides={'F_MULT': 0.3 / 15,
                                              'Re': 0.2,
                                              'USE_CFL': True})),
        (set_ic, 'nl3',
-        build_interp_params(2, 2, overrides={'F_MULT': 1.5,
+        build_interp_params(2, 2, overrides={'F_MULT': 0.7 / 15,
                                              'Re': 0.2,
                                              'USE_CFL': True})),
-       (set_ic, 'nl2_highres',
-        build_interp_params(1, 1, overrides={'Re': 0.2,
+       (set_ic, 'nl4',
+        build_interp_params(2, 2, overrides={'F_MULT': 2 / 15,
+                                             'Re': 0.2,
                                              'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:

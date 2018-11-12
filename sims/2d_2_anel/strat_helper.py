@@ -72,44 +72,38 @@ def get_solver(params):
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
-    # problem.substitutions['mask'] = '0.5 * ' +\
-    #     '(-tanh((z - 9.5 * H) /' + \
-    #         '(SPONGE_WIDTH * (ZMAX - 9.5 * H))) + ' +\
-    #     'tanh((z - (SPONGE_LOW + SPONGE_WIDTH)) /' + \
-    #         '(SPONGE_WIDTH * (SPONGE_LOW + SPONGE_WIDTH))))'
-    problem.substitutions['mask'] = '1'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
-    problem.substitutions['t_s'] = 'T_F / 10'
-    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation('rho0 * dx(ux) + rho0 * uz_z - uz * rho0 / H = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (NU * dx(dx(rho)) + NU * dz(rho_z))' +
-        ' = - sponge * rho - mask * (ux * dx(rho) + uz * dz(rho)) +' +
+        ' = - sponge * rho -' +
+        '(ux * dx(rho) + uz * dz(rho) + rho * (dx(ux) + uz_z)) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '= - sponge * ux - mask * (ux * dx(ux) + uz * dz(ux))')
+        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '= - sponge * uz - mask * (ux * dx(uz) + uz * dz(uz))')
+        '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
 
 
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = 0')
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = 0', condition='nx != 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
     problem.add_bc('right(rho) = 0')
     problem.add_bc('left(rho) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -130,7 +124,7 @@ def run_strat_sim(set_ICs, name, params):
               cadence=10,
               max_dt=params['DT'],
               min_dt=0.01,
-              safety=0.5,
+              safety=1,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
     cfl.add_frequency(params['DT'])
@@ -251,7 +245,6 @@ def load(name, params):
     return sim_times, domain, state_vars
 
 def plot(name, params):
-
     rank = CW.rank
     size = CW.size
 
