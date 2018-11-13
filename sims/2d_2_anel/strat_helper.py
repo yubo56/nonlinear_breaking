@@ -82,11 +82,11 @@ def get_solver(params):
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
-        'dt(ux) + dx(P) / rho0' +
+        'dt(ux) + dx(P)' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
         '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))')
     problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
+        'dt(uz) + dz(P) + rho * g / rho0' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
         '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))')
     problem.add_equation('dz(ux) - ux_z = 0')
@@ -103,7 +103,7 @@ def get_solver(params):
     problem.add_bc('left(rho) = 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK443)
+    solver = problem.build_solver(de.timesteppers.RK222)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -121,7 +121,7 @@ def run_strat_sim(set_ICs, name, params):
 
     cfl = CFL(solver,
               initial_dt=dt,
-              cadence=10,
+              cadence=5,
               max_dt=params['DT'],
               min_dt=0.01,
               safety=1,
@@ -315,8 +315,8 @@ def plot(name, params):
             var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -333,8 +333,8 @@ def plot(name, params):
                 2 * var_dat_t.real[:params['N_X'] // 2, :]))
             p = axes.pcolormesh(x2mesh,
                                 z2mesh,
-                                var_dat_shaped.T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat_shaped.T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(x2mesh, z2mesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -362,7 +362,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
             axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,

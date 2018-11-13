@@ -15,5 +15,7 @@ function shdeactivate () {
     unalias rsync_from
 }
 
-alias rsync_to='rm -f snapshots*/*.h5 && rsync -aP ./*.py yubosu@exo3.astro.cornell.edu:$(dirs)'
-alias rsync_from='rsync -aP yubosu@exo3.astro.cornell.edu:$(dirs) .. --exclude=*.h5'
+alias rsync_to='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo3:$(dirs)'
+alias rsync_from='rsync -aP exo3:$(dirs) .. --exclude=*.h5'
+alias rsync_to_15='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo15c:$(dirs)'
+alias rsync_from_15='rsync -aP exo15c:$(dirs) .. --exclude=*.h5'
