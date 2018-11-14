@@ -37,12 +37,13 @@ def set_ic(solver, domain, params):
 
     # turns on at Z0 + ZMAX / 2 w/ width 2 * lambda_z, turns off at sponge zone
     zmax = params['ZMAX']
-    z_top = params['SPONGE_HIGH']
+    KZ = params['KZ']
     z_bot = (params['Z0'] + params['ZMAX']) / 2
-    width = np.pi / KZ if not params['STEEP'] else (4 * np.pi) / KZ
-    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (2 +
-        np.tanh((z - z_top) / (0.3 * (zmax - z_top))) -
-        np.tanh((z - zbot) / width)) / 2
+    width = abs(np.pi / KZ if not params['STEEP'] else (4 * np.pi) / KZ)
+    z_top = z_bot + 3 * width
+    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
+        np.tanh((z - z_bot) / width) -
+        np.tanh((z - z_top) / (0.3 * (zmax - z_top)))) / 2
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -364,5 +365,5 @@ def plot(name, params):
         plt.savefig('%s/%s' % (snapshots_dir, savefig))
         print('Saved %s/%s' % (snapshots_dir, savefig))
         plt.close()
-    os.system('ffmpeg -y -framerate 12 -i %s/%s %s.mp4' %
-              (snapshots_dir, SAVE_FMT_STR, name))
+    # os.system('ffmpeg -y -framerate 12 -i %s/%s %s.mp4' %
+    #           (snapshots_dir, SAVE_FMT_STR, name))

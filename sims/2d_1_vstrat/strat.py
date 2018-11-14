@@ -70,7 +70,9 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (set_ic, 'vstrat1',
+        (set_ic, 'vstrat_low',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 0.1})),
+        (set_ic, 'vstrat',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1})),
     ]
     if '-plot' in sys.argv:
