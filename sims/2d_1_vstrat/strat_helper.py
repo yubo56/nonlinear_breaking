@@ -34,9 +34,6 @@ def get_vgz(g, h, kx, kz):
 def set_ic(solver, domain, params):
     ux = solver.state['ux']
     z = domain.grid(1)
-    problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
 
     # turns on at Z0 + ZMAX / 2 w/ width 2 * lambda_z, turns off at sponge zone
     zmax = params['ZMAX']
