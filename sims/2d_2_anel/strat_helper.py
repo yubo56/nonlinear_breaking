@@ -73,22 +73,24 @@ def get_solver(params):
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
-    problem.add_equation('rho0 * dx(ux) + rho0 * uz_z - uz * rho0 / H = 0')
+    problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (NU * dx(dx(rho)) + NU * dz(rho_z))' +
         ' = - sponge * rho -' +
-        '(ux * dx(rho) + uz * dz(rho) + rho * (dx(ux) + uz_z)) +' +
+        '(ux * dx(rho) + uz * dz(rho)) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
-        'dt(ux) + dx(P)' +
+        'dt(ux) + dx(P) / rho0' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))')
+        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))' +
+        '+ rho * dx(P) / rho0**2')
     problem.add_equation(
-        'dt(uz) + dz(P) + rho * g / rho0' +
+        'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))')
+        '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))' +
+        '+ rho * dz(P) / rho0**2')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')

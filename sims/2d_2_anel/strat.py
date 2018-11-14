@@ -68,6 +68,14 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
+       # (set_ic, 'nl_test',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 1,
+       #                                       'Re': 0.5,
+       #                                       'USE_CFL': True})),
+       (set_ic, 'nl_test2',
+        build_interp_params(2, 2, overrides={'F_MULT': 10,
+                                             'Re': 0.5,
+                                             'USE_CFL': True})),
        # (set_ic, 'nl1',
        #  build_interp_params(2, 2, overrides={'F_MULT': 1,
        #                                       'Re': 0.5,
@@ -76,13 +84,13 @@ if __name__ == '__main__':
        #  build_interp_params(2, 2, overrides={'F_MULT': 3,
        #                                       'Re': 0.5,
        #                                       'USE_CFL': True})),
-       (set_ic, 'nl3',
-        build_interp_params(2, 2, overrides={'F_MULT': 10,
-                                             'Re': 0.5,
-                                             'USE_CFL': True})),
-       (set_ic, 'linear1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.00005,
-                                             'Re': 0.5})),
+       # (set_ic, 'nl3',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 10,
+       #                                       'Re': 0.5,
+       #                                       'USE_CFL': True})),
+       # (set_ic, 'linear1',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 0.00005,
+       #                                       'Re': 0.5})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
