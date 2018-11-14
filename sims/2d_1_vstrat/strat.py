@@ -1,17 +1,18 @@
 '''
-TODO too much weird stuff happens atop the critical layer, what to do?
 for i in {1..4}; do rm -f *.png && rsync exo15c:~/research/nonlinear_breaking/sims/2d_1_vstrat/snapshots_vstrat$i/*.png . && ffmpeg -y -framerate 12 -i 't_%d.png' vstrat$i.mp4; done; rm -f *.png
 
 '''
 import numpy as np
 import sys
 from strat_helper import *
+from mpi4py import MPI
+CW = MPI.COMM_WORLD
 
 H = 1
 XMAX = H
 ZMAX = H
 
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 300
 TARGET_DISP_RAT = 0.7
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -19,12 +20,12 @@ PARAMS_RAW = {'XMAX': XMAX,
               'N_X': 64,
               'N_Z': 256,
               'KX': 2 * np.pi / XMAX,
-              'KZ': -20 * np.pi / H,
+              'KZ': -10 * np.pi / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.2 * ZMAX,
-              'SPONGE_STRENGTH': 1,
-              'SPONGE_WIDTH': 0.8,
+              'Z0': 0.15 * ZMAX,
+              'SPONGE_STRENGTH': 10,
+              'SPONGE_WIDTH': 0.5,
               'SPONGE_HIGH': 0.93 * ZMAX,
               'SPONGE_LOW': 0.07 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
@@ -42,7 +43,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['T_F'] = T_F
     params['g'] = g
     params['OMEGA'] = OMEGA
-    params['S'] = params['ZMAX'] / 512 * 6
+    params['S'] = params['ZMAX'] / 512 * 4
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     params['N_X'] //= interp_x
@@ -54,9 +55,10 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['NU'] = params.get('NU_MULT', 1) * \
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
-    params['UZ0_COEFF'] = params.get('UZ0_COEFF', 2)
-    params['STEEP'] = params.get('STEEP', True)
-    print(params)
+    params['UZ0_COEFF'] = params.get('UZ0_COEFF', 1)
+    params['STEEP'] = params.get('STEEP', False)
+    if CW.rank == 0: # print only on root process
+        print(params)
     return params
 
 def run(ic, name, params_dict):
@@ -70,19 +72,15 @@ if __name__ == '__main__':
     tasks = [
         (set_ic, 'vstrat1',
          build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1})),
-        (set_ic, 'vstrat2',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2})),
-        (set_ic, 'vstrat3',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 1,
-                                              'STEEP': False})),
-        (set_ic, 'vstrat4',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40, 'UZ0_COEFF': 2,
-                                              'STEEP': False})),
     ]
-    if '-plot' not in sys.argv:
-        for task in tasks:
-            run(*task)
-
-    else:
+    if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
             plot(name, params_dict)
+
+    elif '-merge' in sys.argv:
+        for _, name, _ in tasks:
+            merge(name)
+
+    else:
+        for task in tasks:
+            run(*task)

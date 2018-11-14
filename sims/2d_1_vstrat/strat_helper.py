@@ -4,6 +4,8 @@ helper function to run the shared stratification scenario. user just has to
 specify BCs and ICs
 '''
 import logging
+logger = logging.getLogger()
+
 import os
 from collections import defaultdict
 
@@ -32,14 +34,18 @@ def get_vgz(g, h, kx, kz):
 def set_ic(solver, domain, params):
     ux = solver.state['ux']
     z = domain.grid(1)
-    if params['STEEP']:
-        ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
-            np.exp(-(z - params['Z0'] - params['ZMAX'] / 2)**2 /
-                   (2 * (np.pi / (2 * params['KZ']))**2))
-    else:
-    # KX is conveniently 2pi / XMAX = 2pi / ZMAX
-        ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * \
-            (1 - np.cos(params['KX'] * (z - params['Z0']))) / 2
+    problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
+        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
+        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+
+    # turns on at Z0 + ZMAX / 2 w/ width 2 * lambda_z, turns off at sponge zone
+    zmax = params['ZMAX']
+    z_top = params['SPONGE_HIGH']
+    z_bot = (params['Z0'] + params['ZMAX']) / 2
+    width = np.pi / KZ if not params['STEEP'] else (4 * np.pi) / KZ
+    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (2 +
+        np.tanh((z - z_top) / (0.3 * (zmax - z_top))) -
+        np.tanh((z - zbot) / width)) / 2
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -64,8 +70,6 @@ def get_solver(params):
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
-    problem.substitutions['t_s'] = 'T_F / 10'
-
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(rho) - RHO0 * uz / H' +
@@ -89,7 +93,7 @@ def get_solver(params):
     problem.add_equation('P = 0', condition='nx == 0 and nz == 0')
 
     # Build solver
-    solver = problem.build_solver(de.timesteppers.RK222)
+    solver = problem.build_solver(de.timesteppers.RK443)
     solver.stop_sim_time = params['T_F']
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
@@ -142,13 +146,19 @@ def run_strat_sim(set_ICs, name, params):
                         params['DT'])
             logger.info('Max Re = %f' %flow.max('Re'))
 
-def load(name, params):
-    dyn_vars = ['uz', 'ux', 'rho', 'P']
+def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
+
+def load(name, params):
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    snapshots_dir = SNAPSHOTS_DIR % name
+    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+
+    merge(name)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
@@ -182,7 +192,7 @@ def load(name, params):
         params['g'] * params['H']
 
     state_vars['E'] = params['RHO0'] * np.exp(-z / params['H']) * \
-                       (state_vars['ux']**2 + state_vars['uz']**2) / 2
+        (state_vars['ux']**2 + state_vars['uz']**2) / 2
     state_vars['F_z'] = state_vars['uz'] * (
         state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
         + state_vars['P'])
@@ -192,22 +202,23 @@ def plot(name, params):
     slice_suffix = '(x=0)'
     sum_suffix = '(mean)'
     sub_suffix = ' (- mean)'
-    SAVE_FMT_STR = 't_%d.png'
+    SAVE_FMT_STR = 't_%03i.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['ux']
+    # plot_vars = ['ux']
     # c_vars = ['uz_c']
     # f_vars = ['uz_f']
     f2_vars = ['ux']
     z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
-    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
+    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
     sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
+    plot_vars = []
     c_vars = []
     f_vars = []
     # f2_vars = []
     # z_vars = []
-    slice_vars = []
+    # slice_vars = []
     # sub_vars = []
     n_cols = 4
     n_rows = 1
@@ -322,7 +333,7 @@ def plot(name, params):
                           'b--',
                           linewidth=0.5)
             p = axes.plot(xlims,
-                          [params['Z0'] + params['ZMAX'] / 2] * len(xlims),
+                          [(params['Z0'] + params['ZMAX']) / 2] * len(xlims),
                           'g--',
                           linewidth=0.5)
             idx += 1
