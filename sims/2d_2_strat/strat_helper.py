@@ -72,37 +72,33 @@ def get_solver(params):
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
-    # problem.substitutions['mask'] = '0.5 * ' +\
-    #     '(-tanh((z - 9.5 * H) /' + \
-    #         '(SPONGE_WIDTH * (ZMAX - 9.5 * H))) + ' +\
-    #     'tanh((z - (SPONGE_LOW + SPONGE_WIDTH)) /' + \
-    #         '(SPONGE_WIDTH * (SPONGE_LOW + SPONGE_WIDTH))))'
-    problem.substitutions['mask'] = '1'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
-    problem.substitutions['t_s'] = 'T_F / 10'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(rho) - rho0 * uz / H' +
         '- (NU * dx(dx(rho)) + NU * dz(rho_z))' +
-        ' = - sponge * rho - mask * (ux * dx(rho) + uz * dz(rho)) +' +
+        ' = - sponge * rho -' +
+        '(ux * dx(rho) + uz * dz(rho)) +' +
         'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / rho0' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '= - sponge * ux - mask * (ux * dx(ux) + uz * dz(ux))')
+        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))' +
+        '+ rho * dx(P) / rho0**2')
     problem.add_equation(
         'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '= - sponge * uz - mask * (ux * dx(uz) + uz * dz(uz))')
+        '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))' +
+        '+ rho * dz(P) / rho0**2')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
 
 
-    problem.add_bc('right(uz) = 0', condition='nx != 0')
-    problem.add_bc('right(P) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = 0')
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(P) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = 0', condition='nx != 0')
     problem.add_bc('left(ux) = 0')
     problem.add_bc('right(ux) = 0')
     problem.add_bc('right(rho) = 0')
@@ -127,10 +123,10 @@ def run_strat_sim(set_ICs, name, params):
 
     cfl = CFL(solver,
               initial_dt=dt,
-              cadence=10,
+              cadence=5,
               max_dt=params['DT'],
               min_dt=0.01,
-              safety=0.5,
+              safety=1,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
     cfl.add_frequency(params['DT'])
@@ -251,7 +247,6 @@ def load(name, params):
     return sim_times, domain, state_vars
 
 def plot(name, params):
-
     rank = CW.rank
     size = CW.size
 
@@ -262,18 +257,19 @@ def plot(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_vars = ['ux']
+    # plot_vars = ['ux']
     # c_vars = ['uz_c']
     # f_vars = ['uz_f']
     f2_vars = ['ux']
     z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
-    # slice_vars = ['%s%s' % (i, slice_suffix) for i in ['ux']]
+    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
     sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
+    plot_vars = []
     c_vars = []
     f_vars = []
     # f2_vars = []
     # z_vars = []
-    slice_vars = []
+    # slice_vars = []
     # sub_vars = []
     n_cols = 4
     n_rows = 1
@@ -321,8 +317,8 @@ def plot(name, params):
             var_dat = state_vars[var][:, : , z_b:]
             p = axes.pcolormesh(xmesh,
                                 zmesh,
-                                var_dat[t_idx].T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat[t_idx].T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(xmesh, zmesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -339,8 +335,8 @@ def plot(name, params):
                 2 * var_dat_t.real[:params['N_X'] // 2, :]))
             p = axes.pcolormesh(x2mesh,
                                 z2mesh,
-                                var_dat_shaped.T)
-                                # vmin=var_dat.min(), vmax=var_dat.max())
+                                var_dat_shaped.T,
+                                vmin=var_dat.min(), vmax=var_dat.max())
             axes.axis(pad_limits(x2mesh, z2mesh))
             cb = fig.colorbar(p, ax=axes)
             plt.xticks(rotation=30)
@@ -368,7 +364,7 @@ def plot(name, params):
 
             plt.xticks(rotation=30)
             plt.yticks(rotation=30)
-            xlims = [var_dat[t_idx].min(), var_dat[t_idx].max()]
+            xlims = [var_dat.min(), var_dat.max()]
             axes.set_xlim(*xlims)
             axes.set_ylim(z_pts.min(), z_pts.max())
             p = axes.plot(xlims,

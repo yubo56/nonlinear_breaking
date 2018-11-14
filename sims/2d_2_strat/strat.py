@@ -8,11 +8,11 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 H = 1
-XMAX = 3 * H
-ZMAX = 12 * H
+XMAX = 4 * H
+ZMAX = 10 * H
 
-NUM_SNAPSHOTS = 400
-TARGET_DISP_RAT = 0.05 # k_z * u_z / omega at base
+NUM_SNAPSHOTS = 300
+TARGET_DISP_RAT = 0.1 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -23,10 +23,10 @@ PARAMS_RAW = {'XMAX': XMAX,
               'H': H,
               'RHO0': 1,
               'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 6,
-              'SPONGE_WIDTH': 0.5,
-              'SPONGE_HIGH': 0.93 * ZMAX,
-              'SPONGE_LOW': 0.07 * ZMAX,
+              'SPONGE_STRENGTH': 13,
+              'SPONGE_WIDTH': 0.7,
+              'SPONGE_HIGH': 0.95 * ZMAX,
+              'SPONGE_LOW': 0.05 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
@@ -37,7 +37,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 2.5
+    T_F = abs(ZMAX / VG_Z) * 3
 
     params['T_F'] = T_F
     params['g'] = g
@@ -48,7 +48,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(0.3 / OMEGA, 3)
+    params['DT'] = min(0.1 / OMEGA, 0.1)
     params['F'] = params.get('F_MULT', 1) * \
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
         * np.exp(-params['Z0'] / (2 * H))
@@ -68,25 +68,20 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-       (set_ic, 'linear1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
-                                             'Re': 0.05})),
-       (set_ic, 'linear2',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
-                                             'Re': 0.2})),
-       (set_ic, 'nl1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.5,
-                                             'Re': 0.2,
-                                             'USE_CFL': True})),
-       (set_ic, 'nl2',
-        build_interp_params(2, 2, overrides={'Re': 0.2,
-                                             'USE_CFL': True})),
-       (set_ic, 'nl3',
-        build_interp_params(2, 2, overrides={'F_MULT': 1.5,
-                                             'Re': 0.2,
-                                             'USE_CFL': True})),
-       (set_ic, 'nl2_highres',
-        build_interp_params(1, 1, overrides={'Re': 0.2,
+       # (set_ic, 'linear1',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 0.0005,
+       #                                       'Re': 0.5})),
+       # (set_ic, 'nl1',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 1,
+       #                                       'Re': 0.5,
+       #                                       'USE_CFL': True})),
+       # (set_ic, 'nl2',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 2,
+       #                                       'Re': 0.5,
+       #                                       'USE_CFL': True})),
+       (set_ic, 'nl_full',
+        build_interp_params(1, 1, overrides={'F_MULT': 1,
+                                             'Re': 0.7,
                                              'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:
