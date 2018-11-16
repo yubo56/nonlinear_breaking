@@ -39,7 +39,7 @@ def set_ic(solver, domain, params):
     zmax = params['ZMAX']
     KZ = params['KZ']
     z_bot = (params['Z0'] + params['ZMAX']) / 2
-    width = abs(np.pi / KZ if not params['STEEP'] else (4 * np.pi) / KZ)
+    width = abs(np.pi / KZ)
     z_top = z_bot + 3 * width
     ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
         np.tanh((z - z_bot) / width) -
@@ -204,17 +204,17 @@ def plot(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    # plot_vars = ['ux']
+    plot_vars = ['ux']
     # c_vars = ['uz_c']
     # f_vars = ['uz_f']
-    f2_vars = ['ux']
+    # f2_vars = ['ux']
     z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
     slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
     sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
-    plot_vars = []
+    # plot_vars = []
     c_vars = []
     f_vars = []
-    # f2_vars = []
+    f2_vars = []
     # z_vars = []
     # slice_vars = []
     # sub_vars = []
