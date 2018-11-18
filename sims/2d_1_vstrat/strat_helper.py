@@ -253,9 +253,10 @@ def plot(name, params):
     z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
+    z_pts = np.array((zmesh[1:, 0] + zmesh[:-1, 0]) / 2)
 
     # preprocess
-    for var in dyn_vars + ['F_px']:
+    for var in dyn_vars + ['F_px', 'ux_z']:
         state_vars[var + sum_suffix] = np.sum(state_vars[var], axis=1) / N_X
 
     for var in dyn_vars:
@@ -314,18 +315,17 @@ def plot(name, params):
             for var in z_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
                 var_dat = state_vars[var][:, z_b:]
-                z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
                 p = axes.plot(var_dat[t_idx],
                               z_pts,
                               linewidth=0.5)
                 if var == 'uz%s' % slice_suffix:
                     p = axes.plot(
-                        uz_est * np.ones(z_pts),
+                        uz_est * np.ones(np.shape(z_pts)),
                         z_pts,
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * np.ones(z_pts),
+                        -uz_est * np.ones(np.shape(z_pts)),
                         z_pts,
                         'orange',
                         linewidth=0.5)
@@ -333,7 +333,8 @@ def plot(name, params):
                 if var == 'ux%s' % sum_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
-                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ)),
+                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ)) *
+                            np.ones(np.shape(z_pts)),
                         z_pts,
                         'orange',
                         linewidth=0.5)
