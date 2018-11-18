@@ -164,8 +164,7 @@ def merge(name):
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
 
-def load(name, params):
-    dyn_vars = ['uz', 'ux', 'rho', 'P']
+def load(name, params, dyn_vars, plot_stride):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
@@ -180,7 +179,7 @@ def load(name, params):
 
     # load into state_vars
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times)):
+    for idx in range(len(sim_times))[::plot_stride]:
         solver.load_state(filename, idx)
 
         for varname in dyn_vars:
@@ -239,12 +238,8 @@ def load(name, params):
         params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
         params['g'] * params['H']
 
-    state_vars['E'] = params['RHO0'] * np.exp(-z / params['H']) * \
-        (state_vars['ux']**2 + state_vars['uz']**2) / 2
-    state_vars['F_z'] = state_vars['uz'] * (
-        state_vars['rho'] * (state_vars['ux']**2 + state_vars['uz']**2)
-        + state_vars['P'])
-    return sim_times, domain, state_vars
+    state_vars['F_px'] = state_vars['ux'] * state_vars['uz']
+    return sim_times[::plot_stride], domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -253,166 +248,197 @@ def plot(name, params):
     slice_suffix = '(x=0)'
     sum_suffix = '(mean)'
     sub_suffix = ' (- mean)'
-    SAVE_FMT_STR = 't_%03i.png'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    # plot_vars = ['ux']
-    # c_vars = ['uz_c']
-    # f_vars = ['uz_f']
-    f2_vars = ['ux']
-    z_vars = ['%s%s' % (i, sum_suffix) for i in ['ux']] # sum these over x
-    slice_vars = ['%s%s' % (i, slice_suffix) for i in ['uz']]
-    sub_vars = ['%s%s' % (i, sub_suffix) for i in ['ux']]
-    plot_vars = []
-    c_vars = []
-    f_vars = []
-    # f2_vars = []
-    # z_vars = []
-    # slice_vars = []
-    # sub_vars = []
-    n_cols = 4
-    n_rows = 1
-    plot_stride = 1
+    plot_stride = 10
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     # z_b = N_Z // 4
     z_b = 0
+    KX = params['KX']
+    KZ = params['KZ']
+    V_GZ = get_vgz(params['g'], params['H'], KX, KZ)
 
-    if os.path.exists('%s.mp4' % name):
-        print('%s.mp4 already exists, not regenerating' % name)
-        return
+    # available cfgs:
+    # plot_vars: 2D plot
+    # c_vars: horizontally-summed vertical chebyshev components
+    # f_vars: vertically-summed Fourier components
+    # f2_vars: 2D plot w/ horizontal Fourier transform
+    # slice_vars: sliced at x=0
+    # z_vars: horizontally averaged
+    # sub_vars: 2D plot, mean-subtracted
+    def get_plot_vars(cfg):
+        ''' unpacks above variables from cfg shorthand '''
+        ret_vars = [
+            cfg.get('plot_vars', []),
+            [i + '_c' for i in cfg.get('c_vars', [])],
+            [i + '_f' for i in cfg.get('f_vars', [])],
+            cfg.get('f2_vars', []),
+            [i + sum_suffix for i in cfg.get('z_vars', [])],
+            [i + slice_suffix for i in cfg.get('slice_vars', [])],
+            [i + sub_suffix for i in cfg.get('sub_vars', [])]]
+        n_cols = cfg.get('n_cols', sum([len(arr) for arr in ret_vars]))
+        n_rows = cfg.get('n_rows', 1)
+        ret = [n_cols, n_rows, cfg['save_fmt_str']]
+        ret.extend(ret_vars)
+        return ret
 
-    sim_times, domain, state_vars = load(name, params)
+    plot_cfgs = [
+        {
+            'save_fmt_str': 't_%03i.png',
+            'z_vars': ['ux', 'F_px'],
+            'slice_vars': ['uz'],
+            'sub_vars': ['ux'],
+        },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['ux', 'uz', 'rho1', 'P1'],
+        },
+    ]
+
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride)
 
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
 
-    for var in z_vars:
-        state_vars[var] = np.sum(state_vars[var.replace(sum_suffix, '')],
-                                 axis=1) / N_X
-    for var in slice_vars:
-        state_vars[var] = np.copy(
-            state_vars[var.replace(slice_suffix, '')][:, 0, :])
+    # preprocess
+    for var in dyn_vars + ['F_px']:
+        state_vars[var + sum_suffix] = np.sum(state_vars[var], axis=1) / N_X
 
-    for var in sub_vars:
+    for var in dyn_vars:
+        state_vars[var + slice_suffix] = np.copy(state_vars[var][:, 0, :])
+
+    for var in dyn_vars:
         # can't figure out how to numpy this together
-        means = state_vars[var.replace(sub_suffix, sum_suffix)]
-        state_vars[var] = np.copy(state_vars[var.replace(sub_suffix, '')])
-        for idx, _ in enumerate(state_vars[var]):
-            mean = state_vars[var.replace(sub_suffix, sum_suffix)][idx]
-            state_vars[var][idx] -= np.tile(mean, (N_X, 1))
+        means = state_vars[var + sum_suffix]
+        state_vars[var + sub_suffix] = np.copy(state_vars[var])
+        for idx, _ in enumerate(state_vars[var + sub_suffix]):
+            mean = state_vars[var + sum_suffix][idx]
+            state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
 
-    uz_est = params['F'] * get_uz_f_ratio(params)
+    for cfg in plot_cfgs:
+        n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
+            f2_vars, slice_vars, z_vars, sub_vars = get_plot_vars(cfg)
 
-    for t_idx, sim_time in list(enumerate(sim_times))[rank::size*plot_stride]:
-        fig = plt.figure(dpi=200)
+        uz_est = params['F'] * get_uz_f_ratio(params)
 
-        idx = 1
-        for var in plot_vars + sub_vars:
-            axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
+        for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
+            fig = plt.figure(dpi=200)
 
-            var_dat = state_vars[var][:, : , z_b:]
-            p = axes.pcolormesh(xmesh,
-                                zmesh,
-                                var_dat[t_idx].T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
-            axes.axis(pad_limits(xmesh, zmesh))
-            cb = fig.colorbar(p, ax=axes)
-            plt.xticks(rotation=30)
-            plt.yticks(rotation=30)
-            idx += 1
+            idx = 1
+            for var in plot_vars + sub_vars:
+                axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
-        for var in f2_vars:
-            axes = fig.add_subplot(n_rows, n_cols, idx,
-                                   title='log %s (x-FT)' % var)
+                var_dat = state_vars[var][:, : , z_b:]
+                p = axes.pcolormesh(xmesh,
+                                    zmesh,
+                                    var_dat[t_idx].T,
+                                    vmin=var_dat.min(), vmax=var_dat.max())
+                axes.axis(pad_limits(xmesh, zmesh))
+                cb = fig.colorbar(p, ax=axes)
+                plt.xticks(rotation=30)
+                plt.yticks(rotation=30)
+                idx += 1
 
-            var_dat = state_vars[var][:, : , z_b:]
-            var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
-            var_dat_shaped = np.log(np.abs(
-                2 * var_dat_t.real[:params['N_X'] // 2, :]))
-            p = axes.pcolormesh(x2mesh,
-                                z2mesh,
-                                var_dat_shaped.T,
-                                vmin=var_dat.min(), vmax=var_dat.max())
-            axes.axis(pad_limits(x2mesh, z2mesh))
-            cb = fig.colorbar(p, ax=axes)
-            plt.xticks(rotation=30)
-            plt.yticks(rotation=30)
-            idx += 1
+            for var in f2_vars:
+                axes = fig.add_subplot(n_rows, n_cols, idx,
+                                       title='log %s (x-FT)' % var)
 
-        for var in z_vars + slice_vars:
-            axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
-            var_dat = state_vars[var][:, z_b:]
-            z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
-            p = axes.plot(var_dat[t_idx],
-                          z_pts,
-                          linewidth=0.5)
-            if var == 'uz%s' % slice_suffix:
-                p = axes.plot(
-                    uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
-                    z_pts,
-                    'orange',
-                    linewidth=0.5)
-                p = axes.plot(
-                    -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
-                    z_pts,
-                    'orange',
-                    linewidth=0.5)
+                var_dat = state_vars[var][:, : , z_b:]
+                var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
+                var_dat_shaped = np.log(np.abs(
+                    2 * var_dat_t.real[:params['N_X'] // 2, :]))
+                p = axes.pcolormesh(x2mesh,
+                                    z2mesh,
+                                    var_dat_shaped.T,
+                                    vmin=var_dat.min(), vmax=var_dat.max())
+                axes.axis(pad_limits(x2mesh, z2mesh))
+                cb = fig.colorbar(p, ax=axes)
+                plt.xticks(rotation=30)
+                plt.yticks(rotation=30)
+                idx += 1
 
-            plt.xticks(rotation=30)
-            plt.yticks(rotation=30)
-            xlims = [var_dat.min(), var_dat.max()]
-            axes.set_xlim(*xlims)
-            axes.set_ylim(z_pts.min(), z_pts.max())
-            p = axes.plot(xlims,
-                          [params['SPONGE_LOW']] * len(xlims),
-                          'r:',
-                          linewidth=0.5)
-            p = axes.plot(xlims,
-                          [params['SPONGE_HIGH']] * len(xlims),
-                          'r:',
-                          linewidth=0.5)
-            p = axes.plot(xlims,
-                          [params['Z0'] + 3 * params['S']] * len(xlims),
-                          'b--',
-                          linewidth=0.5)
-            p = axes.plot(xlims,
-                          [params['Z0'] - 3 * params['S']] * len(xlims),
-                          'b--',
-                          linewidth=0.5)
-            idx += 1
-        for var in c_vars:
-            axes = fig.add_subplot(n_rows,
-                                   n_cols,
-                                   idx,
-                                   title='%s (kx=kx_d)' % var)
-            var_dat = state_vars[var]
-            kx_idx = round(params['KX'] / (2 * np.pi / params['XMAX']))
-            p = axes.semilogx(var_dat[t_idx][kx_idx],
-                              range(len(var_dat[t_idx][kx_idx])),
+            for var in z_vars + slice_vars:
+                axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
+                var_dat = state_vars[var][:, z_b:]
+                z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
+                p = axes.plot(var_dat[t_idx],
+                              z_pts,
                               linewidth=0.5)
-            idx += 1
+                if var == 'uz%s' % slice_suffix:
+                    p = axes.plot(
+                        uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                        z_pts,
+                        'orange',
+                        linewidth=0.5)
+                    p = axes.plot(
+                        -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                        z_pts,
+                        'orange',
+                        linewidth=0.5)
 
-        for var in f_vars:
-            axes = fig.add_subplot(n_rows,
-                                   n_cols,
-                                   idx,
-                                   title='%s (Cheb. summed)' % var)
-            var_dat = state_vars[var.replace('_f', '_c')]
-            summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
-            p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
-            idx += 1
+                if var == 'ux%s' % sum_suffix:
+                    # mean flow = E[ux * uz] / V_GZ
+                    p = axes.plot(
+                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
+                            * np.exp((z_pts - params['Z0']) / (params['H'])),
+                        z_pts,
+                        'orange',
+                        linewidth=0.5)
 
-        fig.suptitle(
-            'Config: %s (t=%.2f, kx=%.2f, kz=%.2f, omega=%.2f)' %
-            (name, sim_time, params['KX'], params['KZ'], params['OMEGA']))
-        fig.subplots_adjust(hspace=0.7, wspace=0.6)
-        savefig = SAVE_FMT_STR % (t_idx // plot_stride)
-        plt.savefig('%s/%s' % (snapshots_dir, savefig))
-        logger.info('Saved %s/%s' % (snapshots_dir, savefig))
-        plt.close()
-    # os.system('ffmpeg -y -framerate 12 -i %s/%s %s.mp4' %
-    #           (snapshots_dir, SAVE_FMT_STR, name))
+                plt.xticks(rotation=30)
+                plt.yticks(rotation=30)
+                xlims = [var_dat.min(), var_dat.max()]
+                axes.set_xlim(*xlims)
+                axes.set_ylim(z_pts.min(), z_pts.max())
+                p = axes.plot(xlims,
+                              [params['SPONGE_LOW']] * len(xlims),
+                              'r:',
+                              linewidth=0.5)
+                p = axes.plot(xlims,
+                              [params['SPONGE_HIGH']] * len(xlims),
+                              'r:',
+                              linewidth=0.5)
+                p = axes.plot(xlims,
+                              [params['Z0'] + 3 * params['S']] * len(xlims),
+                              'b--',
+                              linewidth=0.5)
+                p = axes.plot(xlims,
+                              [params['Z0'] - 3 * params['S']] * len(xlims),
+                              'b--',
+                              linewidth=0.5)
+                idx += 1
+            for var in c_vars:
+                axes = fig.add_subplot(n_rows,
+                                       n_cols,
+                                       idx,
+                                       title='%s (kx=kx_d)' % var)
+                var_dat = state_vars[var]
+                kx_idx = round(params['KX'] / (2 * np.pi / params['XMAX']))
+                p = axes.semilogx(var_dat[t_idx][kx_idx],
+                                  range(len(var_dat[t_idx][kx_idx])),
+                                  linewidth=0.5)
+                idx += 1
+
+            for var in f_vars:
+                axes = fig.add_subplot(n_rows,
+                                       n_cols,
+                                       idx,
+                                       title='%s (Cheb. summed)' % var)
+                var_dat = state_vars[var.replace('_f', '_c')]
+                summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
+                p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
+                idx += 1
+
+            fig.suptitle(
+                'Config: %s (t=%.2f, kx(%.2f, %.2f), w=%.2f, v_gz=%.2f)' %
+                (name, sim_time, KX, KZ, params['OMEGA'], V_GZ))
+            fig.subplots_adjust(hspace=0.7, wspace=0.6)
+            savefig = save_fmt_str % (t_idx)
+            plt.savefig('%s/%s' % (snapshots_dir, savefig))
+            logger.info('Saved %s/%s' % (snapshots_dir, savefig))
+            plt.close()
