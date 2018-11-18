@@ -68,6 +68,9 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
+       (set_ic, 'linear0',
+        build_interp_params(2, 2, overrides={'F_MULT': 0.0005,
+                                             'Re': 0.0001})),
        (set_ic, 'linear1',
         build_interp_params(2, 2, overrides={'F_MULT': 0.0005,
                                              'Re': 0.5})),
