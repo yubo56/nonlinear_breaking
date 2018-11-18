@@ -143,6 +143,8 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
+        # if cfl_dt < params['DT'] / 8: # small step sizes if strongly cfl limited
+        #     cfl_dt /= 2
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
@@ -303,7 +305,6 @@ def plot(name, params):
     z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
-    z_pts = np.array((zmesh[1:, 0] + zmesh[:-1, 0]) / 2)
 
     # preprocess
     for var in dyn_vars + ['F_px']:
@@ -365,6 +366,7 @@ def plot(name, params):
             for var in z_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
                 var_dat = state_vars[var][:, z_b:]
+                z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
                 p = axes.plot(var_dat[t_idx],
                               z_pts,
                               linewidth=0.5)

@@ -184,7 +184,8 @@ def load(name, params, dyn_vars, plot_stride):
         params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
         params['g'] * params['H']
     # compatibility
-    state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=-1)
+    state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=-1) * \
+        params['N_Z'] * params['INTERP_Z'] / params['ZMAX']
 
     state_vars['F_px'] = state_vars['rho'] * (state_vars['ux'] *
                                               state_vars['uz'])
