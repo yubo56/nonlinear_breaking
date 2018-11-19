@@ -126,6 +126,39 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Background}
+    \framesubtitle{Digression: Brunt-V\"ais\"al\"a Frequency and IGW}
+
+    \begin{itemize}
+        \item The above system is a strange mix of the incompressible/anelastic
+            approximations!
+
+        \item In the stars, $N^2 = g^2\p*{\rd{\rho_0}{P_0} - \frac{1}{c_s^2}}$
+            where $c_s^2 \to \infty$ is the sound speed.
+
+        \item In atmospheric sciences, $\rd{\rho_0}{P_0} = \frac{1}{gH} =
+            \frac{1}{\p*{282\;\mathrm{m/s}}^2} \sim \frac{1}{c_s^2}$!
+
+        \item Introduce entropy: $S = c_v \ln P - c_p \ln \rho$. If $c_p \gg
+            c_v$, equivalent to $c_s^2 \to \infty, \Delta \rho = 0$.
+
+            If $c_p \sim c_v \gg 1$ however, $\Delta S = 0$ instead for
+            atmospheric \emph{anelastic} approximation.
+
+        \item In our system:
+            \begin{itemize}
+                \item $gH \ll c_s^2$ and so indeed we may use the
+                    equations on the previous slide rather than the atmospheric
+                    anelastic equations.
+                \item Our equations do not conserve horizontal momentum $\rho
+                    u_x$ exactly, but do so up to second order in perturbation
+                    quantities, and mean flow interactions are a second order
+                    effect.
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Background}
     \framesubtitle{Theory}
 
     \begin{itemize}
