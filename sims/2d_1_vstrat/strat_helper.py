@@ -178,14 +178,9 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['rho'] += params['RHO0'] * np.exp(-z / params['H'])
-    state_vars['P'] += params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['g'] * params['H']
-    state_vars['rho1'] = state_vars['rho'] - params['RHO0'] *\
-        np.exp(-z / params['H'])
-    state_vars['P1'] = state_vars['P'] -\
-        params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['g'] * params['H']
+    state_vars['rho'] += params['RHO0']
+    state_vars['rho1'] = state_vars['rho'] - params['RHO0']
+    state_vars['P1'] = state_vars['P']
     # compatibility
     state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=-1) * \
         params['N_Z'] * params['INTERP_Z'] / params['ZMAX']
@@ -402,7 +397,7 @@ def plot_front(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride, start=0)
+        name, params, dyn_vars, plot_stride, start=100)
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
