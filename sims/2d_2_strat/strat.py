@@ -95,6 +95,10 @@ if __name__ == '__main__':
         for _, name, _ in tasks:
             merge(name)
 
+    elif '-front' in sys.argv:
+        for _, name, params_dict in tasks:
+            plot_front(name, params_dict)
+
     else:
         for task in tasks:
             run(*task)
