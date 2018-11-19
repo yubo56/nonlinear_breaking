@@ -56,6 +56,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
     params['UZ0_COEFF'] = params.get('UZ0_COEFF', 1)
+    params['UZ0_RAND'] = params.get('UZ0_RAND', 0)
     if CW.rank == 0: # print only on root process
         print(params)
     return params
@@ -77,6 +78,11 @@ if __name__ == '__main__':
          build_interp_params(1, 1, overrides={'NU_MULT': 40,
                                               'USE_CFL': True,
                                               'UZ0_COEFF': 1})),
+        (set_ic, 'vstrat_rand',
+         build_interp_params(1, 1, overrides={'NU_MULT': 40,
+                                              'USE_CFL': True,
+                                              'UZ0_RAND': 1e-5,
+                                              'UZ0_COEFF': 1})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
@@ -85,6 +91,10 @@ if __name__ == '__main__':
     elif '-merge' in sys.argv:
         for _, name, _ in tasks:
             merge(name)
+
+    elif '-front' in sys.argv:
+        for _, name, params_dict in tasks:
+            plot_front(name, params_dict)
 
     else:
         for task in tasks:

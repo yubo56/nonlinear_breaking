@@ -24,6 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
+plot_stride = 1
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -44,6 +45,8 @@ def set_ic(solver, domain, params):
     ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
         np.tanh((z - z_bot) / width) -
         np.tanh((z - z_top) / (0.3 * (zmax - z_top)))) / 2
+    ux['g'] += params['UZ0_RAND'] * params['OMEGA'] / params['KX']\
+        * np.random.randn(*np.shape(z))
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -147,7 +150,7 @@ def merge(name):
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
 
-def load(name, params, dyn_vars, plot_stride):
+def load(name, params, dyn_vars, plot_stride, start=0):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
@@ -162,7 +165,7 @@ def load(name, params, dyn_vars, plot_stride):
 
     # load into state_vars
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times))[::plot_stride]:
+    for idx in range(len(sim_times))[start::plot_stride]:
         solver.load_state(filename, idx)
 
         for varname in dyn_vars:
@@ -189,7 +192,7 @@ def load(name, params, dyn_vars, plot_stride):
 
     state_vars['F_px'] = state_vars['rho'] * (state_vars['ux'] *
                                               state_vars['uz'])
-    return sim_times[::plot_stride], domain, state_vars
+    return sim_times[start::plot_stride], domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -201,7 +204,6 @@ def plot(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
-    plot_stride = 6
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     # z_b = N_Z // 4
@@ -392,3 +394,40 @@ def plot(name, params):
             plt.savefig('%s/%s' % (snapshots_dir, savefig))
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
+
+def plot_front(name, params):
+    N_X = params['N_X'] * params['INTERP_X']
+    N_Z = params['N_Z'] * params['INTERP_Z']
+    dyn_vars = ['uz', 'ux', 'rho', 'P']
+    snapshots_dir = SNAPSHOTS_DIR % name
+
+    sim_times, domain, state_vars = load(
+        name, params, dyn_vars, plot_stride, start=0)
+    x = domain.grid(0, scales=params['INTERP_X'])
+    z = domain.grid(1, scales=params['INTERP_Z'])
+    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+    z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
+
+    ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
+    F_px = np.sum(state_vars['F_px'], axis=1) / N_X
+
+    front_pos = []
+    fluxes = []
+    for t_idx, sim_time in enumerate(sim_times):
+        max_pos = np.argmax(ux_z[t_idx])
+        front_pos.append(z_pts[max_pos])
+        fluxes.append(F_px[t_idx][max_pos] * 2)
+    plt.plot(front_pos, sim_times)
+    plt.xlabel('Front Position')
+    plt.ylabel('Time')
+    plt.title(name)
+    plt.savefig('%s/front.png' % snapshots_dir)
+    plt.clf()
+
+    plt.plot(fluxes, sim_times)
+    plt.xlabel('F_px')
+    plt.ylabel('Time')
+    plt.title(name)
+    plt.locator_params(nbins=3)
+    plt.savefig('%s/fluxes.png' % snapshots_dir)
+    plt.clf()
