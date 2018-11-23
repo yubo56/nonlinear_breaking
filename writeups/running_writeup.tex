@@ -1,0 +1,253 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\;\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\rfoot{Yubo Su}
+\rhead{}
+\cfoot{\thepage/\pageref{LastPage}}
+
+\section{Equations}
+
+We begin with the fully compressible fluid equations and general equation of
+state
+\begin{subequations}\label{se:comp}
+    \begin{align}
+        \rd{\rho}{t} + \rho \p*{\vec{\nabla} \cdot \vec{u}} &= 0,
+            \label{eq:density}\\
+        \rd{S}{t} &= 0,\label{eq:entropy}\\
+        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + \vec{g} &= 0,
+            \label{eq:velocity}\\
+        P &= P(\rho, S).\label{eq:eos}
+    \end{align}
+\end{subequations}
+We notate $\rd{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$. Note this is
+$5$ equations (in 2D) for 5 variables $(\rho, P, S, \vec{u})$ and so is properly
+closed.
+
+\subsection{Current Implementation}
+
+We assume $P(\rho, S) = P(\rho)$ a barotropic equation of state, such that $S$
+is entirely decoupled from the dynamical equations. We thus drop
+\autoref{eq:entropy} of the full fluid equations \autoref{se:comp}. Then, we
+will decompose dynamical variables into background and fluctuation quantities $P
+= P_0 + P_1, \rho = \rho_0 + \rho_1$, where background quantities are
+time-independent. Assuming no background velocities, we write $\vec{u}$ to
+denote the fluctuation velocity with no ambiguity.
+
+Furthermore, we will implement incompressibility by mandating
+$\at{\pd{P(\rho)}{\rho}}_{ad} \to \infty$ adiabatic derivative. This forces
+$\Delta P \gg \Delta \rho$ within a displaced fluid parcel, or $\rd{\rho}{t} =
+0$ comoving derivative. This allows us to rewrite \autoref{eq:density}, and so
+we arrive at the system of equations
+\begin{subequations}\label{se:pseudo_mid}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0, \label{eq:mid_density}\\
+        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + \vec{g} &= 0,
+            \label{eq:mid_velocity}\\
+        \rd{\rho}{t} = \rd{\rho_1}{t} + u_z \rd{\rho_0}{z} &= 0.
+            \label{eq:mid_eos}
+    \end{align}
+\end{subequations}
+
+We now assume $P_0 = \rho_0 c_s^2 \propto e^{-z/H}$ isothermal exponential
+stratification. At hydrostatic equilibrium, \autoref{eq:mid_velocity} forces
+$\vec{\nabla}P_0 = -\rho_0 \vec{g}$. We next claim that $\frac{\rho_1}{\rho_0}
+\sim \p*{\frac{u}{c_s}}^2 = \mathrm{Ma}^2 \ll 1$\footnote{I guess this doesn't
+have to be true if $\frac{P_0}{\rho_0} = c_s^2 \neq \at{\pd{P}{\rho}}_{ad}$
+which is the velocity we are sending to infinity.}. This may be verified to be
+true by looking briefly at the momentum equation: $\omega u +
+k\p*{\frac{P}{\rho} - \frac{P_0}{\rho_0}} = 0$, which then dividing through by
+$P_0 / \rho_0 = c_s^2$ shows that $\frac{P/P_0}{\rho/\rho_0} - 1 \sim
+\mathrm{Ma}^2$.
+
+Given this, we expand \autoref{eq:mid_velocity} by $\frac{\vec{\nabla}P}{\rho}
+\approx \frac{\vec{\nabla}P_0}{\rho_0} + \frac{\vec{\nabla}P_1}{\rho_0} -
+\frac{\rho_1 \vec{\nabla}P_0}{\rho_0^2} + \dots$ and obtain the full system of
+equations I have been using
+\begin{subequations}\label{se:pseudo_fin}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0, \label{eq:pseudo_density}\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+            + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1 \vec{g}}{\vec{_0}} - \frac{\rho_1 \vec{\nabla}P_1}{
+                \rho_0^2} &= 0,
+            \label{eq:pseudo_velocity}\\
+        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+            - \frac{u_z \rho_0}{H} &= 0.
+            \label{eq:pseudo_eos}
+    \end{align}
+\end{subequations}
+These are complete up to numerical and forcing terms.
+
+\subsection{Anelastic}
+
+We can argue for this in a very formal/nondimensionalized way, but we can also
+see this comparatively simply (albeit less rigorously). We will start from
+\autoref{se:comp}. Expand all variables in terms of $\epsilon \equiv \mathrm{Ma}
+= \frac{u}{c_s}$ where $u$ is the characteristic velocity of the flows we want
+to study, then
+\begin{align*}
+    P &= P_0 + \epsilon P_1 + \dots,& \rho &= \rho_0 + \epsilon \rho_1 + \dots,&
+        S &= S_0 + \epsilon S_1 + \dots,& u &\sim \mathcal{O}(\epsilon^1),\\
+    \vec{\nabla} &\sim k \sim \mathcal{O}(\epsilon^0) ,&
+        \partial_t &\approx uk \sim \mathcal{O}\p*{\epsilon^1}.
+\end{align*}
+Note that we pick a particular length scale with $k$ and with typical flow
+velocity $u$, then $\partial_t = uk$ is the correct order to examine
+at\footnote{More formally, we can probably do $\partial_t = \partial_{t_0} +
+\partial_{t_1/\epsilon} + \dots$}.
+
+With this dictionary, we may consider the incompressible equations at:
+\begin{itemize}
+    \item $\mathcal{O}(\epsilon^0)$, which is just
+        $\frac{\vec{\nabla}P_0}{\rho_0} + \vec{g} = 0$ hydrostatic equilibrium.
+
+        At this point, we may make the same argument as in the preceeding
+        section: $\rd{}{t} \sim \mathcal{O}(\epsilon^2)$, so
+        $\frac{\vec{\nabla}P}{\rho} + \vec{g} = \frac{\vec{\nabla}P}{\rho} -
+        \frac{\vec{\nabla}P_0}{\rho_0} \sim \mathcal{O}(\epsilon^2)$ as well.
+        Thus, $P_1, \rho_1 = 0$ necessarily, otherwise
+        $\frac{\vec{\nabla}P}{\rho} - \frac{\vec{\nabla}P_0}{\rho_0}$ must have
+        $\mathcal{O}(\epsilon^1)$ terms that are not cancelled by
+        $\rd{\vec{u}}{t}$ which is prohibited.
+
+    \item $\mathcal{O}(\epsilon^1)$. Since $P_1 = \rho_1 = 0$, the only terms at
+        this order are $\vec{\nabla} \cdot \p*{\rho_0 \vec{u}} = 0$ and
+        $\p*{\vec{u}_1 \cdot \vec{\nabla}}S_0 = 0$.
+
+    \item $\mathcal{O}(\epsilon^2)$. This is where the momentum equation gets
+        most of its terms, it becomes the familiar
+        \begin{equation}
+            \rd{\vec{u}}{t} + \frac{\vec{\nabla}P_2}{\rho_0} + \frac{\rho_2
+                \vec{g}}{\rho_0} = 0.
+        \end{equation}
+        Now we haven't argued for $S_1 \neq 0$, so we must permit it as well, so
+        the entropy equation becomes
+        \begin{equation}
+            \rd{S_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}S_0 = 0.
+        \end{equation}
+
+    \item Higher order expansions are not hard to find, and relax $\vec{\nabla}
+        \cdot \p*{\rho_0 \vec{u}} = 0$.
+\end{itemize}
+Thus, to order $\mathrm{Ma}^2$, our equations are
+\begin{subequations}\label{se:anel_0}
+    \begin{align}
+        \vec{\nabla} \cdot \p*{\rho_0 \vec{u}} &= 0,\\
+        \rd{S_1}{t} + \vec{u} \cdot \vec{\nabla}S_0 &= 0,\\
+        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P_2}{\rho_0}
+            + \frac{\rho_2 \vec{g}}{\rho_0} &= 0,\\
+        P &= P(\rho, S).
+    \end{align}
+\end{subequations}
+The last step is just to remove $\rho_2$ from the equations using the equation
+of state so that the first three equations of \autoref{se:anel_0} above can form
+a complete system. We simply follow Glatzmaier and rewrite
+\begin{subequations}\label{se:anel_f}
+    \begin{align}
+        \vec{\nabla} \cdot \p*{\rho_0 \vec{u}} &= 0,\\
+        \pd{S_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}S_1 + \vec{u} \cdot
+            \vec{\nabla}S_0 &= 0,\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u} +
+            \vec{\nabla}\frac{P_2}{\rho_0} - \frac{S_1\vec{g}}{S_0} &= 0.
+    \end{align}
+\end{subequations}
+Solving this system gives buoyancy waves with frequency $N^2 =
+\frac{g}{H_S} = \frac{g}{H} \at{\pd{\ln S_0}{\ln \rho_0}}_P \ll \frac{g}{H}$ as
+we obtain $\pd{\ln S_0}{z} = -\frac{1}{H_S}$ stratification using the EoS.
+
+\end{document}
+
