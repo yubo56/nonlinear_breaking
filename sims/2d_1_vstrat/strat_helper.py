@@ -24,7 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
-plot_stride = 1
+plot_stride = 2
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -45,8 +45,6 @@ def set_ic(solver, domain, params):
     ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
         np.tanh((z - z_bot) / width) -
         np.tanh((z - z_top) / (0.3 * (zmax - z_top)))) / 2
-    ux['g'] += params['UZ0_RAND'] * params['OMEGA'] / params['KX']\
-        * np.random.randn(*np.shape(z))
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -391,6 +389,14 @@ def plot(name, params):
             plt.close()
 
 def plot_front(name, params):
+    ''' plots location of max Ri and flux @ that point, quadratically
+    interpolated '''
+    def get_quad_fit(x, fx):
+        ''' a * x**2 + b * x + c = fx, return (a, b, c) '''
+        return np.dot(
+            np.linalg.inv(np.array([x**2, x, 0 * x + 1]).T),
+            fx)
+
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     dyn_vars = ['uz', 'ux', 'rho', 'P']
@@ -410,8 +416,20 @@ def plot_front(name, params):
     fluxes = []
     for t_idx, sim_time in enumerate(sim_times):
         max_pos = np.argmax(ux_z[t_idx])
-        front_pos.append(z_pts[max_pos])
-        fluxes.append(F_px[t_idx][max_pos] * 2)
+
+        ux_z_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
+                                 ux_z[t_idx][max_pos - 1:max_pos + 2])
+        true_max = -ux_z_quad[1] / (2 * ux_z_quad[0]) # -b/2a
+        front_pos.append(true_max)
+
+        fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
+                                   F_px[t_idx][max_pos - 1:max_pos + 2])
+        fluxes.append((fluxes_quad[0] * true_max**2
+                       + fluxes_quad[1] * true_max
+                       + fluxes_quad[2])* 2)
+    with open('%s/data.log' % snapshots_dir, 'w') as data:
+        data.write(repr(front_pos))
+        data.write(repr(fluxes))
     plt.plot(front_pos, sim_times)
     plt.xlabel('Front Position')
     plt.ylabel('Time')

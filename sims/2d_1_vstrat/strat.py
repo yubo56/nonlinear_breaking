@@ -17,8 +17,8 @@ TARGET_DISP_RAT = 0.7
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
-              'N_X': 64,
-              'N_Z': 256,
+              'N_X': 256,
+              'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
               'KZ': -10 * np.pi / H,
               'H': H,
@@ -38,7 +38,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 20
+    T_F = abs(ZMAX / VG_Z) * 50
 
     params['T_F'] = T_F
     params['g'] = g
@@ -56,7 +56,6 @@ def build_interp_params(interp_x, interp_z, overrides=None):
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
     params['UZ0_COEFF'] = params.get('UZ0_COEFF', 1)
-    params['UZ0_RAND'] = params.get('UZ0_RAND', 0)
     if CW.rank == 0: # print only on root process
         print(params)
     return params
@@ -70,18 +69,9 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-        (set_ic, 'vstrat_low',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40,
-                                              'USE_CFL': True,
-                                              'UZ0_COEFF': 0.3})),
         (set_ic, 'vstrat',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40,
+         build_interp_params(4, 4, overrides={'NU_MULT': 40,
                                               'USE_CFL': True,
-                                              'UZ0_COEFF': 1})),
-        (set_ic, 'vstrat_rand',
-         build_interp_params(1, 1, overrides={'NU_MULT': 40,
-                                              'USE_CFL': True,
-                                              'UZ0_RAND': 1e-5,
                                               'UZ0_COEFF': 1})),
     ]
     if '-plot' in sys.argv:
