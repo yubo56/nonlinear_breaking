@@ -101,153 +101,107 @@
 
 \section{Equations}
 
-We begin with the fully compressible fluid equations and general equation of
-state
-\begin{subequations}\label{se:comp}
+\subsection{Boussinesq Equations}
+
+The physical equations in the Boussinesq approximation are:
+\begin{subequations}\label{se:bouss}
     \begin{align}
-        \rd{\rho}{t} + \rho \p*{\vec{\nabla} \cdot \vec{u}} &= 0,
-            \label{eq:density}\\
-        \rd{S}{t} &= 0,\label{eq:entropy}\\
-        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + \vec{g} &= 0,
-            \label{eq:velocity}\\
-        P &= P(\rho, S).\label{eq:eos}
-    \end{align}
-\end{subequations}
-We notate $\rd{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$. Note this is
-$5$ equations (in 2D) for 5 variables $(\rho, P, S, \vec{u})$ and so is properly
-closed.
-
-\subsection{Current Implementation}
-
-We assume $P(\rho, S) = P(\rho)$ a barotropic equation of state, such that $S$
-is entirely decoupled from the dynamical equations. We thus drop
-\autoref{eq:entropy} of the full fluid equations \autoref{se:comp}. Then, we
-will decompose dynamical variables into background and fluctuation quantities $P
-= P_0 + P_1, \rho = \rho_0 + \rho_1$, where background quantities are
-time-independent. Assuming no background velocities, we write $\vec{u}$ to
-denote the fluctuation velocity with no ambiguity.
-
-Furthermore, we will implement incompressibility by mandating
-$\at{\pd{P(\rho)}{\rho}}_{ad} \to \infty$ adiabatic derivative. This forces
-$\Delta P \gg \Delta \rho$ within a displaced fluid parcel, or $\rd{\rho}{t} =
-0$ comoving derivative. This allows us to rewrite \autoref{eq:density}, and so
-we arrive at the system of equations
-\begin{subequations}\label{se:pseudo_mid}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0, \label{eq:mid_density}\\
-        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + \vec{g} &= 0,
-            \label{eq:mid_velocity}\\
-        \rd{\rho}{t} = \rd{\rho_1}{t} + u_z \rd{\rho_0}{z} &= 0.
-            \label{eq:mid_eos}
-    \end{align}
-\end{subequations}
-
-We now assume $P_0 = \rho_0 c_s^2 \propto e^{-z/H}$ isothermal exponential
-stratification. At hydrostatic equilibrium, \autoref{eq:mid_velocity} forces
-$\vec{\nabla}P_0 = -\rho_0 \vec{g}$. We next claim that $\frac{\rho_1}{\rho_0}
-\sim \p*{\frac{u}{c_s}}^2 = \mathrm{Ma}^2 \ll 1$\footnote{I guess this doesn't
-have to be true if $\frac{P_0}{\rho_0} = c_s^2 \neq \at{\pd{P}{\rho}}_{ad}$
-which is the velocity we are sending to infinity.}. This may be verified to be
-true by looking briefly at the momentum equation: $\omega u +
-k\p*{\frac{P}{\rho} - \frac{P_0}{\rho_0}} = 0$, which then dividing through by
-$P_0 / \rho_0 = c_s^2$ shows that $\frac{P/P_0}{\rho/\rho_0} - 1 \sim
-\mathrm{Ma}^2$.
-
-Given this, we expand \autoref{eq:mid_velocity} by $\frac{\vec{\nabla}P}{\rho}
-\approx \frac{\vec{\nabla}P_0}{\rho_0} + \frac{\vec{\nabla}P_1}{\rho_0} -
-\frac{\rho_1 \vec{\nabla}P_0}{\rho_0^2} + \dots$ and obtain the full system of
-equations I have been using
-\begin{subequations}\label{se:pseudo_fin}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0, \label{eq:pseudo_density}\\
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+            - \frac{\rho_0 u_z}{H} &= 0,\\
         \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
             + \frac{\vec{\nabla}P_1}{\rho_0}
-            + \frac{\rho_1 \vec{g}}{\vec{_0}} - \frac{\rho_1 \vec{\nabla}P_1}{
-                \rho_0^2} &= 0,
-            \label{eq:pseudo_velocity}\\
-        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
-            - \frac{u_z \rho_0}{H} &= 0.
-            \label{eq:pseudo_eos}
+            + \frac{\rho_1 \vec{g}}{\rho_0} &= 0.
     \end{align}
 \end{subequations}
-These are complete up to numerical and forcing terms.
+In these equations, we take $\rho_0(z) = \rho_0$ a constant reference density.
 
-\subsection{Anelastic}
-
-We can argue for this in a very formal/nondimensionalized way, but we can also
-see this comparatively simply (albeit less rigorously). We will start from
-\autoref{se:comp}. Expand all variables in terms of $\epsilon \equiv \mathrm{Ma}
-= \frac{u}{c_s}$ where $u$ is the characteristic velocity of the flows we want
-to study, then
-\begin{align*}
-    P &= P_0 + \epsilon P_1 + \dots,& \rho &= \rho_0 + \epsilon \rho_1 + \dots,&
-        S &= S_0 + \epsilon S_1 + \dots,& u &\sim \mathcal{O}(\epsilon^1),\\
-    \vec{\nabla} &\sim k \sim \mathcal{O}(\epsilon^0) ,&
-        \partial_t &\approx uk \sim \mathcal{O}\p*{\epsilon^1}.
-\end{align*}
-Note that we pick a particular length scale with $k$ and with typical flow
-velocity $u$, then $\partial_t = uk$ is the correct order to examine
-at\footnote{More formally, we can probably do $\partial_t = \partial_{t_0} +
-\partial_{t_1/\epsilon} + \dots$}.
-
-With this dictionary, we may consider the incompressible equations at:
-\begin{itemize}
-    \item $\mathcal{O}(\epsilon^0)$, which is just
-        $\frac{\vec{\nabla}P_0}{\rho_0} + \vec{g} = 0$ hydrostatic equilibrium.
-
-        At this point, we may make the same argument as in the preceeding
-        section: $\rd{}{t} \sim \mathcal{O}(\epsilon^2)$, so
-        $\frac{\vec{\nabla}P}{\rho} + \vec{g} = \frac{\vec{\nabla}P}{\rho} -
-        \frac{\vec{\nabla}P_0}{\rho_0} \sim \mathcal{O}(\epsilon^2)$ as well.
-        Thus, $P_1, \rho_1 = 0$ necessarily, otherwise
-        $\frac{\vec{\nabla}P}{\rho} - \frac{\vec{\nabla}P_0}{\rho_0}$ must have
-        $\mathcal{O}(\epsilon^1)$ terms that are not cancelled by
-        $\rd{\vec{u}}{t}$ which is prohibited.
-
-    \item $\mathcal{O}(\epsilon^1)$. Since $P_1 = \rho_1 = 0$, the only terms at
-        this order are $\vec{\nabla} \cdot \p*{\rho_0 \vec{u}} = 0$ and
-        $\p*{\vec{u}_1 \cdot \vec{\nabla}}S_0 = 0$.
-
-    \item $\mathcal{O}(\epsilon^2)$. This is where the momentum equation gets
-        most of its terms, it becomes the familiar
-        \begin{equation}
-            \rd{\vec{u}}{t} + \frac{\vec{\nabla}P_2}{\rho_0} + \frac{\rho_2
-                \vec{g}}{\rho_0} = 0.
-        \end{equation}
-        Now we haven't argued for $S_1 \neq 0$, so we must permit it as well, so
-        the entropy equation becomes
-        \begin{equation}
-            \rd{S_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}S_0 = 0.
-        \end{equation}
-
-    \item Higher order expansions are not hard to find, and relax $\vec{\nabla}
-        \cdot \p*{\rho_0 \vec{u}} = 0$.
-\end{itemize}
-Thus, to order $\mathrm{Ma}^2$, our equations are
-\begin{subequations}\label{se:anel_0}
+Including numerical terms and driving terms, my full equations are
+\begin{subequations}\label{se:bouss_num}
     \begin{align}
-        \vec{\nabla} \cdot \p*{\rho_0 \vec{u}} &= 0,\\
-        \rd{S_1}{t} + \vec{u} \cdot \vec{\nabla}S_0 &= 0,\\
-        \rd{\vec{u}}{t} + \frac{\vec{\nabla}P_2}{\rho_0}
-            + \frac{\rho_2 \vec{g}}{\rho_0} &= 0,\\
-        P &= P(\rho, S).
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} - \frac{\rho_0 u_z}{H}
+            - \nu \nabla^6 \rho_1
+            &= -\Gamma(z) \rho_1
+                - \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+                + Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \frac{\partial_x P}{\rho_0}
+            - \nu \nabla^6 u_x
+            &= -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x,\\
+        \pd{u_z}{t} + \frac{\partial_z P}{\rho_0}
+            + \frac{\rho_1 g}{\rho_0}
+            - \nu \nabla^6 u_z
+            &= -\Gamma(z) u_z
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_z,\\
+        \Gamma(z) &= 5\s*{2 + \tanh \frac{z - z_T}{(z_{\max} - z_T) / 2}
+            + \tanh \frac{z_B - z}{z_B / 2}},
     \end{align}
 \end{subequations}
-The last step is just to remove $\rho_2$ from the equations using the equation
-of state so that the first three equations of \autoref{se:anel_0} above can form
-a complete system. We simply follow Glatzmaier and rewrite
-\begin{subequations}\label{se:anel_f}
+where $z_B = 0.07z_{\max}, z_T = 0.93z_{\max}$ are the boundaries of the damping
+zones, and my domain is $z \in [0, z_{\max}]$. The forcing term $F$ is chosen to
+be weakly nonlinear, $\omega$ is chosen by inverting $\omega(k_x, k_z)$
+dispersion relation for fixed $k_x = 2\pi / x_{\max}$ and some desired $k_z \ll
+H, z_{\max}$ (I've chosen $k_z \approx -\frac{2\pi}{z_{\max} / 5}$ here), and
+$\sigma \lesssim \frac{1}{k_z}$ is used to excite a broad band of modes
+including the desired $k_z$ mode.
+
+\subsection{Stratification}
+
+We simulate an incompressible, isothermal fluid, representatitive of degenerate
+matter in WD bulks. We assume a barotropic equation of state to simplify for the
+time being. The physical equations for an incompressible, barotropic fluid are:
+\begin{subequations}\label{se:fc_orig}
     \begin{align}
-        \vec{\nabla} \cdot \p*{\rho_0 \vec{u}} &= 0,\\
-        \pd{S_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}S_1 + \vec{u} \cdot
-            \vec{\nabla}S_0 &= 0,\\
-        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u} +
-            \vec{\nabla}\frac{P_2}{\rho_0} - \frac{S_1\vec{g}}{S_0} &= 0.
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho}{t} + \vec{u} \cdot \vec{\nabla}\rho &= 0,\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+            + \frac{\vec{\nabla}P}{\rho}
+            + g\hat{z} &= 0.
     \end{align}
 \end{subequations}
-Solving this system gives buoyancy waves with frequency $N^2 =
-\frac{g}{H_S} = \frac{g}{H} \at{\pd{\ln S_0}{\ln \rho_0}}_P \ll \frac{g}{H}$ as
-we obtain $\pd{\ln S_0}{z} = -\frac{1}{H_S}$ stratification using the EoS.
+We will introduce variables $T = P/\rho$. We then mandate $\rho_0, T_0$
+backgrounds satisfy hydrostatic equilibrium $\vec{\nabla}T_0 + T_0
+\vec{\nabla}\rho_0 + \vec{g} = 0$. Taking isothermal stratification, we find
+$T_0 = gH$. Making then substitution of variables $\Upsilon = \ln \rho - \ln
+\rho_0$ and $T_1 = T - T_0$ deviations from the background state, the exact
+fluid equations in the new variables are:
+\begin{subequations}\label{se:fc_var}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\Upsilon}{t} - \frac{u_z}{H} &= 0,\\
+        \pd{u_x}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_x
+            + \pd{T}{x} + gH\pd{\Upsilon}{x}
+            + T_1 \pd{\Upsilon}{x} &= 0,\\
+        \pd{u_z}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_z
+            + \pd{T}{z} + gH\pd{\Upsilon}{z}
+            + T_1 \pd{\Upsilon}{z} - \frac{T_1}{H} &= 0.
+    \end{align}
+\end{subequations}
+
+These are implemented as:
+\begin{subequations}\label{se:curr_num}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\Upsilon}{t} - \frac{u_z}{H}
+            - \nu \nabla^2 \Upsilon &= -\Gamma(z) \Upsilon
+                - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
+                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x}
+            - \nu \nabla^2 u_x
+            &= -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
+                - T_1 \pd{\Upsilon}{x},\\
+        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H}
+            - \nu \nabla^2 u_z &= -\Gamma(z) u_z
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_z
+                - T_1 \pd{\Upsilon}{z}.
+    \end{align}
+\end{subequations}
+$\Gamma(z)$ is as before, but we use $k_z = -2\pi/H$ here, and $\omega$ in the
+forcing term accordingly.
 
 \end{document}
 
