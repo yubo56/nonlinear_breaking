@@ -10,7 +10,7 @@ CW = MPI.COMM_WORLD
 
 H = 1
 XMAX = H
-ZMAX = H / 2
+ZMAX = H
 
 NUM_SNAPSHOTS = 300
 TARGET_DISP_RAT = 0.7
@@ -20,7 +20,7 @@ PARAMS_RAW = {'XMAX': XMAX,
               'N_X': 256,
               'N_Z': 1024,
               'KX': 2 * np.pi / XMAX,
-              'KZ': -10 * np.pi / H,
+              'KZ': -8 * np.pi / H,
               'H': H,
               'RHO0': 1,
               'Z0': 0.15 * ZMAX,
