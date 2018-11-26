@@ -11,7 +11,7 @@ H = 1
 XMAX = 4 * H
 ZMAX = 10 * H
 
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 300
 TARGET_DISP_RAT = 0.1 # k_z * u_z / omega at base
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -37,7 +37,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 10
+    T_F = abs(ZMAX / VG_Z) * 6
 
     params['T_F'] = T_F
     params['g'] = g
@@ -69,23 +69,23 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
        (set_ic, 'linear0',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.0005,
+        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
                                              'Re': 0.0001})),
-       (set_ic, 'linear1',
-        build_interp_params(2, 2, overrides={'F_MULT': 0.0005,
-                                             'Re': 0.3})),
        (set_ic, 'nl1',
         build_interp_params(2, 2, overrides={'F_MULT': 1,
-                                             'Re': 0.3,
+                                             'Re': 0.5,
                                              'USE_CFL': True})),
+       (set_ic, 'linear1',
+        build_interp_params(2, 2, overrides={'F_MULT': 0.05,
+                                             'Re': 0.5})),
        (set_ic, 'nl2',
         build_interp_params(2, 2, overrides={'F_MULT': 2,
-                                             'Re': 0.3,
+                                             'Re': 0.5,
                                              'USE_CFL': True})),
-       # (set_ic, 'nl_full',
-       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
-       #                                       'Re': 0.6,
-       #                                       'USE_CFL': True})),
+       (set_ic, 'nl_full',
+        build_interp_params(1, 1, overrides={'F_MULT': 1,
+                                             'Re': 0.7,
+                                             'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:

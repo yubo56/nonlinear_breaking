@@ -403,7 +403,7 @@ def plot_front(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride, start=100)
+        name, params, dyn_vars, plot_stride, start=0)
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -413,6 +413,7 @@ def plot_front(name, params):
     F_px = np.sum(state_vars['F_px'], axis=1) / N_X
 
     front_pos = []
+    ri_inv = []
     fluxes = []
     for t_idx, sim_time in enumerate(sim_times):
         max_pos = np.argmax(ux_z[t_idx])
@@ -421,6 +422,9 @@ def plot_front(name, params):
                                  ux_z[t_idx][max_pos - 1:max_pos + 2])
         true_max = -ux_z_quad[1] / (2 * ux_z_quad[0]) # -b/2a
         front_pos.append(true_max)
+        ri_inv.append((ux_z_quad[0] * true_max**2
+                       + ux_z_quad[1] * true_max
+                       + ux_z_quad[2]) / (params['g'] / params['H']))
 
         fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
                                    F_px[t_idx][max_pos - 1:max_pos + 2])
@@ -429,12 +433,22 @@ def plot_front(name, params):
                        + fluxes_quad[2])* 2)
     with open('%s/data.log' % snapshots_dir, 'w') as data:
         data.write(repr(front_pos))
+        data.write('\n')
+        data.write(repr(ri_inv))
+        data.write('\n')
         data.write(repr(fluxes))
     plt.plot(front_pos, sim_times)
     plt.xlabel('Front Position')
     plt.ylabel('Time')
     plt.title(name)
     plt.savefig('%s/front.png' % snapshots_dir)
+    plt.clf()
+
+    plt.plot(ri_inv, sim_times)
+    plt.xlabel('1/Ri')
+    plt.ylabel('Time')
+    plt.title(name)
+    plt.savefig('%s/f_ri.png' % snapshots_dir)
     plt.clf()
 
     plt.plot(fluxes, sim_times)

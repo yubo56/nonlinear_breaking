@@ -10,9 +10,9 @@ CW = MPI.COMM_WORLD
 
 H = 1
 XMAX = H
-ZMAX = H
+ZMAX = H / 2
 
-NUM_SNAPSHOTS = 400
+NUM_SNAPSHOTS = 300
 TARGET_DISP_RAT = 0.7
 
 PARAMS_RAW = {'XMAX': XMAX,
@@ -73,6 +73,10 @@ if __name__ == '__main__':
          build_interp_params(4, 4, overrides={'NU_MULT': 40,
                                               'USE_CFL': True,
                                               'UZ0_COEFF': 1})),
+        # (set_ic, 'vstrat_highres',
+        #  build_interp_params(1, 1, overrides={'NU_MULT': 100,
+        #                                       'USE_CFL': True,
+        #                                       'UZ0_COEFF': 1})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
