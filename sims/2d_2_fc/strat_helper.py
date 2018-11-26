@@ -83,12 +83,12 @@ def get_solver(params):
         'F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
-        'dt(ux) + dx(P) + 1 / (g * H) * dx(rho)' +
+        'dt(ux) + dx(P) + (g * H) * dx(rho)' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
         '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))' +
         '- P * dx(rho)')
     problem.add_equation(
-        'dt(uz) + dz(P) + 1 / (g * H) * dz(rho) - P/H' +
+        'dt(uz) + dz(P) + (g * H) * dz(rho) - P/H' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
         '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))' +
         '- P * dz(rho)')
