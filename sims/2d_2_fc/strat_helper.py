@@ -24,7 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
-plot_stride = 1
+plot_stride = 2
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -232,8 +232,9 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['F_px'] = state_vars['rho'] * params['RHO0'] *\
-        np.exp(-z/ params['H']) * (state_vars['ux'] * state_vars['uz'])
+    state_vars['F_px'] = params['RHO0']\
+        * np.exp(-z/ params['H'] + state_vars['rho'])\
+        * (state_vars['ux'] * state_vars['uz'])
     return sim_times[start::plot_stride], domain, state_vars
 
 def plot(name, params):
@@ -453,7 +454,7 @@ def plot_front(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride, start=0)
+        name, params, dyn_vars, plot_stride, start=10)
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])

@@ -41,7 +41,7 @@ def set_ic(solver, domain, params):
     KZ = params['KZ']
     z_bot = (params['Z0'] + params['ZMAX']) / 2
     width = abs(np.pi / KZ)
-    z_top = z_bot + 3 * width
+    z_top = z_bot + 2.5 * width
     ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
         np.tanh((z - z_bot) / width) -
         np.tanh((z - z_top) / (0.3 * (zmax - z_top)))) / 2
