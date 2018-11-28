@@ -108,46 +108,6 @@
 
 \newpage
 
-\chapter{State of the Art}
-
-While the succeeding content is largely chronological, this chapter will be
-devoted to a description of the current state-of-the-art.
-
-\section{2D Cartesian, Pseudo-Anelastic Atmosphere}
-
-Our equations are:
-\begin{subequations}\label{se:base.pseudo-anel}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H}
-            + \vec{u} \cdot \vec{\nabla}\rho_1 &= 0,\\
-        \pd{\vec{u}_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}_1
-            + \frac{\vec{\nabla}P_1}{\rho_0} + \frac{\rho_1 \vec{g}}{\rho_0}
-            - \frac{\vec{\nabla}P_1}{\rho_0}\rho_1 &= 0.
-    \end{align}
-\end{subequations}
-Note that we permit background stratification $-\pd{\ln \rho_0}{z} = H$ but no
-background shear flow $\vec{u}_0$, so we write $\vec{u}_1 = \vec{u}$ without
-ambiguity.
-
-\section{2D Cartesian, Boussinesq Local Simulations}
-
-Our equations are the same:
-\begin{subequations}\label{se:base.bouss}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H}
-            + \vec{u} \cdot \vec{\nabla}\rho_1 &= 0,\\
-        \pd{\vec{u}_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}_1
-            + \frac{\vec{\nabla}P_1}{\rho_0} + \frac{\rho_1 \vec{g}}{\rho_0}
-            - \frac{\vec{\nabla}P_1}{\rho_0}\rho_1 &= 0.
-    \end{align}
-\end{subequations}
-The only difference is that we take $\rho_0(z) = \rho_0$, effectively assuming
-$H$ is much larger than the vertical extent of the domain of simulation.
-
-\clearpage
-
 \chapter{Preliminary Problems}
 
 To get an intuition for how Dedalus and fluid mechanics works, we will solve
@@ -232,28 +192,28 @@ $u_{1x}, u_{1z}$ are exactly $\frac{2\pi}{10}$ at $t = 1$.
     \centering
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_P_t50.png}
+        \includegraphics[width=\textwidth]{plots/no_g_P_t50.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_ux_t50.png}
+        \includegraphics[width=\textwidth]{plots/no_g_ux_t50.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_uz_t50.png}
+        \includegraphics[width=\textwidth]{plots/no_g_uz_t50.png}
     \end{subfigure}
 
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_P_t100.png}
+        \includegraphics[width=\textwidth]{plots/no_g_P_t100.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_ux_t100.png}
+        \includegraphics[width=\textwidth]{plots/no_g_ux_t100.png}
     \end{subfigure}
     \begin{subfigure}{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{../sims_old/2d_0_no_g/no_g_uz_t100.png}
+        \includegraphics[width=\textwidth]{plots/no_g_uz_t100.png}
     \end{subfigure}
     \caption{$P, u_x, u_z$ at $t = 0.5$ and $t = 1$ for $\rho_0 = 1$. We choose
     a $L = 10$ square domain.}\label{fig:no_g}
@@ -653,7 +613,7 @@ produced with only a Dirichlet BC on $u_z$, no BCs on $u_x$, in a linear system
 with absorbing BCs.
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=0.7\textwidth]{../sims_old/2d_1_strat/agree_plots/sponge_2.png}
+    \includegraphics[width=0.7\textwidth]{plots/sponge_2.png}
     \caption{Note the jaggedness in $u_x$ induced by a Dirichlet BC on
     $u_z$.}\label{fig:agree_plots}
 \end{figure}

@@ -1,0 +1,207 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\;\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+
+\begin{document}
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\rfoot{Yubo Su}
+\rhead{}
+\cfoot{\thepage/\pageref{LastPage}}
+
+\section{Equations}
+
+\subsection{Boussinesq Equations}
+
+The physical equations in the Boussinesq approximation are:
+\begin{subequations}\label{se:bouss}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+            - \frac{\rho_0 u_z}{H} &= 0,\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+            + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1 \vec{g}}{\rho_0} &= 0.
+    \end{align}
+\end{subequations}
+In these equations, we take $\rho_0(z) = \rho_0$ a constant reference density.
+
+Including numerical terms and driving terms, my full equations are
+\begin{subequations}\label{se:bouss_num}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
+        \pd{\rho_1}{t} - \frac{\rho_0 u_z}{H}
+            - \nu \nabla^6 \rho_1
+            &= -\Gamma(z) \rho_1
+                - \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
+                + Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \frac{\partial_x P}{\rho_0}
+            - \nu \nabla^6 u_x
+            &= -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x,\\
+        \pd{u_z}{t} + \frac{\partial_z P}{\rho_0}
+            + \frac{\rho_1 g}{\rho_0}
+            - \nu \nabla^6 u_z
+            &= -\Gamma(z) u_z
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_z,\\
+        \Gamma(z) &= 5\s*{2 + \tanh \frac{z - z_T}{(z_{\max} - z_T) / 2}
+            + \tanh \frac{z_B - z}{z_B / 2}},
+    \end{align}
+\end{subequations}
+where $z_B = 0.07z_{\max}, z_T = 0.93z_{\max}$ are the boundaries of the damping
+zones, and my domain is $z \in [0, z_{\max}]$. The forcing term $F$ is chosen to
+be weakly nonlinear, $\omega$ is chosen by inverting $\omega(k_x, k_z)$
+dispersion relation for fixed $k_x = 2\pi / x_{\max}$ and some desired $k_z \ll
+H, z_{\max}$ (I've chosen $k_z \approx -\frac{2\pi}{z_{\max} / 5}$ here), and
+$\sigma \lesssim \frac{1}{k_z}$ is used to excite a broad band of modes
+including the desired $k_z$ mode.
+
+\subsection{Stratification}
+
+We simulate an incompressible, isothermal fluid, representatitive of degenerate
+matter in WD bulks. We assume a barotropic equation of state to simplify for the
+time being. The physical equations for an incompressible, barotropic fluid are:
+\begin{subequations}\label{se:fc_orig}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho}{t} + \vec{u} \cdot \vec{\nabla}\rho &= 0,\\
+        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+            + \frac{\vec{\nabla}P}{\rho}
+            + g\hat{z} &= 0.
+    \end{align}
+\end{subequations}
+We will introduce variables $T = P/\rho$. We then mandate $\rho_0, T_0$
+backgrounds satisfy hydrostatic equilibrium $\vec{\nabla}T_0 + T_0
+\vec{\nabla}\rho_0 + \vec{g} = 0$. Taking isothermal stratification, we find
+$T_0 = gH$. Making then substitution of variables $\Upsilon = \ln \rho - \ln
+\rho_0$ and $T_1 = T - T_0$ deviations from the background state, the exact
+fluid equations in the new variables are:
+\begin{subequations}\label{se:fc_var}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\Upsilon}{t} - \frac{u_z}{H} &= 0,\\
+        \pd{u_x}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_x
+            + \pd{T}{x} + gH\pd{\Upsilon}{x}
+            + T_1 \pd{\Upsilon}{x} &= 0,\\
+        \pd{u_z}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_z
+            + \pd{T}{z} + gH\pd{\Upsilon}{z}
+            + T_1 \pd{\Upsilon}{z} - \frac{T_1}{H} &= 0.
+    \end{align}
+\end{subequations}
+
+These are implemented as:
+\begin{subequations}\label{se:curr_num}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\Upsilon}{t} - \frac{u_z}{H}
+            - \nu \nabla^2 \Upsilon &= -\Gamma(z) \Upsilon
+                - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
+                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x}
+            - \nu \nabla^2 u_x
+            &= -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
+                - T_1 \pd{\Upsilon}{x},\\
+        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H}
+            - \nu \nabla^2 u_z &= -\Gamma(z) u_z
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_z
+                - T_1 \pd{\Upsilon}{z}.
+    \end{align}
+\end{subequations}
+$\Gamma(z)$ is as before, but we use $k_z = -2\pi/H$ here, and $\omega$ in the
+forcing term accordingly.
+
+\end{document}
+

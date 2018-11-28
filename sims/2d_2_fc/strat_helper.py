@@ -76,22 +76,22 @@ def get_solver(params):
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
-        'dt(rho) - rho0 * uz / H' +
+        'dt(rho) - uz / H' +
         '- (NU * dx(dx(rho)) + NU * dz(rho_z))' +
         ' = - sponge * rho -' +
         '(ux * dx(rho) + uz * dz(rho)) +' +
-        'F * exp(-(z - Z0)**2 / (2 * S**2)) *' +
+        'F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)')
     problem.add_equation(
-        'dt(ux) + dx(P) / rho0' +
+        'dt(ux) + dx(P) + (g * H) * dx(rho)' +
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
         '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))' +
-        '+ rho * dx(P) / rho0**2')
+        '- P * dx(rho)')
     problem.add_equation(
-        'dt(uz) + dz(P) / rho0 + rho * g / rho0' +
+        'dt(uz) + dz(P) + (g * H) * dz(rho) - P/H' +
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
         '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))' +
-        '+ rho * dz(P) / rho0**2')
+        '- P * dz(rho)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
     problem.add_equation('dz(rho) - rho_z = 0')
@@ -127,7 +127,7 @@ def run_strat_sim(set_ICs, name, params):
               cadence=5,
               max_dt=params['DT'],
               min_dt=0.01,
-              safety=1,
+              safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
     cfl.add_frequency(params['DT'])
@@ -139,6 +139,7 @@ def run_strat_sim(set_ICs, name, params):
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
     flow.add_property('sqrt((ux / NU)**2 + (uz / NU)**2)', name='Re')
+    flow.add_property('ux_z / (g / H)', name='Ri_inv')
 
     # Main loop
     logger.info('Starting sim...')
@@ -156,7 +157,8 @@ def run_strat_sim(set_ICs, name, params):
                         solver.stop_sim_time,
                         cfl_dt,
                         params['DT'])
-            logger.info('Max Re = %f' %flow.max('Re'))
+            logger.info('Max Re = %e, Max Ri_inv = %f' % (flow.max('Re'),
+                                                          flow.max('Ri_inv')))
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -191,56 +193,47 @@ def load(name, params, dyn_vars, plot_stride, start=0):
             state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
 
         # get dissipation, use solver.state['P'] as temp var
-        temp = solver.state['P']
+        # temp = solver.state['P']
 
-        disp_x = np.zeros(np.shape(temp['g']))
-        disp_z = np.zeros(np.shape(temp['g']))
+        # disp_x = np.zeros(np.shape(temp['g']))
+        # disp_z = np.zeros(np.shape(temp['g']))
 
-        ux = solver.state['ux']
-        ux.differentiate('x', out=temp)
-        temp.differentiate('x', out=temp)
-        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                        keep_data=True)
-        disp_x += temp['g'] * params['NU']
+        # ux = solver.state['ux']
+        # ux.differentiate('x', out=temp)
+        # temp.differentiate('x', out=temp)
+        # temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+        #                 keep_data=True)
+        # disp_x += temp['g'] * params['NU']
 
-        ux_z = solver.state['ux_z']
-        ux_z.differentiate('z', out=temp)
-        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                        keep_data=True)
-        disp_x += temp['g'] * params['NU']
+        # ux_z = solver.state['ux_z']
+        # ux_z.differentiate('z', out=temp)
+        # temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+        #                 keep_data=True)
+        # disp_x += temp['g'] * params['NU']
 
-        uz = solver.state['uz']
-        uz.differentiate('x', out=temp)
-        temp.differentiate('x', out=temp)
-        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                        keep_data=True)
-        disp_z += temp['g'] * params['NU']
+        # uz = solver.state['uz']
+        # uz.differentiate('x', out=temp)
+        # temp.differentiate('x', out=temp)
+        # temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+        #                 keep_data=True)
+        # disp_z += temp['g'] * params['NU']
 
-        uz_z = solver.state['uz_z']
-        uz_z.differentiate('z', out=temp)
-        temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                        keep_data=True)
-        disp_z += temp['g'] * params['NU']
+        # uz_z = solver.state['uz_z']
+        # uz_z.differentiate('z', out=temp)
+        # temp.set_scales((params['INTERP_X'], params['INTERP_Z']),
+        #                 keep_data=True)
+        # disp_z += temp['g'] * params['NU']
 
-        ux.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
-        uz.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
-        state_vars['NS-nu'].append(params['RHO0'] * np.exp(-z / params['H']) * (
-            temp['g'] * ux['g'] + disp_z * uz['g']))
+        # ux.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
+        # uz.set_scales((params['INTERP_X'], params['INTERP_Z']), keep_data=True)
+        # state_vars['NS-nu'].append(params['RHO0'] * np.exp(-z / params['H']) * (
+        #     temp['g'] * ux['g'] + disp_z * uz['g']))
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['rho'] += params['RHO0'] * np.exp(-z / params['H'])
-    state_vars['P'] += params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['g'] * params['H']
-    state_vars['rho1'] = state_vars['rho'] - params['RHO0'] *\
-        np.exp(-z / params['H'])
-    state_vars['P1'] = state_vars['P'] -\
-        params['RHO0'] * (np.exp(-z / params['H']) - 1) *\
-        params['g'] * params['H']
-
-    state_vars['F_px'] = state_vars['rho'] * (state_vars['ux'] *
-                                              state_vars['uz'])
+    state_vars['F_px'] = state_vars['rho'] * params['RHO0'] *\
+        np.exp(-z/ params['H']) * (state_vars['ux'] * state_vars['uz'])
     return sim_times[start::plot_stride], domain, state_vars
 
 def plot(name, params):
@@ -287,14 +280,14 @@ def plot(name, params):
 
     plot_cfgs = [
         {
-            'save_fmt_str': 't_%03i.png',
+            'save_fmt_str': 'p_%03i.png',
             'z_vars': ['ux', 'F_px', 'ux_z'],
             'slice_vars': ['uz'],
             'sub_vars': ['ux'],
         },
         {
             'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['ux', 'uz', 'rho1', 'P1'],
+            'plot_vars': ['ux', 'uz', 'rho', 'P'],
         },
     ]
 
@@ -460,7 +453,7 @@ def plot_front(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride, start=20)
+        name, params, dyn_vars, plot_stride, start=0)
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
