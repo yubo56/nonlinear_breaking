@@ -82,10 +82,10 @@ if __name__ == '__main__':
         build_interp_params(2, 2, overrides={'F_MULT': 2,
                                              'Re': 0.5,
                                              'USE_CFL': True})),
-       (set_ic, 'nl_full',
-        build_interp_params(1, 1, overrides={'F_MULT': 1,
-                                             'Re': 0.7,
-                                             'USE_CFL': True})),
+       # (set_ic, 'nl_full',
+       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
+       #                                       'Re': 0.7,
+       #                                       'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:

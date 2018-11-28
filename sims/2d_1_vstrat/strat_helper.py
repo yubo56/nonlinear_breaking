@@ -401,60 +401,75 @@ def plot_front(name, params):
     N_Z = params['N_Z'] * params['INTERP_Z']
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     snapshots_dir = SNAPSHOTS_DIR % name
+    logfile = '%s/data.log' % snapshots_dir
 
-    sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride, start=0)
-    x = domain.grid(0, scales=params['INTERP_X'])
-    z = domain.grid(1, scales=params['INTERP_Z'])
-    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-    z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
-
-    ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
-    F_px = np.sum(state_vars['F_px'], axis=1) / N_X
-
+    sim_times = []
     front_pos = []
     ri_inv = []
     fluxes = []
-    for t_idx, sim_time in enumerate(sim_times):
-        max_pos = np.argmax(ux_z[t_idx])
 
-        ux_z_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
-                                 ux_z[t_idx][max_pos - 1:max_pos + 2])
-        true_max = -ux_z_quad[1] / (2 * ux_z_quad[0]) # -b/2a
-        front_pos.append(true_max)
-        ri_inv.append((ux_z_quad[0] * true_max**2
-                       + ux_z_quad[1] * true_max
-                       + ux_z_quad[2]) / (params['g'] / params['H']))
+    # load if exists
+    if not os.path.exists(logfile):
+        print('log file not found, generating')
+        sim_times, domain, state_vars = load(
+            name, params, dyn_vars, plot_stride, start=10)
+        x = domain.grid(0, scales=params['INTERP_X'])
+        z = domain.grid(1, scales=params['INTERP_Z'])
+        xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+        z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
 
-        fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
-                                   F_px[t_idx][max_pos - 1:max_pos + 2])
-        fluxes.append((fluxes_quad[0] * true_max**2
-                       + fluxes_quad[1] * true_max
-                       + fluxes_quad[2])* 2)
-    with open('%s/data.log' % snapshots_dir, 'w') as data:
-        data.write(repr(front_pos))
-        data.write('\n')
-        data.write(repr(ri_inv))
-        data.write('\n')
-        data.write(repr(fluxes))
-    plt.plot(front_pos, sim_times)
-    plt.xlabel('Front Position')
-    plt.ylabel('Time')
+        ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
+        F_px = np.sum(state_vars['F_px'], axis=1) / N_X
+        for t_idx, sim_time in enumerate(sim_times):
+            max_pos = np.argmax(ux_z[t_idx])
+
+            ux_z_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
+                                     ux_z[t_idx][max_pos - 1:max_pos + 2])
+            true_max = -ux_z_quad[1] / (2 * ux_z_quad[0]) # -b/2a
+            front_pos.append(true_max)
+            ri_inv.append((ux_z_quad[0] * true_max**2
+                           + ux_z_quad[1] * true_max
+                           + ux_z_quad[2]) / (params['g'] / params['H']))
+
+            fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
+                                       F_px[t_idx][max_pos - 1:max_pos + 2])
+            fluxes.append((fluxes_quad[0] * true_max**2
+                           + fluxes_quad[1] * true_max
+                           + fluxes_quad[2])* 2)
+        with open(logfile, 'w') as data:
+            data.write(repr(sim_times.tolist()))
+            data.write('\n')
+            data.write(repr(front_pos))
+            data.write('\n')
+            data.write(repr(ri_inv))
+            data.write('\n')
+            data.write(repr(fluxes))
+
+    else:
+        print('data.log found, loading')
+        with open(logfile) as data:
+            sim_times = eval(data.readline())
+            front_pos = eval(data.readline())
+            ri_inv = eval(data.readline())
+            fluxes = eval(data.readline())
+    plt.plot(sim_times, front_pos)
+    plt.ylabel('Front Position')
+    plt.xlabel('Time')
     plt.title(name)
-    plt.savefig('%s/front.png' % snapshots_dir)
+    plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(ri_inv, sim_times)
-    plt.xlabel('1/Ri')
-    plt.ylabel('Time')
+    plt.plot(sim_times, ri_inv)
+    plt.ylabel('1/Ri')
+    plt.xlabel('Time')
     plt.title(name)
-    plt.savefig('%s/f_ri.png' % snapshots_dir)
+    plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(fluxes, sim_times)
-    plt.xlabel('F_px')
-    plt.ylabel('Time')
+    plt.plot(sim_times, fluxes)
+    plt.ylabel('F_px')
+    plt.xlabel('Time')
     plt.title(name)
     plt.locator_params(nbins=3)
-    plt.savefig('%s/fluxes.png' % snapshots_dir)
+    plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=200)
     plt.clf()
