@@ -517,10 +517,9 @@ def plot_front(name, params):
     plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, fluxes)
-    plt.ylabel('F_px')
+    plt.plot(sim_times, np.array(fluxes) * 1e5)
+    plt.ylabel('F_px (1e-5)')
     plt.xlabel('Time')
     plt.title(name)
-    plt.locator_params(nbins=3)
     plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=200)
     plt.clf()
