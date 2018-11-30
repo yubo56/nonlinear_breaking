@@ -24,7 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
-plot_stride = 2
+plot_stride = 10
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -139,7 +139,7 @@ def run_strat_sim(set_ICs, name, params):
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
     flow.add_property('sqrt((ux / NU)**2 + (uz / NU)**2)', name='Re')
-    flow.add_property('ux_z / (g / H)', name='Ri_inv')
+    flow.add_property('integ(ux_z, "x") / (XMAX * g / H)', name='Ri_inv')
 
     # Main loop
     logger.info('Starting sim...')
@@ -463,7 +463,7 @@ def plot_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride, start=10)
+            name, params, dyn_vars, 1, start=10)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
