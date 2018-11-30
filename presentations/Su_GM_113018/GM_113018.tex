@@ -91,70 +91,69 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Background}
-    \framesubtitle{Problem Setup}
+    \framesubtitle{Goldreich \& Nicholson 1989}
 
     \begin{itemize}
-        \item 2D plane parallel atmosphere, continuous train IGW from below.
+        \item \emph{Tidal Friction in Early-Type Stars}.
 
-        \item Equations to filter sound waves (actually surprisingly
-            contentious):
-            \begin{align}
-                \vec{\nabla} \cdot \vec{u} &= 0,\\
-                \pd{\rho_1}{t} -{}& \frac{u_{1z} \rho_0}{H}
-                    + \vec{u} \cdot \vec{\nabla}\rho_1\nonumber\\
-                    &= \s*{-\Gamma(z) + \mathfrak{D}}\rho_1
-                    + \z*{Fe^{-\frac{(z - z_0)^2}{2\sigma^2}} \cos\p*{k_xx -
-                    \omega t}},\\
-                \pd{\vec{u}}{t} +{}& \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
-                    + \frac{\vec{\nabla}P_1}{\rho_0}
-                    + \frac{\rho_1 \vec{g}}{\rho_0}
-                    - \frac{\vec{\nabla}P_1}{\rho_0^2}\rho_1\nonumber\\
-                    &= \s*{-\Gamma(z) + \mathfrak{D}}\vec{u}
-            \end{align}
+        \item Tidal torques excite outgoing internal gravity waves (IGW) at
+            boundary between convective core and radiative envelope.
 
-        \begin{itemize}
-            \item $\Gamma(z) \propto 2 + \tanh\p*{\frac{z - z_H}{w}} +
-                \tanh\p*{\frac{z_b - z}{w}}, \mathfrak{D} \sim \nabla^{k}$.
-                ($[]$ numerical, $\z*{}$ forcing).
+        \item IGW amplify as they propagate due to density rarefaction, break
+            and deposit angular momentum.
 
-            \item If $\rd{\ln \rho_0}{z} = H$ scale height $\gg$ domain of
-                simulation, can use $\rho_0(z) = \rho_0$, \emph{Boussinesq
-                approximation}. Else, $\sim$ \emph{anelastic}.
-        \end{itemize}
+        \item Transfers energy from the orbit to the star and synchronizing the
+            spin to the orbit outside-in.
     \end{itemize}
+    \begin{figure}[t]
+        \centering
+        \includegraphics[width=0.3\textwidth]{../Su_GM_092118/conv_core.jpg}
+    \end{figure}
 \end{frame}
 
 \begin{frame}
     \frametitle{Background}
-    \framesubtitle{Digression: Brunt-V\"ais\"al\"a Frequency and IGW}
-
-    \begin{itemize}
-        \item The above system is a strange mix of the incompressible/anelastic
-            approximations!
-
-        \item In the stars, $N^2 = g^2\p*{\rd{\rho_0}{P_0} - \frac{1}{c_s^2}}$
-            where $c_s^2 \to \infty$ is the sound speed.
-
-        \item In atmospheric sciences, $\rd{\rho_0}{P_0} = \frac{1}{gH} =
-            \frac{1}{\p*{282\;\mathrm{m/s}}^2} \sim \frac{1}{c_s^2}$!
-
-        \item Introduce entropy: $S = c_v \ln P - c_p \ln \rho$. If $c_p \gg
-            c_v$, equivalent to $c_s^2 \to \infty, \Delta \rho = 0$.
-
-            If $c_p \sim c_v \gg 1$ however, $\Delta S = 0$ instead for
-            atmospheric \emph{anelastic} approximation.
-
-        \item In our system:
+    \framesubtitle{Problem Setup}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            {\small
             \begin{itemize}
-                \item $gH \ll c_s^2$ and so indeed we may use the
-                    equations on the previous slide rather than the atmospheric
-                    anelastic equations.
-                \item Our equations do not conserve horizontal momentum $\rho
-                    u_x$ exactly, but do so up to second order in perturbation
-                    quantities, and mean flow interactions are a second order
-                    effect.
+                \item 2D incompressible, isothermal, stratified  plane parallel
+                    atmosphere.
+
+                \item For a barotropic $P(\rho, S) = P(\rho)$, incompressibility
+                    $c_s^2 \to \infty$ produces
+                    \begin{subequations}\label{se:fc_orig}
+                        \begin{align}
+                            \vec{\nabla} \cdot \vec{u} &= 0,\\
+                            \pd{\rho}{t} + \vec{u} \cdot \vec{\nabla}\rho &= 0,\\
+                            \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+                                + \frac{\vec{\nabla}P}{\rho}
+                                + g\hat{z} &= 0.
+                        \end{align}
+                    \end{subequations}
             \end{itemize}
-    \end{itemize}
+            }
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            {\small
+            \begin{itemize}
+                \item Numerics: instead of $\frac{P}{\rho}$, $\rho T = P$ and
+                    $\rho = \rho_0 e^\Upsilon$ for stratification $\rho(z)
+                    \propto e^{-z/H}$.
+                \begin{subequations}
+                    \begin{align}
+                        \vec{\nabla} \cdot \vec{u} &= 0,\\
+                        \pd{\Upsilon}{t} - \frac{u_z}{H} &= 0,\\
+                        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
+                            + \vec{\nabla}T + gH \vec{\nabla}\Upsilon &\nonumber\\
+                            + T_1\vec{\nabla}\Upsilon - \frac{T_1\hat{z}}{H} &= 0.
+                    \end{align}
+                \end{subequations}
+            \end{itemize}
+            }
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
@@ -162,8 +161,11 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
     \framesubtitle{Theory}
 
     \begin{itemize}
+        \item In linear regime $\p*{\vec{u} \cdot \vec{\nabla}} \ll \partial_t$,
+            $\vec{u} \propto e^{z/2H}$.
+
         \item Perturbation $\p*{\vec{u}, \rho_1, P_1}$ carries average
-            horizontal momentum flux $\ev*{F_{p, x}}_x = \ev*{\rho u_x u_z}$.
+            horizontal momentum flux $\ev*{F_{p, x}}_x = \ev*{\rho u_x u_z}_x$.
 
         \item Induces mean flow
             \begin{equation}
@@ -175,8 +177,8 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
             systems): where Doppler-shifted frequency (in fluid rest frame)
             $\omega \Rightarrow \omega - k_x\bar{U}_x = 0$.
 
-        \item Since $\vec{u} \propto e^{z/2H}$, so $\bar{U}_x \propto e^{z/H}$,
-            $\exists \,z_c\!: \omega - k_x\bar{U}_x(z_c) = 0$.
+        \item Note $\bar{U}_x \propto e^{z/H}$ so there is eventually $z_c:
+            \omega - k_x\bar{U}_x(z_c) = 0$.
     \end{itemize}
 \end{frame}
 
@@ -194,7 +196,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
             \begin{itemize}
                 \item $\vec{u}_1$ is excited, induces $\bar{U}_x$ mean flow.
 
-                \item Once $\bar{U}_x$ satisfies critical layer criterion,
+                \item Where $\bar{U}_x$ satisfies critical layer criterion,
                     $F_{p, x}$ is fully absorbed.
 
                 \item Horizontal momentum goes into spinning up more fluid up to
@@ -203,17 +205,14 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
                 \item Thus, critical layer should propagate down.
             \end{itemize}
 
-        \item Exactly \emph{quasi-biennial oscillation} theory (Lindzen 1980,
-            1982), assume critical layer breaks down eventually.
-
-        \item Already different from naive ``goes nonlinear and deposits
-            locally'' theory!
+        \item Exactly the \emph{spin up outside in} tidal synchronization
+            picture..
     \end{itemize}
 \end{frame}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, Low-Amplitude}
+    \framesubtitle{Large Domain, Low-Amplitude}
 
     \begin{itemize}
         \item Permit $z \in [0H, 10H]$, full $\rho_0 \propto e^{-z/H}$, allow
@@ -243,7 +242,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, Low-Amplitude}
+    \framesubtitle{Large Domain, Low-Amplitude}
 
     \begin{figure}[t]
         \centering
@@ -255,11 +254,11 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, High-Amplitude}
+    \framesubtitle{Large Domain, High-Amplitude}
 
     \begin{itemize}
         \item Note steepening region ($N = 1$, so $\pd{\bar{U}_x}{z} =
-            \mathrm{Ri}^{-1}$).
+            \frac{N}{\mathrm{Ri}} = \mathrm{Ri}^{-1}$).
     \end{itemize}
 
     \begin{figure}[t]
@@ -283,7 +282,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, High-Amplitude}
+    \framesubtitle{Large Domain, High-Amplitude}
 
     \begin{itemize}
         \item Later
@@ -310,7 +309,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, Comments}
+    \framesubtitle{Large Domain, Comments}
 
     \begin{itemize}
         \item While damping layers pump up $\bar{U}_x$, ran on higher amplitude,
@@ -335,7 +334,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
 
 \begin{frame}
     \frametitle{Simulations}
-    \framesubtitle{Large Anelastic, Predicting $u_{front}$}
+    \framesubtitle{Large Domain, Predicting $u_{front}$}
 
     \begin{itemize}
         \item Front position is $z_f = \argmax_z \rd{\bar{U}_x}{z}$, while
@@ -358,7 +357,7 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
             \centering
             % nl_full/t_049.png
             \includegraphics[width=\textwidth]{fluxes_nl_full.png}
-            \caption{$F_{p, x} = \ev*{\rho_0 u_x u_z}_x$.}
+            \caption{$F_{p, x} = \ev*{\rho u_x u_z}_x$.}
         \end{subfigure}
         \hspace*{-19mm}%
     \end{figure}
@@ -398,7 +397,6 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
     \framesubtitle{Local Boussinesq}
     \begin{itemize}
         \item Expect Kelvin-Helmholtz instability to develop; resolution-limit?
-            Tried with random noise, no qualitative difference.
 
         \item Not viscosity-limited: $\nu^{(6)} \rho_0
             \frac{\bar{U}_{x, c}}{d^6} \ll \frac{F_{p, x}}{d}$!
@@ -409,12 +407,12 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
         \hspace*{-19mm}%
         \begin{subfigure}{0.55\textwidth}
             \centering
-            % vstrat/t_040.png
+            % vstrat/t_060.png
             \includegraphics[width=\textwidth]{vstrat_2.png}
         \end{subfigure}
         \begin{subfigure}{0.55\textwidth}
             \centering
-            % vstrat/t_065.png
+            % vstrat/t_105.png
             \includegraphics[width=\textwidth]{vstrat_3.png}
         \end{subfigure}
         \hspace*{-19mm}%
@@ -439,13 +437,11 @@ Mean Flow Steepening in Internal Gravity Wave Breaking}
         \hspace*{-19mm}%
         \begin{subfigure}{0.53\textwidth}
             \centering
-            % nl1/t_049.png
             \includegraphics[width=\textwidth]{front_vstrat.png}
             \caption{Front Position. Slowing down.}
         \end{subfigure}
         \begin{subfigure}{0.53\textwidth}
             \centering
-            % nl_full/t_049.png
             \includegraphics[width=\textwidth]{fluxes_vstrat.png}
             \caption{$F_{p, x}$.}
         \end{subfigure}
