@@ -280,15 +280,20 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
+        # {
+        #     'save_fmt_str': 'p_%03i.png',
+        #     'z_vars': ['F_px', 'ux'],
+        #     'slice_vars': ['uz'],
+        #     # 'sub_vars': ['ux'],
+        # },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['ux', 'uz', 'rho', 'P'],
+        # },
         {
-            'save_fmt_str': 'p_%03i.png',
-            'z_vars': ['ux', 'F_px', 'ux_z'],
+            'save_fmt_str': 't_%03i.png',
+            'z_vars': ['F_px', 'ux'],
             'slice_vars': ['uz'],
-            'sub_vars': ['ux'],
-        },
-        {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['ux', 'uz', 'rho', 'P'],
         },
     ]
 
@@ -377,6 +382,17 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
 
+                if var == 'F_px%s' % sum_suffix:
+                    p = axes.plot(
+                        (params['F'] * get_uz_f_ratio(params))**2 / 2
+                            * abs(params['KZ'] / params['KX'])
+                            * params['RHO0']
+                                * np.exp(-params['Z0'] / params['H'])
+                            * np.ones(np.shape(z_pts)),
+                        z_pts,
+                        'orange',
+                        linewidth=0.5)
+
                 if var == 'ux%s' % sum_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
@@ -385,6 +401,13 @@ def plot(name, params):
                         z_pts,
                         'orange',
                         linewidth=0.5)
+                    # critical = omega / kx
+                    p = axes.plot(
+                        params['OMEGA'] / params['KX']
+                            * np.ones(np.shape(z_pts)),
+                        z_pts,
+                        'red',
+                        linewidth=0.5)
 
                 plt.xticks(rotation=30)
                 plt.yticks(rotation=30)
@@ -392,11 +415,13 @@ def plot(name, params):
                 axes.set_xlim(*xlims)
                 axes.set_ylim(z_pts.min(), z_pts.max())
                 p = axes.plot(xlims,
-                              [params['SPONGE_LOW']] * len(xlims),
+                              [params['SPONGE_LOW']
+                                  + params['SPONGE_WIDTH']] * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [params['SPONGE_HIGH']] * len(xlims),
+                              [params['SPONGE_HIGH']
+                                  - params['SPONGE_WIDTH']] * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
@@ -482,11 +507,13 @@ def plot_front(name, params):
                            + ux_z_quad[1] * true_max
                            + ux_z_quad[2]) / (params['g'] / params['H']))
 
-            fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
-                                       F_px[t_idx][max_pos - 1:max_pos + 2])
-            fluxes.append((fluxes_quad[0] * true_max**2
-                           + fluxes_quad[1] * true_max
-                           + fluxes_quad[2])* 2)
+            fluxes.append(F_px[t_idx][max_pos - 20] - F_px[t_idx][max_pos + 20])
+
+            # fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
+            #                            F_px[t_idx][max_pos - 1:max_pos + 2])
+            # fluxes.append((fluxes_quad[0] * true_max**2
+            #                + fluxes_quad[1] * true_max
+            #                + fluxes_quad[2])* 2)
         with open(logfile, 'w') as data:
             data.write(repr(sim_times.tolist()))
             data.write('\n')
@@ -503,21 +530,38 @@ def plot_front(name, params):
             front_pos = eval(data.readline())
             ri_inv = eval(data.readline())
             fluxes = eval(data.readline())
+    flux_anal = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+         * np.ones(np.shape(fluxes)) * abs(params['KZ'] / params['KX']) \
+         * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
     plt.plot(sim_times, front_pos)
-    plt.ylabel('Front Position')
+    plt.ylabel('Critical Layer Position')
     plt.xlabel('Time')
     plt.title(name)
     plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, ri_inv)
-    plt.ylabel('1/Ri')
+    plt.plot(sim_times,
+             np.gradient(front_pos) / np.gradient(sim_times),
+             label='Data')
+    plt.plot(sim_times, -flux_anal /
+        (params['RHO0'] * np.exp(-np.array(front_pos) / params['H'])) *
+        params['KX'] / params['OMEGA'], label='Analytic')
+    plt.ylabel('Critical Layer Velocity')
+    plt.xlabel('Time')
+    plt.legend()
+    plt.title(name)
+    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
+    plt.clf()
+
+    plt.plot(sim_times, 1 / np.array(ri_inv)**2)
+    plt.ylabel('Ri')
     plt.xlabel('Time')
     plt.title(name)
     plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
     plt.plot(sim_times, np.array(fluxes) * 1e5)
+    plt.plot(sim_times,flux_anal * 1e5)
     plt.ylabel('F_px (1e-5)')
     plt.xlabel('Time')
     plt.title(name)

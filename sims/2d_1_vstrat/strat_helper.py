@@ -448,28 +448,42 @@ def plot_front(name, params):
     else:
         print('data.log found, loading')
         with open(logfile) as data:
-            sim_times = eval(data.readline())
-            front_pos = eval(data.readline())
-            ri_inv = eval(data.readline())
-            fluxes = eval(data.readline())
+            sim_times = eval(data.readline())[30: ]
+            front_pos = eval(data.readline())[30: ]
+            ri_inv = eval(data.readline())[30: ]
+            fluxes = eval(data.readline())[30: ]
+    flux_anal = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+         * np.ones(np.shape(fluxes)) * abs(params['KZ'] / params['KX'])
     plt.plot(sim_times, front_pos)
-    plt.ylabel('Front Position')
+    plt.ylabel('Critical Layer Position')
     plt.xlabel('Time')
     plt.title(name)
     plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, ri_inv)
-    plt.ylabel('1/Ri')
+    front_v = np.gradient(front_pos) / np.gradient(sim_times)
+    anal_v = -flux_anal / \
+        (params['RHO0'] * np.exp(-np.array(front_pos) / params['H'])) * \
+        params['KX'] / params['OMEGA']
+    plt.plot(sim_times, front_v, label='Data')
+    plt.plot(sim_times, anal_v, label='Analytic')
+    plt.ylabel('Critical Layer Velocity')
+    plt.xlabel('Time')
+    plt.ylim([min(min(front_v), min(anal_v)), 0])
+    plt.legend()
+    plt.title(name)
+    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
+    plt.clf()
+
+    plt.plot(sim_times, 1 / np.array(ri_inv)**2)
+    plt.ylabel('Ri')
     plt.xlabel('Time')
     plt.title(name)
     plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
     plt.plot(sim_times, np.array(fluxes) * 1e6)
-    plt.plot(sim_times, (params['F'] * get_uz_f_ratio(params))**2 / 2
-             * np.ones(np.shape(fluxes)) * abs(params['KZ'] / params['KX'])
-             * 1e6)
+    plt.plot(sim_times,flux_anal * 1e6)
     plt.ylabel('F_px (1e-6)')
     plt.xlabel('Time')
     plt.title(name)

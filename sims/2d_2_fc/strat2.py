@@ -68,10 +68,10 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-       (set_ic, 'nl1',
-        build_interp_params(2, 2, overrides={'F_MULT': 1,
-                                             'Re': 0.5,
-                                             'USE_CFL': True})),
+       # (set_ic, 'nl1',
+       #  build_interp_params(2, 2, overrides={'F_MULT': 1,
+       #                                       'Re': 0.5,
+       #                                       'USE_CFL': True})),
        # (set_ic, 'linear1',
        #  build_interp_params(2, 2, overrides={'F_MULT': 0.05,
        #                                       'Re': 0.5})),
@@ -81,7 +81,7 @@ if __name__ == '__main__':
        #                                       'USE_CFL': True})),
        # (set_ic, 'linear0',
        #  build_interp_params(2, 2, overrides={'F_MULT': 0.05,
-       #                                       'Re': 0.01})),
+       #                                       'Re': 0.0001})),
        # (set_ic, 'nl_full',
        #  build_interp_params(1, 1, overrides={'F_MULT': 1,
        #                                       'Re': 0.7,
@@ -113,14 +113,14 @@ if __name__ == '__main__':
        # (set_ic, 'linear_01',
        #  build_interp_params(2, 2, overrides={'F_MULT': 0.05,
        #                                       'Re': 0.1})),
-       # (set_ic, 'nl_full_01',
-       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
-       #                                       'Re': 0.2,
-       #                                       'USE_CFL': True})),
-       # (set_ic, 'nl_full_02',
-       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
-       #                                       'Re': 0.4,
-       #                                       'USE_CFL': True})),
+       (set_ic, 'nl_full_01',
+        build_interp_params(1, 1, overrides={'F_MULT': 1,
+                                             'Re': 0.2,
+                                             'USE_CFL': True})),
+       (set_ic, 'nl_full_02',
+        build_interp_params(1, 1, overrides={'F_MULT': 1,
+                                             'Re': 0.4,
+                                             'USE_CFL': True})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
