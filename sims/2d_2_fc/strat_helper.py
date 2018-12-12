@@ -24,7 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
-plot_stride = 10
+plot_stride = 5
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -114,7 +114,6 @@ def get_solver(params):
 
 def run_strat_sim(set_ICs, name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
 
     solver, domain = get_solver(params)
 
@@ -280,21 +279,21 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
-        # {
-        #     'save_fmt_str': 'p_%03i.png',
-        #     'z_vars': ['F_px', 'ux'],
-        #     'slice_vars': ['uz'],
-        #     # 'sub_vars': ['ux'],
-        # },
+        {
+            'save_fmt_str': 'p_%03i.png',
+            'z_vars': ['F_px', 'ux', 'ux_z'],
+            'slice_vars': ['uz'],
+            'sub_vars': ['ux'],
+        },
         # {
         #     'save_fmt_str': 'm_%03i.png',
         #     'plot_vars': ['ux', 'uz', 'rho', 'P'],
         # },
-        {
-            'save_fmt_str': 't_%03i.png',
-            'z_vars': ['F_px', 'ux'],
-            'slice_vars': ['uz'],
-        },
+        # {
+        #     'save_fmt_str': 't_%03i.png',
+        #     'z_vars': ['F_px', 'ux'],
+        #     'slice_vars': ['uz'],
+        # },
     ]
 
     dyn_vars = ['uz', 'ux', 'rho', 'P', 'ux_z']
