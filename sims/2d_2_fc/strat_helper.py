@@ -551,6 +551,17 @@ def plot_front(name, params):
     plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
+    plt.plot(sim_times,
+             np.gradient(front_pos) / np.gradient(sim_times),
+             label='Data')
+    plt.plot(sim_times, velocities_anal, label='Analytic')
+    plt.ylabel('Critical Layer Velocity')
+    plt.xlabel('Time')
+    plt.legend()
+    plt.title(name)
+    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
+    plt.clf()
+
     plt.plot(sim_times, 1 / np.array(ri_inv)**2)
     plt.ylabel('Ri')
     plt.xlabel('Time')
