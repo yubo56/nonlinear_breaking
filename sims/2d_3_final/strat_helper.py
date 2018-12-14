@@ -77,9 +77,9 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(U) - uz / H' +
-        '- (NU * dx(dx(U)) + NU * dz(U_z) - 2 * U_z / H)' +
+        '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
         '= - sponge * U' +
-        '- (ux * dx(U) + uz * dz(U)) +' +
+        '- (ux * dx(U) + uz * dz(U))' +
         '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)')
@@ -92,7 +92,8 @@ def get_solver(params):
         '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
         '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
         '- 2 * NU * ux * U_z / H' +
-        '+ NU * ux * (1 - exp(-U)) / H**2' +
+        # '+ NU * ux * (1 - exp(-U)) / H**2' +
+        '+ NU * ux * U / H**2' +
         '- W * dx(U)')
     problem.add_equation(
         'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
@@ -103,7 +104,8 @@ def get_solver(params):
         '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
         '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
         '- 2 * NU * uz * U_z / H' +
-        '+ NU * uz * (1 - exp(-U)) / H**2' +
+        # '+ NU * uz * (1 - exp(-U)) / H**2' +
+        '+ NU * uz * U / H**2' +
         '- W * dz(U)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
