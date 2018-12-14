@@ -24,7 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
-plot_stride = 5
+plot_stride = 2
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -48,7 +48,7 @@ def set_ic(name, solver, domain, params):
 
 def get_uz_f_ratio(params):
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
-            params['KX']**2) * np.exp(-1/2) / (
+            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
                 2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
                 * params['OMEGA']**2 * params['KZ'])
 
@@ -241,15 +241,13 @@ def plot(name, params):
     size = CW.size
 
     slice_suffix = '(x=0)'
-    sum_suffix = '(mean)'
+    mean_suffix = '(mean)'
     sub_suffix = ' (- mean)'
     snapshots_dir = SNAPSHOTS_DIR % name
     path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
-    # z_b = N_Z // 4
-    z_b = 0
     KX = params['KX']
     KZ = params['KZ']
     V_GZ = get_vgz(params['g'], params['H'], KX, KZ)
@@ -260,7 +258,7 @@ def plot(name, params):
     # f_vars: vertically-summed Fourier components
     # f2_vars: 2D plot w/ horizontal Fourier transform
     # slice_vars: sliced at x=0
-    # z_vars: horizontally averaged
+    # mean_vars: horizontally averaged
     # sub_vars: 2D plot, mean-subtracted
     def get_plot_vars(cfg):
         ''' unpacks above variables from cfg shorthand '''
@@ -269,7 +267,7 @@ def plot(name, params):
             [i + '_c' for i in cfg.get('c_vars', [])],
             [i + '_f' for i in cfg.get('f_vars', [])],
             cfg.get('f2_vars', []),
-            [i + sum_suffix for i in cfg.get('z_vars', [])],
+            [i + mean_suffix for i in cfg.get('mean_vars', [])],
             [i + slice_suffix for i in cfg.get('slice_vars', [])],
             [i + sub_suffix for i in cfg.get('sub_vars', [])]]
         n_cols = cfg.get('n_cols', sum([len(arr) for arr in ret_vars]))
@@ -281,17 +279,17 @@ def plot(name, params):
     plot_cfgs = [
         {
             'save_fmt_str': 'p_%03i.png',
-            'z_vars': ['F_px', 'ux', 'ux_z'],
+            'mean_vars': ['F_px', 'ux', 'ux_z'],
             'slice_vars': ['uz'],
             'sub_vars': ['ux'],
         },
-        # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['ux', 'uz', 'rho', 'P'],
-        # },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['ux', 'uz', 'rho', 'P'],
+        },
         # {
         #     'save_fmt_str': 't_%03i.png',
-        #     'z_vars': ['F_px', 'ux'],
+        #     'mean_vars': ['F_px', 'ux'],
         #     'slice_vars': ['uz'],
         # },
     ]
@@ -301,28 +299,31 @@ def plot(name, params):
         start=0)
 
     x = domain.grid(0, scales=params['INTERP_X'])
-    z = domain.grid(1, scales=params['INTERP_Z'])[: , z_b:]
+    z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
 
     # preprocess
     for var in dyn_vars + ['F_px']:
-        state_vars[var + sum_suffix] = np.sum(state_vars[var], axis=1) / N_X
+        state_vars[var + mean_suffix] = (
+            np.sum(state_vars[var], axis=1) / N_X,
+            np.min(state_vars[var], axis=1),
+            np.max(state_vars[var], axis=1))
 
     for var in dyn_vars:
         state_vars[var + slice_suffix] = np.copy(state_vars[var][:, 0, :])
 
     for var in dyn_vars:
         # can't figure out how to numpy this together
-        means = state_vars[var + sum_suffix]
+        means = state_vars[var + mean_suffix][0]
         state_vars[var + sub_suffix] = np.copy(state_vars[var])
         for idx, _ in enumerate(state_vars[var + sub_suffix]):
-            mean = state_vars[var + sum_suffix][idx]
+            mean = means[idx]
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
 
     for cfg in plot_cfgs:
         n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
-            f2_vars, slice_vars, z_vars, sub_vars = get_plot_vars(cfg)
+            f2_vars, mean_vars, slice_vars, sub_vars = get_plot_vars(cfg)
 
         uz_est = params['F'] * get_uz_f_ratio(params)
 
@@ -333,7 +334,7 @@ def plot(name, params):
             for var in plot_vars + sub_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
 
-                var_dat = state_vars[var][:, : , z_b:]
+                var_dat = state_vars[var]
                 p = axes.pcolormesh(xmesh,
                                     zmesh,
                                     var_dat[t_idx].T,
@@ -348,7 +349,7 @@ def plot(name, params):
                 axes = fig.add_subplot(n_rows, n_cols, idx,
                                        title='log %s (x-FT)' % var)
 
-                var_dat = state_vars[var][:, : , z_b:]
+                var_dat = state_vars[var]
                 var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
                 var_dat_shaped = np.log(np.abs(
                     2 * var_dat_t.real[:params['N_X'] // 2, :]))
@@ -362,12 +363,17 @@ def plot(name, params):
                 plt.yticks(rotation=30)
                 idx += 1
 
-            for var in z_vars + slice_vars:
+            for var in mean_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
-                var_dat = state_vars[var][:, z_b:]
+                if var in slice_vars:
+                    var_dat = state_vars[var]
+                else:
+                    var_dat, var_min, var_max = state_vars[var]
+
                 z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
                 p = axes.plot(var_dat[t_idx],
                               z_pts,
+                              'r-',
                               linewidth=0.5)
                 if var == 'uz%s' % slice_suffix:
                     p = axes.plot(
@@ -381,7 +387,7 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
 
-                if var == 'F_px%s' % sum_suffix:
+                if var == 'F_px%s' % mean_suffix:
                     p = axes.plot(
                         (params['F'] * get_uz_f_ratio(params))**2 / 2
                             * abs(params['KZ'] / params['KX'])
@@ -392,7 +398,7 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
 
-                if var == 'ux%s' % sum_suffix:
+                if var == 'ux%s' % mean_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
                         uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
@@ -405,8 +411,20 @@ def plot(name, params):
                         params['OMEGA'] / params['KX']
                             * np.ones(np.shape(z_pts)),
                         z_pts,
-                        'red',
+                        'green',
                         linewidth=0.5)
+                if var in mean_vars:
+                    p = axes.plot(
+                        var_min[t_idx],
+                        z_pts,
+                        'r:',
+                        linewidth=0.2)
+                    p = axes.plot(
+                        var_max[t_idx],
+                        z_pts,
+                        'r:',
+                        linewidth=0.2)
+
 
                 plt.xticks(rotation=30)
                 plt.yticks(rotation=30)
@@ -464,14 +482,7 @@ def plot(name, params):
             plt.close()
 
 def plot_front(name, params):
-    ''' plots location of max Ri and flux @ that point, quadratically
-    interpolated '''
-    def get_quad_fit(x, fx):
-        ''' a * x**2 + b * x + c = fx, return (a, b, c) '''
-        return np.dot(
-            np.linalg.inv(np.array([x**2, x, 0 * x + 1]).T),
-            fx)
-
+    ''' few plots for front, defined where flux drops below 1/3 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     dyn_vars = ['uz', 'ux', 'rho', 'P', 'ux_z']
@@ -482,12 +493,16 @@ def plot_front(name, params):
     front_pos = []
     ri_inv = []
     fluxes = []
+    flux_th = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+         * abs(params['KZ'] / params['KX']) \
+         * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+    flux_threshold = flux_th / 3
 
     # load if exists
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, 1, start=10)
+            name, params, dyn_vars, 2, start=10)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -496,23 +511,14 @@ def plot_front(name, params):
         ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
         F_px = np.sum(state_vars['F_px'], axis=1) / N_X
         for t_idx, sim_time in enumerate(sim_times):
-            max_pos = np.argmax(ux_z[t_idx])
+            max_pos = len(F_px[t_idx]) - 1
+            while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
+                max_pos -= 1
 
-            ux_z_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
-                                     ux_z[t_idx][max_pos - 1:max_pos + 2])
-            true_max = -ux_z_quad[1] / (2 * ux_z_quad[0]) # -b/2a
-            front_pos.append(true_max)
-            ri_inv.append((ux_z_quad[0] * true_max**2
-                           + ux_z_quad[1] * true_max
-                           + ux_z_quad[2]) / (params['g'] / params['H']))
+            front_pos.append(z_pts[max_pos])
+            ri_inv.append(ux_z[t_idx][max_pos] / (params['g'] / params['H']))
 
-            fluxes.append(F_px[t_idx][max_pos - 20] - F_px[t_idx][max_pos + 20])
-
-            # fluxes_quad = get_quad_fit(z_pts[max_pos - 1:max_pos + 2],
-            #                            F_px[t_idx][max_pos - 1:max_pos + 2])
-            # fluxes.append((fluxes_quad[0] * true_max**2
-            #                + fluxes_quad[1] * true_max
-            #                + fluxes_quad[2])* 2)
+            fluxes.append(F_px[t_idx][max_pos - 10] - F_px[t_idx][max_pos + 10])
         with open(logfile, 'w') as data:
             data.write(repr(sim_times.tolist()))
             data.write('\n')
@@ -529,40 +535,35 @@ def plot_front(name, params):
             front_pos = eval(data.readline())
             ri_inv = eval(data.readline())
             fluxes = eval(data.readline())
-    flux_anal = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
-         * np.ones(np.shape(fluxes)) * abs(params['KZ'] / params['KX']) \
-         * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
-    plt.plot(sim_times, front_pos)
+    flux_anal = flux_th * np.ones(np.shape(fluxes))
+    velocities_anal =  -flux_anal / \
+        (params['RHO0'] * np.exp(-np.array(front_pos) / params['H'])) * \
+        params['KX'] / params['OMEGA']
+    pos_anal = np.cumsum(velocities_anal) * np.gradient(sim_times) # dt
+    pos_anal += front_pos[-2] - pos_anal[-2]
+
+    plt.plot(sim_times, front_pos, label='Data')
+    plt.plot(sim_times, pos_anal, label='Analytical')
     plt.ylabel('Critical Layer Position')
     plt.xlabel('Time')
     plt.title(name)
-    plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
-    plt.clf()
-
-    plt.plot(sim_times,
-             np.gradient(front_pos) / np.gradient(sim_times),
-             label='Data')
-    plt.plot(sim_times, -flux_anal /
-        (params['RHO0'] * np.exp(-np.array(front_pos) / params['H'])) *
-        params['KX'] / params['OMEGA'], label='Analytic')
-    plt.ylabel('Critical Layer Velocity')
-    plt.xlabel('Time')
     plt.legend()
-    plt.title(name)
-    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
     plt.plot(sim_times, 1 / np.array(ri_inv)**2)
     plt.ylabel('Ri')
     plt.xlabel('Time')
     plt.title(name)
+    plt.ylim([0, 10])
     plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, np.array(fluxes) * 1e5)
-    plt.plot(sim_times,flux_anal * 1e5)
+    plt.plot(sim_times, np.array(fluxes) * 1e5, label='Data')
+    plt.plot(sim_times,flux_anal * 1e5, label='Analytical')
     plt.ylabel('F_px (1e-5)')
     plt.xlabel('Time')
     plt.title(name)
+    plt.legend()
     plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=200)
     plt.clf()
