@@ -24,6 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
+FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 plot_stride = 2
 
 def get_omega(g, h, kx, kz):
@@ -34,7 +35,7 @@ def get_vgz(g, h, kx, kz):
 
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
     if not os.path.exists(snapshots_dir):
         print('No snapshots found, no IC loaded')
@@ -176,43 +177,51 @@ def run_strat_sim(set_ICs, name, params):
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
-
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
-
     merge(name)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
 
-    with h5py.File(filename, mode='r') as dat:
-        sim_times = np.array(dat['scales']['sim_time'])
-    # we let the file close before trying to reopen it again in load
-
-    # load into state_vars
+    i = 1
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
+    total_sim_times = []
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times))[start::plot_stride]:
-        solver.load_state(filename, idx)
 
-        for varname in dyn_vars:
-            values = solver.state[varname]
-            values.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                              keep_data=True)
-            state_vars[varname].append(np.copy(values['g']))
-            state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+    while os.path.exists(filename):
+        print('Loading %s' % filename)
+        with h5py.File(filename, mode='r') as dat:
+            sim_times = np.array(dat['scales']['sim_time'])
+        # we let the file close before trying to reopen it again in load
+
+        # load into state_vars
+        for idx in range(len(sim_times))[start::plot_stride]:
+            solver.load_state(filename, idx)
+
+            for varname in dyn_vars:
+                values = solver.state[varname]
+                values.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                                  keep_data=True)
+                state_vars[varname].append(np.copy(values['g']))
+                state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+
+        total_sim_times.extend(sim_times)
+        i += 1
+        filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
+
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
     state_vars['F_px'] = params['RHO0']\
-        * np.exp(-z/ params['H'] + state_vars['U'])\
+        * np.exp(-z/ params['H'])\
         * (state_vars['ux'] * state_vars['uz'])
-    return sim_times[start::plot_stride], domain, state_vars
+    return total_sim_times[start::plot_stride], domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -222,7 +231,6 @@ def plot(name, params):
     mean_suffix = '(mean)'
     sub_suffix = ' (- mean)'
     snapshots_dir = SNAPSHOTS_DIR % name
-    path = '{s}/{s}_s1'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
@@ -480,7 +488,7 @@ def plot_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, 2, start=10)
+            name, params, dyn_vars, 2, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
