@@ -506,7 +506,7 @@ def plot_front(name, params):
 
             fluxes.append(F_px[t_idx][max_pos - 10] - F_px[t_idx][max_pos + 10])
         with open(logfile, 'w') as data:
-            data.write(repr(sim_times.tolist()))
+            data.write(repr(sim_times))
             data.write('\n')
             data.write(repr(front_pos))
             data.write('\n')
