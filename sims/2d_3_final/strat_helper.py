@@ -34,7 +34,7 @@ def get_vgz(g, h, kx, kz):
 
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(snapshots_dir):
         print('No snapshots found, no IC loaded')
@@ -77,9 +77,9 @@ def get_solver(params):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(U) - uz / H' +
-        '- (NU * dx(dx(U)) + NU * dz(U_z) - 2 * U_z / H)' +
+        '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
         '= - sponge * U' +
-        '- (ux * dx(U) + uz * dz(U)) +' +
+        '- (ux * dx(U) + uz * dz(U))' +
         '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)')
@@ -92,7 +92,8 @@ def get_solver(params):
         '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
         '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
         '- 2 * NU * ux * U_z / H' +
-        '+ NU * ux * (1 - exp(-U)) / H**2' +
+        # '+ NU * ux * (1 - exp(-U)) / H**2' +
+        '+ NU * ux * U / H**2' +
         '- W * dx(U)')
     problem.add_equation(
         'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
@@ -103,7 +104,8 @@ def get_solver(params):
         '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
         '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
         '- 2 * NU * uz * U_z / H' +
-        '+ NU * uz * (1 - exp(-U)) / H**2' +
+        # '+ NU * uz * (1 - exp(-U)) / H**2' +
+        '+ NU * uz * U / H**2' +
         '- W * dz(U)')
     problem.add_equation('dz(ux) - ux_z = 0')
     problem.add_equation('dz(uz) - uz_z = 0')
@@ -174,14 +176,14 @@ def run_strat_sim(set_ICs, name, params):
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
 
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s1.h5'.format(s=snapshots_dir)
+    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
 
     merge(name)
 
@@ -208,7 +210,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
         state_vars[key] = np.array(state_vars[key])
 
     state_vars['F_px'] = params['RHO0']\
-        * np.exp(-z/ params['H'] + state_vars['U'])\
+        * np.exp(-z/ params['H'])\
         * (state_vars['ux'] * state_vars['uz'])
     return sim_times[start::plot_stride], domain, state_vars
 
@@ -220,7 +222,7 @@ def plot(name, params):
     mean_suffix = '(mean)'
     sub_suffix = ' (- mean)'
     snapshots_dir = SNAPSHOTS_DIR % name
-    path = '{s}/{s}_s1'.format(s=snapshots_dir)
+    path = '{s}/{s}_s2'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
@@ -478,7 +480,7 @@ def plot_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, 2, start=10)
+            name, params, dyn_vars, 2, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])

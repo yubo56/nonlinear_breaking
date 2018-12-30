@@ -11,13 +11,17 @@ function shdeactivate () {
     export _LD_LIBRARY_PATH=
 
     unfunction shdeactivate
-    unalias rsync_to
-    unalias rsync_from
+    unalias rsync_to_3
+    unalias rsync_from_3
+    unalias rsync_to_4
+    unalias rsync_from_4
+    unalias rsync_to_15
+    unalias rsync_from_15
 }
 
 alias rsync_to_3='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo3:$(dirs)'
 alias rsync_from_3='rsync -aP exo3:$(dirs) .. --exclude=*.h5'
-alias rsync_to_4='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo15c:$(dirs)'
-alias rsync_from_4='rsync -aP exo15c:$(dirs) .. --exclude=*.h5'
+alias rsync_to_4='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo4:$(dirs)'
+alias rsync_from_4='rsync -aP exo4:$(dirs) .. --exclude=*.h5'
 alias rsync_to_15='rm -f snapshots*/*.h5 && rsync -aP ./*.py exo15c:$(dirs)'
 alias rsync_from_15='rsync -aP exo15c:$(dirs) .. --exclude=*.h5'

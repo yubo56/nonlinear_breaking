@@ -48,7 +48,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['N_X'] //= interp_x
     params['N_Z'] //= interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = min(0.1 / OMEGA, 0.1)
+    params['DT'] = params.get('DT', min(0.1 / OMEGA, 0.1))
     params['F'] = params.get('F_MULT', 1) * \
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
         * np.exp(-params['Z0'] / (2 * H))
@@ -68,22 +68,23 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-       (set_ic, 'lin_0',
-        build_interp_params(4, 4, overrides={'F_MULT': 0.05,
-                                             'Re': 0.01,
-                                             'T_F': 500})),
-       (set_ic, 'lin_1',
-        build_interp_params(4, 4, overrides={'F_MULT': 0.05,
-                                             'Re': 0.2,
-                                             'T_F': 500})),
+       # (set_ic, 'lin_0',
+       #  build_interp_params(4, 4, overrides={'F_MULT': 0.05,
+       #                                       'Re': 0.01,
+       #                                       'T_F': 500})),
+       # (set_ic, 'lin_1',
+       #  build_interp_params(4, 4, overrides={'F_MULT': 0.05,
+       #                                       'Re': 0.2,
+       #                                       'DT': 0.3,
+       #                                       'T_F': 500})),
        # (set_ic, 'nl_low_1',
        #  build_interp_params(2, 2, overrides={'F_MULT': 1,
        #                                       'Re': 0.5,
        #                                       'USE_CFL': True})),
-       # (set_ic, 'nl_1',
-       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
-       #                                       'Re': 0.7,
-       #                                       'USE_CFL': True})),
+       (set_ic, 'nl_1',
+        build_interp_params(1, 1, overrides={'F_MULT': 1,
+                                             'Re': 0.7,
+                                             'USE_CFL': True})),
        # (set_ic, 'nl_2',
        #  build_interp_params(1, 1, overrides={'F_MULT': 1,
        #                                       'Re': 0.4,

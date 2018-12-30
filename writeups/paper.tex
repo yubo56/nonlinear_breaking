@@ -1,4 +1,5 @@
     \documentclass[twocolumn,
+        nofootinbib,
         usenames, % allows access to some tikz colors
         dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
     ]{revtex4-1}% chktex 8
@@ -89,100 +90,121 @@
 \renewcommand*{\equationautorefname}{Eq.}
 \renewcommand*{\tableautorefname}{Tab.}
 
-\title{IGWs and WDs Ongoing Writeup}
-\author{Yubo Su}
+\begin{abstract}
+    In white dwarf binaries tidal torques are expected to raise a train of
+    internal gravity waves in the white dwarf interior. These
+    outward-propagating waves can then grow to be nonlinear and break via
+    hydrodynamical instabilities, transfering energy and angular momentum from
+    the binary orbit to the white dwarf. We perform 2D numerical simulations of
+    nonlinear wave breaking of outwards-propagating internal gravity waves in an
+    incompressible, isothermal atmosphere with an exponentially decaying density
+    stratification. We find that tidal synchronization, after an initial
+    transient phase, proceeds inwards from the surface in thin layers. We argue
+    the thickness of these layers is limited by the Kelvin-Helmholtz
+    Instability. We provide simple analytical formulae for the location and
+    thickness of tidal synchronization over time that are in good agreement with
+    our simulations.
+\end{abstract}
+
+\title{Tidal Heating via Internal Gravity Waves in White Dwarf Binaries}
+\author{Authors}
+\date{\today}
 \maketitle
 
 \section{Introduction}
 
-WIP ongoing writeup, last updated \today.
+% Usual WD binaries introduction, from proposals
 
-% Define white dwarfs (WD), internal gravity waves (IGW), citations
+% IGW tidal dissipation has been thoroughly studied in many astrophysical
+% binary systems (Barker Ogilvie, Goldreich Nicholson, Zahn?). Its effect in WDs
+% (Fuller Lai) resembles early solar type stars but has not been studied
+% numerically. While the linear IGW solution is an exact solution of the
+% nonlinear system (Drazin) but is globally unstable (Drazin), the IVP must be
+% studied numerically to determine how the linear solution breaks down and
+% deposits energy/angular momentum.
 
-Basic narrative is: the prevailing understanding is that mean flow absorption
-slowly spins up a WD from the outside in as the critical layer propagates
-inwards. Our numerical simulations validate this prediction and give an
-analytical prediction for the motion of the critical layer. However, it appears
-our numerical simulations are viscosity limited. We present a brief argument for
-why the viscosity limitations are insignificant, but also present some
-exploratory, inconclusive work towards direct numerical simulation resolving
-critical layer behavior without being viscosity limited.
+% From numerical studies, IGWs are known to be anti-diffusive (Lecoanet mean
+% flow papers, Lindzen) and sharpen mean flows (m = 0). Mean flows produce
+% reflection, known both analytically (Booker & Bretherton) and numerically
+% (Winters d'Asaro). IGW self-interaction via its wave-induced mean flow is
+% known to play a crucial role in IGW wavebreaking (Sutherland x2).
 
-In \autoref{s:eq}, we will cover the equations and numerical setup. In
-\autoref{s:lin}, we will discuss the agreement of our simulation in the
-low-amplitude limit with analytical linear theory. In \autoref{s:nonlin} we will
-present a few reference simulations illustrating critical layer absorption
-depositing horizontal angular momentum into the fluid. Finally, in
-\autoref{s:bouss} we will consider a speculative series of simulations
-attempting to rectify the seemingly viscosity-limited simulations of the
-previous section.
+% We study IGW breaking in the plane-parallel approximation in 2D. Known to
+% describe both wave steepening (Kloyermeister 1991) and captures mean flow
+% absorption (Booker & Bretherton). While the details of breaking are presently
+% understood to be 3D (Winters & d'Asaro), we argue in (section) that our
+% results should be qualitatively similar to 3D (both 2D and 3D exhibit KHI, and
+% since we are able to resolve KHI, the spinup in 3D should be similar?).
 
-\section{Equations}\label{s:eq}
+In \autoref{s:num_setup}, we will cover the numerical setup. In \autoref{s:lin}, we
+will discuss the agreement of our simulation in the low-amplitude limit with
+analytical linear theory. In \autoref{s:nonlin} we will present a few reference
+simulations illustrating critical layer absorption depositing horizontal angular
+momentum into the fluid.
 
-We simulate an incompressible, isothermal fluid, representatitive of degenerate
-matter in WD bulks. We assume a barotropic equation of state as a first
-approximation. Furthermore, we model the background, hydrostatic density
-stratification as $\rho_0(x, z) = \rho_0(z) \propto e^{-z/H}$.
+\section{Problem Description}\label{s:num_setup}
 
-The physical equations for an incompressible, barotropic fluid in a uniform
+\subsection{Fluid Equations}
+
+We consider an incompressible, isothermal fluid, representative of degenerate
+matter in WD bulks, in 2D. We assume a barotropic equation of state as a first
+approximation. As we are interested in the behavior of the wave far from the
+center of the WD, we approximate the gravitational field as uniform. We model
+the background density stratification as $\rho_0(x, z) = \rho_0(z) = \rho_{ref}
+e^{-z/H}$ for some reference density $\rho_{ref} = \at{\rho_0(z)}_{z = 0}$.
+
+The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
 \begin{subequations}\label{se:fc_orig}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\rho}{t} + \vec{u} \cdot \vec{\nabla}\rho &= 0
-            ,\label{eq:fc_density}\\
-        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
-            + \frac{\vec{\nabla}P}{\rho}
-            + g\hat{z} &= 0.
+        \md{\rho}{t} &= 0 ,\label{eq:fc_density}\\
+        \md{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + g\hat{z} &= 0.
     \end{align}
 \end{subequations}
-$\vec{u}, \rho, P$ are the fluid dynamical variables and $-g\hat{z}$ is constant
-gravitational acceleration. Note that at hydrostatic equilibrium $\partial_t =
-0$ we have $\vec{u} = 0, \vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 =
-\rho_0 gH$.
+$\md{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$ is the material
+derivative. $\vec{u}, \rho, P$ are the fluid dynamical variables and $-g\hat{z}$
+is constant gravitational acceleration. Note that at hydrostatic equilibrium
+$\pd{}{t} = 0$ we have $\vec{u} = 0, \vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and
+so $P_0 = \rho_0 gH$.
 
 We nondimensionalize by taking $H = N = \rho_{ref} = 1$ where
 \begin{equation}
     N^2 \equiv g^2\p*{\rd{\rho}{P} - \at{\pd{\rho}{P}}_{ad}}
         = \frac{g}{H},
 \end{equation}
-is the Brunt-V\"ais\"al\"a frequency and $\rho_{ref}$ is the background density
-stratification at $z = 0$. The full numerical details of the simulation are
-described in \autoref{ss:strat_impl}.
+is the Brunt-V\"ais\"al\"a frequency. The full numerical details of the
+simulation are described in \autoref{ss:strat_impl}.
 
 \subsection{Wave Generation}
 
 To model a continuous IGW wave train excited deep in the WD interior propagating
 towards the surface without unnecessary computational cost, we excite an
-IGW wave train from the bottom of the simulation domain. As Chebyshev grid is
-a factor of $\propto N_z$ denser near the edges of the simulation domain, we
-use a volumetric forcing to excite IGW at some $z_0 > 0$ interior to the
-simulation domain. Our forcing excites both IGW propagating upwards, the
-physically interesting solution, and downwards, which are damped away by damping
-layers (see \autoref{ss:strat_impl}) before inducing strict Courant-Friedrichs-Lewy
-(CFL) timestepping constraints (cite).
+IGW wave train from the bottom of the simulation domain. We use a volumetric
+forcing term to excite IGW at some $z_0 > 0$ interior to the simulation
+domain\footnote{Interfacial forcing at the bottom boundary incurs severe CFL
+timestepping constraints, as we use a Chebyshev polynomial basis along the $z$
+axis in our spectral method which has very small grid spacing at the
+boundaries.}. Our forcing excites both IGWs propagating upwards, imitating a
+wave tidally excited deeper in the WD, and downwards, which are damped away by
+damping layers (see \autoref{ss:numerics}) before inducing strict
+Courant-Friedrichs-Lewy (CFL) timestepping constraints.
 
 As not to interfere with the incompressibility constraint, we force the system
 on the density equation, replacing \autoref{eq:fc_density} with
 \begin{equation}
-    \pd{\rho}{t} + \vec{u} \cdot \vec{\nabla}\rho =
-        Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-            \cos \p*{k_{0, x}x - \omega_0 t}.
+    \md{\rho}{t} = Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+            \cos \p*{k_{0x}x - \omega_0 t}.
 \end{equation}
-Define $k_{0, z}: \omega(k_{0, x}, k_{0, z}) = \omega_0$. If $k_{0, z}\sigma \ll
-1$, the forcing term has the effect of picking out $k_{0, z}$ driven by
-$\cos\p*{k_{0, x}x - \omega_0 t}$ from the broad $k_z$ wavenumber spectrum
-permitted by the narrow Gaussian profile.
+Using a narrow Gaussian profile excites a broad $k_z$ wavenumber spectrum, and
+only the $k_{0z}$ satisfying the IGW's dispersion relation for the given
+$k_{0x}, \omega_0$ will propagate.
+% Define $k_{0z}: \omega(k_{0x}, k_{0z}) = \omega_0$ the wavenumber picked
+% out by $k_{0x}, \omega_0$. If $k_{0z}\sigma \ll 1$, the $\cos\p*{k_{0x}x -
+% \omega_0 t}$ term permits only the $k_{0z}$ mode to propagate among the broad
+% $k_z$ wavenumber spectrum permitted by the narrow Gaussian profile.
 
-\section{Linear Regime}\label{s:lin}
-
-We first test our numerical simulation with a ``linear'' simulation, where
-all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
-\rho_0$ and $\vec{u} \cdot \vec{\nabla} \ll \partial_t$. We clarify that our
-``linear'' simulations solve the full nonlinear equations, just in the weak
-perturbation limit.
-
-\subsection{Analytical Solution}
+\subsection{Internal Gravity Waves}
 
 In the small perturbation limit, we linearize \autoref{se:fc_orig} with
 inhomegeneous driving term and obtain:
@@ -198,8 +220,7 @@ inhomegeneous driving term and obtain:
     \end{align}
 \end{subequations}
 We have substituted $\cos\p*{k_xx - \omega_0t}$ for a complex exponential for
-easier manipulation; taking real parts of all dynamical variables above recovers
-the physical solution.
+easier manipulation.
 
 It is well known that the solutions to the $F = 0$ homogeneous
 \autoref{se:vol_drive} are of form (cite)
@@ -212,8 +233,9 @@ It is well known that the solutions to the $F = 0$ homogeneous
 
 To solve the inhomogeneous system, we may first approximate the driving term
 using $e^{\frac{-(z - z_0)^2}{2\sigma^2}} \approx \sqrt{2\pi \sigma^2}\delta(z -
-z_0)$ if $\sigma \to 0$, then relax to $k_{0z}\sigma \lesssim 1$. This may be
-solved to obtain the solution
+z_0)$ if $\sigma \to 0$. This system is solved exactly by matching the two
+homogeneous solutions above and below $z_0$, We may then approximately relax the
+solution to $k_{0z}\sigma \lesssim 1$. This may be solved to obtain the solution
 \begin{align}
     A(F) &= \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
         \frac{1}{2ik_z}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
@@ -225,9 +247,17 @@ solved to obtain the solution
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
-The extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ compared to the
-$\delta$-function solution comes from evaluating the Fourier Transform of
+An extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises compared to the
+$\delta$-function solution when evaluating the Fourier Transform of
 $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$.
+
+% Linear solution: e^z/2H, dispersion relation, phase/group velocity. Observe is
+% exact solution of nonlinear.
+% Linear solution is globally unstable to RTI though, thus not stable
+% equilibrium of IVP
+%
+% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
+% wave-induced mean flow, horizontal momentum flux
 
 Furthermore, in the low-amplitude, dissipation free limit, the time-averaged
 total $x$-momentum flux in the $\hat{z}$ direction can be computed. Since all
@@ -260,6 +290,21 @@ velocity. In terms of our forcing amplitude,
 \end{equation}
 where $c_{gz} = -\frac{Nk_{0x}k_{0z}}{\p*{k_{0x}^2 + k_{0z}^2 +
 \frac{1}{4H^2}}^{3/2}}$.
+
+\subsection{Numerical Parameters}\label{ss:numerics}
+
+% Description of spectral method, basis functions, initial conditions
+% Grid Size
+% Viscosity + diffusivity, damping layers (to simulate radiative BC)
+% timestepping? RK443, (CFL limiter??)
+
+\section{Linear Regime}\label{s:lin}
+
+We first test our numerical simulation with a ``linear'' simulation, where
+all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
+\rho_0$ and $\vec{u} \cdot \vec{\nabla} \ll \partial_t$. We emphasize that our
+``linear'' simulations solve the full nonlinear equations, just in the weak
+perturbation limit.
 
 $\omega$ is chosen by inverting $\omega(k_x, k_z)$ dispersion relation for fixed
 $k_x = 2\pi / L_x$ and some desired $k_z = -2\pi/H$, and $\sigma \lesssim
@@ -485,89 +530,6 @@ is perhaps physical: a Richardson number $\sim 0.25$ incurs the KHI which saps
 energy and angular momentum from the flow. It is conceivable then that our
 numerical viscosity is physically motivated as a effective KHI viscosity.
 
-\section{Boussinesq Local Simulation (Speculative)}\label{s:bouss}
-
-Alternatively, we can attempt direct numerical simulation probing lower
-Richardson numbers. We will move to the Boussinesq approximation and set up a
-mean flow as an initial condition. This relaxes the constraint that the domain
-must be sufficiently large to permit substantial $e^{z/H}$ growth of the mean
-flow $\bar{U}_0$ and allows us to probe much finer vertical resolution.
-
-The physical equations in the Boussinesq approximation are:
-\begin{subequations}\label{se:bouss}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\rho_1}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
-            - N^2\frac{\rho_0 u_z}{g} &= 0,\\
-        \pd{\vec{u}}{t} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u}
-            + \frac{\vec{\nabla}P_1}{\rho_0}
-            + \frac{\rho_1 g\hat{z}}{\rho_0} &= 0.
-    \end{align}
-\end{subequations}
-In these equations, we take $\rho_0(z) = \rho_0 = 1$ a constant reference
-density. We nondimensionalize $\rho_0 = N = g = 1$. By using a subgrid model
-(details \autoref{ss:bouss_impl}), we are able to probe significantly smaller
-Richardson numbers.
-
-\subsection{Low-Resolution Simulation}
-
-The parameters of the simulation differ slightly; since we do not have
-exponential density stratification to induce $\bar{U}_0 \propto e^{z/H}$ growth,
-we initialize the system with an initial $\bar{U}_0(z) \leq \bar{U}_c$,
-simulating a later phase of the stratified simulation where the critical layer
-has propagated deep into the domain.
-
-Sample snapshots from a reference simulation are \autoref{fig:bouss_1}.
-\begin{figure}[h]
-    \centering
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/vstrat_1.png}
-        \caption{Boussinesq simulation initial condition.}
-    \end{subfigure}
-
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/vstrat_2.png}
-        \caption{At later time, when critical layer absorption has begun.}
-    \end{subfigure}
-
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/vstrat_3.png}
-        \caption{At an even later time, a strong reflective character seems to
-        emerge as the Richardson number $\to 0.5$.}
-    \end{subfigure}
-    \caption{Boussinesq simulation snapshots.}\label{fig:bouss_1}
-\end{figure}
-The resulting front velocity and Richardson number are depicted in
-\autoref{fig:bouss}. Most important to note are the significantly diminished
-critical layer velocity compared to the prediction (owing to critical layer
-reflection) and the Richardson number which approaches the critical $1/4$ value
-for KHI-instability.
-\begin{figure}[t]
-    \centering
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/vstrat_ri.png}
-        \caption{Richardson number evolution over time.}
-    \end{subfigure}
-
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/vstrat_front_v.png}
-        \caption{Front velocity compared to analytical \autoref{eq:u0_lin}
-        prediction.}
-    \end{subfigure}
-    \caption{Boussinesq data analysis plots.}\label{fig:bouss}
-\end{figure}
-
-YUBONOTE\@: The next step would be to run simulations at sufficient resolution to
-resolve the KHI (only possible in the Boussinesq system, where we are not
-required to have a sufficiently large vertical domain to capture exponential
-growth and can choose ever smaller vertical domains); I have started to try this
-but haven't resolved the resultant numerical issues yet.
-
 \clearpage
 \onecolumngrid
 \appendix
@@ -625,34 +587,6 @@ Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
 regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
 \frac{\omega}{\abs*{k_z}}\frac{L_z}{2\pi N_z}$ was found to be suitable for $N_z
 = 1024$, where $k_z$ is the wavenumber of the excited linear mode.
-
-\subsection{Boussinesq Fluid}\label{ss:bouss_impl}
-
-In the Boussinesq system, there is no need to transform to $T, \Upsilon$
-variables as $\rho_0$ is constant. Including numerical terms and driving terms,
-our full equations are
-\begin{subequations}\label{se:bouss_num}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
-        \pd{\rho_1}{t} - \frac{\rho_0 u_z}{H}
-            - \nu \nabla^6 \rho_1
-            &= -\Gamma(z) \rho_1
-                - \p*{\vec{u} \cdot \vec{\nabla}}\rho_1
-                + Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                    \cos \p*{k_xx - \omega t},\\
-        \pd{u_x}{t} + \frac{\partial_x P}{\rho_0}
-            - \nu \nabla^6 u_x
-            &= -\Gamma(z) u_x
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_x,\\
-        \pd{u_z}{t} + \frac{\partial_z P}{\rho_0}
-            + \frac{\rho_1 g}{\rho_0}
-            - \nu \nabla^6 u_z
-            &= -\Gamma(z) u_z
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_z.
-    \end{align}
-\end{subequations}
-$\Gamma(z)$ is as \autoref{eq:Gamma}. We use subgrid model $\nabla^6$ (cite) to
-decrease the effect of viscosity on scales above the grid resolution.
 
 \end{document}
 
