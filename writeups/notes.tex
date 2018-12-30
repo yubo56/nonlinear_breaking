@@ -946,13 +946,50 @@ spectrum is obtained. Second, the turbulence causes some energy to be reflected
 in higher $k$ modes, which interact nonlinearly with the flow at lower
 amplitudes.
 
-\subsection{Gotcha: $\nu_x, \nu_z$ and Grid Spacing}
+\subsection{Choices of $k_x, k_z$ and Scales}
 
-If the grid resolution is uneven in the $x, z$ directions, it might be tempting
-to use different $\nu_x, \nu_z$ per the above criteria, since their $k_{turb} =
-k_{\max}$ differ. This is dangerous however, since $\nu \nabla^2 \vec{u}_1$ has
-to be divergenceless! Thus, it is more advisable to choose an equal grid spacing
-in the two directions.
+Lots of scales to consider:
+\begin{itemize}
+    \item $k_zH \lesssim 1$ is required for the density stratification to be
+        considered weak.
+
+    \item $k_z \ll k_{z, \max} \equiv \frac{2\pi N_z}{L_z}$ is required for
+        there to be significant separation of scales between the linear mode,
+        the nonlinear cascade and the grid resolution.
+
+    \item $L_Z \gtrsim 10H$ or a few, to get a decent amplitude growth going
+        from linear to nonlinear amplitudes.
+
+    \item Viscosity induced decay length scale: $\partial_t \sim \omega + i\nu
+        k^2$ where $k^2 = k_x^2 + k_z^2$, so the characteristic length scale on
+        which the wave decays is $L_\nu \sim \frac{v_{ph, z}}{\nu k_z^2}$. Call
+        $\tilde{\nu} = \nu / \frac{\omega}{k_zk_{z, \max}}$, \lstinline{NU_MULT}
+        in our simulations, then we may simplify
+        \begin{equation}
+            L_\nu \sim \frac{k_z^2k_{z, \max}}{\tilde{\nu}k^4}.
+        \end{equation}
+        Approximating $k_z \approx k$ and requiring $L_\nu \gtrsim L_Z$ enforces
+        \begin{equation}
+            \frac{L_\nu}{L_Z} \sim \frac{N_z}{\tilde{\nu}200\pi} \gtrsim 1.
+        \end{equation}
+\end{itemize}
+
+However, in order for the simulation to both be well-damped
+at grid resolutions and be neglibily damped at leading order nonlinear
+wavelengths, we require $k_{0z} \ll \frac{1}{L_{NL}} \ll \frac{2\pi
+N_z}{L_z}$, where $L_{NL}$ denotes some characteristic length scale of
+nonlinear features. Finally, we need $L_z$ to be many $H$ to capture
+significant $e^{z/2H}$ growth and separate the linear and nonlinear
+amplitudes of $u_z$.
+
+Fixing $L_z = 10H$ to give $\sim e^4$ amplitude growth between the
+damping zones, this implies we require separation of scales $1 \ll
+k_{0z}H \ll \frac{H}{L_{NL}} \ll \frac{2\pi N_z}{10}$.
+
+Since $N_z$ is fixed by computational cost (we tried both $N_z = 512,
+N_z = 1024$), we choose $k_{0z} \sim \frac{2\pi}{H}$. This is less
+physically representative but gives more wavenumber space for the
+nonlinear cascade.
 
 \chapter{Stability Analysis}
 

@@ -24,6 +24,7 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
+FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 plot_stride = 2
 
 def get_omega(g, h, kx, kz):
@@ -34,7 +35,7 @@ def get_vgz(g, h, kx, kz):
 
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
     if not os.path.exists(snapshots_dir):
         print('No snapshots found, no IC loaded')
@@ -176,35 +177,43 @@ def run_strat_sim(set_ICs, name, params):
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
-
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
     if not os.path.exists(filename):
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = '{s}/{s}_s2.h5'.format(s=snapshots_dir)
-
     merge(name)
 
     solver, domain = get_solver(params)
     z = domain.grid(1, scales=params['INTERP_Z'])
 
-    with h5py.File(filename, mode='r') as dat:
-        sim_times = np.array(dat['scales']['sim_time'])
-    # we let the file close before trying to reopen it again in load
-
-    # load into state_vars
+    i = 1
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
+    total_sim_times = []
     state_vars = defaultdict(list)
-    for idx in range(len(sim_times))[start::plot_stride]:
-        solver.load_state(filename, idx)
 
-        for varname in dyn_vars:
-            values = solver.state[varname]
-            values.set_scales((params['INTERP_X'], params['INTERP_Z']),
-                              keep_data=True)
-            state_vars[varname].append(np.copy(values['g']))
-            state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+    while os.path.exists(filename):
+        print('Loading %s' % filename)
+        with h5py.File(filename, mode='r') as dat:
+            sim_times = np.array(dat['scales']['sim_time'])
+        # we let the file close before trying to reopen it again in load
+
+        # load into state_vars
+        for idx in range(len(sim_times))[start::plot_stride]:
+            solver.load_state(filename, idx)
+
+            for varname in dyn_vars:
+                values = solver.state[varname]
+                values.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                                  keep_data=True)
+                state_vars[varname].append(np.copy(values['g']))
+                state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+
+        total_sim_times.extend(sim_times)
+        i += 1
+        filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
+
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
@@ -212,7 +221,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     state_vars['F_px'] = params['RHO0']\
         * np.exp(-z/ params['H'])\
         * (state_vars['ux'] * state_vars['uz'])
-    return sim_times[start::plot_stride], domain, state_vars
+    return np.array(total_sim_times[start::plot_stride]), domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -222,7 +231,6 @@ def plot(name, params):
     mean_suffix = '(mean)'
     sub_suffix = ' (- mean)'
     snapshots_dir = SNAPSHOTS_DIR % name
-    path = '{s}/{s}_s2'.format(s=snapshots_dir)
     matplotlib.rcParams.update({'font.size': 6})
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
@@ -485,6 +493,7 @@ def plot_front(name, params):
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
+        z0 = z[0]
 
         ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
         F_px = np.sum(state_vars['F_px'], axis=1) / N_X
@@ -496,8 +505,11 @@ def plot_front(name, params):
             front_pos.append(z_pts[max_pos])
             ri_inv.append(ux_z[t_idx][max_pos] / (params['g'] / params['H']))
 
-            fluxes.append(F_px[t_idx][max_pos - 10] - F_px[t_idx][max_pos + 10])
+            fluxes.append(F_px[t_idx][max_pos - 20] -
+                          F_px[t_idx][max_pos + 20])
         with open(logfile, 'w') as data:
+            data.write(repr(z0.tolist()))
+            data.write('\n')
             data.write(repr(sim_times.tolist()))
             data.write('\n')
             data.write(repr(front_pos))
@@ -505,23 +517,38 @@ def plot_front(name, params):
             data.write(repr(ri_inv))
             data.write('\n')
             data.write(repr(fluxes))
+            data.write('\n')
+            data.write(repr(F_px.tolist()))
+            data.write('\n')
 
     else:
         print('data.log found, loading')
         with open(logfile) as data:
-            sim_times = eval(data.readline())
+            z0 = np.array(eval(data.readline()))
+            sim_times = np.array(eval(data.readline()))
             front_pos = eval(data.readline())
             ri_inv = eval(data.readline())
             fluxes = eval(data.readline())
-    flux_anal = flux_th * np.ones(np.shape(fluxes))
-    velocities_anal =  -flux_anal / \
-        (params['RHO0'] * np.exp(-np.array(front_pos) / params['H'])) * \
-        params['KX'] / params['OMEGA']
-    pos_anal = np.cumsum(velocities_anal) * np.gradient(sim_times) # dt
-    pos_anal += front_pos[-2] - pos_anal[-2]
+            F_px = np.array(eval(data.readline()))
 
-    plt.plot(sim_times, front_pos, label='Data')
-    plt.plot(sim_times, pos_anal, label='Analytical')
+    start_idx = 10
+    flux_anal = flux_th * np.ones(np.shape(fluxes))
+    H = params['H']
+    pos_anal = -H * (np.log(sim_times * H / (
+        flux_anal / params['RHO0'] * params['KX'] / params['OMEGA'])))
+    velocities_anal = np.gradient(pos_anal) / np.gradient(sim_times)
+    pos_anal += front_pos[-2] - pos_anal[-2] # fit constant of integration
+
+    tmesh, zmesh = quad_mesh(x=sim_times[start_idx: ], y=z0)
+    p = plt.pcolormesh(tmesh,
+                       zmesh,
+                       F_px[start_idx: , ].T)
+    plt.colorbar(p)
+    plt.savefig('%s/fpx.png' % snapshots_dir, dpi=200)
+    plt.clf()
+
+    plt.plot(sim_times[start_idx: ], front_pos[start_idx: ], label='Data')
+    plt.plot(sim_times[start_idx: ], pos_anal[start_idx: ], label='Analytical')
     plt.ylabel('Critical Layer Position')
     plt.xlabel('Time')
     plt.title(name)
@@ -529,10 +556,10 @@ def plot_front(name, params):
     plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times,
-             np.gradient(front_pos) / np.gradient(sim_times),
+    plt.plot(sim_times[start_idx: ],
+             (np.gradient(front_pos) / np.gradient(sim_times))[start_idx: ],
              label='Data')
-    plt.plot(sim_times, velocities_anal, label='Analytic')
+    plt.plot(sim_times[start_idx: ], velocities_anal[start_idx: ], label='Analytic')
     plt.ylabel('Critical Layer Velocity')
     plt.xlabel('Time')
     plt.legend()
@@ -540,7 +567,7 @@ def plot_front(name, params):
     plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, 1 / np.array(ri_inv)**2)
+    plt.plot(sim_times[start_idx: ], (1 / np.array(ri_inv[start_idx: ])**2))
     plt.ylabel('Ri')
     plt.xlabel('Time')
     plt.title(name)
@@ -548,8 +575,12 @@ def plot_front(name, params):
     plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
     plt.clf()
 
-    plt.plot(sim_times, np.array(fluxes) * 1e5, label='Data')
-    plt.plot(sim_times,flux_anal * 1e5, label='Analytical')
+    plt.plot(sim_times[start_idx: ],
+             (np.array(fluxes) * 1e5)[start_idx: ],
+             label='Data')
+    plt.plot(sim_times[start_idx: ],
+             (flux_anal * 1e5)[start_idx: ],
+             label='Analytical')
     plt.ylabel('F_px (1e-5)')
     plt.xlabel('Time')
     plt.title(name)
