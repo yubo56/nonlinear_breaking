@@ -48,6 +48,7 @@ def set_ic(name, solver, domain, params):
     return write, dt
 
 def get_uz_f_ratio(params):
+    ''' get uz(z = z0) / F '''
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
             params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
                 2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
@@ -72,8 +73,8 @@ def get_solver(params):
     problem.parameters.update(params)
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
-        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
-        'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+        '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)))'+\
+        '- tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
@@ -141,7 +142,7 @@ def run_strat_sim(set_ICs, name, params):
               initial_dt=dt,
               cadence=5,
               max_dt=params['DT'],
-              min_dt=0.01,
+              min_dt=0.007,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
@@ -160,8 +161,6 @@ def run_strat_sim(set_ICs, name, params):
     logger.info('Starting sim...')
     while solver.ok:
         cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
-        # if cfl_dt < params['DT'] / 8: # small step sizes if strongly cfl limited
-        #     cfl_dt /= 2
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
@@ -208,7 +207,8 @@ def load(name, params, dyn_vars, plot_stride, start=0):
                 values.set_scales((params['INTERP_X'], params['INTERP_Z']),
                                   keep_data=True)
                 state_vars[varname].append(np.copy(values['g']))
-                state_vars['%s_c' % varname].append(np.copy(np.abs(values['c'])))
+                state_vars['%s_c' % varname].append(
+                    np.copy(np.abs(values['c'])))
 
         total_sim_times.extend(sim_times)
         i += 1
@@ -269,10 +269,10 @@ def plot(name, params):
             'slice_vars': ['uz'],
             'sub_vars': ['ux'],
         },
-        {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['ux', 'uz', 'U', 'W'],
-        },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['ux', 'uz', 'U', 'W'],
+        # },
         # {
         #     'save_fmt_str': 't_%03i.png',
         #     'mean_vars': ['F_px', 'ux'],
@@ -314,7 +314,7 @@ def plot(name, params):
         uz_est = params['F'] * get_uz_f_ratio(params)
 
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
-            fig = plt.figure(dpi=200)
+            fig = plt.figure(dpi=400)
 
             idx = 1
             for var in plot_vars + sub_vars:
@@ -363,19 +363,21 @@ def plot(name, params):
                               linewidth=0.5)
                 if var == 'uz%s' % slice_suffix:
                     p = axes.plot(
-                        uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                        uz_est * np.exp((z_pts - params['Z0']) /
+                                        (2 * params['H'])),
                         z_pts,
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * np.exp((z_pts - params['Z0']) / (2 * params['H'])),
+                        -uz_est * np.exp((z_pts - params['Z0']) /
+                                         (2 * params['H'])),
                         z_pts,
                         'orange',
                         linewidth=0.5)
 
                 if var == 'F_px%s' % mean_suffix:
                     p = axes.plot(
-                        (params['F'] * get_uz_f_ratio(params))**2 / 2
+                        uz_est**2 / 2
                             * abs(params['KZ'] / params['KX'])
                             * params['RHO0']
                                 * np.exp(-params['Z0'] / params['H'])
@@ -455,7 +457,9 @@ def plot(name, params):
                                        title='%s (Cheb. summed)' % var)
                 var_dat = state_vars[var.replace('_f', '_c')]
                 summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
-                p = axes.semilogx(summed_dat, range(len(summed_dat)), linewidth=0.5)
+                p = axes.semilogx(summed_dat,
+                                  range(len(summed_dat)),
+                                  linewidth=0.5)
                 idx += 1
 
             fig.suptitle(
@@ -501,6 +505,10 @@ def plot_front(name, params):
             max_pos = len(F_px[t_idx]) - 1
             while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
                 max_pos -= 1
+            # max_pos = 1
+            # while F_px[t_idx][max_pos] > flux_threshold\
+            #         and max_pos < len(F_px[t_idx]):
+            #     max_pos += 1
 
             front_pos.append(z_pts[max_pos])
             ri_inv.append(ux_z[t_idx][max_pos] / (params['g'] / params['H']))
@@ -534,8 +542,8 @@ def plot_front(name, params):
     start_idx = 10
     flux_anal = flux_th * np.ones(np.shape(fluxes))
     H = params['H']
-    pos_anal = -H * (np.log(sim_times * H / (
-        flux_anal / params['RHO0'] * params['KX'] / params['OMEGA'])))
+    pos_anal = -H * (np.log(sim_times * H / (flux_anal / (params['RHO0'])
+        * params['KX'] / params['OMEGA'])))
     velocities_anal = np.gradient(pos_anal) / np.gradient(sim_times)
     pos_anal += front_pos[-2] - pos_anal[-2] # fit constant of integration
 
@@ -545,7 +553,7 @@ def plot_front(name, params):
                        F_px[start_idx: , ].T)
     plt.colorbar(p)
     plt.title(name)
-    plt.savefig('%s/fpx.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/fpx.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     plt.plot(sim_times[start_idx: ], front_pos[start_idx: ], label='Data')
@@ -554,18 +562,20 @@ def plot_front(name, params):
     plt.xlabel('Time')
     plt.title(name)
     plt.legend()
-    plt.savefig('%s/front.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     plt.plot(sim_times[start_idx: ],
              (np.gradient(front_pos) / np.gradient(sim_times))[start_idx: ],
              label='Data')
-    plt.plot(sim_times[start_idx: ], velocities_anal[start_idx: ], label='Analytic')
+    plt.plot(sim_times[start_idx: ],
+             velocities_anal[start_idx: ],
+             label='Analytic')
     plt.ylabel('Critical Layer Velocity')
     plt.xlabel('Time')
     plt.legend()
     plt.title(name)
-    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     plt.plot(sim_times[start_idx: ], (1 / np.array(ri_inv[start_idx: ])**2))
@@ -573,7 +583,7 @@ def plot_front(name, params):
     plt.xlabel('Time')
     plt.title(name)
     plt.ylim([0, 10])
-    plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     plt.plot(sim_times[start_idx: ],
@@ -586,5 +596,5 @@ def plot_front(name, params):
     plt.xlabel('Time')
     plt.title(name)
     plt.legend()
-    plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=200)
+    plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
     plt.clf()
