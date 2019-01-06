@@ -544,6 +544,7 @@ def plot_front(name, params):
                        zmesh,
                        F_px[start_idx: , ].T)
     plt.colorbar(p)
+    plt.title(name)
     plt.savefig('%s/fpx.png' % snapshots_dir, dpi=200)
     plt.clf()
 
