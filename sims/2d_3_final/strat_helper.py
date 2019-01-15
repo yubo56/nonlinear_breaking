@@ -25,7 +25,7 @@ CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 2
+plot_stride = 4
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -472,7 +472,7 @@ def plot(name, params):
             plt.close()
 
 def plot_front(name, params):
-    ''' few plots for front, defined where flux drops below 1/3 of theory '''
+    ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
@@ -481,50 +481,28 @@ def plot_front(name, params):
 
     sim_times = []
     front_pos = []
-    ri_inv = []
-    fluxes = []
     flux_th = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
-         * abs(params['KZ'] / params['KX']) \
-         * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
-    flux_threshold = flux_th / 3
+        * abs(params['KZ'] / params['KX']) * params['RHO0'] \
+        * np.exp(-params['Z0'] / params['H'])
+    flux_threshold = flux_th / 2
 
     # load if exists
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, 2, start=0)
+            name, params, dyn_vars, plot_stride, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
         z0 = z[0]
 
-        ux_z = np.sum(state_vars['ux_z'], axis=1) / N_X
         F_px = np.sum(state_vars['F_px'], axis=1) / N_X
-        for t_idx, sim_time in enumerate(sim_times):
-            max_pos = len(F_px[t_idx]) - 1
-            while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
-                max_pos -= 1
-            # max_pos = 1
-            # while F_px[t_idx][max_pos] > flux_threshold\
-            #         and max_pos < len(F_px[t_idx]):
-            #     max_pos += 1
 
-            front_pos.append(z_pts[max_pos])
-            ri_inv.append(ux_z[t_idx][max_pos] / (params['g'] / params['H']))
-
-            fluxes.append(F_px[t_idx][max_pos - 20] -
-                          F_px[t_idx][max_pos + 20])
         with open(logfile, 'w') as data:
             data.write(repr(z0.tolist()))
             data.write('\n')
             data.write(repr(sim_times.tolist()))
-            data.write('\n')
-            data.write(repr(front_pos))
-            data.write('\n')
-            data.write(repr(ri_inv))
-            data.write('\n')
-            data.write(repr(fluxes))
             data.write('\n')
             data.write(repr(F_px.tolist()))
             data.write('\n')
@@ -534,13 +512,21 @@ def plot_front(name, params):
         with open(logfile) as data:
             z0 = np.array(eval(data.readline()))
             sim_times = np.array(eval(data.readline()))
-            front_pos = eval(data.readline())
-            ri_inv = eval(data.readline())
-            fluxes = eval(data.readline())
             F_px = np.array(eval(data.readline()))
 
+    for t_idx, sim_time in enumerate(sim_times):
+        max_pos = len(F_px[t_idx]) - 1
+        while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
+            max_pos -= 1
+        # max_pos = 1
+        # while F_px[t_idx][max_pos] > flux_threshold\
+        #         and max_pos < len(F_px[t_idx]):
+        #     max_pos += 1
+
+        front_pos.append(z_pts[max_pos])
+
     start_idx = 10
-    flux_anal = flux_th * np.ones(np.shape(fluxes))
+    flux_anal = flux_th * np.ones(np.shape(sim_times))
     H = params['H']
     pos_anal = -H * (np.log(sim_times * H / (flux_anal / (params['RHO0'])
         * params['KX'] / params['OMEGA'])))
@@ -578,20 +564,16 @@ def plot_front(name, params):
     plt.savefig('%s/front_v.png' % snapshots_dir, dpi=400)
     plt.clf()
 
-    plt.plot(sim_times[start_idx: ], (1 / np.array(ri_inv[start_idx: ])**2))
-    plt.ylabel('Ri')
-    plt.xlabel('Time')
-    plt.title(name)
-    plt.ylim([0, 10])
-    plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=400)
-    plt.clf()
+    # horizontal plot showing Fpx at certain times
+    time1 = (len(sim_times) - start_idx) // 8 + start_idx
+    time2 = (len(sim_times) - start_idx) * 2 // 4 + start_idx
+    time3 = (len(sim_times) - start_idx) * 3 // 4 + start_idx
 
-    plt.plot(sim_times[start_idx: ],
-             (np.array(fluxes) * 1e5)[start_idx: ],
-             label='Data')
-    plt.plot(sim_times[start_idx: ],
-             (flux_anal * 1e5)[start_idx: ],
-             label='Analytical')
+    F_px[start_idx: , ]
+    plt.plot(z0, F_px[time1] * 1e5, label='t=%f' % sim_times[time1])
+    plt.plot(z0, F_px[time2] * 1e5, label='t=%f' % sim_times[time2])
+    plt.plot(z0, F_px[time3] * 1e5, label='t=%f' % sim_times[time3])
+    plt.plot(z0, (flux_th * 1e5) * np.ones(np.shape(z0)), label='Analytical')
     plt.ylabel('F_px (1e-5)')
     plt.xlabel('Time')
     plt.title(name)
