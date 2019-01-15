@@ -165,16 +165,100 @@ gravitational field are
 $\md{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$ is the material
 derivative. $\vec{u}, \rho, P$ are the fluid dynamical variables and $-g\hat{z}$
 is constant gravitational acceleration. Note that at hydrostatic equilibrium
-$\pd{}{t} = 0$ we have $\vec{u} = 0, \vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and
-so $P_0 = \rho_0 gH$.
+$\pd{}{t} = 0$ we have $\vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 = \rho_0
+gH$. A shear flow $u_x(x, z, t) = u_x(z)$ is permitted in hydrostatic
+equilibrium, but we will initially consider no shear flow in equilibrium.
 
-We nondimensionalize by taking $H = N = \rho_{ref} = 1$ where
+\subsection{Internal Gravity Waves: Linear Theory}
+
+In the small perturbation limit, where flow velocities are small compared to the
+characteristic space and time scales $\pd{}{t} \gg \vec{u} \cdot \vec{\nabla}$,
+we linearize \autoref{se:fc_orig} by ignoring the advective components of the
+material derivative, defining $\rho_1 \equiv \rho - \rho_0 \ll \rho_0$ and $P_1
+\equiv P - P_0$ deviations from equilibrium and obtain:
+\begin{subequations}\label{se:lin_homo}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\rho_1}{t} - \frac{u_{z} \rho_0}{H} &= 0,\\
+        \pd{\vec{u}}{t} + \frac{\vec{\nabla}P_1}{\rho_0}
+            + \frac{\rho_1 g\hat{z}}{\rho_0}
+            &= 0.
+    \end{align}
+\end{subequations}
+
+It is well known that the solutions to the $F = 0$ homogeneous
+\autoref{se:lin_homo} are of form (cite)
+\begin{subequations}\label{se:lin_sol}
+    \begin{align}
+        u_z\p*{x, z, t} &= Ae^{z/2H}e^{i(k_{0x}x + k_{0z}z - \omega_0 t)},\\
+        \omega_0^2 &= \frac{N^2k_{0x}^2}{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}},
+    \end{align}
+\end{subequations}
+up to undetermined amplitude $A$, where
 \begin{equation}
     N^2 \equiv g^2\p*{\rd{\rho}{P} - \at{\pd{\rho}{P}}_{ad}}
         = \frac{g}{H},
 \end{equation}
-is the Brunt-V\"ais\"al\"a frequency. The full numerical details of the
-simulation are described in \autoref{ss:strat_impl}.
+is the Brunt-V\"ais\"al\"a, or buoyancy, frequency.
+
+In the weak stratification limit $k_zH \gg 1$, the solution exhibits the
+following characteristics:
+\begin{itemize}
+    \item The amplitude of the perturbations grows like $e^{z/2H}$. Thus, the
+        linear approximation is violated for sufficiently large $z$.
+
+    \item The phase and group velocities can be computed respectively:
+        \begin{align}
+            \vec{c}_{ph} &= \frac{Nk_x}{k_x^2 + k_z^2 + 1/4H^2} \hat{k},\\
+            \vec{c}_{g} &= \frac{N\p*{k_xk_z\hat{x}
+                - \p*{k_z^2 + \frac{1}{4H^2}}\hat{z}}}
+                {\p*{k_x^2 + k_z^2 + \frac{1}{4H^2}}^{3/2}} \nonumber\\
+                &\approx \frac{Nk_z}{k_x^2 + k_z^2}\p*{k_x\hat{x} - k_z\hat{z}}.
+        \end{align}
+        We recover the usual result $\vec{c}_{ph} \cdot \vec{c}_g = 0$ (CITE).
+        Note that an IGW transporting energy and momentum upwards has $k_z < 0$.
+
+%     \item The linear solution is an exact solution to the full nonlinear
+%         equations \autoref{se:fc_orig}, thanks to the advective terms vanishing
+%         identically when $\vec{\nabla} \cdot \vec{u} = 0$ (CITE). However, this
+%         solution is globally unstable to resonant triad interactions (CITE).
+
+    \item The time-averaged total $x$-momentum flux in the $\hat{z}$ direction
+        can be computed. Since the fluid variables have separable as $f(x, z, t)
+        = f(z)e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and time averaging are
+        equivalent, so we may write ($\ev*{\dots}_x$ denotes $x$-averaging)
+        \begin{align}
+            F_{px, z} &\equiv \ev*{\rho u_x u_z}_x =
+                \frac{1}{L_x}\int_0^{L_x}\limits \rho u_x u_z\;\mathrm{d}x
+                    \nonumber\\
+                &\approx -\frac{A^2}{2}\rho_{ref}\frac{k_z}{k_x}.
+                    \label{eq:fpx_lin}
+        \end{align}
+
+    \item Finally, it may be noted that horizontally averaged horizontal
+        momentum $p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{F_{px}}{z} =
+        0$. Since flux is transported on the group velocity timescale (CITE),
+        this simplifies to the known expression for the wave-induced horizontal
+        mean flow (cite)
+        \begin{equation}
+            \bar{U}_0 \equiv \ev*{u_x}_x = \frac{\ev*{u_xu_z}_x}{c_{gz}}
+        \end{equation}
+        We've denoted $c_{gz} = \at{\pd{\omega}{k_{z}}}_{k_{z0}}$ the vertical group
+        velocity. In terms of our forcing amplitude,
+        \begin{equation}
+            \bar{U}_0(F) = -\frac{A(F)^2}{2}e^{\frac{z - z_0}{H}} \frac{k_z}{k_x}c_{gz},
+                \label{eq:u0_lin}
+        \end{equation}
+        where $c_{gz} = -\frac{Nk_{0x}k_{0z}}{\p*{k_{0x}^2 + k_{0z}^2 +
+        \frac{1}{4H^2}}^{3/2}}$.
+\end{itemize}
+% Linear solution: e^z/2H, dispersion relation, phase/group velocity. Observe is
+% exact solution of nonlinear.
+% Linear solution is globally unstable to RTI though, thus not stable
+% equilibrium of IVP
+%
+% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
+% wave-induced mean flow, horizontal momentum flux
 
 \subsection{Wave Generation}
 
@@ -198,105 +282,82 @@ on the density equation, replacing \autoref{eq:fc_density} with
 \end{equation}
 Using a narrow Gaussian profile excites a broad $k_z$ wavenumber spectrum, and
 only the $k_{0z}$ satisfying the IGW's dispersion relation for the given
-$k_{0x}, \omega_0$ will propagate.
-% Define $k_{0z}: \omega(k_{0x}, k_{0z}) = \omega_0$ the wavenumber picked
-% out by $k_{0x}, \omega_0$. If $k_{0z}\sigma \ll 1$, the $\cos\p*{k_{0x}x -
-% \omega_0 t}$ term permits only the $k_{0z}$ mode to propagate among the broad
-% $k_z$ wavenumber spectrum permitted by the narrow Gaussian profile.
-
-\subsection{Internal Gravity Waves}
-
-In the small perturbation limit, we linearize \autoref{se:fc_orig} with
-inhomegeneous driving term and obtain:
+$k_{0x}, \omega_0(k_{0x}, k_{0z})$ will propagate. The fluid equations then take
+form
 \begin{subequations}\label{se:vol_drive}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\vec{u}_1}{t} + \frac{\vec{\nabla}P}{\rho_0}
-            + \frac{\rho_1 \vec{g}}{\rho_0}
-            &= 0,\\
-        \pd{\rho_1}{t} - \frac{u_{1z} \rho_0}{H}
-            &= Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                e^{i(k_xx - \omega t)}.
-    \end{align}
-\end{subequations}
-We have substituted $\cos\p*{k_xx - \omega_0t}$ for a complex exponential for
-easier manipulation.
-
-It is well known that the solutions to the $F = 0$ homogeneous
-\autoref{se:vol_drive} are of form (cite)
-\begin{subequations}\label{se:lin_sol}
-    \begin{align}
-        u_z\p*{x, z, t} &= Ae^{z/2H}e^{i(k_{0x}x + k_{0z}z - \omega_0 t)},\\
-        \omega_0^2 &= \frac{N^2k_{0x}^2}{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}}.
+        \md{\rho}{t} &= Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                e^{i(k_xx - \omega t)},\\
+        \md{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho}
+            + g\hat{z} &= 0.
     \end{align}
 \end{subequations}
 
-To solve the inhomogeneous system, we may first approximate the driving term
-using $e^{\frac{-(z - z_0)^2}{2\sigma^2}} \approx \sqrt{2\pi \sigma^2}\delta(z -
-z_0)$ if $\sigma \to 0$. This system is solved exactly by matching the two
-homogeneous solutions above and below $z_0$, We may then approximately relax the
-solution to $k_{0z}\sigma \lesssim 1$. This may be solved to obtain the solution
+The linearized \autoref{se:vol_drive}, obtained by dropping the advective term
+in the material derivative, can be solved analytically up to good accuracy. We
+may first approximate the driving term using $e^{\frac{-(z - z_0)^2}{2\sigma^2}}
+\approx \sqrt{2\pi \sigma^2}\delta(z - z_0)$ if $\sigma \to 0$\footnote{$\sigma$
+must be large enough to be numerically resolved by the spectral code.}. This
+system is solved exactly by matching the two homogeneous solutions above and
+below $z_0$, We may then approximately relax the solution to $k_{0z}\sigma
+\lesssim 1$: an extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises
+compared to the $\delta$-function solution (evaluating the Fourier Transform
+of $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 \begin{align}
-    A(F) &= \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
+    A(F) ={}& \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
         \frac{1}{2ik_z}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}},\\
-    u_{1z} &= A(F) \times\begin{cases}
+    u_{1z}(x, z, t) ={}& A(F) \times\nonumber\\
+        &{}\begin{cases}
         e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x + k_{0z}(z - z_0) - \omega_0 t)}
             & z > z_0\\
         e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x - k_{0z}(z - z_0) - \omega_0 t)}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
-An extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises compared to the
-$\delta$-function solution when evaluating the Fourier Transform of
-$e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$.
-
-% Linear solution: e^z/2H, dispersion relation, phase/group velocity. Observe is
-% exact solution of nonlinear.
-% Linear solution is globally unstable to RTI though, thus not stable
-% equilibrium of IVP
-%
-% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
-% wave-induced mean flow, horizontal momentum flux
-
-Furthermore, in the low-amplitude, dissipation free limit, the time-averaged
-total $x$-momentum flux in the $\hat{z}$ direction can be computed. Since all
-dynamical variables $\propto e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and
-time averaging are equivalent, so we may write
-\begin{equation}
-    F_{px} \equiv \frac{1}{L_x}\int_0^{L_x}\limits \rho u_x u_z\;\mathrm{d}x
-\end{equation}
-We will denote this $F_{px} = \ev*{\rho u_xu_z}_x$ for simplicity. For a given
-forcing amplitude then:
-\begin{equation}
-    F_{px}(F) \approx -\frac{A(F)^2}{2}\rho_0(z_0) \frac{k_z}{k_x}.
-        \label{eq:fpx_lin}
-\end{equation}
-We've approximated $k_zH \ll 1$ and noticed $\ev*{\rho_1 u_xu_z}_x = 0$ in the
-above for clarity.
-
-Finally, it may be noted that horizontally averaged horizontal momentum
-$p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{F_{px}}{z} = 0$, and since
-flux is transported on the group velocity timescale, this simplifies to the
-known expression for the wave-induced horizontal mean flow (cite)
-\begin{equation}
-    \bar{U}_0 \equiv \ev*{u_x}_x = \frac{\ev*{u_xu_z}_x}{c_{gz}}
-\end{equation}
-We've denoted $c_{gz} = \at{\pd{\omega}{k_{z}}}_{k_{z0}}$ the vertical group
-velocity. In terms of our forcing amplitude,
-\begin{equation}
-    \bar{U}_0(F) = -\frac{A(F)^2}{2}e^{\frac{z - z_0}{H}} \frac{k_z}{k_x}c_{gz},
-        \label{eq:u0_lin}
-\end{equation}
-where $c_{gz} = -\frac{Nk_{0x}k_{0z}}{\p*{k_{0x}^2 + k_{0z}^2 +
-\frac{1}{4H^2}}^{3/2}}$.
 
 \subsection{Numerical Parameters}\label{ss:numerics}
+
+We nondimensionalize by taking $H = N = \rho_{ref} = 1$
+
+%%%
+These are implemented as:
+\begin{subequations}\label{se:curr_num}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \pd{\Upsilon}{t} - \frac{u_z}{H}
+            - \nu \nabla^2 \Upsilon &= -\Gamma(z) \Upsilon
+                - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
+                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x}
+            - \nu \nabla^2 u_x
+            &= -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
+                - T_1 \pd{\Upsilon}{x},\\
+        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H}
+            - \nu \nabla^2 u_z &= -\Gamma(z) u_z
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_z
+                - T_1 \pd{\Upsilon}{z},\\
+    \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
+        + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
+    \end{align}
+\end{subequations}
+where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zones. A
+Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
+regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
+\frac{\omega}{\abs*{k_z}}\frac{L_z}{2\pi N_z}$ was found to be suitable for $N_z
+= 1024$, where $k_z$ is the wavenumber of the excited linear mode.
+%%%
 
 % Description of spectral method, basis functions, initial conditions
 % Grid Size
 % Viscosity + diffusivity, damping layers (to simulate radiative BC)
 % timestepping? RK443, (CFL limiter??)
+
+The exact implementation of these equations in Dedalus is described in
+\autoref{ss:strat_impl}.
 
 \section{Linear Regime}\label{s:lin}
 
@@ -534,59 +595,80 @@ numerical viscosity is physically motivated as a effective KHI viscosity.
 \onecolumngrid
 \appendix
 
-\section{Equation Implementations}
+\section{Equation Implementations}\label{ss:strat_impl}
 
 We denote $x \in [0, L_x], z \in [0, L_z]$ the simulation domain and $N_x, N_z$
-the number of spectral modes in the respective dimensions.
+the number of spectral modes in the respective dimensions. We perform direct
+numerical simulation of \autoref{se:vol_drive} with the open-source
+pseudo-spectral code Dedalus (CITE).
 
-\subsection{Stratified Fluid}\label{ss:strat_impl}
-
-We introduce variable $T = P/\rho$. We then mandate $\rho_0, T_0$ background
-fields satisfy hydrostatic equilibrium $\vec{\nabla}T_0 + T_0 \vec{\nabla}\rho_0
-+ \vec{g} = 0$. Taking isothermal stratification, we find $T_0 = gH$. Making
-then substitution of variables $\Upsilon = \ln \rho - \ln \rho_0$ and $T_1 = T -
-T_0$ deviations from the background state, the exact fluid equations in the new
-variables are:
+Numerically, the nonlinear $\frac{\vec{\nabla}P}{\rho}$ term is problematic: we
+desire a system where the fluid fields are not divided by one another. We
+introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\rho_0, \varpi_0$
+background fields satisfy hydrostatic equilibrium $\vec{\nabla}\varpi_0 +
+\varpi_0 \vec{\nabla}\rho_0 + g\hat{z} = 0$. Taking isothermal stratification,
+we find $\varpi_0 = gH$. We further change variables to $\Upsilon = \ln \rho -
+\ln \rho_0$ and $\varpi_1 = \varpi - \varpi_0$ deviations from the background
+state to obtain a system of equations at most quadratic in fluid fields:
 \begin{subequations}\label{se:fc_var}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\Upsilon}{t} - \frac{u_z}{H} &= 0,\\
+        \pd{\Upsilon}{t} + \p*{\vec{u} \cdot \vec{\nabla}} \Upsilon
+            - \frac{u_z}{H} &= 0,\\
         \pd{u_x}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_x
-            + \pd{T}{x} + gH\pd{\Upsilon}{x}
-            + T_1 \pd{\Upsilon}{x} &= 0,\\
+            + \pd{\varpi_1}{x} + gH\pd{\Upsilon}{x}
+            + \varpi_1 \pd{\Upsilon}{x} &= 0,\\
         \pd{u_z}{t} + \p*{\vec{u} \cdot \vec{\nabla}}u_z
-            + \pd{T}{z} + gH\pd{\Upsilon}{z}
-            + T_1 \pd{\Upsilon}{z} - \frac{T_1}{H} &= 0.
+            + \pd{\varpi_1}{z} + gH\pd{\Upsilon}{z}
+            + \varpi_1 \pd{\Upsilon}{z} - \frac{\varpi_1}{H} &= 0.
     \end{align}
 \end{subequations}
+It bears noting that these equations are exactly equivalent to the original
+Euler equations and hence conserve horizontal momentum.
 
-These are implemented as:
-\begin{subequations}\label{se:curr_num}
+\subsection{Artificial Dissipation}
+
+The nonlinear terms in the above equations will transfer energy from lower
+wavenumbers to higher wavenumbers. Since spectral codes have no numerical
+dissipation, artificial dissipation must be added. To ensure the dissipitive
+system conserves horizontal momentum, we begin by adding dissipitive terms to
+the flux-conservative form of the Euler fluid equations \autoref{se:fc_orig} (we
+use stress tensor $\tau_{ij} = P\delta_{ij}$):
+\begin{subequations}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\Upsilon}{t} - \frac{u_z}{H}
-            - \nu \nabla^2 \Upsilon &= -\Gamma(z) \Upsilon
-                - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
-                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                    \cos \p*{k_xx - \omega t},\\
-        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x}
-            - \nu \nabla^2 u_x
-            &= -\Gamma(z) u_x
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
-                - T_1 \pd{\Upsilon}{x},\\
-        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H}
-            - \nu \nabla^2 u_z &= -\Gamma(z) u_z
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_z
-                - T_1 \pd{\Upsilon}{z},\\
-    \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
-        + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
+        \partial_t \rho + \vec{\nabla} \cdot (\rho \vec{u} - \nu
+            \vec{\nabla}(\rho - \rho_0)) &= 0,\label{eq:visc_cons_mom}\\
+        \partial_t (\rho \vec{u}) + \vec{\nabla} \cdot (\rho \vec{u} \vec{u} +
+            \mathrm{diag}(\rho \varpi) - \nu \rho \vec{\nabla}\vec{u}) + \rho g
+            \hat{z} &= 0.
     \end{align}
 \end{subequations}
-where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zones. A
-Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
-regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
-\frac{\omega}{\abs*{k_z}}\frac{L_z}{2\pi N_z}$ was found to be suitable for $N_z
-= 1024$, where $k_z$ is the wavenumber of the excited linear mode.
+The same $\nu$ is used for both the diffusive and viscous term, though this is
+not required. Since the dissipation is not physical and is purely used for
+numerical stability, we choose it such that hydrostatic equilibrium is not
+modified. Some algebraic manipulation to re-cast it in the form of
+\autoref{se:fc_var} gives
+\begin{subequations}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \partial_t \Upsilon + \p*{\vec{u} \cdot \vec{\nabla}} \Upsilon -
+            \frac{u_z}{H} - \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
+        \partial_t \vec{u} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u} +
+            \vec{\nabla} \varpi + \varpi \vec{\nabla} \Upsilon - \nu \nabla^2
+            \vec{u} + \vec{u} \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
+        - 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}\vec{u} -
+            \frac{1}{H}\partial_z \vec{u}} - \frac{\varpi_1}{H} &= 0.
+    \end{align}
+\end{subequations}
+Hydrostatic equilibrium is still $\vec{\nabla} \varpi_0 + g\hat{z} = 0$ where
+$\rho = \rho_0, \vec{u} = 0$. Including the damping layers and forcing terms as
+described in \autoref{ss:numerics}, we finally obtain the full system of
+equations as simulated in Dedalus:
 
 \end{document}
 
