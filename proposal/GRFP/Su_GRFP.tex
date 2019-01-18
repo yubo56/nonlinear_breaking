@@ -1,0 +1,230 @@
+    \documentclass[11pt,
+        usenames, % allows access to some tikz colors
+        dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
+    ]{article}
+    \usepackage{
+        amsmath,
+        amssymb,
+        fouriernc, % fourier font w/ new century book
+        fancyhdr, % page styling
+        lastpage, % footer fanciness
+        hyperref, % various links
+        setspace, % line spacing
+        amsthm, % newtheorem and proof environment
+        mathtools, % \Aboxed for boxing inside aligns, among others
+        float, % Allow [H] figure env alignment
+        enumerate, % Allow custom enumerate numbering
+        graphicx, % allow includegraphics with more filetypes
+        wasysym, % \smiley!
+        upgreek, % \upmu for \mum macro
+        listings, % writing TrueType fonts and including code prettily
+        tikz, % drawing things
+        booktabs, % \bottomrule instead of hline apparently
+        cancel % can cancel things out!
+    }
+    \usepackage[margin=1in]{geometry} % page geometry
+    \usepackage[
+        labelfont=bf, % caption names are labeled in bold
+        font=scriptsize % smaller font for captions
+    ]{caption}
+    \usepackage[font=scriptsize]{subcaption} % subfigures
+
+    \newcommand*{\scinot}[2]{#1\times10^{#2}}
+    \newcommand*{\dotp}[2]{\left<#1\,\middle|\,#2\right>}
+    \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2 #1}{\partial#2^2}}
+    \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
+    \newcommand*{\pvec}[1]{\vec{#1}^{\,\prime}}
+    \newcommand*{\svec}[1]{\vec{#1}\;\!}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\ang}[0]{\;\text{\AA}}
+    \newcommand*{\mum}[0]{\;\upmu \mathrm{m}}
+    \newcommand*{\at}[1]{\left.#1\right|}
+
+    \newtheorem{theorem}{Theorem}[section]
+
+    \let\Re\undefined
+    \let\Im\undefined
+    \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\Re}{Re}
+    \DeclareMathOperator{\Im}{Im}
+    \DeclareMathOperator{\Log}{Log}
+    \DeclareMathOperator{\Arg}{Arg}
+    \DeclareMathOperator{\Tr}{Tr}
+    \DeclareMathOperator{\E}{E}
+    \DeclareMathOperator{\Var}{Var}
+    \DeclareMathOperator*{\argmin}{argmin}
+    \DeclareMathOperator*{\argmax}{argmax}
+    \DeclareMathOperator{\sgn}{sgn}
+    \DeclareMathOperator{\diag}{diag\;}
+
+    \DeclarePairedDelimiter\bra{\langle}{\rvert}
+    \DeclarePairedDelimiter\ket{\lvert}{\rangle}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}
+    \DeclarePairedDelimiter\ev{\langle}{\rangle}
+    \DeclarePairedDelimiter\p{\lparen}{\rparen}
+    \DeclarePairedDelimiter\s{\lbrack}{\rbrack}
+    \DeclarePairedDelimiter\z{\lbrace}{\rbrace}
+
+    % \everymath{\displaystyle} % biggify limits of inline sums and integrals
+    \tikzstyle{circ} % usage: \node[circ, placement] (label) {text};
+        = [draw, circle, fill=white, node distance=3cm, minimum height=2em]
+    \definecolor{commentgreen}{rgb}{0,0.6,0}
+    \lstset{
+        basicstyle=\ttfamily\footnotesize,
+        frame=single,
+        numbers=left,
+        showstringspaces=false,
+        keywordstyle=\color{blue},
+        stringstyle=\color{purple},
+        commentstyle=\color{commentgreen},
+        morecomment=[l][\color{magenta}]{\#}
+    }
+    \usepackage[
+        backend=bibtex8,
+        style=nature]{biblatex}
+
+\bibliography{Su_GRFP}
+% \AtEveryBibitem{\clearfield{title}}
+\begin{document}
+
+% NOTE: this is not the version I submitted, I wrote it on gdocs
+
+\def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{\Snospace}
+\renewcommand*{\appendixautorefname}{\Snospace}
+\renewcommand*{\figureautorefname}{Fig.}
+\renewcommand*{\equationautorefname}{Eq.}
+\renewcommand*{\tableautorefname}{Tab.}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\rfoot{Yubo Su}
+\rhead{}
+\cfoot{\thepage/\pageref{LastPage}}
+
+\title{Nonlinear Tidal Dissipation in Binary White Dwarfs}
+\author{Yubo Su}
+\date{\today}
+
+\maketitle
+
+
+\section{White Dwarf Binaries}
+
+White dwarfs (WDs) are remnants of stellar evolution for stars with mass
+$\lesssim 8M_{\odot}$. They are some of the densest objects in the universe,
+fitting a solar mass into an Earth-sized sphere. They are supported against
+gravity by degeneracy pressure, a quantum mechanical effect arising from
+subjecting matter to immense pressure. As such, WDs are a unique window into
+matter under extreme conditions.
+
+WDs are commonly found in binary systems in which two objects orbit their center
+of mass under mutual gravitational attraction. The companion object ranges from
+another WD to a supermassive black hole, and all of these binary systems are
+very important to astrophysics. In particular, merging WD-WD binaries are
+thought to generate Type Ia supernovae (SNe Ia). Because SNe Ia are highly
+luminous and can be seen at large distances, they have been used as ``standard
+candles'' to probe the expansion rate of the universe (e.g.\ in 1998 SNe Ia
+observations provided the first evidence for dark energy\cite{DE}). WD binaries
+also produce gravitational waves (GW), periodic warping of space-time predicted
+by Einstein's theory of general relativity. The first detection of GWs by the
+Laser Interferometer Gravitational-Wave Observatory (LIGO) in 2015 heralded a
+new era of GW astrophysics. Although LIGO cannot detect the low-frequency GWs
+expected from WD binaries, the space-based Laser Interferometer Space Antenna
+(LISA) will detect such GWs in the coming decades\cite{lisa}. As GW astronomy
+relies on accurate predictions of the expected gravitational waveforms, it is
+important to build highly precise models of the WD binary inspiral before LISA
+observation runs begin (scheduled for $\sim 2030$).
+
+\subsection{Tidal Dissipation and Internal Gravity Waves}
+
+Tidal dissipation in binary WDs can affect the pre-merger state of the WD and
+have a major impact on the gravitational waves produced by the binary. Such
+dissipation arises from the excitation of internal gravity waves (IGWs) in the
+deep envelope of the WD by the gravitational force of its companion and their
+subsequent dissipation in the outer envelope\cite{fullerII}. IGWs, not to be
+confused with the gravitational waves above, are internal displacements in the
+WD fluid that oscillate and propagate due to a restoring buoyancy force. These
+waves are analogous to ocean tides on Earth raised by the Moon and the Sun,
+except that, since WDs do not have sharp surfaces, these waves are internal to
+the WD\@. As these waves propagate outwards from where they are excited, they
+grow in amplitude until they break, as do ocean waves on a shore, and deposit
+both energy and angular momentum from the binary orbit in the outer envelope of
+the WD\@.
+
+Previous works have shown that this dissipation mechanism can generate
+significantly more energy than thermal radiation from the WD surface alone and
+is thus a major contributor to the WD energy budget\cite{fullerII,fullerIV}.
+However, these works treated nonlinear wave dissipation by a simple
+parameterization. Related works in other fields find that properly including
+nonlinear effects produces drastically different IGW dissipation
+behavior\cite{winters1994}. Such fully nonlinear studies have not been performed
+for astrophysical binary systems but are important for the thermal and orbital
+evolution of WD binaries undergoing tidal heating. Characterizing this nonlinear
+tidal dissipation will require extensive numerical simulation to capture the
+turbulent cascade to small scales that drives IGW dissipation. This is the goal
+of my proposed research.
+
+\section{Proposed Research}
+
+I propose to study the dynamical effects of tidal dissipation via nonlinear IGW
+breaking in binary WDs using both analytical techniques and numerical
+simulations. As WDs vary widely in composition and effective temperature, I will
+study select WD models to capture a wide range of possible phenomena. My
+research will proceed in the following stages:
+
+I will perform simulations of nonlinear IGW breaking for various WD models. In
+the last year, I have adapted the spectral hydrodynamic code
+Dedalus\cite{dedalus} to simulate the simplest WD models. I have excited IGWs in
+the deep envelope and observed nonlinear dissipation as the wave propagates into
+the outer envelope. I am in the process of characterizing this dissipation and
+extending my simulation to other, more realistic WD models. From these
+simulations, I will compute energy and angular momentum dissipation as a
+function of time and depth in the envelope for each WD model.
+
+I will apply my dissipation profiles to study tidally heated WDs. Modules for
+Experiments in Stellar Astrophysics (MESA) is a proven stellar evolution code
+that is readily extensible to include tidal heating\cite{MESA}. Packaging my dissipation
+profiles for each WD model as a MESA module would enable simulations of the
+binary WDs’ internal structures evolving under tidal heating. From these
+simulations, I will extract the WD luminosity over time.
+
+I will compare the simulated binary WD luminosity to observational data to
+constrain WD properties. For instance, the WD binary SDSS JJ065133+284423
+(period 13 minutes) may undergo strong tidal heating and exhibit energetic
+behavior such as tidal novae\cite{12min, tidal_novae}. The Large Synoptic Survey
+Telescope (LSST, expected 2021) is expected to detect a few thousand more WD
+binaries\cite{lsst_wd}. I will forecast properties of these samples due to tidal
+heating.
+
+Tidal dissipation can also affect the orbital evolution of the WD binary and
+hence its GW emission during inspiral. I will calculate the signature of tidal
+dissipation on these GWs for each WD model. I will publish my corrected GW
+waveforms for use by LISA and the GW community.
+
+Intellectual Merit: As discussed, WD binaries are important for being potential
+progenitors of Type Ia supernovae, for being future LISA GW sources and for
+producing various transients that would be detectable. My work will characterize
+a key ingredient of WD binary evolution that may explain observed properties of
+such binaries. Additionally, the nonlinear IGW dissipation model I will build
+has applications beyond WDs binaries. Within astrophysics, IGWs are a key
+angular momentum transport mechanism in stellar interiors: they are believed to
+fill a crucial gap in stellar evolution theory\cite{l_trans_rev}. Beyond
+astrophysics, IGWs are also studied in terrestrial sciences such as oceanography
+and atmospheric sciences. A robust understanding of nonlinear IGW dissipation
+would thus have consequences for problems ranging from planetary and stellar
+evolution to weather patterns and biosphere dynamics on Earth.
+
+Broader Impacts: With the support of the NSF GRFP, I will grow as an effective
+researcher. I will present my results at conferences and to collaborators in the
+US and abroad. I will generate videos for use in future Cornell outreach
+efforts. As hydrodynamical simulation produces visually spectacular videos, my
+research will be an effective tool in inspiring the public.
+
+\printbibliography
+
+\end{document}
