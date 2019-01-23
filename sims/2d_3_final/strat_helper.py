@@ -518,12 +518,8 @@ def plot_front(name, params):
         max_pos = len(F_px[t_idx]) - 1
         while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
             max_pos -= 1
-        # max_pos = 1
-        # while F_px[t_idx][max_pos] > flux_threshold\
-        #         and max_pos < len(F_px[t_idx]):
-        #     max_pos += 1
 
-        front_pos.append(z_pts[max_pos])
+        front_pos.append(z0[max_pos])
 
     start_idx = 10
     flux_anal = flux_th * np.ones(np.shape(sim_times))
@@ -538,7 +534,6 @@ def plot_front(name, params):
                        zmesh,
                        F_px[start_idx: , ].T)
     plt.colorbar(p)
-    plt.title(name)
     plt.savefig('%s/fpx.png' % snapshots_dir, dpi=400)
     plt.clf()
 
@@ -546,7 +541,6 @@ def plot_front(name, params):
     plt.plot(sim_times[start_idx: ], pos_anal[start_idx: ], label='Analytical')
     plt.ylabel('Critical Layer Position')
     plt.xlabel('Time')
-    plt.title(name)
     plt.legend()
     plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
     plt.clf()
@@ -560,23 +554,18 @@ def plot_front(name, params):
     plt.ylabel('Critical Layer Velocity')
     plt.xlabel('Time')
     plt.legend()
-    plt.title(name)
     plt.savefig('%s/front_v.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     # horizontal plot showing Fpx at certain times
-    time1 = (len(sim_times) - start_idx) // 8 + start_idx
-    time2 = (len(sim_times) - start_idx) * 2 // 4 + start_idx
-    time3 = (len(sim_times) - start_idx) * 3 // 4 + start_idx
-
-    F_px[start_idx: , ]
-    plt.plot(z0, F_px[time1] * 1e5, label='t=%f' % sim_times[time1])
-    plt.plot(z0, F_px[time2] * 1e5, label='t=%f' % sim_times[time2])
-    plt.plot(z0, F_px[time3] * 1e5, label='t=%f' % sim_times[time3])
-    plt.plot(z0, (flux_th * 1e5) * np.ones(np.shape(z0)), label='Analytical')
-    plt.ylabel('F_px (1e-5)')
-    plt.xlabel('Time')
-    plt.title(name)
+    times = [1/8, 3/8, 5/8, 7/8, 1]
+    z_b = len(np.where(z0 < params['Z0'])[0])
+    for time_frac in times:
+        time = int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
+        plt.plot(z0[z_b: ], F_px[time, z_b: ] / flux_th,
+                 label='t=%.1f' % sim_times[time])
+    plt.ylabel('S_px')
+    plt.xlabel('z')
     plt.legend()
     plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
     plt.clf()
