@@ -559,7 +559,7 @@ def plot_front(name, params):
 
     # horizontal plot showing Fpx at certain times
     times = [1/8, 3/8, 5/8, 7/8, 1]
-    z_b = len(np.where(z0 < params['Z0'])[0])
+    z_b = len(np.where(z0 < params['Z0'] + 3 * params['S'])[0])
     for time_frac in times:
         time = int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
         plt.plot(z0[z_b: ], F_px[time, z_b: ] / flux_th,
