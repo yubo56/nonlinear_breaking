@@ -4,6 +4,7 @@ helper function to run the shared stratification scenario. user just has to
 specify BCs and ICs
 '''
 import logging
+import pickle
 logger = logging.getLogger()
 
 import os
@@ -14,7 +15,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -477,7 +480,7 @@ def plot_front(name, params):
     N_Z = params['N_Z'] * params['INTERP_Z']
     dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
     snapshots_dir = SNAPSHOTS_DIR % name
-    logfile = '%s/data.log' % snapshots_dir
+    logfile = '%s/data.pkl' % snapshots_dir
 
     sim_times = []
     front_pos = []
@@ -498,21 +501,15 @@ def plot_front(name, params):
         z0 = z[0]
 
         F_px = np.sum(state_vars['F_px'], axis=1) / N_X
+        u0 = np.sum(state_vars['ux'], axis=1) / N_X
 
-        with open(logfile, 'w') as data:
-            data.write(repr(z0.tolist()))
-            data.write('\n')
-            data.write(repr(sim_times.tolist()))
-            data.write('\n')
-            data.write(repr(F_px.tolist()))
-            data.write('\n')
+        with open(logfile, 'wb') as data:
+            pickle.dump((z0, sim_times, F_px, u0), data)
 
     else:
-        print('data.log found, loading')
-        with open(logfile) as data:
-            z0 = np.array(eval(data.readline()))
-            sim_times = np.array(eval(data.readline()))
-            F_px = np.array(eval(data.readline()))
+        print('data found, loading')
+        with open(logfile, 'rb') as data:
+            z0, sim_times, F_px, u0 = pickle.load(data)
 
     for t_idx, sim_time in enumerate(sim_times):
         max_pos = len(F_px[t_idx]) - 1
@@ -523,6 +520,7 @@ def plot_front(name, params):
 
     start_idx = 10
     flux_anal = flux_th * np.ones(np.shape(sim_times))
+    u0_th = params['OMEGA'] / params['KX']
     H = params['H']
     pos_anal = -H * (np.log(sim_times * H / (flux_anal / (params['RHO0'])
         * params['KX'] / params['OMEGA'])))
@@ -539,8 +537,8 @@ def plot_front(name, params):
 
     plt.plot(sim_times[start_idx: ], front_pos[start_idx: ], label='Data')
     plt.plot(sim_times[start_idx: ], pos_anal[start_idx: ], label='Analytical')
-    plt.ylabel('Critical Layer Position')
-    plt.xlabel('Time')
+    plt.ylabel(r'$z_c$')
+    plt.xlabel(r't')
     plt.legend()
     plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
     plt.clf()
@@ -551,21 +549,35 @@ def plot_front(name, params):
     plt.plot(sim_times[start_idx: ],
              velocities_anal[start_idx: ],
              label='Analytic')
-    plt.ylabel('Critical Layer Velocity')
-    plt.xlabel('Time')
+    plt.ylabel(r'$\frac{dz_c}{dt}$')
+    plt.xlabel(r't')
     plt.legend()
     plt.savefig('%s/front_v.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     # horizontal plot showing Fpx at certain times
     times = [1/8, 3/8, 5/8, 7/8, 1]
-    z_b = len(np.where(z0 < params['Z0'] + 3 * params['S'])[0])
+    z_min = params['Z0'] + 3 * params['S']
+    z_b = len(np.where(z0 < z_min)[0])
+    fig = plt.figure()
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     for time_frac in times:
         time = int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
-        plt.plot(z0[z_b: ], F_px[time, z_b: ] / flux_th,
-                 label='t=%.1f' % sim_times[time])
-    plt.ylabel('S_px')
-    plt.xlabel('z')
-    plt.legend()
+        ax1.plot(z0[z_b: ],
+                 u0[time, z_b: ] / u0_th,
+                 linewidth=0.7,
+                 label=r't=%.1f$N^{-1}$' % sim_times[time])
+        ax2.plot(z0[z_b: ],
+                 F_px[time, z_b: ] / flux_th,
+                 linewidth=0.7)
+    ax1.set_xlim(z_min, params['ZMAX'])
+    ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
+    ax2.set_xlim(z_min, params['ZMAX'])
+    ax2.set_ylim(-0.1, 1.1 * F_px.max() / flux_th)
+    ax1.legend()
+
+    ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
+    ax2.set_ylabel(r'$S_{px} / S_0$')
+    ax2.set_xlabel(r'$z(H)$')
     plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
-    plt.clf()
+    plt.close()
