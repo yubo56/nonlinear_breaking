@@ -556,28 +556,44 @@ def plot_front(name, params):
     plt.clf()
 
     # horizontal plot showing Fpx at certain times
-    times = [1/8, 3/8, 5/8, 7/8, 1]
+    times = [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
+             for time_frac in [1/8, 3/8, 5/8, 7/8, 1]]
     z_min = params['Z0'] + 3 * params['S']
     z_b = len(np.where(z0 < z_min)[0])
     fig = plt.figure()
-    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-    for time_frac in times:
-        time = int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
-        ax1.plot(z0[z_b: ],
-                 u0[time, z_b: ] / u0_th,
-                 linewidth=0.7,
-                 label=r't=%.1f$N^{-1}$' % sim_times[time])
-        ax2.plot(z0[z_b: ],
-                 F_px[time, z_b: ] / flux_th,
-                 linewidth=0.7)
-    ax1.set_xlim(z_min, params['ZMAX'])
-    ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
-    ax2.set_xlim(z_min, params['ZMAX'])
-    ax2.set_ylim(-0.1, 1.1 * F_px.max() / flux_th)
-    ax1.legend()
+    if 'lin' in name:
+        for time in times:
+            plt.plot(z0[z_b: ],
+                     F_px[time, z_b: ] / flux_th,
+                     linewidth=0.7,
+                     label=r't=%.1f$N^{-1}$' % sim_times[time])
+        plt.xlim(z_min, params['ZMAX'])
+        plt.ylim(-0.1, 1.1 * F_px[times, z_b: ].max() / flux_th)
+        plt.legend()
 
-    ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
-    ax2.set_ylabel(r'$S_{px} / S_0$')
-    ax2.set_xlabel(r'$z(H)$')
-    plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
-    plt.close()
+        plt.xlabel(r'$z(H)$')
+        plt.ylabel(r'$S_{px} / S_0$')
+        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+    else:
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        for time in times:
+            ax1.plot(z0[z_b: ],
+                     u0[time, z_b: ] / u0_th,
+                     linewidth=0.7,
+                     label=r't=%.1f$N^{-1}$' % sim_times[time])
+            ax2.plot(z0[z_b: ],
+                     F_px[time, z_b: ] / flux_th,
+                     linewidth=0.7)
+        ax1.set_xlim(z_min, params['ZMAX'])
+        ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
+        ax2.set_xlim(z_min, params['ZMAX'])
+        ax2.set_ylim(-0.1, 1.1 * F_px.max() / flux_th)
+        ax1.legend()
+
+        ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
+        ax2.set_ylabel(r'$S_{px} / S_0$')
+        ax2.set_xlabel(r'$z(H)$')
+        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.close()
