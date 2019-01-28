@@ -15,7 +15,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-# plt.style.use('ggplot')
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
@@ -28,7 +27,7 @@ CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 4
+plot_stride = 20
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -221,9 +220,9 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['F_px'] = params['RHO0']\
-        * np.exp(-z/ params['H'])\
-        * (state_vars['ux'] * state_vars['uz'])
+    state_vars['F_{px}'] = params['RHO0'] * np.exp(-z/ params['H']) * (
+        (state_vars['ux'] * state_vars['uz']) +
+        (params['NU'] * np.exp(state_vars['U']) * state_vars['ux_z']))
     return np.array(total_sim_times[start::plot_stride]), domain, state_vars
 
 def plot(name, params):
@@ -239,7 +238,11 @@ def plot(name, params):
     N_Z = params['N_Z'] * params['INTERP_Z']
     KX = params['KX']
     KZ = params['KZ']
-    V_GZ = get_vgz(params['g'], params['H'], KX, KZ)
+    g = params['g']
+    H = params['H']
+    Z0 = params['Z0']
+    OMEGA = params['OMEGA']
+    V_GZ = get_vgz(g, H, KX, KZ)
 
     # available cfgs:
     # plot_vars: 2D plot
@@ -249,6 +252,7 @@ def plot(name, params):
     # slice_vars: sliced at x=0
     # mean_vars: horizontally averaged
     # sub_vars: 2D plot, mean-subtracted
+    # anal_vars: subtract analytical solution (only uz)
     def get_plot_vars(cfg):
         ''' unpacks above variables from cfg shorthand '''
         ret_vars = [
@@ -258,7 +262,8 @@ def plot(name, params):
             cfg.get('f2_vars', []),
             [i + mean_suffix for i in cfg.get('mean_vars', [])],
             [i + slice_suffix for i in cfg.get('slice_vars', [])],
-            [i + sub_suffix for i in cfg.get('sub_vars', [])]]
+            [i + sub_suffix for i in cfg.get('sub_vars', [])],
+            cfg.get('anal_vars', [])]
         n_cols = cfg.get('n_cols', sum([len(arr) for arr in ret_vars]))
         n_rows = cfg.get('n_rows', 1)
         ret = [n_cols, n_rows, cfg['save_fmt_str']]
@@ -266,21 +271,18 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
-        {
-            'save_fmt_str': 'p_%03i.png',
-            'mean_vars': ['F_px', 'ux', 'ux_z'],
-            'slice_vars': ['uz'],
-            'sub_vars': ['ux'],
-        },
         # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['ux', 'uz', 'U', 'W'],
-        # },
-        # {
-        #     'save_fmt_str': 't_%03i.png',
-        #     'mean_vars': ['F_px', 'ux'],
+        #     'save_fmt_str': 'p_%03i.png',
+        #     'mean_vars': ['F_{px}', 'ux'],
         #     'slice_vars': ['uz'],
+        #     'sub_vars': ['uz'],
         # },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['uz'],
+            'anal_vars': ['uz'],
+            'slice_vars': ['uz'],
+        },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
@@ -290,10 +292,10 @@ def plot(name, params):
     x = domain.grid(0, scales=params['INTERP_X'])
     z = domain.grid(1, scales=params['INTERP_Z'])
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-    x2mesh, z2mesh = quad_mesh(x=np.arange(params['N_X'] // 2), y=z[0])
+    x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
 
     # preprocess
-    for var in dyn_vars + ['F_px']:
+    for var in dyn_vars + ['F_{px}']:
         state_vars[var + mean_suffix] = (
             np.sum(state_vars[var], axis=1) / N_X,
             np.min(state_vars[var], axis=1),
@@ -312,7 +314,8 @@ def plot(name, params):
 
     for cfg in plot_cfgs:
         n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
-            f2_vars, mean_vars, slice_vars, sub_vars = get_plot_vars(cfg)
+            f2_vars, mean_vars, slice_vars, sub_vars, anal_vars\
+            = get_plot_vars(cfg)
 
         uz_est = params['F'] * get_uz_f_ratio(params)
 
@@ -321,7 +324,7 @@ def plot(name, params):
 
             idx = 1
             for var in plot_vars + sub_vars:
-                axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
+                axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
 
                 var_dat = state_vars[var]
                 p = axes.pcolormesh(xmesh,
@@ -336,12 +339,12 @@ def plot(name, params):
 
             for var in f2_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx,
-                                       title='log %s (x-FT)' % var)
+                                       title=r'$\log %s$ (x-FT)' % var)
 
                 var_dat = state_vars[var]
                 var_dat_t = np.fft.fft(var_dat[t_idx], axis=0)
                 var_dat_shaped = np.log(np.abs(
-                    2 * var_dat_t.real[:params['N_X'] // 2, :]))
+                    2 * var_dat_t.real[:N_X // 2, :]))
                 p = axes.pcolormesh(x2mesh,
                                     z2mesh,
                                     var_dat_shaped.T,
@@ -353,7 +356,7 @@ def plot(name, params):
                 idx += 1
 
             for var in mean_vars + slice_vars:
-                axes = fig.add_subplot(n_rows, n_cols, idx, title=var)
+                axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
                 if var in slice_vars:
                     var_dat = state_vars[var]
                 else:
@@ -365,25 +368,32 @@ def plot(name, params):
                               'r-',
                               linewidth=0.5)
                 if var == 'uz%s' % slice_suffix:
+                    k = np.sqrt(KX**2 + KZ**2)
                     p = axes.plot(
-                        uz_est * np.exp((z_pts - params['Z0']) /
-                                        (2 * params['H'])),
+                        -uz_est * np.exp((z_pts - Z0) / (2 * H))
+                        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                                 * (z_pts - Z0))
+                        * np.sin(KX * x[0, 0] + KZ * (z_pts - Z0)
+                                 - OMEGA * sim_time + 1 / (2 * KZ * H)),
                         z_pts,
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * np.exp((z_pts - params['Z0']) /
-                                         (2 * params['H'])),
+                        -uz_est * np.exp((z_pts - Z0) / (2 * H)),
                         z_pts,
-                        'orange',
+                        'green',
+                        linewidth=0.5)
+                    p = axes.plot(
+                        uz_est * np.exp((z_pts - Z0) / (2 * H)),
+                        z_pts,
+                        'green',
                         linewidth=0.5)
 
-                if var == 'F_px%s' % mean_suffix:
+                if var == 'F_{px}%s' % mean_suffix:
                     p = axes.plot(
                         uz_est**2 / 2
-                            * abs(params['KZ'] / params['KX'])
-                            * params['RHO0']
-                                * np.exp(-params['Z0'] / params['H'])
+                            * abs(KZ / KX)
+                            * params['RHO0'] * np.exp(-params['Z0'] / H)
                             * np.ones(np.shape(z_pts)),
                         z_pts,
                         'orange',
@@ -393,14 +403,12 @@ def plot(name, params):
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
                         uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
-                            * np.exp((z_pts - params['Z0']) / (params['H'])),
+                            * np.exp((z_pts - Z0) / H),
                         z_pts,
                         'orange',
                         linewidth=0.5)
                     # critical = omega / kx
-                    p = axes.plot(
-                        params['OMEGA'] / params['KX']
-                            * np.ones(np.shape(z_pts)),
+                    p = axes.plot(OMEGA / KX * np.ones(np.shape(z_pts)),
                         z_pts,
                         'green',
                         linewidth=0.5)
@@ -433,11 +441,11 @@ def plot(name, params):
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [params['Z0'] + 3 * params['S']] * len(xlims),
+                              [Z0 + 3 * params['S']] * len(xlims),
                               'b--',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [params['Z0'] - 3 * params['S']] * len(xlims),
+                              [Z0 - 3 * params['S']] * len(xlims),
                               'b--',
                               linewidth=0.5)
                 idx += 1
@@ -445,9 +453,9 @@ def plot(name, params):
                 axes = fig.add_subplot(n_rows,
                                        n_cols,
                                        idx,
-                                       title='%s (kx=kx_d)' % var)
+                                       title=r'$%s$ (kx=kx_d)' % var)
                 var_dat = state_vars[var]
-                kx_idx = round(params['KX'] / (2 * np.pi / params['XMAX']))
+                kx_idx = round(KX / (2 * np.pi / params['XMAX']))
                 p = axes.semilogx(var_dat[t_idx][kx_idx],
                                   range(len(var_dat[t_idx][kx_idx])),
                                   linewidth=0.5)
@@ -457,7 +465,7 @@ def plot(name, params):
                 axes = fig.add_subplot(n_rows,
                                        n_cols,
                                        idx,
-                                       title='%s (Cheb. summed)' % var)
+                                       title=r'$%s$ (Cheb. summed)' % var)
                 var_dat = state_vars[var.replace('_f', '_c')]
                 summed_dat = np.sum(np.abs(var_dat[t_idx]), 1)
                 p = axes.semilogx(summed_dat,
@@ -465,14 +473,50 @@ def plot(name, params):
                                   linewidth=0.5)
                 idx += 1
 
+            if 'uz' in anal_vars:
+                k = np.sqrt(KX**2 + KZ**2)
+                var_dat = uz_est * (
+                    -np.exp((z - Z0) / 2 * H)
+                    * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                             * (z_pts - Z0))
+                    * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
+                             + 1 / (2 * KZ * H)))\
+                    - state_vars['uz'][t_idx]
+
+                # divide by analytical profile
+                var_dat = var_dat / (uz_est *
+                                     np.exp((z - Z0) / (2 * H)))
+                z_bot = len(np.where(z[0] < Z0 + 3 * params['S'])[0])
+                z_top = len(np.where(z[0] < params['SPONGE_HIGH']
+                                     - 2 * params['SPONGE_WIDTH'])[0])
+                var_dat[:, 0: z_bot] = 0
+                var_dat[:, z_top: ] = 0
+                # truncate var_dat at sponge layers
+
+                err = np.sqrt(np.mean(var_dat**2))
+                axes = fig.add_subplot(n_rows,
+                                       n_cols,
+                                       idx,
+                                       title=r'$\delta u_z$ (RMS = %.4e)' % err)
+                p = axes.pcolormesh(xmesh,
+                                    zmesh,
+                                    var_dat.T,
+                                    vmin=var_dat.min(), vmax=var_dat.max())
+                axes.axis(pad_limits(xmesh, zmesh))
+                cb = fig.colorbar(p, ax=axes)
+                plt.xticks(rotation=30)
+                plt.yticks(rotation=30)
+                idx += 1
+
             fig.suptitle(
-                'Config: %s (t=%.2f, kx(%.2f, %.2f), w=%.2f, v_gz=%.2f)' %
-                (name, sim_time, KX, KZ, params['OMEGA'], V_GZ))
+                r'Config: $%s (t=%.2f, \vec{k}=(%.2f, %.2f), \omega=%.2f)$' %
+                (name, sim_time, KX, KZ, OMEGA))
             fig.subplots_adjust(hspace=0.7, wspace=0.6)
             savefig = save_fmt_str % (t_idx)
             plt.savefig('%s/%s' % (snapshots_dir, savefig))
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
+
 
 def plot_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
@@ -500,7 +544,7 @@ def plot_front(name, params):
         z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
         z0 = z[0]
 
-        F_px = np.sum(state_vars['F_px'], axis=1) / N_X
+        F_px = np.sum(state_vars['F_{px}'], axis=1) / N_X
         u0 = np.sum(state_vars['ux'], axis=1) / N_X
 
         with open(logfile, 'wb') as data:
