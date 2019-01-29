@@ -27,13 +27,34 @@ CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 20
+plot_stride = 4
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vgz(g, h, kx, kz):
     return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
+
+def get_front_idx(S_px, flux_threshold):
+    max_pos = len(S_px) - 1
+    while S_px[max_pos] < flux_threshold and max_pos >= 0:
+        max_pos -= 1
+    return max_pos
+
+def horiz_mean(field, n_x):
+    return np.sum(field, axis=1) / n_x
+
+def get_uz_f_ratio(params):
+    ''' get uz(z = z0) / F '''
+    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
+            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
+                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+                * params['OMEGA']**2 * params['KZ'])
+
+def get_flux_th(params):
+    return (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+        * abs(params['KZ'] / params['KX']) * params['RHO0'] \
+        * np.exp(-params['Z0'] / params['H'])
 
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -48,13 +69,6 @@ def set_ic(name, solver, domain, params):
     write, dt = solver.load_state(filename, -1)
     print('Loaded snapshots')
     return write, dt
-
-def get_uz_f_ratio(params):
-    ''' get uz(z = z0) / F '''
-    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
-            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
-                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
-                * params['OMEGA']**2 * params['KZ'])
 
 def get_solver(params):
     ''' sets up solver '''
@@ -220,7 +234,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['F_{px}'] = params['RHO0'] * np.exp(-z/ params['H']) * (
+    state_vars['S_{px}'] = params['RHO0'] * np.exp(-z/ params['H']) * (
         (state_vars['ux'] * state_vars['uz']) +
         (params['NU'] * np.exp(state_vars['U']) * state_vars['ux_z']))
     return np.array(total_sim_times[start::plot_stride]), domain, state_vars
@@ -271,18 +285,19 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
-        # {
-        #     'save_fmt_str': 'p_%03i.png',
-        #     'mean_vars': ['F_{px}', 'ux'],
-        #     'slice_vars': ['uz'],
-        #     'sub_vars': ['uz'],
-        # },
         {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['uz'],
-            'anal_vars': ['uz'],
+            'save_fmt_str': 'p_%03i.png',
+            'mean_vars': ['S_{px}', 'ux'],
             'slice_vars': ['uz'],
+            'sub_vars': ['ux'],
+            'anal_vars': ['uz'],
         },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['uz'],
+        #     'anal_vars': ['uz'],
+        #     'slice_vars': ['uz'],
+        # },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
@@ -295,9 +310,9 @@ def plot(name, params):
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
 
     # preprocess
-    for var in dyn_vars + ['F_{px}']:
+    for var in dyn_vars + ['S_{px}']:
         state_vars[var + mean_suffix] = (
-            np.sum(state_vars[var], axis=1) / N_X,
+            horiz_mean(state_vars[var], N_X),
             np.min(state_vars[var], axis=1),
             np.max(state_vars[var], axis=1))
 
@@ -389,7 +404,7 @@ def plot(name, params):
                         'green',
                         linewidth=0.5)
 
-                if var == 'F_{px}%s' % mean_suffix:
+                if var == 'S_{px}%s' % mean_suffix:
                     p = axes.plot(
                         uz_est**2 / 2
                             * abs(KZ / KX)
@@ -487,8 +502,13 @@ def plot(name, params):
                 var_dat = var_dat / (uz_est *
                                      np.exp((z - Z0) / (2 * H)))
                 z_bot = len(np.where(z[0] < Z0 + 3 * params['S'])[0])
+
+                S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
+                front_idx = get_front_idx(S_px_mean[t_idx],
+                                          get_flux_th(params) * 0.2)
                 z_top = len(np.where(z[0] < params['SPONGE_HIGH']
                                      - 2 * params['SPONGE_WIDTH'])[0])
+                z_top = front_idx
                 var_dat[:, 0: z_bot] = 0
                 var_dat[:, z_top: ] = 0
                 # truncate var_dat at sponge layers
@@ -528,9 +548,7 @@ def plot_front(name, params):
 
     sim_times = []
     front_pos = []
-    flux_th = (params['F'] * get_uz_f_ratio(params))**2 / 2 \
-        * abs(params['KZ'] / params['KX']) * params['RHO0'] \
-        * np.exp(-params['Z0'] / params['H'])
+    flux_th = get_flux_th(params)
     flux_threshold = flux_th / 2
 
     # load if exists
@@ -544,23 +562,20 @@ def plot_front(name, params):
         z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
         z0 = z[0]
 
-        F_px = np.sum(state_vars['F_{px}'], axis=1) / N_X
-        u0 = np.sum(state_vars['ux'], axis=1) / N_X
+        S_px = horiz_mean(state_vars['S_{px}'], N_X)
+        u0 = horiz_mean(state_vars['ux'], N_X)
 
         with open(logfile, 'wb') as data:
-            pickle.dump((z0, sim_times, F_px, u0), data)
+            pickle.dump((z0, sim_times, S_px, u0), data)
 
     else:
         print('data found, loading')
         with open(logfile, 'rb') as data:
-            z0, sim_times, F_px, u0 = pickle.load(data)
+            z0, sim_times, S_px, u0 = pickle.load(data)
 
     for t_idx, sim_time in enumerate(sim_times):
-        max_pos = len(F_px[t_idx]) - 1
-        while F_px[t_idx][max_pos] < flux_threshold and max_pos >= 0:
-            max_pos -= 1
-
-        front_pos.append(z0[max_pos])
+        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+        front_pos.append(z0[front_idx])
 
     start_idx = 10
     flux_anal = flux_th * np.ones(np.shape(sim_times))
@@ -574,7 +589,7 @@ def plot_front(name, params):
     tmesh, zmesh = quad_mesh(x=sim_times[start_idx: ], y=z0)
     p = plt.pcolormesh(tmesh,
                        zmesh,
-                       F_px[start_idx: , ].T)
+                       S_px[start_idx: , ].T)
     plt.colorbar(p)
     plt.savefig('%s/fpx.png' % snapshots_dir, dpi=400)
     plt.clf()
@@ -608,11 +623,11 @@ def plot_front(name, params):
     if 'lin' in name:
         for time in times:
             plt.plot(z0[z_b: ],
-                     F_px[time, z_b: ] / flux_th,
+                     S_px[time, z_b: ] / flux_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
         plt.xlim(z_min, params['ZMAX'])
-        plt.ylim(-0.1, 1.1 * F_px[times, z_b: ].max() / flux_th)
+        plt.ylim(-0.1, 1.1 * S_px[time, z_b: ].max() / flux_th)
         plt.legend()
 
         plt.xlabel(r'$z(H)$')
@@ -628,12 +643,12 @@ def plot_front(name, params):
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
             ax2.plot(z0[z_b: ],
-                     F_px[time, z_b: ] / flux_th,
+                     S_px[time, z_b: ] / flux_th,
                      linewidth=0.7)
         ax1.set_xlim(z_min, params['ZMAX'])
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
         ax2.set_xlim(z_min, params['ZMAX'])
-        ax2.set_ylim(-0.1, 1.1 * F_px.max() / flux_th)
+        ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
         ax1.legend()
 
         ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
