@@ -70,6 +70,73 @@ def set_ic(name, solver, domain, params):
     print('Loaded snapshots')
     return write, dt
 
+def add_nl_problem(problem):
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation(
+        'dt(U) - uz / H' +
+        '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
+        '= - sponge * U' +
+        '- NL * (ux * dx(U) + uz * dz(U))' +
+        '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
+        '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
+            'cos(KX * x - OMEGA * t)')
+    problem.add_equation(
+        'dt(ux) + dx(W) + (g * H) * dx(U)' +
+        '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
+        '+ NU * dz(ux) / H'
+        '= - sponge * ux' +
+        '- NL * (ux * dx(ux) + uz * dz(ux))' +
+        '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
+        '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
+        '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
+        '- 2 * NU * ux * U_z / H' +
+        # '+ NU * ux * (1 - exp(-U)) / H**2' +
+        '+ NU * ux * U / H**2' +
+        '- NL * (W * dx(U))')
+    problem.add_equation(
+        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
+        '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
+        '+ NU * dz(uz) / H'
+        '= - sponge * uz - NL * (ux * dx(uz) + uz * dz(uz))' +
+        '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
+        '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
+        '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
+        '- 2 * NU * uz * U_z / H' +
+        # '+ NU * uz * (1 - exp(-U)) / H**2' +
+        '+ NU * uz * U / H**2' +
+        '- NL * (W * dz(U))')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+    problem.add_equation('dz(U) - U_z = 0')
+
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(W) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(ux) = 0')
+    problem.add_bc('right(ux) = 0')
+    problem.add_bc('right(U) = 0')
+    problem.add_bc('left(U) = 0')
+
+def add_lin_problem(problem):
+    problem.add_equation('dx(ux) + dz(uz) = 0')
+    problem.add_equation(
+        'dt(U) - uz / H' +
+        '= - sponge * U' +
+        '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
+            'cos(KX * x - OMEGA * t)')
+    problem.add_equation(
+        'dt(ux) + dx(W) + (g * H) * dx(U)' +
+        '= - sponge * ux')
+    problem.add_equation(
+        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
+        '= - sponge * uz')
+    # don't really need, but too messy to refactor everywhere else
+    # problem.add_equation('dz(ux) - ux_z = 0')
+
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(W) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = 0', condition='nx != 0')
+
 def get_solver(params):
     ''' sets up solver '''
     x_basis = de.Fourier('x',
@@ -82,61 +149,22 @@ def get_solver(params):
                            dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
+    NL = params['NL']
 
-    problem = de.IVP(domain, variables=['W', 'U', 'ux', 'uz',
-                                        'ux_z', 'uz_z', 'U_z',
-                                        ])
+    variables = ['W', 'U', 'ux', 'uz']
+    if NL:
+        variables += ['uz_z', 'ux_z', 'U_z']
+    problem = de.IVP(domain, variables=variables)
     problem.parameters.update(params)
 
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)))'+\
         '- tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
-    problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation(
-        'dt(U) - uz / H' +
-        '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
-        '= - sponge * U' +
-        '- (ux * dx(U) + uz * dz(U))' +
-        '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
-        '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
-            'cos(KX * x - OMEGA * t)')
-    problem.add_equation(
-        'dt(ux) + dx(W) + (g * H) * dx(U)' +
-        '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '+ NU * dz(ux) / H'
-        '= - sponge * ux - (ux * dx(ux) + uz * dz(ux))' +
-        '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
-        '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
-        '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
-        '- 2 * NU * ux * U_z / H' +
-        # '+ NU * ux * (1 - exp(-U)) / H**2' +
-        '+ NU * ux * U / H**2' +
-        '- W * dx(U)')
-    problem.add_equation(
-        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
-        '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '+ NU * dz(uz) / H'
-        '= - sponge * uz - (ux * dx(uz) + uz * dz(uz))' +
-        '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
-        '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
-        '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
-        '- 2 * NU * uz * U_z / H' +
-        # '+ NU * uz * (1 - exp(-U)) / H**2' +
-        '+ NU * uz * U / H**2' +
-        '- W * dz(U)')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-    problem.add_equation('dz(U) - U_z = 0')
-
-
-    problem.add_bc('right(uz) = 0')
-    problem.add_bc('left(W) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(ux) = 0')
-    problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(U) = 0')
-    problem.add_bc('left(U) = 0')
+    if NL:
+        add_nl_problem(problem)
+    else:
+        add_lin_problem(problem)
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
@@ -170,13 +198,12 @@ def run_strat_sim(set_ICs, name, params):
 
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
-    flow.add_property('sqrt((ux / NU)**2 + (uz / NU)**2)', name='Re')
-    flow.add_property('integ(ux_z, "x") / (XMAX * g / H)', name='Ri_inv')
+    flow.add_property('sqrt(ux**2 + ux**2)', name='u')
 
     # Main loop
     logger.info('Starting sim...')
     while solver.ok:
-        cfl_dt = cfl.compute_dt() if params.get('USE_CFL') else params['DT']
+        cfl_dt = cfl.compute_dt() if params['NL'] else params['DT']
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
@@ -187,8 +214,7 @@ def run_strat_sim(set_ICs, name, params):
                         solver.stop_sim_time,
                         cfl_dt,
                         params['DT'])
-            logger.info('Max Re = %e, Max Ri_inv = %f' % (flow.max('Re'),
-                                                          flow.max('Ri_inv')))
+            logger.info('Max u = %e' % flow.max('u'))
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -233,6 +259,9 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     # cast to np arrays
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
+
+    if not params['NL']:
+        state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=2)
 
     state_vars['S_{px}'] = params['RHO0'] * np.exp(-z/ params['H']) * (
         (state_vars['ux'] * state_vars['uz']) +
@@ -300,7 +329,9 @@ def plot(name, params):
         # },
     ]
 
-    dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
+    dyn_vars = ['uz', 'ux', 'U', 'W']
+    if params['NL']:
+        dyn_vars += ['ux_z']
     sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride,
         start=0)
 
@@ -542,7 +573,9 @@ def plot_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
-    dyn_vars = ['uz', 'ux', 'U', 'W', 'ux_z']
+    dyn_vars = ['uz', 'ux', 'U', 'W']
+    if params['NL']:
+        dyn_vars += ['ux_z']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
 
