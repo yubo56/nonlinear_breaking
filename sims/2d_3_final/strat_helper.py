@@ -27,7 +27,7 @@ CW = MPI.COMM_WORLD
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 4
+plot_stride = 75
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -316,17 +316,16 @@ def plot(name, params):
     plot_cfgs = [
         {
             'save_fmt_str': 'p_%03i.png',
-            'mean_vars': ['S_{px}', 'ux'],
+            'plot_vars': ['uz'],
             'slice_vars': ['uz'],
-            'sub_vars': ['ux'],
             'anal_vars': ['uz'],
+            'f2_vars': ['uz'],
         },
-        # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['uz'],
-        #     'anal_vars': ['uz'],
-        #     'slice_vars': ['uz'],
-        # },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['uz', 'ux'],
+            'mean_vars': ['S_{px}', 'ux'],
+        },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -568,7 +567,6 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-
 def plot_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
@@ -588,7 +586,7 @@ def plot_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride, start=0)
+            name, params, dyn_vars, plot_stride=1, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])

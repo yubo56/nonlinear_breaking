@@ -845,10 +845,14 @@ It should then be apparent that the $u_{1z}$ solution is
 \begin{equation}
     u_{1z} = \frac{F_0gk_x^2}{\rho_0(z = z_0)\omega^2}\frac{1}{2ik_z} \times
     \begin{cases}
-        e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)} & z > z_0\\
-        e^{(z - z_0)/2H}e^{i(k_xx - k_z(z - z_0) - \omega t)} & z < z_0\\
+        e^{(z - z_0)/2H}e^{i(k_xx + k_z(z - z_0) - \omega t)
+            + \frac{1}{2k_zH}} & z > z_0\\
+        e^{(z - z_0)/2H}e^{i(k_xx - k_z(z - z_0) - \omega t)
+            + \frac{1}{2k_zH}} & z < z_0\\
     \end{cases}.
 \end{equation}
+The extra phase shift comes from $\pd{}{z} \approx ik_z + \frac{1}{2H} \approx
+k_z\p*{e^{-\frac{1}{2k_zH}}}$.
 
 Given that we are actually using a Gaussian $F(x, z, t) \propto F_0e^{-\frac{(z
 - z_0)^2}{2\sigma^2}}$, the integral under $F(z)$ is actually
@@ -1511,6 +1515,105 @@ The entropy equation takes a bit more work, but we may show that
         &= 0.
 \end{align}
 We have used $\vec{\nabla} \cdot \p*{\rho_0 \vec{u}_1} = 0$.
+
+\chapter{Tidal Synchronization}
+
+Chapter containing notes slightly more pertaining to the paper. I've kinda not
+been updating my notes here for the last few months, so I'll just add what I
+can.
+
+\section{Momentum-Conserving Equations}
+
+First, we want to simplate the Euler equations, but $\frac{\vec{\nabla}P}{\rho}$
+is difficult to deal with. Instead, define $\varpi = P / \rho$, then we can
+divide $\rho$ out of the momentum equation and get no quotients of dynamical
+variables. It is then easier to use $\Upsilon: \rho = \rho e^\Upsilon$.
+Proceeding:
+
+We start from the flux-conservative Euler equations and manually insert
+artificial viscosity terms in a momentum-conserving way:
+\begin{subequations}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \partial_t \rho + \vec{\nabla} \cdot (\rho \vec{u} - \nu
+            \vec{\nabla}(\rho - \rho_0)) &= 0,\label{eq:visc_cons_mom}\\
+        \partial_t (\rho \vec{u}) + \vec{\nabla} \cdot (\rho \vec{u} \vec{u} +
+            \mathrm{diag}(\rho \varpi) - \nu \rho \vec{\nabla}\vec{u}) + \rho g
+            \hat{z} &= 0.
+    \end{align}
+\end{subequations}
+We can do some algebra and obtain
+\begin{subequations}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} &= 0,\\
+        \partial_t \Upsilon + \p*{\vec{u} \cdot \vec{\nabla}} \Upsilon -
+            \frac{u_z}{H} - \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
+        \partial_t \vec{u} + \p*{\vec{u} \cdot \vec{\nabla}}\vec{u} +
+            \vec{\nabla} \varpi + \varpi \vec{\nabla} \Upsilon - \nu \nabla^2
+            \vec{u} + \vec{u} \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
+        - 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}\vec{u} -
+            \frac{1}{H}\partial_z \vec{u}} - \frac{\varpi_1}{H} &= 0.
+    \end{align}
+\end{subequations}
+Including numerical dissipation, sponge layers and driving gives the full system
+of equations
+\begin{subequations}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} ={}& 0,\\
+        \partial_t \Upsilon - \frac{u_z}{H}
+            ={}& \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}},\nonumber\\
+            & - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
+                -\Gamma(z) \Upsilon
+                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x} ={}&
+            \nu \nabla^2 u_x
+            - u_x \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla} \Upsilon} \cdot
+                \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+                + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
+            &+ 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_x
+                - \frac{1}{H}\partial_z u_x}
+            -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
+                - T_1 \pd{\Upsilon}{x},\\
+        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H} ={}&
+            \nu \nabla^2 u_z
+            - u_z \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla} \Upsilon} \cdot
+                \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+                + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
+            &+ 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_z -
+                \frac{1}{H}\partial_z u_{z}}
+            -\Gamma(z) u_z - \p*{\vec{u} \cdot \vec{\nabla}}u_z
+            - T_1 \pd{\Upsilon}{z},\\
+        \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
+            + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
+    \end{align}
+\end{subequations}
+
+\section{Mean Flow Absorption}
+
+The model we're examining now is if part of the flow has synchronized to the
+horizontal phase velocity of the wave. Then as the wavetrain is incident on the
+wave with horizontal momentum flux $S_{px}$, it completely deposits its
+horizonttal momentum. Thus, $S_{px}$ goes from the wave's, which is well known,
+down to zero, being deposited into the mean flow, which forces
+\begin{equation}
+    \rho(z) c_{ph,x} \pd{z_c}{t} = -S_{px}.
+\end{equation}
+where $c_{ph, x}$ is the horizontal phase velocity/critical velocity, $z_c$ is
+the location of the dissipation front, and $S_{px}$ constant is the incident
+momentum flux. This can be analytically solved if we take $\rho(z) \approx
+\rho_0 \propto e^{-z/H}$. Try ansatz $z(t) = -H\p*{\ln t + \ln \tau}$ and we
+find
+\begin{equation}
+    z(t) = -H\ln t - H\ln \frac{H\rho_0(z = 0)c_{ph, x}}{S_{px}}.
+\end{equation}
 
 \clearpage
 
