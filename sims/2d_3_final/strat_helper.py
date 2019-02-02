@@ -24,10 +24,11 @@ from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 from mpi4py import MPI
 CW = MPI.COMM_WORLD
+PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 4
+plot_stride = 75
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -316,17 +317,16 @@ def plot(name, params):
     plot_cfgs = [
         {
             'save_fmt_str': 'p_%03i.png',
-            'mean_vars': ['S_{px}', 'ux'],
+            'plot_vars': ['uz'],
             'slice_vars': ['uz'],
-            'sub_vars': ['ux'],
             'anal_vars': ['uz'],
+            'f2_vars': ['uz'],
         },
-        # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['uz'],
-        #     'anal_vars': ['uz'],
-        #     'slice_vars': ['uz'],
-        # },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['uz', 'ux'],
+            'mean_vars': ['S_{px}', 'ux'],
+        },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -568,7 +568,6 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-
 def plot_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
@@ -588,7 +587,7 @@ def plot_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride, start=0)
+            name, params, dyn_vars, plot_stride=1, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -649,7 +648,7 @@ def plot_front(name, params):
 
     # horizontal plot showing Fpx at certain times
     times = [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
-             for time_frac in [1/8, 3/8, 5/8, 7/8, 1]]
+             for time_frac in [1/8, 3/8, 5/8, 7/8]]
     z_min = params['Z0'] + 3 * params['S']
     z_b = len(np.where(z0 < z_min)[0])
     fig = plt.figure()
@@ -670,13 +669,20 @@ def plot_front(name, params):
 
     else:
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-        for time in times:
+        f.subplots_adjust(hspace=0)
+        for time, color in zip(times, PLT_COLORS):
+            S_px_avg = np.sum(S_px[time - 2: time + 2, z_b: ], axis=0) / 4
             ax1.plot(z0[z_b: ],
                      u0[time, z_b: ] / u0_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
             ax2.plot(z0[z_b: ],
                      S_px[time, z_b: ] / flux_th,
+                     '%s-' % color,
+                     linewidth=0.7)
+            ax2.plot(z0[z_b: ],
+                     S_px_avg / flux_th,
+                     '%s:' % color,
                      linewidth=0.7)
         ax1.set_xlim(z_min, params['ZMAX'])
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
