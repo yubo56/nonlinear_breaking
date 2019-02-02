@@ -228,7 +228,7 @@ following characteristics:
         = f(z)e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and time averaging are
         equivalent, so we may write ($\ev*{\dots}_x$ denotes $x$-averaging)
         \begin{align}
-            F_{px, z} &\equiv \ev*{\rho u_x u_z}_x =
+            S_{px, z} &\equiv \ev*{\rho u_x u_z}_x =
                 \frac{1}{L_x}\int_0^{L_x}\limits \rho u_x u_z\;\mathrm{d}x
                     \nonumber\\
                 &\approx -\frac{A^2}{2}\rho_{ref}\frac{k_z}{k_x}.
@@ -236,7 +236,7 @@ following characteristics:
         \end{align}
 
     \item Finally, it may be noted that horizontally averaged horizontal
-        momentum $p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{F_{px}}{z} =
+        momentum $p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{S_{px}}{z} =
         0$. Since flux is transported on the group velocity timescale (CITE),
         this simplifies to the known expression for the wave-induced horizontal
         mean flow (cite)
@@ -300,19 +300,20 @@ may first approximate the driving term using $e^{\frac{-(z - z_0)^2}{2\sigma^2}}
 \approx \sqrt{2\pi \sigma^2}\delta(z - z_0)$ if $\sigma \to 0$\footnote{$\sigma$
 must be large enough to be numerically resolved by the spectral code.}. This
 system is solved exactly by matching the two homogeneous solutions above and
-below $z_0$, We may then approximately relax the solution to $k_{0z}\sigma
+below $z_0$. We may then approximately relax the solution to $k_{0z}\sigma
 \lesssim 1$: an extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises
 compared to the $\delta$-function solution (evaluating the Fourier Transform
 of $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 \begin{align}
-    A(F) ={}& \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
+    u_{1z}&(x, z, t) ={} \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
         \frac{1}{2ik_z}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
-        {\sqrt{2\pi\sigma^2}},\\
-    u_{1z}(x, z, t) ={}& A(F) \times\nonumber\\
+        {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
-        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x + k_{0z}(z - z_0) - \omega_0 t)}
+        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x + k_{0z}(z - z_0) - \omega_0 t)
+            + \frac{1}{2k_zH}}
             & z > z_0\\
-        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x - k_{0z}(z - z_0) - \omega_0 t)}
+        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x - k_{0z}(z - z_0) - \omega_0 t)
+            + \frac{1}{2k_zH}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
@@ -321,29 +322,6 @@ of $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 
 We nondimensionalize by taking $H = N = \rho_{ref} = 1$
 
-%%%
-These are implemented as:
-\begin{subequations}\label{se:curr_num}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\Upsilon}{t} - \frac{u_z}{H}
-            - \nu \nabla^2 \Upsilon &= -\Gamma(z) \Upsilon
-                - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
-                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                    \cos \p*{k_xx - \omega t},\\
-        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x}
-            - \nu \nabla^2 u_x
-            &= -\Gamma(z) u_x
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
-                - T_1 \pd{\Upsilon}{x},\\
-        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H}
-            - \nu \nabla^2 u_z &= -\Gamma(z) u_z
-                - \p*{\vec{u} \cdot \vec{\nabla}}u_z
-                - T_1 \pd{\Upsilon}{z},\\
-    \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
-        + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
-    \end{align}
-\end{subequations}
 where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zones. A
 Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
 regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
@@ -418,7 +396,7 @@ is provided in \autoref{fig:linear_nonu}. Key features to note:
 \begin{itemize}
     \item $u_z$ grows with \autoref{eq:uz_lin} to reasonable accuracy.
 
-    \item $F_{px}$ is seen to be constant, as would be expected by
+    \item $S_{px}$ is seen to be constant, as would be expected by
         \autoref{eq:fpx_lin}.
 
     \item $\bar{U}_0$ agrees with \autoref{eq:u0_lin} at lower $z$ but deviates
@@ -431,7 +409,7 @@ using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
     \centering
     \includegraphics[width=0.5\textwidth]{plots/linear_nonu.png}
     \caption{Snapshot of linear simulation after reaching steady state.
-        Analytical predictions of $\abs*{u_z}, \bar{U}_0, F_{px}$ are shown in
+        Analytical predictions of $\abs*{u_z}, \bar{U}_0, S_{px}$ are shown in
         orange. Red dotted lines indicate the onset of the damping region and
         blue dotted lines denote the driving region.}\label{fig:linear_nonu}
 \end{figure}
@@ -441,7 +419,7 @@ using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
     \caption{Same as \autoref{fig:linear_nonu} but with $0.3\times $viscosity
     used for nonlinear simulations (YUBONOTE should be the same but that
     simulation mysteriously stopped without me noticing; restarting worked, so
-    currently rerunning). Note the slight resulting dissipation in $F_{px}$.
+    currently rerunning). Note the slight resulting dissipation in $S_{px}$.
     }\label{fig:linear_nu}
 \end{figure}
 
@@ -488,11 +466,16 @@ other words, the total horizontal momentum of the shear flow obeys conservation
 equation
 \begin{equation}
     \pd{}{t}\int\limits_0^{L_z} \rho(z) \bar{U}_0(z, t)\;\mathrm{d}z
-        - F_{px} = 0.
+        - S_{px} = 0.
 \end{equation}
 Treating $\bar{U}_0(z > z_c) = \bar{U}_c, \bar{U}(z < z_c) = 0$ gives us exactly
 \begin{equation}
-    \rho \bar{U}_c\pd{z_c}{t} = -F_{px}.\label{eq:zc_anal}
+    \rho \bar{U}_c\pd{z_c}{t} = -S_{px}.\label{eq:zc_anal}
+\end{equation}
+For constant $S_{px}$ in space and $\rho \approx \rho_0$, this has analytical
+solution
+\begin{equation}
+    z(t) = -H\ln t - H\ln \frac{H\rho_0(z = 0)c_{ph, x}}{S_{px}}.
 \end{equation}
 
 \subsection{Numerical Simulation}
@@ -515,7 +498,7 @@ are:
 
 Two representative snapshots from our simulation are provided in
 \autoref{fig:nl} after the critical layer has had time to form. We may note that
-the critical layer, where $F_{px}$ is absorbed and $\bar{U}_0 = \bar{U}_c$,
+the critical layer, where $S_{px}$ is absorbed and $\bar{U}_0 = \bar{U}_c$,
 travels downwards as predicted.
 \begin{figure}[h]
     \centering
@@ -541,8 +524,8 @@ For the simulation in \autoref{fig:nl}, we may define $z_c = \argmax_z
 \pd{\bar{U}_0}{z}$. Computing $\pd{z_c}{t}$ using the analytical flux
 \autoref{eq:fpx_lin} allows comparison to \autoref{eq:zc_anal}, which we exhibit
 in \autoref{fig:zc_anal}. We see overall good agreement, though some small
-deviation is expected since $F_{px}$ is not perfectly conserved owing to
-numerical viscosity (and YUBONOTE $F_{px}$ is misestimated?).
+deviation is expected since $S_{px}$ is not perfectly conserved owing to
+numerical viscosity (and YUBONOTE $S_{px}$ is misestimated?).
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/nl35_front_v.png}
@@ -669,6 +652,40 @@ Hydrostatic equilibrium is still $\vec{\nabla} \varpi_0 + g\hat{z} = 0$ where
 $\rho = \rho_0, \vec{u} = 0$. Including the damping layers and forcing terms as
 described in \autoref{ss:numerics}, we finally obtain the full system of
 equations as simulated in Dedalus:
+\begin{subequations}
+    \begin{align}
+        \vec{\nabla} \cdot \vec{u} ={}& 0,\\
+        \partial_t \Upsilon - \frac{u_z}{H}
+            ={}& \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla}
+            \Upsilon} \cdot \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}},\nonumber\\
+            & - \p*{\vec{u} \cdot \vec{\nabla}}\Upsilon
+                -\Gamma(z) \Upsilon
+                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                    \cos \p*{k_xx - \omega t},\\
+        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x} ={}&
+            \nu \nabla^2 u_x
+            - u_x \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla} \Upsilon} \cdot
+                \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+                + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
+            &+ 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_x
+                - \frac{1}{H}\partial_z u_x}
+            -\Gamma(z) u_x
+                - \p*{\vec{u} \cdot \vec{\nabla}}u_x
+                - T_1 \pd{\Upsilon}{x},\\
+        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H} ={}&
+            \nu \nabla^2 u_z
+            - u_z \nu\p*{\nabla^2 \Upsilon + \p*{\vec{\nabla} \Upsilon} \cdot
+                \p*{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+                + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
+            &+ 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_z -
+                \frac{1}{H}\partial_z u_{z}}
+            -\Gamma(z) u_z - \p*{\vec{u} \cdot \vec{\nabla}}u_z
+            - T_1 \pd{\Upsilon}{z},\\
+        \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
+            + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
+    \end{align}
+\end{subequations}
 
 \end{document}
 
