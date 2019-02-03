@@ -57,6 +57,39 @@ def get_flux_th(params):
         * abs(params['KZ'] / params['KX']) * params['RHO0'] \
         * np.exp(-params['Z0'] / params['H'])
 
+def get_anal_uz(params, t, x, z):
+    KX = params['KX']
+    KZ = params['KZ']
+    g = params['g']
+    H = params['H']
+    Z0 = params['Z0']
+    OMEGA = params['OMEGA']
+    k = np.sqrt(KX**2 + KZ**2)
+    uz_est = params['F'] * get_uz_f_ratio(params)
+
+    return uz_est * (
+        -np.exp((z - Z0) / 2 * H)
+        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                 * (z - Z0))
+        * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
+                 + 1 / (2 * KZ * H)))
+
+def get_anal_ux(params, t, x, z):
+    KX = params['KX']
+    KZ = params['KZ']
+    g = params['g']
+    H = params['H']
+    Z0 = params['Z0']
+    OMEGA = params['OMEGA']
+    k = np.sqrt(KX**2 + KZ**2)
+    ux_est = params['F'] * get_uz_f_ratio(params) * KZ / KX
+    return ux_est * (
+        np.exp((z - Z0) / 2 * H)
+        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                 * (z[0] - Z0))
+        * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
+                 + 1 / (KZ * H)))
+
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
@@ -318,9 +351,8 @@ def plot(name, params):
     plot_cfgs = [
         {
             'save_fmt_str': 'p_%03i.png',
-            'plot_vars': ['ux'],
-            'slice_vars': ['ux'],
-            'res_vars': ['ux'],
+            'plot_vars': ['ux', 'uz'],
+            'res_vars': ['ux', 'uz'],
         },
         # {
         #     'save_fmt_str': 'm_%03i.png',
@@ -369,19 +401,8 @@ def plot(name, params):
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
             fig = plt.figure(dpi=400)
 
-            k = np.sqrt(KX**2 + KZ**2)
-            uz_anal = uz_est * (
-                -np.exp((z - Z0) / 2 * H)
-                * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
-                         * (z[0] - Z0))
-                * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
-                         + 1 / (2 * KZ * H)))
-            ux_anal = ux_est * (
-                np.exp((z - Z0) / 2 * H)
-                * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
-                         * (z[0] - Z0))
-                * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
-                         + 1 / (KZ * H)))
+            uz_anal = get_anal_uz(params, sim_time, x, z)
+            ux_anal = get_anal_ux(params, sim_time, x, z)
 
             idx = 1
             for var in plot_vars + sub_vars + res_vars:
@@ -581,12 +602,15 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def plot_front(name, params):
+def write_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     H = params['H']
-    u_c = params['OMEGA'] / params['KX']
+    KX = params['KX']
+    KZ = params['KZ']
+    OMEGA = params['OMEGA']
+    u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U', 'W']
     if params['NL']:
         dyn_vars += ['ux_z']
@@ -595,6 +619,9 @@ def plot_front(name, params):
 
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
+
+    def get_z_idx(z, z0):
+        return int(len(np.where(z0 < z)[0]))
 
     # load if exists
     if not os.path.exists(logfile):
@@ -606,19 +633,56 @@ def plot_front(name, params):
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
 
+        ux_res_slice = []
+        uz_res_slice = []
+
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
 
+        uz_est = params['F'] * get_uz_f_ratio(params)
+        ux_est = uz_est * KZ / KX
+        for t_idx, sim_time in enumerate(sim_times):
+            ux_res = np.copy(get_anal_ux(params, sim_time, x, z)
+                             - state_vars['ux'][t_idx]) / \
+                (ux_est * np.exp((z - params['Z0']) / (2 * H)))
+            uz_res = np.copy(get_anal_uz(params, sim_time, x, z)
+                             - state_vars['uz'][t_idx]) / \
+                (uz_est * np.exp((z - params['Z0']) / (2 * H)))
+            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+            slice_idx = get_z_idx(z0[front_idx] - 1 / KZ, z0)
+
+            ux_res_slice.append(ux_res[:, slice_idx - 1])
+            uz_res_slice.append(uz_res[:, slice_idx - 1])
+
         with open(logfile, 'wb') as data:
-            pickle.dump((z0, sim_times, S_px, u0), data)
-
+            pickle.dump((z0, sim_times, S_px, u0, ux_res_slice, uz_res_slice),
+                        data)
     else:
-        print('data found, loading')
-        with open(logfile, 'rb') as data:
-            z0, sim_times, S_px, u0 = pickle.load(data)
+        print('log file found, not regenerating')
 
-    def get_z_idx(z):
-        return int(len(np.where(z0 < z)[0]))
+def plot_front(name, params):
+    N_X = params['N_X'] * params['INTERP_X']
+    N_Z = params['N_Z'] * params['INTERP_Z']
+    H = params['H']
+    KX = params['KX']
+    KZ = params['KZ']
+    OMEGA = params['OMEGA']
+    u_c = OMEGA / KX
+    dyn_vars = ['uz', 'ux', 'U', 'W']
+    if params['NL']:
+        dyn_vars += ['ux_z']
+    snapshots_dir = SNAPSHOTS_DIR % name
+    logfile = '%s/data.pkl' % snapshots_dir
+
+    flux_th = get_flux_th(params)
+    flux_threshold = flux_th * 0.3
+    if not os.path.exists(logfile):
+        write_front(name, params)
+
+    print('loading data')
+    with open(logfile, 'rb') as data:
+        z0, sim_times, S_px, u0, ux_res_slice, uz_res_slice\
+            = pickle.load(data)
 
     dSpx0 = []
     dSpx = []
@@ -626,18 +690,18 @@ def plot_front(name, params):
     dz = abs(1 / params['KZ'])
     l_z = abs(2 * np.pi / params['KZ'])
     z_b = params['Z0'] + 3 * params['S']
-    z_b_idx = get_z_idx(z_b)
+    z_b_idx = get_z_idx(z_b, z0)
     for t_idx, sim_time in enumerate(sim_times):
         front_idx = get_front_idx(S_px[t_idx], flux_threshold)
         z_c = z0[front_idx]
         front_pos.append(z_c)
 
         # measure flux incident at dz critical layer
-        dz_idx = get_z_idx(dz)
+        dz_idx = get_z_idx(dz, z0)
         dSpx0.append(-np.mean(S_px[
-            t_idx, get_z_idx(z_b): get_z_idx(z_b + l_z)]))
+            t_idx, get_z_idx(z_b, z0): get_z_idx(z_b + l_z, z0)]))
         dSpx.append(-np.mean(S_px[
-            t_idx, get_z_idx(z_c - l_z - dz): get_z_idx(z_c - dz)]))
+            t_idx, get_z_idx(z_c - l_z - dz, z0): get_z_idx(z_c - dz, z0)]))
 
     start_idx = 10
 

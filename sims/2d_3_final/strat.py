@@ -112,7 +112,11 @@ if __name__ == '__main__':
         for _, name, _ in tasks:
             merge(name)
 
-    elif '-front' in sys.argv or '-plot' in sys.argv:
+    elif '-write' in sys.argv:
+        for _, name, params_dict in tasks:
+            write_front(name, params_dict)
+
+    elif '-front' in sys.argv:
         for _, name, params_dict in tasks:
             plot_front(name, params_dict)
 
