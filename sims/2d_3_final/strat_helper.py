@@ -90,6 +90,9 @@ def get_anal_ux(params, t, x, z):
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (KZ * H)))
 
+def get_z_idx(z, z0):
+    return int(len(np.where(z0 < z)[0]))
+
 def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
@@ -354,11 +357,15 @@ def plot(name, params):
             'plot_vars': ['ux', 'uz'],
             'res_vars': ['ux', 'uz'],
         },
-        # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['uz', 'ux'],
-        #     'mean_vars': ['S_{px}', 'ux'],
-        # },
+        {
+            'save_fmt_str': 's_%03i.png',
+            'slice_vars': ['uz', 'ux'],
+            'mean_vars': ['S_{px}', 'ux'],
+        },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['uz', 'ux', 'W', 'U'],
+        },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -620,9 +627,6 @@ def write_front(name, params):
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
 
-    def get_z_idx(z, z0):
-        return int(len(np.where(z0 < z)[0]))
-
     # load if exists
     if not os.path.exists(logfile):
         print('log file not found, generating')
@@ -685,23 +689,34 @@ def plot_front(name, params):
             = pickle.load(data)
 
     dSpx0 = []
-    dSpx = []
-    front_pos = []
+    dSpx_S = []
+    dSpx_U = []
+    front_pos_S = []
+    front_pos_U = []
     dz = abs(1 / params['KZ'])
     l_z = abs(2 * np.pi / params['KZ'])
     z_b = params['Z0'] + 3 * params['S']
     z_b_idx = get_z_idx(z_b, z0)
     for t_idx, sim_time in enumerate(sim_times):
-        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
-        z_c = z0[front_idx]
-        front_pos.append(z_c)
+        front_idx_S = get_front_idx(S_px[t_idx], flux_threshold)
+        z_cS = z0[front_idx_S]
+        front_pos_S.append(z_cS)
+
+        front_idx_U = 0
+        u_curr = u0[t_idx]
+        while front_idx_U < len(u_curr) - 1 and u_curr[front_idx_U] < u_c:
+            front_idx_U += 1
+        z_cU = z0[front_idx_U]
+        front_pos_U.append(z_cU)
 
         # measure flux incident at dz critical layer
         dz_idx = get_z_idx(dz, z0)
         dSpx0.append(-np.mean(S_px[
             t_idx, get_z_idx(z_b, z0): get_z_idx(z_b + l_z, z0)]))
-        dSpx.append(-np.mean(S_px[
-            t_idx, get_z_idx(z_c - l_z - dz, z0): get_z_idx(z_c - dz, z0)]))
+        dSpx_S.append(-np.mean(S_px[
+            t_idx, get_z_idx(z_cS - l_z - dz, z0): get_z_idx(z_cS - dz, z0)]))
+        dSpx_U.append(-np.mean(S_px[
+            t_idx, get_z_idx(z_cU - l_z - dz, z0): get_z_idx(z_cU - dz, z0)]))
 
     start_idx = 10
 
@@ -743,8 +758,8 @@ def plot_front(name, params):
                      S_px_avg / flux_th,
                      '%s:' % color,
                      linewidth=0.7)
-        ax2.axvspan(front_pos[times[-1]] - dz - l_z,
-                    front_pos[times[-1]] - dz,
+        ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
+                    front_pos_S[times[-1]] - dz,
                     color='grey')
         ax1.set_xlim(z_b, params['ZMAX'])
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
@@ -762,25 +777,39 @@ def plot_front(name, params):
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
-        zf = np.max(front_pos[-5: -1])
+        zf = np.max(front_pos_S[-5: -1])
         tf = sim_times[-1]
         t = sim_times[start_idx: ]
         dt = np.mean(np.gradient(sim_times[1: -1]))
         dSpx0 = np.array(dSpx0)
-        dSpx = np.array(dSpx)
-        front_pos = np.array(front_pos)
+        dSpx_S = np.array(dSpx_S)
+        dSpx_U = np.array(dSpx_U)
+        front_pos_S = np.array(front_pos_S)
+        front_pos_U = np.array(front_pos_U)
 
-        front_vel = dSpx / (params['RHO0'] * np.exp(-front_pos / H) * u_c)
-        front_pos_intg = np.cumsum(front_vel[start_idx: ]) * dt
-        front_pos_intg += zf - front_pos_intg[-1]
+        front_vel_S = dSpx_S / (params['RHO0'] * np.exp(-front_pos_S / H) * u_c)
+        front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
+        front_pos_intg_S += zf - front_pos_intg_S[-1]
+        front_vel_U = dSpx_U / (params['RHO0'] * np.exp(-front_pos_U / H) * u_c)
+        front_pos_intg_U = np.cumsum(front_vel_U[start_idx: ]) * dt
+        front_pos_intg_U += zf - front_pos_intg_U[-1]
+
         ax1.plot(t, -dSpx0[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_0)$')
-        ax1.plot(t, -dSpx[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_c)$')
+        ax1.plot(t,
+                 -dSpx_S[start_idx: ] / flux_th,
+                 label=r'$\Delta S_{px}(z_{c; S})$')
+        ax1.plot(t,
+                 -dSpx_U[start_idx: ] / flux_th,
+                 label=r'$\Delta S_{px}(z_{c; U})$')
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
         ax1.legend(fontsize=6)
 
-        ax2.plot(t, front_pos[start_idx: ], label='Data')
-        ax2.plot(t, front_pos_intg, label='Model (data $\Delta S_{px}(z_c)$)')
-        flux_mults = [np.mean(-dSpx[len(dSpx) // 3: ]) / flux_th,
+        ax2.plot(t,
+                 front_pos_intg_S,
+                 label='Model (data $\Delta S_{px}(z_{c; S})$)')
+        ax2.plot(t, front_pos_S[start_idx: ], label='Data (S)')
+        ax2.plot(t, front_pos_U[start_idx: ], label='Data (U)')
+        flux_mults = [np.mean(-dSpx_S[len(dSpx_S) // 3: ]) / flux_th,
                       np.mean(-dSpx0[len(dSpx0) // 3: ]) / flux_th,
                       1]
         for mult in flux_mults:
@@ -793,7 +822,7 @@ def plot_front(name, params):
                      label='Model ($%.2f S_{px,0}$)' % mult)
         ax2.set_ylabel(r'$z_c$')
         ax2.set_xlabel(r't')
-        ax2.set_ylim([zf, max(front_pos) * 1.05])
+        ax2.set_ylim([zf, max(front_pos_S) * 1.05])
         ax2.legend(fontsize=6)
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
