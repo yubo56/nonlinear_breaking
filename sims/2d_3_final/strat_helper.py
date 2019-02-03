@@ -617,33 +617,43 @@ def plot_front(name, params):
         with open(logfile, 'rb') as data:
             z0, sim_times, S_px, u0 = pickle.load(data)
 
+    def get_z_idx(z):
+        return int(len(np.where(z0 < z)[0]))
+
+    dSpx0 = []
     dSpx = []
     front_pos = []
-    dz = abs(3 / params['KZ'])
+    dz = abs(1 / params['KZ'])
+    l_z = abs(2 * np.pi / params['KZ'])
+    z_b = params['Z0'] + 3 * params['S']
+    z_b_idx = get_z_idx(z_b)
     for t_idx, sim_time in enumerate(sim_times):
         front_idx = get_front_idx(S_px[t_idx], flux_threshold)
         z_c = z0[front_idx]
         front_pos.append(z_c)
 
         # measure flux incident at dz critical layer
-        dSpx.append(-S_px[t_idx, front_idx - int(dz * N_Z / params['ZMAX'])])
+        dz_idx = get_z_idx(dz)
+        dSpx0.append(-np.mean(S_px[
+            t_idx, get_z_idx(z_b): get_z_idx(z_b + l_z)]))
+        dSpx.append(-np.mean(S_px[
+            t_idx, get_z_idx(z_c - l_z - dz): get_z_idx(z_c - dz)]))
 
     start_idx = 10
 
     # horizontal plot showing Fpx at certain times
     times = [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
              for time_frac in [1/8, 3/8, 5/8, 7/8]]
-    z_min = params['Z0'] + 3 * params['S']
-    z_b = len(np.where(z0 < z_min)[0])
     fig = plt.figure()
     if 'lin' in name:
         for time in times:
-            plt.plot(z0[z_b: ],
-                     S_px[time, z_b: ] / flux_th,
+            z_b_idx
+            plt.plot(z0[z_b_idx: ],
+                     S_px[time, z_b_idx: ] / flux_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-        plt.xlim(z_min, params['ZMAX'])
-        plt.ylim(-0.1, 1.1 * S_px[time, z_b: ].max() / flux_th)
+        plt.xlim(z_b, params['ZMAX'])
+        plt.ylim(-0.1, 1.1 * S_px[time, z_b_idx: ].max() / flux_th)
         plt.legend(fontsize=6)
 
         plt.xlabel(r'$z(H)$')
@@ -656,25 +666,25 @@ def plot_front(name, params):
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         for time, color in zip(times, PLT_COLORS):
-            S_px_avg = np.sum(S_px[time - 2: time + 2, z_b: ], axis=0) / 4
-            ax1.plot(z0[z_b: ],
-                     u0[time, z_b: ] / u_c,
+            S_px_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
+            ax1.plot(z0[z_b_idx: ],
+                     u0[time, z_b_idx: ] / u_c,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-            ax2.plot(z0[z_b: ],
-                     S_px[time, z_b: ] / flux_th,
+            ax2.plot(z0[z_b_idx: ],
+                     S_px[time, z_b_idx: ] / flux_th,
                      '%s-' % color,
                      linewidth=0.7)
-            ax2.plot(z0[z_b: ],
+            ax2.plot(z0[z_b_idx: ],
                      S_px_avg / flux_th,
                      '%s:' % color,
                      linewidth=0.7)
-        ax2.axvspan(front_pos[times[-1]] - dz,
-                    front_pos[times[-1]],
+        ax2.axvspan(front_pos[times[-1]] - dz - l_z,
+                    front_pos[times[-1]] - dz,
                     color='grey')
-        ax1.set_xlim(z_min, params['ZMAX'])
+        ax1.set_xlim(z_b, params['ZMAX'])
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
-        ax2.set_xlim(z_min, params['ZMAX'])
+        ax2.set_xlim(z_b, params['ZMAX'])
         ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
         ax1.legend(fontsize=6)
 
@@ -692,18 +702,23 @@ def plot_front(name, params):
         tf = sim_times[-1]
         t = sim_times[start_idx: ]
         dt = np.mean(np.gradient(sim_times[1: -1]))
+        dSpx0 = np.array(dSpx0)
         dSpx = np.array(dSpx)
         front_pos = np.array(front_pos)
 
         front_vel = dSpx / (params['RHO0'] * np.exp(-front_pos / H) * u_c)
         front_pos_intg = np.cumsum(front_vel[start_idx: ]) * dt
         front_pos_intg += zf - front_pos_intg[-1]
-        ax1.plot(t, -dSpx[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_c)')
+        ax1.plot(t, -dSpx0[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_0)$')
+        ax1.plot(t, -dSpx[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_c)$')
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
+        ax1.legend(fontsize=6)
 
         ax2.plot(t, front_pos[start_idx: ], label='Data')
-        ax2.plot(t, front_pos_intg, label='Model (data $S_{px}$)')
-        flux_mults = [np.mean(-dSpx[len(dSpx) // 3: ]) / flux_th, 1]
+        ax2.plot(t, front_pos_intg, label='Model (data $\Delta S_{px}(z_c)$)')
+        flux_mults = [np.mean(-dSpx[len(dSpx) // 3: ]) / flux_th,
+                      np.mean(-dSpx0[len(dSpx0) // 3: ]) / flux_th,
+                      1]
         for mult in flux_mults:
             tau = H * params['RHO0'] * u_c / (flux_th * mult)
             pos_anal = -H * np.log(
