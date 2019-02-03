@@ -1609,10 +1609,36 @@ down to zero, being deposited into the mean flow, which forces
 where $c_{ph, x}$ is the horizontal phase velocity/critical velocity, $z_c$ is
 the location of the dissipation front, and $S_{px}$ constant is the incident
 momentum flux. This can be analytically solved if we take $\rho(z) \approx
-\rho_0 \propto e^{-z/H}$. Try ansatz $z(t) = -H\p*{\ln t + \ln \tau}$ and we
+\rho_0 \propto e^{-z/H}$. Try ansatz $z(t) = -H\p*{\ln t / \tau}$ and we
 find
+\begin{align}
+    \rho_0(z = 0) \frac{t}{\tau} c_{ph, x} \p*{-\frac{H}{t}} &= -S_{px}
+        \nonumber\\
+    \tau &= \frac{H\rho_0(z = 0)c_{ph, x}}{S_{px}},\nonumber\\
+    z(t) &= -H\ln \frac{t + t_0}{\tau}.
+\end{align}
+$t_0$ is some constant of integration that is fit by setting $z_c(t = 0) = z_0$
+some initial condition. Let's first notice that $z(-t_0) = +\infty, z(\tau -
+t_0) = 0$, and so $\tau$ corresponds to the time it takes to spin up the entire
+atmosphere above $z = 0$. Indeed, halving $S_{px}$ doubles the amount of time
+necessary.
+
+In our simulations, it seems like $S_{px}$ decreases over time due to reflective
+behavior setting in (similar to Winters \& d'Asaro, though since they had a very
+narrow critical layer they observed transmission too, impossible in our case).
+We can thus consider how two $z(t, S_{px})$ solutions differ based on choice of
+$S_{px}$ given some fixed initial condition. In our case, since the beginning of
+the simulation is dominated by transients, horizontal momentum dissipation and
+formation of the critical layer, our equation is only really valid towards the
+end of the simulation. Thus, we formulate our problem as follows: given two
+$S_{px}, \alpha S_{px}$, compute $z(t)$ for both given initial condition
+$z(t_f) = z_f$. We can solve and obtain
 \begin{equation}
-    z(t) = -H\ln t - H\ln \frac{H\rho_0(z = 0)c_{ph, x}}{S_{px}}.
+    t_0 = \tau e^{-z_f/H} - t_f,
+\end{equation}
+and so the exact solution becomes
+\begin{equation}
+    z(t) = -H\ln \frac{t - t_f + \tau e^{-z_f/H}}{\tau}.
 \end{equation}
 
 \clearpage

@@ -28,7 +28,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 75
+plot_stride = 30
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -276,6 +276,7 @@ def plot(name, params):
     slice_suffix = '(x=0)'
     mean_suffix = '(mean)'
     sub_suffix = ' (- mean)'
+    res_suffix = ' (res)'
     snapshots_dir = SNAPSHOTS_DIR % name
     matplotlib.rcParams.update({'font.size': 6})
     N_X = params['N_X'] * params['INTERP_X']
@@ -296,7 +297,7 @@ def plot(name, params):
     # slice_vars: sliced at x=0
     # mean_vars: horizontally averaged
     # sub_vars: 2D plot, mean-subtracted
-    # anal_vars: subtract analytical solution (only uz)
+    # res_vars: subtract analytical solution (only uz/ux)
     def get_plot_vars(cfg):
         ''' unpacks above variables from cfg shorthand '''
         ret_vars = [
@@ -307,7 +308,7 @@ def plot(name, params):
             [i + mean_suffix for i in cfg.get('mean_vars', [])],
             [i + slice_suffix for i in cfg.get('slice_vars', [])],
             [i + sub_suffix for i in cfg.get('sub_vars', [])],
-            cfg.get('anal_vars', [])]
+            [i + res_suffix for i in cfg.get('res_vars', [])]]
         n_cols = cfg.get('n_cols', sum([len(arr) for arr in ret_vars]))
         n_rows = cfg.get('n_rows', 1)
         ret = [n_cols, n_rows, cfg['save_fmt_str']]
@@ -317,16 +318,15 @@ def plot(name, params):
     plot_cfgs = [
         {
             'save_fmt_str': 'p_%03i.png',
-            'plot_vars': ['uz'],
-            'slice_vars': ['uz'],
-            'anal_vars': ['uz'],
-            'f2_vars': ['uz'],
+            'plot_vars': ['ux'],
+            'slice_vars': ['ux'],
+            'res_vars': ['ux'],
         },
-        {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['uz', 'ux'],
-            'mean_vars': ['S_{px}', 'ux'],
-        },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['uz', 'ux'],
+        #     'mean_vars': ['S_{px}', 'ux'],
+        # },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -360,23 +360,77 @@ def plot(name, params):
 
     for cfg in plot_cfgs:
         n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
-            f2_vars, mean_vars, slice_vars, sub_vars, anal_vars\
+            f2_vars, mean_vars, slice_vars, sub_vars, res_vars\
             = get_plot_vars(cfg)
 
         uz_est = params['F'] * get_uz_f_ratio(params)
+        ux_est = uz_est * KZ / KX
 
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
             fig = plt.figure(dpi=400)
 
-            idx = 1
-            for var in plot_vars + sub_vars:
-                axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
+            k = np.sqrt(KX**2 + KZ**2)
+            uz_anal = uz_est * (
+                -np.exp((z - Z0) / 2 * H)
+                * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                         * (z[0] - Z0))
+                * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
+                         + 1 / (2 * KZ * H)))
+            ux_anal = ux_est * (
+                np.exp((z - Z0) / 2 * H)
+                * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+                         * (z[0] - Z0))
+                * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
+                         + 1 / (KZ * H)))
 
-                var_dat = state_vars[var]
+            idx = 1
+            for var in plot_vars + sub_vars + res_vars:
+                if res_suffix in var:
+                    # divide by analytical profile and normalize
+                    if var == 'uz%s' % res_suffix:
+                        var_dat = np.copy(uz_anal- state_vars['uz'][t_idx]) \
+                            / (uz_est * np.exp((z - Z0) / (2 * H)))
+                        title = 'u_z'
+                    elif var == 'ux%s' % res_suffix:
+                        var_dat = np.copy(ux_anal- state_vars['ux'][t_idx]) \
+                            / (ux_est * np.exp((z - Z0) / (2 * H)))
+                        title = 'u_x'
+                    else:
+                        raise ValueError('lol wtf is %s' % var)
+                    z_bot = len(np.where(z[0] < Z0 + 3 * params['S'])[0])
+
+                    S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
+                    front_idx = get_front_idx(S_px_mean[t_idx],
+                                              get_flux_th(params) * 0.2)
+                    z_top = len(np.where(z[0] < params['SPONGE_HIGH']
+                                         - 2 * params['SPONGE_WIDTH'])[0])
+                    z_top = front_idx
+                    # truncate uz_anal at sponge and critical layers
+                    var_dat[:, 0: z_bot] = 0
+                    var_dat[:, z_top: ] = 0
+
+                    err = np.sqrt(np.mean(var_dat**2))
+                    axes = fig.add_subplot(
+                        n_rows,
+                        n_cols,
+                        idx,
+                        title=r'$\delta %s$ (RMS = %.4e)' % (title, err))
+                    vmin = var_dat.min()
+                    vmax = var_dat.max()
+                else:
+                    axes = fig.add_subplot(
+                        n_rows,
+                        n_cols,
+                        idx,
+                        title=r'$%s$' % var)
+
+                    var_dat = state_vars[var][t_idx]
+                    vmin = state_vars[var].min()
+                    vmax = state_vars[var].max()
                 p = axes.pcolormesh(xmesh,
                                     zmesh,
-                                    var_dat[t_idx].T,
-                                    vmin=var_dat.min(), vmax=var_dat.max())
+                                    var_dat.T,
+                                    vmin=vmin, vmax=vmax)
                 axes.axis(pad_limits(xmesh, zmesh))
                 cb = fig.colorbar(p, ax=axes)
                 plt.xticks(rotation=30)
@@ -408,31 +462,30 @@ def plot(name, params):
                 else:
                     var_dat, var_min, var_max = state_vars[var]
 
-                z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
                 p = axes.plot(var_dat[t_idx],
-                              z_pts,
+                              z[0],
                               'r-',
                               linewidth=0.5)
                 if var == 'uz%s' % slice_suffix:
-                    k = np.sqrt(KX**2 + KZ**2)
                     p = axes.plot(
-                        -uz_est * np.exp((z_pts - Z0) / (2 * H))
-                        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
-                                 * (z_pts - Z0))
-                        * np.sin(KX * x[0, 0] + KZ * (z_pts - Z0)
-                                 - OMEGA * sim_time + 1 / (2 * KZ * H)),
-                        z_pts,
+                        uz_anal[0, :],
+                        z[0],
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * np.exp((z_pts - Z0) / (2 * H)),
-                        z_pts,
-                        'green',
+                        -uz_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
+                        uz_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
+                        linewidth=0.5)
+
+                if var == 'ux%s' % slice_suffix:
+                    p = axes.plot(
+                        ux_anal[0, :],
+                        z[0],
+                        'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        uz_est * np.exp((z_pts - Z0) / (2 * H)),
-                        z_pts,
-                        'green',
+                        -ux_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
+                        ux_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
                         linewidth=0.5)
 
                 if var == 'S_{px}%s' % mean_suffix:
@@ -440,8 +493,8 @@ def plot(name, params):
                         uz_est**2 / 2
                             * abs(KZ / KX)
                             * params['RHO0'] * np.exp(-params['Z0'] / H)
-                            * np.ones(np.shape(z_pts)),
-                        z_pts,
+                            * np.ones(np.shape(z[0])),
+                        z[0],
                         'orange',
                         linewidth=0.5)
 
@@ -449,24 +502,24 @@ def plot(name, params):
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
                         uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
-                            * np.exp((z_pts - Z0) / H),
-                        z_pts,
+                            * np.exp((z[0] - Z0) / H),
+                        z[0],
                         'orange',
                         linewidth=0.5)
                     # critical = omega / kx
-                    p = axes.plot(OMEGA / KX * np.ones(np.shape(z_pts)),
-                        z_pts,
+                    p = axes.plot(OMEGA / KX * np.ones(np.shape(z[0])),
+                        z[0],
                         'green',
                         linewidth=0.5)
                 if var in mean_vars:
                     p = axes.plot(
                         var_min[t_idx],
-                        z_pts,
+                        z[0],
                         'r:',
                         linewidth=0.2)
                     p = axes.plot(
                         var_max[t_idx],
-                        z_pts,
+                        z[0],
                         'r:',
                         linewidth=0.2)
 
@@ -475,7 +528,7 @@ def plot(name, params):
                 plt.yticks(rotation=30)
                 xlims = [var_dat.min(), var_dat.max()]
                 axes.set_xlim(*xlims)
-                axes.set_ylim(z_pts.min(), z_pts.max())
+                axes.set_ylim(z[0].min(), z[0].max())
                 p = axes.plot(xlims,
                               [params['SPONGE_LOW']
                                   + params['SPONGE_WIDTH']] * len(xlims),
@@ -519,46 +572,6 @@ def plot(name, params):
                                   linewidth=0.5)
                 idx += 1
 
-            if 'uz' in anal_vars:
-                k = np.sqrt(KX**2 + KZ**2)
-                var_dat = uz_est * (
-                    -np.exp((z - Z0) / 2 * H)
-                    * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
-                             * (z_pts - Z0))
-                    * np.sin(KX * x + KZ * (z - Z0) - OMEGA * sim_time
-                             + 1 / (2 * KZ * H)))\
-                    - state_vars['uz'][t_idx]
-
-                # divide by analytical profile
-                var_dat = var_dat / (uz_est *
-                                     np.exp((z - Z0) / (2 * H)))
-                z_bot = len(np.where(z[0] < Z0 + 3 * params['S'])[0])
-
-                S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
-                front_idx = get_front_idx(S_px_mean[t_idx],
-                                          get_flux_th(params) * 0.2)
-                z_top = len(np.where(z[0] < params['SPONGE_HIGH']
-                                     - 2 * params['SPONGE_WIDTH'])[0])
-                z_top = front_idx
-                var_dat[:, 0: z_bot] = 0
-                var_dat[:, z_top: ] = 0
-                # truncate var_dat at sponge layers
-
-                err = np.sqrt(np.mean(var_dat**2))
-                axes = fig.add_subplot(n_rows,
-                                       n_cols,
-                                       idx,
-                                       title=r'$\delta u_z$ (RMS = %.4e)' % err)
-                p = axes.pcolormesh(xmesh,
-                                    zmesh,
-                                    var_dat.T,
-                                    vmin=var_dat.min(), vmax=var_dat.max())
-                axes.axis(pad_limits(xmesh, zmesh))
-                cb = fig.colorbar(p, ax=axes)
-                plt.xticks(rotation=30)
-                plt.yticks(rotation=30)
-                idx += 1
-
             fig.suptitle(
                 r'Config: $%s (t=%.2f, \vec{k}=(%.2f, %.2f), \omega=%.2f)$' %
                 (name, sim_time, KX, KZ, OMEGA))
@@ -572,6 +585,8 @@ def plot_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
+    H = params['H']
+    u_c = params['OMEGA'] / params['KX']
     dyn_vars = ['uz', 'ux', 'U', 'W']
     if params['NL']:
         dyn_vars += ['ux_z']
@@ -581,7 +596,7 @@ def plot_front(name, params):
     sim_times = []
     front_pos = []
     flux_th = get_flux_th(params)
-    flux_threshold = flux_th / 2
+    flux_threshold = flux_th / 3
 
     # load if exists
     if not os.path.exists(logfile):
@@ -591,7 +606,6 @@ def plot_front(name, params):
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-        z_pts = (zmesh[1:, 0] + zmesh[:-1, 0]) / 2
         z0 = z[0]
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
@@ -610,40 +624,23 @@ def plot_front(name, params):
         front_pos.append(z0[front_idx])
 
     start_idx = 10
-    flux_anal = flux_th * np.ones(np.shape(sim_times))
-    u0_th = params['OMEGA'] / params['KX']
-    H = params['H']
-    pos_anal = -H * (np.log(sim_times * H / (flux_anal / (params['RHO0'])
-        * params['KX'] / params['OMEGA'])))
-    velocities_anal = np.gradient(pos_anal) / np.gradient(sim_times)
-    pos_anal += front_pos[-2] - pos_anal[-2] # fit constant of integration
-
-    tmesh, zmesh = quad_mesh(x=sim_times[start_idx: ], y=z0)
-    p = plt.pcolormesh(tmesh,
-                       zmesh,
-                       S_px[start_idx: , ].T)
-    plt.colorbar(p)
-    plt.savefig('%s/fpx.png' % snapshots_dir, dpi=400)
-    plt.clf()
 
     plt.plot(sim_times[start_idx: ], front_pos[start_idx: ], label='Data')
-    plt.plot(sim_times[start_idx: ], pos_anal[start_idx: ], label='Analytical')
+    # fit constants of integration
+    zf = np.max(front_pos[-5: -1])
+    tf = sim_times[-1]
+    flux_mults = [1/3, 1/2, 1]
+    for mult in flux_mults:
+        tau = H * params['RHO0'] * u_c / (flux_th * mult)
+        pos_anal = -H * np.log((sim_times - tf + tau * np.exp(-zf/params['H']))
+                               / tau)
+        plt.plot(sim_times[start_idx: ],
+                 pos_anal[start_idx: ],
+                 label='Analytical ($S_{px} = %.2f S_{px,0}$)' % mult)
     plt.ylabel(r'$z_c$')
     plt.xlabel(r't')
     plt.legend()
     plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
-    plt.clf()
-
-    plt.plot(sim_times[start_idx: ],
-             (np.gradient(front_pos) / np.gradient(sim_times))[start_idx: ],
-             label='Data')
-    plt.plot(sim_times[start_idx: ],
-             velocities_anal[start_idx: ],
-             label='Analytic')
-    plt.ylabel(r'$\frac{dz_c}{dt}$')
-    plt.xlabel(r't')
-    plt.legend()
-    plt.savefig('%s/front_v.png' % snapshots_dir, dpi=400)
     plt.clf()
 
     # horizontal plot showing Fpx at certain times
@@ -673,7 +670,7 @@ def plot_front(name, params):
         for time, color in zip(times, PLT_COLORS):
             S_px_avg = np.sum(S_px[time - 2: time + 2, z_b: ], axis=0) / 4
             ax1.plot(z0[z_b: ],
-                     u0[time, z_b: ] / u0_th,
+                     u0[time, z_b: ] / u_c,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
             ax2.plot(z0[z_b: ],
@@ -685,7 +682,7 @@ def plot_front(name, params):
                      '%s:' % color,
                      linewidth=0.7)
         ax1.set_xlim(z_min, params['ZMAX'])
-        ax1.set_ylim(-0.1, 1.1 * u0.max() / u0_th)
+        ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
         ax2.set_xlim(z_min, params['ZMAX'])
         ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
         ax1.legend()
