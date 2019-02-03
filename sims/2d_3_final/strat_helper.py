@@ -593,10 +593,8 @@ def plot_front(name, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
 
-    sim_times = []
-    front_pos = []
     flux_th = get_flux_th(params)
-    flux_threshold = flux_th / 3
+    flux_threshold = flux_th * 0.3
 
     # load if exists
     if not os.path.exists(logfile):
@@ -619,29 +617,18 @@ def plot_front(name, params):
         with open(logfile, 'rb') as data:
             z0, sim_times, S_px, u0 = pickle.load(data)
 
+    dSpx = []
+    front_pos = []
+    dz = abs(3 / params['KZ'])
     for t_idx, sim_time in enumerate(sim_times):
         front_idx = get_front_idx(S_px[t_idx], flux_threshold)
-        front_pos.append(z0[front_idx])
+        z_c = z0[front_idx]
+        front_pos.append(z_c)
+
+        # measure flux incident at dz critical layer
+        dSpx.append(-S_px[t_idx, front_idx - int(dz * N_Z / params['ZMAX'])])
 
     start_idx = 10
-
-    plt.plot(sim_times[start_idx: ], front_pos[start_idx: ], label='Data')
-    # fit constants of integration
-    zf = np.max(front_pos[-5: -1])
-    tf = sim_times[-1]
-    flux_mults = [1/3, 1/2, 1]
-    for mult in flux_mults:
-        tau = H * params['RHO0'] * u_c / (flux_th * mult)
-        pos_anal = -H * np.log((sim_times - tf + tau * np.exp(-zf/params['H']))
-                               / tau)
-        plt.plot(sim_times[start_idx: ],
-                 pos_anal[start_idx: ],
-                 label='Analytical ($S_{px} = %.2f S_{px,0}$)' % mult)
-    plt.ylabel(r'$z_c$')
-    plt.xlabel(r't')
-    plt.legend()
-    plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
-    plt.clf()
 
     # horizontal plot showing Fpx at certain times
     times = [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
@@ -657,7 +644,7 @@ def plot_front(name, params):
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
         plt.xlim(z_min, params['ZMAX'])
         plt.ylim(-0.1, 1.1 * S_px[time, z_b: ].max() / flux_th)
-        plt.legend()
+        plt.legend(fontsize=6)
 
         plt.xlabel(r'$z(H)$')
         plt.ylabel(r'$S_{px} / S_0$')
@@ -665,6 +652,7 @@ def plot_front(name, params):
         plt.close()
 
     else:
+        # plot fluxes + mean flow over time
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         for time, color in zip(times, PLT_COLORS):
@@ -681,14 +669,52 @@ def plot_front(name, params):
                      S_px_avg / flux_th,
                      '%s:' % color,
                      linewidth=0.7)
+        ax2.axvspan(front_pos[times[-1]] - dz,
+                    front_pos[times[-1]],
+                    color='grey')
         ax1.set_xlim(z_min, params['ZMAX'])
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
         ax2.set_xlim(z_min, params['ZMAX'])
         ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
-        ax1.legend()
+        ax1.legend(fontsize=6)
 
         ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
         ax2.set_ylabel(r'$S_{px} / S_0$')
         ax2.set_xlabel(r'$z(H)$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+        # plot front position and absorbed flux over time
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f.subplots_adjust(hspace=0)
+
+        zf = np.max(front_pos[-5: -1])
+        tf = sim_times[-1]
+        t = sim_times[start_idx: ]
+        dt = np.mean(np.gradient(sim_times[1: -1]))
+        dSpx = np.array(dSpx)
+        front_pos = np.array(front_pos)
+
+        front_vel = dSpx / (params['RHO0'] * np.exp(-front_pos / H) * u_c)
+        front_pos_intg = np.cumsum(front_vel[start_idx: ]) * dt
+        front_pos_intg += zf - front_pos_intg[-1]
+        ax1.plot(t, -dSpx[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_c)')
+        ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
+
+        ax2.plot(t, front_pos[start_idx: ], label='Data')
+        ax2.plot(t, front_pos_intg, label='Model (data $S_{px}$)')
+        flux_mults = [np.mean(-dSpx[len(dSpx) // 3: ]) / flux_th, 1]
+        for mult in flux_mults:
+            tau = H * params['RHO0'] * u_c / (flux_th * mult)
+            pos_anal = -H * np.log(
+                (sim_times - tf + tau * np.exp(-zf/params['H']))
+                / tau)
+            ax2.plot(t,
+                     pos_anal[start_idx: ],
+                     label='Model ($%.2f S_{px,0}$)' % mult)
+        ax2.set_ylabel(r'$z_c$')
+        ax2.set_xlabel(r't')
+        ax2.set_ylim([zf, max(front_pos) * 1.05])
+        ax2.legend(fontsize=6)
+        plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
