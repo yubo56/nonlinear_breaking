@@ -1,6 +1,8 @@
     \documentclass[twocolumn,
-        nofootinbib,
+        nofootinbib, % unbreaks footnotes from being put in bib
         usenames, % allows access to some tikz colors
+        aps,
+        prd,
         dvipsnames % more colors: https://en.wikibooks.org/wiki/LaTeX/Colors
     ]{revtex4-1}% chktex 8
     \usepackage{
@@ -136,22 +138,20 @@
 % results should be qualitatively similar to 3D (both 2D and 3D exhibit KHI, and
 % since we are able to resolve KHI, the spinup in 3D should be similar?).
 
-In \autoref{s:num_setup}, we will cover the numerical setup. In \autoref{s:lin}, we
+In \autoref{s:equations}, we will cover the numerical setup. In \autoref{s:lin}, we
 will discuss the agreement of our simulation in the low-amplitude limit with
 analytical linear theory. In \autoref{s:nonlin} we will present a few reference
 simulations illustrating critical layer absorption depositing horizontal angular
 momentum into the fluid.
 
-\section{Problem Description}\label{s:num_setup}
-
-\subsection{Fluid Equations}
+\section{Equations}\label{s:equations}
 
 We consider an incompressible, isothermal fluid, representative of degenerate
 matter in WD bulks, in 2D. We assume a barotropic equation of state as a first
 approximation. As we are interested in the behavior of the wave far from the
 center of the WD, we approximate the gravitational field as uniform. We model
-the background density stratification as $\rho_0(x, z) = \rho_0(z) = \rho_{ref}
-e^{-z/H}$ for some reference density $\rho_{ref} = \at{\rho_0(z)}_{z = 0}$.
+the background density stratification as $\rho_0(x, z) = \rho_0(z) = \rho_0(z=0)
+e^{-z/H}$ for some reference density $\rho_0(z=0) = \at{\rho_0(z)}_{z = 0}$.
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
@@ -169,13 +169,15 @@ $\pd{}{t} = 0$ we have $\vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 = \rho_0
 gH$. A shear flow $u_x(x, z, t) = u_x(z)$ is permitted in hydrostatic
 equilibrium, but we will initially consider no shear flow in equilibrium.
 
-\subsection{Internal Gravity Waves: Linear Theory}
+\section{Internal Gravity Waves: Linear Theory}
+
+\subsection{Analytical Properties}
 
 In the small perturbation limit, where flow velocities are small compared to the
 characteristic space and time scales $\pd{}{t} \gg \vec{u} \cdot \vec{\nabla}$,
 we linearize \autoref{se:fc_orig} by ignoring the advective components of the
-material derivative, defining $\rho_1 \equiv \rho - \rho_0 \ll \rho_0$ and $P_1
-\equiv P - P_0$ deviations from equilibrium and obtain:
+material derivative, defining $\rho_1 \equiv \rho - \rho_0 \ll \rho_0 \ll
+\rho_0$ and $P_1 \equiv P - P_0 \ll P_0$ deviations from equilibrium and obtain:
 \begin{subequations}\label{se:lin_homo}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
@@ -187,21 +189,22 @@ material derivative, defining $\rho_1 \equiv \rho - \rho_0 \ll \rho_0$ and $P_1
 \end{subequations}
 
 It is well known that the solutions to the $F = 0$ homogeneous
-\autoref{se:lin_homo} are of form (cite)
+\autoref{se:lin_homo} are of form\cite{drazin,sutherland0}:
 \begin{subequations}\label{se:lin_sol}
     \begin{align}
         u_z\p*{x, z, t} &= Ae^{z/2H}e^{i(k_{0x}x + k_{0z}z - \omega_0 t)},\\
         \omega_0^2 &= \frac{N^2k_{0x}^2}{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}},
     \end{align}
 \end{subequations}
-up to undetermined amplitude $A$, where
+up to undetermined amplitude $A$, and
 \begin{equation}
     N^2 \equiv g^2\p*{\rd{\rho}{P} - \at{\pd{\rho}{P}}_{ad}}
         = \frac{g}{H},
 \end{equation}
-is the Brunt-V\"ais\"al\"a, or buoyancy, frequency.
+is the Brunt-V\"ais\"al\"a/buoyancy frequency for our incompressible,
+exponentially stratified atmosphere.
 
-In the weak stratification limit $k_zH \gg 1$, the solution exhibits the
+In the weak stratification limit $k_{0z}H \gg 1$, the solution exhibits the
 following characteristics:
 \begin{itemize}
     \item The amplitude of the perturbations grows like $e^{z/2H}$. Thus, the
@@ -209,56 +212,46 @@ following characteristics:
 
     \item The phase and group velocities can be computed respectively:
         \begin{align}
-            \vec{c}_{ph} &= \frac{Nk_x}{k_x^2 + k_z^2 + 1/4H^2} \hat{k},\\
-            \vec{c}_{g} &= \frac{N\p*{k_xk_z\hat{x}
-                - \p*{k_z^2 + \frac{1}{4H^2}}\hat{z}}}
-                {\p*{k_x^2 + k_z^2 + \frac{1}{4H^2}}^{3/2}} \nonumber\\
-                &\approx \frac{Nk_z}{k_x^2 + k_z^2}\p*{k_x\hat{x} - k_z\hat{z}}.
+            \vec{c}_{ph} &= \frac{Nk_{0x}}{k_{0x}^2 + k_{0z}^2 + 1/4H^2} \hat{k},\\
+            \vec{c}_{g} &= \frac{N\p*{k_{0x}k_{0z}\hat{x}
+                - \p*{k_{0z}^2 + \frac{1}{4H^2}}\hat{z}}}
+                {\p*{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}}^{3/2}} \nonumber\\
+                &\approx \frac{Nk_{0z}}{k_{0x}^2 + k_{0z}^2}\p*{k_{0x}\hat{x} -
+                k_{0z}\hat{z}}.
         \end{align}
-        We recover the usual result $\vec{c}_{ph} \cdot \vec{c}_g = 0$ (CITE).
-        Note that an IGW transporting energy and momentum upwards has $k_z < 0$.
-
-%     \item The linear solution is an exact solution to the full nonlinear
-%         equations \autoref{se:fc_orig}, thanks to the advective terms vanishing
-%         identically when $\vec{\nabla} \cdot \vec{u} = 0$ (CITE). However, this
-%         solution is globally unstable to resonant triad interactions (CITE).
+        We recover the usual result $\vec{c}_{ph} \cdot \vec{c}_g = 0$
+        (e.g.\ \cite{drazin,sutherland1}). Note that an IGW transporting energy
+        and momentum upwards $c_{g, z} > 0$ has $k_{0z} < 0$.
 
     \item The time-averaged total $x$-momentum flux in the $\hat{z}$ direction
-        can be computed. Since the fluid variables have separable as $f(x, z, t)
-        = f(z)e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and time averaging are
+        can be computed. Since the linear solution is separable as $f(x, z, t) =
+        f(z)e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and time averaging are
         equivalent, so we may write ($\ev*{\dots}_x$ denotes $x$-averaging)
         \begin{align}
-            S_{px, z} &\equiv \ev*{\rho u_x u_z}_x =
+            S_{px, z} &\equiv \ev*{\rho u_x u_z}_x \equiv
                 \frac{1}{L_x}\int_0^{L_x}\limits \rho u_x u_z\;\mathrm{d}x
                     \nonumber\\
-                &\approx -\frac{A^2}{2}\rho_{ref}\frac{k_z}{k_x}.
+                &\approx -\frac{A^2}{2}\rho_0(z=0)\frac{k_{0z}}{k_{0x}}.
                     \label{eq:fpx_lin}
         \end{align}
 
     \item Finally, it may be noted that horizontally averaged horizontal
         momentum $p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{S_{px}}{z} =
-        0$. Since flux is transported on the group velocity timescale (CITE),
-        this simplifies to the known expression for the wave-induced horizontal
-        mean flow (cite)
+        0$. Since flux is transported on the group velocity
+        timescale\cite{sutherland0}, this simplifies to the known expression for
+        the wave-induced horizontal mean flow\cite{sutherland0,sutherland1}
         \begin{equation}
             \bar{U}_0 \equiv \ev*{u_x}_x = \frac{\ev*{u_xu_z}_x}{c_{gz}}
         \end{equation}
         We've denoted $c_{gz} = \at{\pd{\omega}{k_{z}}}_{k_{z0}}$ the vertical group
-        velocity. In terms of our forcing amplitude,
+        velocity. This may also be rewritten
         \begin{equation}
-            \bar{U}_0(F) = -\frac{A(F)^2}{2}e^{\frac{z - z_0}{H}} \frac{k_z}{k_x}c_{gz},
-                \label{eq:u0_lin}
+            \bar{U}_0 = -\frac{A^2}{2}e^{\frac{z - z_0}{H}}
+                \frac{k_{0z}}{k_{0x}}c_{gz}, \label{eq:u0_lin}
         \end{equation}
         where $c_{gz} = -\frac{Nk_{0x}k_{0z}}{\p*{k_{0x}^2 + k_{0z}^2 +
         \frac{1}{4H^2}}^{3/2}}$.
 \end{itemize}
-% Linear solution: e^z/2H, dispersion relation, phase/group velocity. Observe is
-% exact solution of nonlinear.
-% Linear solution is globally unstable to RTI though, thus not stable
-% equilibrium of IVP
-%
-% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
-% wave-induced mean flow, horizontal momentum flux
 
 \subsection{Wave Generation}
 
@@ -278,23 +271,13 @@ As not to interfere with the incompressibility constraint, we force the system
 on the density equation, replacing \autoref{eq:fc_density} with
 \begin{equation}
     \md{\rho}{t} = Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-            \cos \p*{k_{0x}x - \omega_0 t}.
+            \cos \p*{k_{0x}x - \omega_0 t}.\label{eq:vol_drive}
 \end{equation}
 Using a narrow Gaussian profile excites a broad $k_z$ wavenumber spectrum, and
 only the $k_{0z}$ satisfying the IGW's dispersion relation for the given
-$k_{0x}, \omega_0(k_{0x}, k_{0z})$ will propagate. The fluid equations then take
-form
-\begin{subequations}\label{se:vol_drive}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \md{\rho}{t} &= Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                e^{i(k_xx - \omega t)},\\
-        \md{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho}
-            + g\hat{z} &= 0.
-    \end{align}
-\end{subequations}
+$k_{0x}, \omega_0(k_{0x}, k_{0z})$ will propagate.
 
-The linearized \autoref{se:vol_drive}, obtained by dropping the advective term
+The linearized \autoref{eq:vol_drive}, obtained by dropping the advective term
 in the material derivative, can be solved analytically up to good accuracy. We
 may first approximate the driving term using $e^{\frac{-(z - z_0)^2}{2\sigma^2}}
 \approx \sqrt{2\pi \sigma^2}\delta(z - z_0)$ if $\sigma \to 0$\footnote{$\sigma$
@@ -306,27 +289,33 @@ compared to the $\delta$-function solution (evaluating the Fourier Transform
 of $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 \begin{align}
     u_{1z}&(x, z, t) ={} \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
-        \frac{1}{2ik_z}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
+        \frac{1}{2ik_{0z}}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
         e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x + k_{0z}(z - z_0) - \omega_0 t)
-            + \frac{1}{2k_zH}}
+            + \frac{1}{2k_{0z}H}}
             & z > z_0\\
         e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x - k_{0z}(z - z_0) - \omega_0 t)
-            + \frac{1}{2k_zH}}
+            + \frac{1}{2k_{0z}H}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
+The $z > z_0$ solution models an upwards-propagating IGW wavetrain inbound on
+the simulation domain from below. The solution for $u_{1x}(x, z, t)$ moreover is
+just $u_{1x} \approx \frac{k_{0z} u_{1z}}{k_{0x}}e^{\frac{1}{2k_{0z}H}}$.
+
+\section{Numerical Simulation}
 
 \subsection{Numerical Parameters}\label{ss:numerics}
 
-We nondimensionalize by taking $H = N = \rho_{ref} = 1$
+We nondimensionalize by taking $H = N = \rho_0(z=0) = 1$ in
+\autoref{se:fc_orig}.
 
 where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zones. A
 Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
 regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
-\frac{\omega}{\abs*{k_z}}\frac{L_z}{2\pi N_z}$ was found to be suitable for $N_z
-= 1024$, where $k_z$ is the wavenumber of the excited linear mode.
+\frac{\omega}{\abs*{k_{0z}}}\frac{L_z}{2\pi N_z}$ was found to be suitable for
+$N_z = 1024$, where $k_{0z}$ is the wavenumber of the excited linear mode.
 %%%
 
 % Description of spectral method, basis functions, initial conditions
@@ -345,25 +334,28 @@ all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
 ``linear'' simulations solve the full nonlinear equations, just in the weak
 perturbation limit.
 
-$\omega$ is chosen by inverting $\omega(k_x, k_z)$ dispersion relation for fixed
-$k_x = 2\pi / L_x$ and some desired $k_z = -2\pi/H$, and $\sigma \lesssim
-\frac{1}{k_z}$ is used to excite a broad band of modes including the desired
-$k_z$ mode.
+$\omega$ is chosen by inverting $\omega(k_{0x}, k_{0z})$ dispersion relation for fixed
+$k_{0x} = 2\pi / L_x$ and some desired $k_{0z} = -2\pi/H$, and $\sigma \lesssim
+\frac{1}{k_{0z}}$ is used to excite a broad band of $k_z$ modes including the
+desired $k_{0z}$ mode.
 
 \subsection{Numerical Simulation}\label{ss:lin_ns}
 
-We simulate using Dedalus (cite) a spectral numerical method. We use a Fourier
-basis in the $x$ direction and a Chebyshev in the $z$ direction. Our simulation
-starts with all perturbation quantities at zero, an initial condition at rest.
-Our parameters are chosen to be as similar as possible to the later nonlinear
-simulations (\autoref{s:nonlin}). We choose as follows:
+% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
+% wave-induced mean flow, horizontal momentum flux
+
+We simulate using Dedalus\cite{dedalus} a spectral numerical method. We use a
+Fourier basis in the $x$ direction and a Chebyshev in the $z$ direction. Our
+simulation starts with all perturbation quantities at zero, an initial condition
+at rest. Our parameters are chosen to be as similar as possible to the later
+nonlinear simulations (\autoref{s:nonlin}). We choose as follows:
 \begin{itemize}
-    \item $k_{0x}$: Astrophysical IGWs have $k_x \ll k_z$, so we choose $k_{0x}
+    \item $k_{0x}$: Astrophysical IGWs have $k_{0x} \ll k_{0z}$, so we choose $k_{0x}
         = \frac{2\pi}{L_x}$ the smallest permitted wavenumber permitted by
         periodic boundary conditions.
 
     \item We choose $\omega_0$ by choosing it to produce a desired $k_{0z}$.
-        Astrophysical systems generally also exhibit $k_zH \gg 1$, where the
+        Astrophysical systems generally also exhibit $k_{0z}H \gg 1$, where the
         stratification height is significantly larger than the vertical
         wavelength. However, in order for the simulation to both be well-damped
         at grid resolutions and be neglibily damped at leading order nonlinear
@@ -405,7 +397,7 @@ is provided in \autoref{fig:linear_nonu}. Key features to note:
 \end{itemize}
 We also include a qualitatively similar snapshot of the same simulation run
 using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/linear_nonu.png}
     \caption{Snapshot of linear simulation after reaching steady state.
@@ -413,7 +405,7 @@ using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
         orange. Red dotted lines indicate the onset of the damping region and
         blue dotted lines denote the driving region.}\label{fig:linear_nonu}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/linear_nu.png}
     \caption{Same as \autoref{fig:linear_nonu} but with $0.3\times $viscosity
@@ -423,7 +415,7 @@ using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
     }\label{fig:linear_nu}
 \end{figure}
 
-\section{Nonlinear Regime}\label{s:nonlin}
+\subsection{Nonlinear Regime}\label{s:nonlin}
 
 \subsection{Mean Flow Critical Layer Absorption}
 
@@ -500,7 +492,7 @@ Two representative snapshots from our simulation are provided in
 \autoref{fig:nl} after the critical layer has had time to form. We may note that
 the critical layer, where $S_{px}$ is absorbed and $\bar{U}_0 = \bar{U}_c$,
 travels downwards as predicted.
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \begin{subfigure}{0.5\textwidth}
         \centering
@@ -526,7 +518,7 @@ For the simulation in \autoref{fig:nl}, we may define $z_c = \argmax_z
 in \autoref{fig:zc_anal}. We see overall good agreement, though some small
 deviation is expected since $S_{px}$ is not perfectly conserved owing to
 numerical viscosity (and YUBONOTE $S_{px}$ is misestimated?).
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/nl35_front_v.png}
     \caption{Comparison of simulated $\pd{z_c}{t}$ to analytical
@@ -541,7 +533,7 @@ Richardson number is initially decreasing but eventually levels out and
 begins to increase again. This corresponds to an increasingly sharp critical
 layer transition then subsequently a decreasingly sharp critical layer
 transition.
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/nl35_f_ri.png}
     \caption{Plot of $\mathrm{Ri}_{\max}(t) = \max_z
@@ -551,28 +543,12 @@ transition.
 We argue that the Richardson number is bounded from below by viscosity. A
 repeated simulation with a larger viscosity is shown in \autoref{fig:nl1_f_ri},
 where the Richardson number does not go nearly as low.
-\begin{figure}[h]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{plots/nl1_f_ri.png}
     \caption{Same as \autoref{fig:nl35_f_ri} but with $\sim 1.3\times$
     viscosity.}\label{fig:nl1_f_ri}
 \end{figure}
-
-Additionally, a lower-viscosity simulation shows significant features resembling
-Kelvin-Helmholtz instabilities (KHI), \autoref{fig:nl_full_01}. As we have only
-plotted $\bar{U}_0(z)$, the local Richardson number $N^2 / \pd{u_x}{z}$ may
-exceed the plotted value and incur KHIs.
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/nl_full_01.png}
-    \caption{Low viscosity simulation showing seemingly KHI-like
-    features.}\label{fig:nl_full_01}
-\end{figure}
-
-This seems to suggest that our reference simulation is viscosity limited. This
-is perhaps physical: a Richardson number $\sim 0.25$ incurs the KHI which saps
-energy and angular momentum from the flow. It is conceivable then that our
-numerical viscosity is physically motivated as a effective KHI viscosity.
 
 \clearpage
 \onecolumngrid
@@ -582,7 +558,7 @@ numerical viscosity is physically motivated as a effective KHI viscosity.
 
 We denote $x \in [0, L_x], z \in [0, L_z]$ the simulation domain and $N_x, N_z$
 the number of spectral modes in the respective dimensions. We perform direct
-numerical simulation of \autoref{se:vol_drive} with the open-source
+numerical simulation of \autoref{eq:vol_drive} with the open-source
 pseudo-spectral code Dedalus (CITE).
 
 Numerically, the nonlinear $\frac{\vec{\nabla}P}{\rho}$ term is problematic: we
@@ -687,5 +663,7 @@ equations as simulated in Dedalus:
     \end{align}
 \end{subequations}
 
+\bibliographystyle{apsrev4-1} % chktex 8
+\bibliography{paper}
 \end{document}
 
