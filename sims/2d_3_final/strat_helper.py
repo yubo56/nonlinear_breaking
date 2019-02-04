@@ -357,15 +357,15 @@ def plot(name, params):
             'plot_vars': ['ux', 'uz'],
             'res_vars': ['ux', 'uz'],
         },
-        {
-            'save_fmt_str': 's_%03i.png',
-            'slice_vars': ['uz', 'ux'],
-            'mean_vars': ['S_{px}', 'ux'],
-        },
-        {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['uz', 'ux', 'W', 'U'],
-        },
+        # {
+        #     'save_fmt_str': 's_%03i.png',
+        #     'slice_vars': ['uz', 'ux'],
+        #     'mean_vars': ['S_{px}', 'ux'],
+        # },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['uz', 'ux', 'W', 'U'],
+        # },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -404,6 +404,10 @@ def plot(name, params):
 
         uz_est = params['F'] * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
+        uz_mean = np.outer(np.ones(N_X),
+                           state_vars['uz%s' % mean_suffix][0][t_idx])
+        ux_mean = np.outer(np.ones(N_X),
+                           state_vars['ux%s' % mean_suffix][0][t_idx])
 
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
             fig = plt.figure(dpi=400)
@@ -416,11 +420,11 @@ def plot(name, params):
                 if res_suffix in var:
                     # divide by analytical profile and normalize
                     if var == 'uz%s' % res_suffix:
-                        var_dat = np.copy(uz_anal- state_vars['uz'][t_idx]) \
+                        var_dat = (state_vars['uz'][t_idx] - uz_anal - uz_mean)\
                             / (uz_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_z'
                     elif var == 'ux%s' % res_suffix:
-                        var_dat = np.copy(ux_anal- state_vars['ux'][t_idx]) \
+                        var_dat = (state_vars['ux'][t_idx] - ux_anal - ux_mean)\
                             / (ux_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_x'
                     else:
@@ -646,11 +650,11 @@ def write_front(name, params):
         uz_est = params['F'] * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            ux_res = np.copy(get_anal_ux(params, sim_time, x, z)
-                             - state_vars['ux'][t_idx]) / \
+            ux_res = (get_anal_ux(params, sim_time, x, z)
+                      - state_vars['ux'][t_idx]) / \
                 (ux_est * np.exp((z - params['Z0']) / (2 * H)))
-            uz_res = np.copy(get_anal_uz(params, sim_time, x, z)
-                             - state_vars['uz'][t_idx]) / \
+            uz_res = (get_anal_uz(params, sim_time, x, z)
+                      - state_vars['uz'][t_idx]) / \
                 (uz_est * np.exp((z - params['Z0']) / (2 * H)))
             front_idx = get_front_idx(S_px[t_idx], flux_threshold)
             slice_idx = get_z_idx(z0[front_idx] - 1 / KZ, z0)
@@ -794,21 +798,27 @@ def plot_front(name, params):
         front_pos_intg_U = np.cumsum(front_vel_U[start_idx: ]) * dt
         front_pos_intg_U += zf - front_pos_intg_U[-1]
 
-        ax1.plot(t, -dSpx0[start_idx: ] / flux_th, label=r'$\Delta S_{px}(z_0)$')
+        ax1.plot(t,
+                 -dSpx0[start_idx: ] / flux_th,
+                 label=r'$\Delta S_{px}(z_0)$',
+                 linewidth=0.7)
         ax1.plot(t,
                  -dSpx_S[start_idx: ] / flux_th,
-                 label=r'$\Delta S_{px}(z_{c; S})$')
+                 label=r'$\Delta S_{px}(z_{c; S})$',
+                 linewidth=0.7)
         ax1.plot(t,
                  -dSpx_U[start_idx: ] / flux_th,
-                 label=r'$\Delta S_{px}(z_{c; U})$')
+                 label=r'$\Delta S_{px}(z_{c; U})$',
+                 linewidth=0.7)
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
         ax1.legend(fontsize=6)
 
         ax2.plot(t,
                  front_pos_intg_S,
-                 label='Model (data $\Delta S_{px}(z_{c; S})$)')
-        ax2.plot(t, front_pos_S[start_idx: ], label='Data (S)')
-        ax2.plot(t, front_pos_U[start_idx: ], label='Data (U)')
+                 label='Model (data $\Delta S_{px}(z_{c; S})$)',
+                 linewidth=0.7)
+        ax2.plot(t, front_pos_S[start_idx: ], label='Data (S)', linewidth=0.7)
+        ax2.plot(t, front_pos_U[start_idx: ], label='Data (U)', linewidth=0.7)
         flux_mults = [np.mean(-dSpx_S[len(dSpx_S) // 3: ]) / flux_th,
                       np.mean(-dSpx0[len(dSpx0) // 3: ]) / flux_th,
                       1]
@@ -819,10 +829,37 @@ def plot_front(name, params):
                 / tau)
             ax2.plot(t,
                      pos_anal[start_idx: ],
-                     label='Model ($%.2f S_{px,0}$)' % mult)
+                     label='Model ($%.2f S_{px,0}$)' % mult,
+                     linewidth=0.7)
         ax2.set_ylabel(r'$z_c$')
         ax2.set_xlabel(r't')
         ax2.set_ylim([zf, max(front_pos_S) * 1.05])
         ax2.legend(fontsize=6)
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
+
+    # plot FFTs of residuals
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    f.subplots_adjust(hspace=0)
+    num_plots = 5
+    half_avg = 8
+    ux_ffts = np.array(
+        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in ux_res_slice])
+    uz_ffts = np.array(
+        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in uz_res_slice])
+    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / params['XMAX'],
+                     N_X // 2)[1: ]
+    # drop endpoints
+    for idx in np.linspace(0, len(ux_ffts), num_plots + 2)[1: -1]:
+        idx = int(idx)
+        x_avg = np.mean(ux_ffts[idx - half_avg:idx + half_avg, :], 0)
+        z_avg = np.mean(uz_ffts[idx - half_avg:idx + half_avg, :], 0)
+        ax1.loglog(kx, x_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
+        ax2.loglog(kx, z_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
+    ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
+    ax2.set_ylabel(r'$\tilde{u}_z(k_x)$')
+    ax2.set_xlabel(r'$k_x$')
+    ax1.legend()
+    ax2.legend()
+    plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
+    plt.close()
