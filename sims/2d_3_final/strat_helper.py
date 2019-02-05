@@ -57,6 +57,15 @@ def get_flux_th(params):
         * abs(params['KZ'] / params['KX']) * params['RHO0'] \
         * np.exp(-params['Z0'] / params['H'])
 
+def get_k_damp(params):
+    KX = params['KX']
+    KZ = params['KZ']
+    g = params['g']
+    H = params['H']
+    k = np.sqrt(KX**2 + KZ**2)
+
+    return params['NU'] * k**5 / abs(KZ * g / H * KX)
+
 def get_anal_uz(params, t, x, z):
     KX = params['KX']
     KZ = params['KZ']
@@ -64,12 +73,12 @@ def get_anal_uz(params, t, x, z):
     H = params['H']
     Z0 = params['Z0']
     OMEGA = params['OMEGA']
-    k = np.sqrt(KX**2 + KZ**2)
     uz_est = params['F'] * get_uz_f_ratio(params)
+    k_damp = get_k_damp(params)
 
     return uz_est * (
         -np.exp((z - Z0) / 2 * H)
-        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
+        * np.exp(-k_damp
                  * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (2 * KZ * H)))
@@ -81,12 +90,12 @@ def get_anal_ux(params, t, x, z):
     H = params['H']
     Z0 = params['Z0']
     OMEGA = params['OMEGA']
-    k = np.sqrt(KX**2 + KZ**2)
     ux_est = params['F'] * get_uz_f_ratio(params) * KZ / KX
+    k_damp = get_k_damp(params)
+
     return ux_est * (
         np.exp((z - Z0) / 2 * H)
-        * np.exp(-params['NU'] * k**5 / abs(KZ * g / H * KX)
-                 * (z[0] - Z0))
+        * np.exp(-k_damp * (z[0] - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (KZ * H)))
 
@@ -676,14 +685,15 @@ def plot_front(name, params):
     KZ = params['KZ']
     OMEGA = params['OMEGA']
     u_c = OMEGA / KX
-    dyn_vars = ['uz', 'ux', 'U', 'W']
-    if params['NL']:
-        dyn_vars += ['ux_z']
-    snapshots_dir = SNAPSHOTS_DIR % name
-    logfile = '%s/data.pkl' % snapshots_dir
-
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
+    k_damp = get_k_damp(params)
+
+    dyn_vars = ['uz', 'ux', 'U', 'W']
+    snapshots_dir = SNAPSHOTS_DIR % name
+    logfile = '%s/data.pkl' % snapshots_dir
+    if params['NL']:
+        dyn_vars += ['ux_z']
     if not os.path.exists(logfile):
         write_front(name, params)
 
@@ -729,12 +739,16 @@ def plot_front(name, params):
              for time_frac in [1/8, 3/8, 5/8, 7/8]]
     fig = plt.figure()
     if 'lin' in name:
+        z0_cut = z0[z_b_idx: ]
         for time in times:
-            z_b_idx
-            plt.plot(z0[z_b_idx: ],
+            plt.plot(z0_cut,
                      S_px[time, z_b_idx: ] / flux_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
+        plt.plot(z0_cut,
+                 np.exp(-k_damp * 2 * (z0_cut - params['Z0'])),
+                 linewidth=1.5,
+                 label=r'Model')
         plt.xlim(z_b, params['ZMAX'])
         plt.ylim(-0.1, 1.1 * S_px[time, z_b_idx: ].max() / flux_th)
         plt.legend(fontsize=6)
@@ -748,20 +762,26 @@ def plot_front(name, params):
         # plot fluxes + mean flow over time
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
+        z0_cut = z0[z_b_idx: ]
         for time, color in zip(times, PLT_COLORS):
             S_px_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
-            ax1.plot(z0[z_b_idx: ],
+            ax1.plot(z0_cut,
                      u0[time, z_b_idx: ] / u_c,
+                     '%s-' % color,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-            ax2.plot(z0[z_b_idx: ],
+            ax2.plot(z0_cut,
                      S_px[time, z_b_idx: ] / flux_th,
                      '%s-' % color,
                      linewidth=0.7)
-            ax2.plot(z0[z_b_idx: ],
+            ax2.plot(z0_cut,
                      S_px_avg / flux_th,
                      '%s:' % color,
                      linewidth=0.7)
+        ax2.plot(z0_cut,
+                 np.exp(-k_damp * 2 * (z0_cut - params['Z0'])),
+                 linewidth=1.5,
+                 label=r'Model')
         ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
                     front_pos_S[times[-1]] - dz,
                     color='grey')
@@ -769,7 +789,7 @@ def plot_front(name, params):
         ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
         ax2.set_xlim(z_b, params['ZMAX'])
         ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
-        ax1.legend(fontsize=6)
+        ax2.legend(fontsize=6)
 
         ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
         ax2.set_ylabel(r'$S_{px} / S_0$')
