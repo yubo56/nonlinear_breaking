@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 '''
-helper function to run the shared stratification scenario. user just has to
-specify BCs and ICs
+Absolutely god awful code :(
 '''
 import logging
 import pickle
@@ -688,6 +687,7 @@ def plot_front(name, params):
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
     k_damp = get_k_damp(params)
+    start_idx = 10
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -702,11 +702,15 @@ def plot_front(name, params):
         z0, sim_times, S_px, u0, ux_res_slice, uz_res_slice\
             = pickle.load(data)
 
-    dSpx0 = []
-    dSpx_S = []
-    dSpx_U = []
-    front_pos_S = []
-    front_pos_U = []
+    tf = sim_times[-1]
+    t = sim_times[start_idx: ]
+    dt = np.mean(np.gradient(sim_times[1: -1])) # should be T_F / NUM_SNAPSHOTS
+
+    S_px0 = [] # S_px averaged near origin
+    dSpx_S = [] # Delta S_px using S criterion
+    dSpx_U = [] # Delta S_px using U criterion
+    front_pos_S = [] # front position using S criterion
+    front_pos_U = [] # front position using U criterion
     dz = abs(1 / params['KZ'])
     l_z = abs(2 * np.pi / params['KZ'])
     z_b = params['Z0'] + 3 * params['S']
@@ -725,20 +729,22 @@ def plot_front(name, params):
 
         # measure flux incident at dz critical layer
         dz_idx = get_z_idx(dz, z0)
-        dSpx0.append(-np.mean(S_px[
+        S_px0.append(-np.mean(S_px[
             t_idx, get_z_idx(z_b, z0): get_z_idx(z_b + l_z, z0)]))
         dSpx_S.append(-np.mean(S_px[
             t_idx, get_z_idx(z_cS - l_z - dz, z0): get_z_idx(z_cS - dz, z0)]))
         dSpx_U.append(-np.mean(S_px[
             t_idx, get_z_idx(z_cU - l_z - dz, z0): get_z_idx(z_cU - dz, z0)]))
 
-    start_idx = 10
-
-    # horizontal plot showing Fpx at certain times
     times = [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
              for time_frac in [1/8, 3/8, 5/8, 7/8]]
     fig = plt.figure()
     if 'lin' in name:
+        #####################################################################
+        # fluxes.png
+        #
+        # horizontal plot showing Fpx at certain times
+        #####################################################################
         z0_cut = z0[z_b_idx: ]
         for time in times:
             plt.plot(z0_cut,
@@ -759,29 +765,40 @@ def plot_front(name, params):
         plt.close()
 
     else:
+        #####################################################################
+        # fluxes.png
+        #
         # plot fluxes + mean flow over time
+        #####################################################################
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         z0_cut = z0[z_b_idx: ]
         for time, color in zip(times, PLT_COLORS):
             S_px_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
+            # mean flow
             ax1.plot(z0_cut,
                      u0[time, z_b_idx: ] / u_c,
                      '%s-' % color,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
+            # plot S_px sliced at time
             ax2.plot(z0_cut,
                      S_px[time, z_b_idx: ] / flux_th,
                      '%s-' % color,
-                     linewidth=0.7)
+                     linewidth=0.7,
+                     label=r't=%.1f$N^{-1}$' % sim_times[time])
+            # plot S_px averaged in ~ 1 period
             ax2.plot(z0_cut,
                      S_px_avg / flux_th,
                      '%s:' % color,
-                     linewidth=0.7)
+                     linewidth=0.7,
+                     label=r't=%.1f$N^{-1}$' % sim_times[time])
+        # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
                  np.exp(-k_damp * 2 * (z0_cut - params['Z0'])),
                  linewidth=1.5,
-                 label=r'Model')
+                 label=r'$\nu$-only')
+        # indicate vertical averaging wavelength
         ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
                     front_pos_S[times[-1]] - dz,
                     color='grey')
@@ -797,20 +814,23 @@ def plot_front(name, params):
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
         plt.close()
 
+        #####################################################################
+        # front.png
+        #
         # plot front position and absorbed flux over time
+        #####################################################################
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
         zf = np.max(front_pos_S[-5: -1])
-        tf = sim_times[-1]
-        t = sim_times[start_idx: ]
-        dt = np.mean(np.gradient(sim_times[1: -1]))
-        dSpx0 = np.array(dSpx0)
+
+        S_px0 = np.array(S_px0)
         dSpx_S = np.array(dSpx_S)
         dSpx_U = np.array(dSpx_U)
         front_pos_S = np.array(front_pos_S)
         front_pos_U = np.array(front_pos_U)
 
+        # compute front position
         front_vel_S = dSpx_S / (params['RHO0'] * np.exp(-front_pos_S / H) * u_c)
         front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
         front_pos_intg_S += zf - front_pos_intg_S[-1]
@@ -818,29 +838,62 @@ def plot_front(name, params):
         front_pos_intg_U = np.cumsum(front_vel_U[start_idx: ]) * dt
         front_pos_intg_U += zf - front_pos_intg_U[-1]
 
+        # estimate incident Delta S_px if all from S_px0 that's viscously
+        # damped, compare to other Delta S_px criteria/from data
+        color_idx = 0
+        dSpx0 = -S_px0[start_idx: ] / flux_th * \
+            np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
-                 -dSpx0[start_idx: ] / flux_th,
-                 label=r'$\Delta S_{px}(z_0)$',
+                 dSpx0,
+                 '%s-' % PLT_COLORS[color_idx],
+                 label=r'$\Delta S_{px,0}|_{z=z_{c;S}}$',
                  linewidth=0.7)
+        color_idx += 1
         ax1.plot(t,
                  -dSpx_S[start_idx: ] / flux_th,
+                 '%s-' % PLT_COLORS[color_idx],
                  label=r'$\Delta S_{px}(z_{c; S})$',
                  linewidth=0.7)
+        color_idx += 1
         ax1.plot(t,
                  -dSpx_U[start_idx: ] / flux_th,
+                 '%s-' % PLT_COLORS[color_idx],
                  label=r'$\Delta S_{px}(z_{c; U})$',
                  linewidth=0.7)
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
         ax1.legend(fontsize=6)
 
+        # compare forecasts of front position using three predictors integrated
+        # from incident flux in data
+        color_idx = 0
         ax2.plot(t,
                  front_pos_intg_S,
+                 '%s-' % PLT_COLORS[color_idx],
                  label='Model (data $\Delta S_{px}(z_{c; S})$)',
                  linewidth=0.7)
-        ax2.plot(t, front_pos_S[start_idx: ], label='Data (S)', linewidth=0.7)
-        ax2.plot(t, front_pos_U[start_idx: ], label='Data (U)', linewidth=0.7)
-        flux_mults = [np.mean(-dSpx_S[len(dSpx_S) // 3: ]) / flux_th,
-                      np.mean(-dSpx0[len(dSpx0) // 3: ]) / flux_th,
+        color_idx += 1
+        ax2.plot(t,
+                 front_pos_S[start_idx: ],
+                 '%s-' % PLT_COLORS[color_idx],
+                 label='Data (S)',
+                 linewidth=0.7)
+        color_idx += 1
+        ax2.plot(t,
+                 front_pos_U[start_idx: ],
+                 '%s-' % PLT_COLORS[color_idx],
+                 label='Data (U)',
+                 linewidth=0.7)
+        mean_pos = np.max(front_pos_S[len(front_pos_S) // 3: ])
+        color_idx += 1
+
+        # three multipliers are (i) average incident flux, (ii) estimated
+        # incident flux extrapolated from nu and (iii) full flux
+        mean_incident = np.mean(-dSpx_S[len(dSpx_S) // 3: ])
+        est_generated_flux = -S_px0[len(S_px0) // 5]
+        est_incident_flux = est_generated_flux *\
+            np.exp(-k_damp * 2 * (mean_pos - params['Z0']))
+        flux_mults = [mean_incident / flux_th,
+                      est_incident_flux / flux_th,
                       1]
         for mult in flux_mults:
             tau = H * params['RHO0'] * u_c / (flux_th * mult)
@@ -849,8 +902,10 @@ def plot_front(name, params):
                 / tau)
             ax2.plot(t,
                      pos_anal[start_idx: ],
+                     '%s:' % PLT_COLORS[color_idx],
                      label='Model ($%.2f S_{px,0}$)' % mult,
                      linewidth=0.7)
+            color_idx += 1
         ax2.set_ylabel(r'$z_c$')
         ax2.set_xlabel(r't')
         ax2.set_ylim([zf, max(front_pos_S) * 1.05])
@@ -858,7 +913,11 @@ def plot_front(name, params):
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
 
+    #########################################################################
+    # fft.png
+    #
     # plot FFTs of residuals
+    #########################################################################
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     f.subplots_adjust(hspace=0)
     num_plots = 5
