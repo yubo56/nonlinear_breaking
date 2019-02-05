@@ -883,13 +883,13 @@ def plot_front(name, params):
                  '%s-' % PLT_COLORS[color_idx],
                  label='Data (U)',
                  linewidth=0.7)
-        mean_pos = np.max(front_pos_S[len(front_pos_S) // 3: ])
         color_idx += 1
 
         # three multipliers are (i) average incident flux, (ii) estimated
         # incident flux extrapolated from nu and (iii) full flux
         mean_incident = np.mean(-dSpx_S[len(dSpx_S) // 3: ])
         est_generated_flux = -S_px0[len(S_px0) // 5]
+        mean_pos = np.max(front_pos_S[len(front_pos_S) // 3: ])
         est_incident_flux = est_generated_flux *\
             np.exp(-k_damp * 2 * (mean_pos - params['Z0']))
         flux_mults = [mean_incident / flux_th,
