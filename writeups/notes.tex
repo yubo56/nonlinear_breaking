@@ -1641,6 +1641,28 @@ and so the exact solution becomes
     z(t) = -H\ln \frac{t - t_f + \tau e^{-z_f/H}}{\tau}.
 \end{equation}
 
+\section{Estimating Various Other Scales}
+
+\subsection{Viscous Damping Length}
+
+This is a rather hacky derivation. Consider that in the fluid equations, if we
+assume $\frac{1}{k_zH} \ll 1$, then viscosity basically just enters as a bunch
+of $\nu k^2$ terms. We can absorb this into the frequency $\partial_t + \nu k^2
+\sim i\omega_0\p*{1 - \frac{i\nu k^2}{\omega_0}}$. Plugging into the dispersion
+relation then shows that ($k_0 = \abs*{\vec{k}_0} = \sqrt{k_{x0}^2 + k_{z0}^2}$)
+\begin{align*}
+    \omega^2 &\approx \frac{N^2k_{x0}^2}{k^2}\p*{1 - \frac{2i\nu k^2}{\omega_0}},\\
+        &\approx \frac{N^2k_{x0}^2}{k_{x0}^2 k_{z0}^2\p*{1 + \frac{2i\nu k^4}{\omega
+            k_{z0}^2}}},\\
+        &\approx \frac{N^2k_{x0}^2}{k_{x0}^2 + \s*{k_{0z}
+            \p*{1 + \frac{i\nu k_0^4}{\omega k_{0z}^2}}}},\\
+        &\approx \frac{N^2k_{x0}^2}{k_{x0}^2 + \s*{k_{0z}
+            \p*{1 + \frac{i\nu k_0^5}{Nk_{x0} k_{0z}^2}}}},\\
+    e^{ik_zz} &\approx \exp\s*{ik_{z0}z - \frac{\nu k_0^5}{Nk_{x0}k_{z0}}z}.
+\end{align*}
+Thus, in the small dissipation limit we can treat the artificial viscosity the
+same as a vertical damping length.
+
 \clearpage
 
 \appendix

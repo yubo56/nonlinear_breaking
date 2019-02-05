@@ -82,135 +82,257 @@
 \begin{document}
 
 \begin{frame}
-    \frametitle{Linear}
+    \frametitle{Review}
 
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item Linear: $\nu = 0$ has $S_{px}(z) = S_{px, 0}$ great
+                    prediction. Fit $\vec{u}$ for $\nu \neq 0$ as well, though
+                    not $S_{px}(z)$ yet (\textbf{Updated!}).
+
+                \item In nonlinear, review: expect deposited flux $\Delta S_{px}
+                    = S_{px, 0}$ incident/generated flux.
+
+                \item Instead, observe $\Delta S_{px} < S_{px, 0}$, and moreover
+                    $S_{px}$ far from critical layer changing over time!
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item Last week: defined some
+                    \begin{equation}
+                        \delta u_z = \frac{u_z - u_{z, 0}
+                            - \ev*{u_z}_x}{\abs*{u_{z, 0}}},
+                    \end{equation}
+                    deviation (new: subtracting mean flow too), computed RMS\@.
+                    Found higher RMS for lower $\nu$.
+
+                \item Could it be $\ev*{\dots}_x$ vs $\ev*{\dots}_t$?
+
+                \item Objective: understand ``reflection''?
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Overview}
+
+    \begin{itemize}
+        \item Understand exactly how much flux is being absorbed at the critical
+            layer:
+            \begin{itemize}
+                \item Can the decreased flux absorption be explained by
+                    viscous dissipation before the critical alyer alone?
+
+                \item Compare predictions of $\pd{z_c}{t}$ to the observed
+                    $\Delta S_{px}$ at the critical layer.
+            \end{itemize}
+
+        \item Understand nature of ``reflection'', why cannot see in certain
+            simulations.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results}
+    \framesubtitle{Linear}
+
+    Had great $u_z$ fits including viscosity (error $\sim 3-5\%$), but did not
+    show great $S_{px}(z; \nu)$ fits last week. Here they are!
     \begin{figure}[t]
         \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_lin_0/fluxes.png}
-        \caption{Linear simulation.}
+        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_lin_1/fluxes.png}
+        \caption{Fits linear $S_{px}(z; \nu)$.}
     \end{figure}
 \end{frame}
 
 \begin{frame}
-    \frametitle{New Plotting for Nonlinear}
+    \frametitle{Results}
+    \framesubtitle{Mean Flow and Flux}
 
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_3/fluxes.png}
-        \caption{Nonlinear simulation, new plotting methodology. Feedback?}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_4/fluxes.png}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item Last week: Evolution of $\ev*{u_x}_x(t),
+                    \ev*{S_{px}}_x(t)$ at different times. Note flux seems to
+                    decrease over time throughout domain.
+
+                \item Bottom panel, solid lines are time slices, dotted lines
+                    indicate averaging over $\sim \frac{2\pi}{\omega}$ one
+                    period (6 times), thick line is linear viscous prediction.
+
+                \item Shaded grey indicates one vertical wavelength.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection?}
+    \frametitle{Results}
+    \framesubtitle{Mean Flow and Flux}
 
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_lin_1/p_074.png}
-        \caption{Linear simulation with same viscosity as nonlinear. Green is
-        viscosity-free envelope, orange analytical.}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_1/fluxes.png}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item More damped for comparison ($\nu \to 7\nu/3$).
+
+                \item Note that $S_{px}$ does not change much over time, general
+                    trend matches viscous linear decrease.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection (nl4)}
+    \frametitle{Results}
+    \framesubtitle{Absorbed Flux and Front Propagation}
 
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_4/p_074.png}
-        \caption{Nonlinear simulation. Green is viscosity-free envelope, orange
-        analytical.}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_4/front.png}
+            \end{figure}
+            \begin{itemize}
+                \item Three different $\Delta S_{px}$:
+                    \begin{itemize}
+                        \item LinVisc extrapolate $S_{px, 0}$.
+
+                        \item $\Delta S_{px; S}$ ($z$-avg).
+
+                        \item $\Delta S_{px; U}$ ($z$-avg too).
+                    \end{itemize}
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+
+                \item \textbf{FIXED} $z_c(t)$ for different incident fluxes,
+                    even more models:
+                    \begin{itemize}
+                        \item Solid lines are three ways of extracting from
+                            data.
+
+                        \item Dotted lines use $\pd{z_c}{t}(\Delta S_{px})$
+                            model for three values of $S_{px}$:
+                            \begin{itemize}
+                                \item Average $\Delta S_{px}$.
+                                \item $\nu$-extrapolated $S_{px, 0}$.
+                                \item Full $S_{px, 0}$.
+                            \end{itemize}
+                    \end{itemize}
+                    Takeaway: strongly inconsistent with $S_{px, 0}$ being
+                    completly absorbed! In fact, most are $\sim 0.5S_{px}$ being
+                    absorbed.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection?}
+    \frametitle{Results}
+    \framesubtitle{Absorbed Flux and Front Propagation}
 
-    \begin{table}[t]
-        \centering
-        \begin{tabular}{l|l l }
-            Name & RMS & Notes\\
-            lin0 & 0.077 & Almost-no visc\\
-            lin1 & 0.067 & Same visc as nl4\\
-            nl1 (low) & 0.132 & half-res nl1, higher visc\\
-            nl1 & 0.120 & $0.7\nu$\\
-            nl2 & 0.213 & $0.4\nu$\\
-            nl3 & 0.179 & $0.4\nu$ (double A)\\
-            nl4 & 0.269 & $0.3\nu$\\
-            nl5 & 0.207 & $0.3\nu$ (double $k_z$)\\
-            nl6 & 0.246 & $0.2\nu$\\
-            nl7 & 0.358 & $0.1\nu$
-        \end{tabular}
-        \caption{Table of RMS values.}
-    \end{table}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_1/front.png}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item Overdamped for comparison.
+
+                \item Absorbed flux is in good agreement w/ linear viscous
+                    extrapolation of $S_{px, 0}$, seems to imply full
+                    absorption.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection (nl6)}
+    \frametitle{Results}
+    \framesubtitle{Residual Flow Properties}
 
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_6/p_074.png}
-        \caption{Nonlinear simulation. Green is viscosity-free envelope, orange
-        analytical.}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_4/fft.png}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item FT of $\delta \vec{u}$ slightly below the critical layer.
+                    Red line denotes where $2\nu k_x^2 = \omega$, ``viscous
+                    wavenumber''?
+
+                \item Note that we've chosen $\nu k_x^2 \lesssim u_xk_x \sim
+                    \frac{\omega}{k_{0x}}k_x$, our previous viscous wavenumber
+                    already.
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection (nl7)}
+    \frametitle{Results}
+    \framesubtitle{Residual Flow Properties}
 
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_7/p_074.png}
-        \caption{Nonlinear simulation. Green is viscosity-free envelope, orange
-        analytical.}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_1/fft.png}
+                \caption{Overdamped for comparison, not power law!}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_lin_2/fft.png}
+                \caption{Linear for comparison; taken just below damping zone.}
+            \end{figure}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}
-    \frametitle{Reflection (nl3)}
+    \frametitle{Useful Plots}
+    \framesubtitle{Residuals}
 
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_3/p_058.png}
-        \caption{Nonlinear simulation. Green is viscosity-free envelope, orange
-        analytical.}
-    \end{figure}
-\end{frame}
-
-\begin{frame}
-    \frametitle{Reflection (nl5)}
-
-    Get exact solution, up to viscous dissipation. Plot $\delta u_z =
-    \frac{u_{z,sim} - u_{z, anal}}{\abs*{u_{z, anal}}}$, ``fractional
-    deviation'' between driving zone and critical layer. Compute $\mathrm{RMS} =
-    \sqrt{\ev*{\delta u_z^2}}$.
-    \begin{figure}[t]
-        \centering
-        \includegraphics[width=0.7\textwidth]{../sims/2d_3_final/snapshots_nl_5/p_074.png}
-        \caption{Nonlinear simulation. Green is viscosity-free envelope, orange
-        analytical.}
-    \end{figure}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_4/p_009.png}
+                \caption{Residuals for not overdamped. }
+            \end{figure}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{figure}[t]
+                \centering
+                \includegraphics[width=\textwidth]{../sims/2d_3_final/snapshots_nl_1/p_009.png}
+                \caption{Residuals for overdamped.}
+            \end{figure}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \end{document}
