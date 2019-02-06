@@ -27,7 +27,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 30
+plot_stride = 15
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -360,16 +360,16 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
-        {
-            'save_fmt_str': 'p_%03i.png',
-            'plot_vars': ['ux', 'uz'],
-            'res_vars': ['ux', 'uz'],
-        },
         # {
-        #     'save_fmt_str': 's_%03i.png',
-        #     'slice_vars': ['uz', 'ux'],
-        #     'mean_vars': ['S_{px}', 'ux'],
+        #     'save_fmt_str': 'p_%03i.png',
+        #     'plot_vars': ['ux', 'uz'],
+        #     'res_vars': ['ux', 'uz'],
         # },
+        {
+            'save_fmt_str': 's_%03i.png',
+            'slice_vars': ['uz', 'ux'],
+            'mean_vars': ['S_{px}'],
+        },
         # {
         #     'save_fmt_str': 'm_%03i.png',
         #     'plot_vars': ['uz', 'ux', 'W', 'U'],
@@ -412,16 +412,20 @@ def plot(name, params):
 
         uz_est = params['F'] * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
-        uz_mean = np.outer(np.ones(N_X),
-                           state_vars['uz%s' % mean_suffix][0][t_idx])
-        ux_mean = np.outer(np.ones(N_X),
-                           state_vars['ux%s' % mean_suffix][0][t_idx])
 
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
             fig = plt.figure(dpi=400)
 
             uz_anal = get_anal_uz(params, sim_time, x, z)
             ux_anal = get_anal_ux(params, sim_time, x, z)
+            uz_mean = np.outer(np.ones(N_X),
+                               state_vars['uz%s' % mean_suffix][0][t_idx])
+            ux_mean = np.outer(np.ones(N_X),
+                               state_vars['ux%s' % mean_suffix][0][t_idx])
+            S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
+            z_top = get_front_idx(S_px_mean[t_idx],
+                                  get_flux_th(params) * 0.2)
+            z_bot = get_z_idx(Z0 + 3 * params['S'], z[0])
 
             idx = 1
             for var in plot_vars + sub_vars + res_vars:
@@ -437,14 +441,6 @@ def plot(name, params):
                         title = 'u_x'
                     else:
                         raise ValueError('lol wtf is %s' % var)
-                    z_bot = len(np.where(z[0] < Z0 + 3 * params['S'])[0])
-
-                    S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
-                    front_idx = get_front_idx(S_px_mean[t_idx],
-                                              get_flux_th(params) * 0.2)
-                    z_top = len(np.where(z[0] < params['SPONGE_HIGH']
-                                         - 2 * params['SPONGE_WIDTH'])[0])
-                    z_top = front_idx
                     # truncate uz_anal at sponge and critical layers
                     var_dat[:, 0: z_bot] = 0
                     var_dat[:, z_top: ] = 0
@@ -505,7 +501,8 @@ def plot(name, params):
                 p = axes.plot(var_dat[t_idx],
                               z[0],
                               'r-',
-                              linewidth=0.5)
+                              linewidth=0.7,
+                              label='Data')
                 if var == 'uz%s' % slice_suffix:
                     p = axes.plot(
                         uz_anal[0, :],
@@ -529,14 +526,42 @@ def plot(name, params):
                         linewidth=0.5)
 
                 if var == 'S_{px}%s' % mean_suffix:
+                    k_damp = get_k_damp(params)
                     p = axes.plot(
                         uz_est**2 / 2
                             * abs(KZ / KX)
-                            * params['RHO0'] * np.exp(-params['Z0'] / H)
-                            * np.ones(np.shape(z[0])),
+                            * params['RHO0'] * np.exp(-Z0 / H)
+                            * np.exp(-k_damp * 2 * (z[0] - Z0)),
                         z[0],
                         'orange',
                         linewidth=0.5)
+                    rho0 = params['RHO0'] * np.exp(-z / params['H'])
+                    # compute all of the S_px cross terms (00 is model)
+                    Spx01 = np.sum(rho0 * state_vars['ux'][t_idx] *
+                                   (state_vars['uz'][t_idx] - uz_anal),
+                                   axis=0) / N_X
+                    Spx10 = np.sum(rho0 * state_vars['uz'][t_idx] *
+                                   (state_vars['ux'][t_idx] - ux_anal),
+                                   axis=0) / N_X
+                    Spx11 = np.sum(rho0 * (state_vars['ux'][t_idx] - ux_anal) *
+                                   (state_vars['ux'][t_idx] - ux_anal),
+                                   axis=0) / N_X
+                    p = axes.plot(Spx01[z_bot: z_top],
+                                  z[0, z_bot: z_top],
+                                  'g:',
+                                  linewidth=0.4,
+                                  label='01')
+                    p = axes.plot(Spx10[z_bot: z_top],
+                                  z[0, z_bot: z_top],
+                                  'b:',
+                                  linewidth=0.4,
+                                  label='10')
+                    p = axes.plot(Spx11[z_bot: z_top],
+                                  z[0, z_bot: z_top],
+                                  'k-',
+                                  linewidth=0.7,
+                                  label='11')
+                    axes.legend()
 
                 if var == 'ux%s' % mean_suffix:
                     # mean flow = E[ux * uz] / V_GZ
@@ -551,18 +576,17 @@ def plot(name, params):
                         z[0],
                         'green',
                         linewidth=0.5)
-                if var in mean_vars:
-                    p = axes.plot(
-                        var_min[t_idx],
-                        z[0],
-                        'r:',
-                        linewidth=0.2)
-                    p = axes.plot(
-                        var_max[t_idx],
-                        z[0],
-                        'r:',
-                        linewidth=0.2)
-
+                # if var in mean_vars:
+                #     p = axes.plot(
+                #         var_min[t_idx],
+                #         z[0],
+                #         'r:',
+                #         linewidth=0.2)
+                #     p = axes.plot(
+                #         var_max[t_idx],
+                #         z[0],
+                #         'r:',
+                #         linewidth=0.2)
 
                 plt.xticks(rotation=30)
                 plt.yticks(rotation=30)
@@ -680,6 +704,7 @@ def plot_front(name, params):
     N_X = params['N_X'] * params['INTERP_X']
     N_Z = params['N_Z'] * params['INTERP_Z']
     H = params['H']
+    N = np.sqrt(params['g'] / H)
     KX = params['KX']
     KZ = params['KZ']
     OMEGA = params['OMEGA']
@@ -756,7 +781,7 @@ def plot_front(name, params):
                  linewidth=1.5,
                  label=r'Model')
         plt.xlim(z_b, params['ZMAX'])
-        plt.ylim(-0.1, 1.1 * S_px[time, z_b_idx: ].max() / flux_th)
+        plt.ylim(-0.1, 1.1)
         plt.legend(fontsize=6)
 
         plt.xlabel(r'$z(H)$')
@@ -791,8 +816,7 @@ def plot_front(name, params):
             ax2.plot(z0_cut,
                      S_px_avg / flux_th,
                      '%s:' % color,
-                     linewidth=0.7,
-                     label=r't=%.1f$N^{-1}$' % sim_times[time])
+                     linewidth=0.7)
         # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
                  np.exp(-k_damp * 2 * (z0_cut - params['Z0'])),
@@ -802,10 +826,14 @@ def plot_front(name, params):
         ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
                     front_pos_S[times[-1]] - dz,
                     color='grey')
+        u0_z = np.gradient(u0[:, z_b_idx: ], axis=1) /\
+            np.outer(np.ones(len(sim_times)), np.gradient(z0[z_b_idx: ]))
+        ax1.text(z_b + 0.2, 0.8,
+                 'Min Ri: %.3f' % (N / u0_z.max())**2)
         ax1.set_xlim(z_b, params['ZMAX'])
-        ax1.set_ylim(-0.1, 1.1 * u0.max() / u_c)
+        ax1.set_ylim(-0.1, 1.25)
         ax2.set_xlim(z_b, params['ZMAX'])
-        ax2.set_ylim(-0.1, 1.1 * S_px.max() / flux_th)
+        ax2.set_ylim(-0.1, 1.1)
         ax2.legend(fontsize=6)
 
         ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
@@ -908,7 +936,7 @@ def plot_front(name, params):
             color_idx += 1
         ax2.set_ylabel(r'$z_c$')
         ax2.set_xlabel(r't')
-        ax2.set_ylim([zf, max(front_pos_S) * 1.05])
+        ax2.set_ylim([zf, 10])
         ax2.legend(fontsize=6)
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
