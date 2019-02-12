@@ -397,7 +397,7 @@ class InitialValueSolver:
             Timestep at loaded write
         """
         path = pathlib.Path(path)
-        logger.info("Loading solver state from: {}".format(path))
+        # logger.info("Loading solver state from: {}".format(path))
         with h5py.File(str(path), mode='r') as file:
             # Load solver attributes
             write = file['scales']['write_number'][index]
@@ -408,10 +408,10 @@ class InitialValueSolver:
             self.iteration = self.initial_iteration = file['scales']['iteration'][index]
             self.sim_time = self.initial_sim_time = file['scales']['sim_time'][index]
             # Log restart info
-            logger.info("Loading iteration: {}".format(self.iteration))
-            logger.info("Loading write: {}".format(write))
-            logger.info("Loading sim time: {}".format(self.sim_time))
-            logger.info("Loading timestep: {}".format(dt))
+            # logger.info("Loading iteration: {}".format(self.iteration))
+            # logger.info("Loading write: {}".format(write))
+            # logger.info("Loading sim time: {}".format(self.sim_time))
+            # logger.info("Loading timestep: {}".format(dt))
             # Load fields
             for field in self.state.fields:
                 dset = file['tasks'][field.name]

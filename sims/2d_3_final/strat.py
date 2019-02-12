@@ -103,12 +103,12 @@ if __name__ == '__main__':
        (set_ic, 'nl_7',
         build_interp_params(1, 1, overrides={'F_MULT': 1,
                                              'Re': 0.1})),
-       # (set_ic, 'nl_6_HRx',
-       #  build_interp_params(0.5, 1, overrides={'F_MULT': 1,
-       #                                         'Re': 0.2})),
-       # (set_ic, 'nl_6_HRz',
-       #  build_interp_params(1, 0.5, overrides={'F_MULT': 1,
-       #                                         'Re': 0.4})),
+       (set_ic, 'nl_6_HRx',
+        build_interp_params(0.5, 1, overrides={'F_MULT': 1,
+                                               'Re': 0.2})),
+       (set_ic, 'nl_6_HRz',
+        build_interp_params(1, 0.5, overrides={'F_MULT': 1,
+                                               'Re': 0.4})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:

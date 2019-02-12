@@ -668,11 +668,11 @@ def write_front(name, params):
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
 
-    # load if exists
+    # generate if does not exist
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=1, start=0)
+            name, params, dyn_vars, plot_stride=4, start=0)
         x = domain.grid(0, scales=params['INTERP_X'])
         z = domain.grid(1, scales=params['INTERP_Z'])
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -684,6 +684,8 @@ def write_front(name, params):
         Spx01 = []
         Spx10 = []
         Spx11 = []
+        x_amps = []
+        z_amps = []
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
@@ -691,26 +693,39 @@ def write_front(name, params):
         uz_est = params['F'] * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            dux = state_vars['ux'][t_idx] - get_anal_ux(params, sim_time, x, z)
-            duz = state_vars['uz'][t_idx] - get_anal_uz(params, sim_time, x, z)
+            # figure out what to subtract by convolution
+            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+            z_bot = get_z_idx(params['Z0'] + 3 * params['S'], z0)
+
+            front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
+            anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: front_idx]
+            anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: front_idx]
+            x_amp = np.sum(state_vars['ux'][t_idx, :, z_bot: front_idx]
+                           * anal_ux) / np.sum(anal_ux**2)
+            z_amp = np.sum(state_vars['uz'][t_idx, :, z_bot: front_idx]
+                           * anal_uz) / np.sum(anal_uz**2)
+            x_lin_est = x_amp * get_anal_ux(params, sim_time, x, z)
+            z_lin_est = z_amp * get_anal_uz(params, sim_time, x, z)
+
+            dux = state_vars['ux'][t_idx] - x_lin_est
+            duz = state_vars['uz'][t_idx] - z_lin_est
 
             ux_res = dux / (ux_est * np.exp((z - params['Z0']) / (2 * H)))
             uz_res = dux / (uz_est * np.exp((z - params['Z0']) / (2 * H)))
-            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
             slice_idx = get_z_idx(z0[front_idx] - 1 / KZ, z0)
 
             ux_res_slice.append(ux_res[:, slice_idx - 1])
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
-            Spx01.append(np.sum(rho0 * state_vars['ux'][t_idx] * duz, axis=0)
-                         / N_X)
-            Spx10.append(np.sum(rho0 * state_vars['uz'][t_idx] * dux, axis=0)
-                         / N_X)
+            x_amps.append(x_amp)
+            z_amps.append(z_amp)
+            Spx01.append(np.sum(rho0 * x_lin_est * duz, axis=0) / N_X)
+            Spx10.append(np.sum(rho0 * z_lin_est * dux, axis=0) / N_X)
             Spx11.append(np.sum(rho0 * dux * duz, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
-            pickle.dump((z0, sim_times, S_px, Spx01, Spx10, Spx11, u0,
-                         ux_res_slice, uz_res_slice), data)
+            pickle.dump((z0, sim_times, S_px, Spx01, Spx10, Spx11,
+                         x_amps, z_amps, u0, ux_res_slice, uz_res_slice), data)
     else:
         print('log file found, not regenerating')
 
@@ -738,8 +753,8 @@ def plot_front(name, params):
 
     print('loading data')
     with open(logfile, 'rb') as data:
-        z0, sim_times, S_px, Spx01, Spx10, Spx11, u0,\
-            ux_res_slice, uz_res_slice = pickle.load(data)
+        z0, sim_times, S_px, Spx01, Spx10, Spx11, x_amps, z_amps, \
+            u0, ux_res_slice, uz_res_slice = pickle.load(data)
         Spx01 = np.array(Spx01)
         Spx10 = np.array(Spx10)
         Spx11 = np.array(Spx11)
@@ -750,9 +765,7 @@ def plot_front(name, params):
 
     S_px0 = [] # S_px averaged near origin
     dSpx_S = [] # Delta S_px using S criterion
-    dSpx_U = [] # Delta S_px using U criterion
     front_pos_S = [] # front position using S criterion
-    front_pos_U = [] # front position using U criterion
     dz = abs(1 / params['KZ'])
     l_z = abs(2 * np.pi / params['KZ'])
     z_b = params['Z0'] + 3 * params['S']
@@ -762,21 +775,12 @@ def plot_front(name, params):
         z_cS = z0[front_idx_S]
         front_pos_S.append(z_cS)
 
-        front_idx_U = 0
-        u_curr = u0[t_idx]
-        while front_idx_U < len(u_curr) - 1 and u_curr[front_idx_U] < u_c:
-            front_idx_U += 1
-        z_cU = z0[front_idx_U]
-        front_pos_U.append(z_cU)
-
         # measure flux incident at dz critical layer
         dz_idx = get_z_idx(dz, z0)
         S_px0.append(-np.mean(S_px[
             t_idx, get_z_idx(z_b, z0): get_z_idx(z_b + l_z, z0)]))
         dSpx_S.append(-np.mean(S_px[
             t_idx, get_z_idx(z_cS - l_z - dz, z0): get_z_idx(z_cS - dz, z0)]))
-        dSpx_U.append(-np.mean(S_px[
-            t_idx, get_z_idx(z_cU - l_z - dz, z0): get_z_idx(z_cU - dz, z0)]))
 
     times = get_times([1/8, 3/8, 5/8, 7/8], sim_times, start_idx)
     fig = plt.figure()
@@ -883,7 +887,7 @@ def plot_front(name, params):
                     label=r'$u_xu_z$')
             for lbl, Spx in zip([r'$u_x\delta u_z$', r'$\delta u_x u_z$',
                                  r'$\delta u_x \delta u_z$'],
-                                [-Spx01, -Spx10, Spx11]):
+                                [Spx01, Spx10, Spx11]):
                 Spx_avg = np.sum(Spx[time - 2: time + 2, : ], axis=0) / 4
                 ax.plot(z0[z_b_idx: z_t_idx],
                         Spx_avg[z_b_idx: z_t_idx] / flux_th,
@@ -898,6 +902,17 @@ def plot_front(name, params):
         plt.close()
 
         #####################################################################
+        # f_amps.png
+        #
+        # convolved amplitudes over time
+        #####################################################################
+        plt.plot(sim_times, x_amps, label=r'$u_x / u_{x0}$')
+        plt.plot(sim_times, z_amps, label=r'$u_z / u_{z0}$')
+        plt.legend()
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+        #####################################################################
         # front.png
         #
         # plot front position and absorbed flux over time
@@ -909,17 +924,12 @@ def plot_front(name, params):
 
         S_px0 = np.array(S_px0)
         dSpx_S = np.array(dSpx_S)
-        dSpx_U = np.array(dSpx_U)
         front_pos_S = np.array(front_pos_S)
-        front_pos_U = np.array(front_pos_U)
 
         # compute front position
         front_vel_S = dSpx_S / (params['RHO0'] * np.exp(-front_pos_S / H) * u_c)
         front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
         front_pos_intg_S += zf - front_pos_intg_S[-1]
-        front_vel_U = dSpx_U / (params['RHO0'] * np.exp(-front_pos_U / H) * u_c)
-        front_pos_intg_U = np.cumsum(front_vel_U[start_idx: ]) * dt
-        front_pos_intg_U += zf - front_pos_intg_U[-1]
 
         # estimate incident Delta S_px if all from S_px0 that's viscously
         # damped, compare to other Delta S_px criteria/from data
@@ -927,44 +937,39 @@ def plot_front(name, params):
         dSpx0 = -S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
+                 -S_px0[start_idx: ] / flux_th,
+                 '%s-' % PLT_COLORS[color_idx],
+                 label=r'$\Delta S_{px,0}|_{z=z_0}$',
+                 linewidth=0.7)
+        color_idx += 1
+        ax1.plot(t,
                  dSpx0,
                  '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px,0}|_{z=z_{c;S}}$',
+                 label=r'$\Delta S_{px,0}|_{z=z_{c}}$',
                  linewidth=0.7)
         color_idx += 1
         ax1.plot(t,
                  -dSpx_S[start_idx: ] / flux_th,
                  '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px}(z_{c; S})$',
+                 label=r'$\Delta S_{px}(z_{c})$',
                  linewidth=0.7)
         color_idx += 1
-        ax1.plot(t,
-                 -dSpx_U[start_idx: ] / flux_th,
-                 '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px}(z_{c; U})$',
-                 linewidth=0.7)
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
         ax1.legend(fontsize=6)
 
-        # compare forecasts of front position using three predictors integrated
+        # compare forecasts of front position using two predictors integrated
         # from incident flux in data
         color_idx = 0
         ax2.plot(t,
                  front_pos_intg_S,
                  '%s-' % PLT_COLORS[color_idx],
-                 label='Model (data $\Delta S_{px}(z_{c; S})$)',
+                 label='Model (data $\Delta S_{px}(z_{c})$)',
                  linewidth=0.7)
         color_idx += 1
         ax2.plot(t,
                  front_pos_S[start_idx: ],
                  '%s-' % PLT_COLORS[color_idx],
                  label='Data (S)',
-                 linewidth=0.7)
-        color_idx += 1
-        ax2.plot(t,
-                 front_pos_U[start_idx: ],
-                 '%s-' % PLT_COLORS[color_idx],
-                 label='Data (U)',
                  linewidth=0.7)
         color_idx += 1
 

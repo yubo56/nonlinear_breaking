@@ -97,12 +97,12 @@
 \AtEveryBibitem{\clearfield{title}}
 \begin{document}
 
-\def\Snospace~{\S{}} % hack to remove the space left after autorefs
-\renewcommand*{\sectionautorefname}{\Snospace}
-\renewcommand*{\appendixautorefname}{\Snospace}
-\renewcommand*{\figureautorefname}{Fig.}
-\renewcommand*{\equationautorefname}{Eq.}
-\renewcommand*{\tableautorefname}{Tab.}
+% \def\Snospace~{\S{}} % hack to remove the space left after autorefs
+\renewcommand*{\sectionautorefname}{Section}
+% \renewcommand*{\appendixautorefname}{\Snospace}
+% \renewcommand*{\figureautorefname}{Fig.}
+% \renewcommand*{\equationautorefname}{Eq.}
+% \renewcommand*{\tableautorefname}{Tab.}
 
 \singlespacing
 
@@ -125,63 +125,63 @@ Compact white dwarf (WD) binary systems, with orbital periods in the range of
 minutes to hours, are important for a range of astrophysical problems. They are
 the most important sources of gravitational waves (GWs) for the Laser
 Interferometric Space Antenna (LISA)\cite{lisa}. They are also thought to
-produce interesting optical transients such as tidal novae\cite{tidal_novae},
-underluminous supernovae\cite{underlum}, and Ca-rich fast
-transients\cite{carich}. Most importantly, they have been proposed as the likely
+produce interesting optical transients such as underluminous
+supernovae\cite{underlum}, Ca-rich fast transients\cite{carich}, and tidal
+novae\cite{tidal_novae}. Most importantly, they have been proposed as the likely
 progenitors of type Ia supernovae (e.g.~\cite{Ia0,webbink} or more
 recently\cite{Ia1,Ia2}). While presently only a few tens of compact WD binaries
 are known\cite{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
-expand the catalog to a few hundred\cite{lsst_wd} (results based on
+expand the catalog to a few hundreds\cite{lsst_wd} (results based on
 \emph{Gaia}'s second data release have already begun to
 appear\cite{gaiaDD,gaiaDD2}), and the Large Synoptic Survey Telescope (LSST,
 first light scheduled for 2020) will likely detect a few thousand
 more\cite{lsst_wd}. These observations will significantly advance the
-understanding of WD binaries. My proposed theoretical and computational research
-is well-timed to take advantage of these new advances.
+understanding of WD binaries and their evolution. My proposed theoretical and
+computational research is well-timed to take advantage of these new advances.
 
 In spite of the broad importance of WD binaries, the evolution of these systems
-prior to their final merger is not well understood. Much of this uncertainty
+prior to their final mergers is not well understood. Much of this uncertainty
 comes from our imprecise understanding of tidal interactions, which play an
-important role during a compact WD binary's inspiral\cite{fullerII}. Studies
-show that these interactions manifest as tidal excitation of internal gravity
-waves (IGW), waves in the WD fluid restored by the buoyancy force due to density
-stratification\cite{fullerI}. As these waves propagate outwards towards the
-surface, they grow in amplitude until they break, as do ocean waves on a shore,
-and transfer both energy and angular momentum from the binary orbit to the outer
-envelope of the WD\cite{fullerI,fullerII}.
+important role during a compact WD binary's inspiral\cite{fullerII}. Previous
+studies have shown that these interactions manifest as tidal excitation of
+internal gravity waves (IGW), waves in the WD fluid restored by the buoyancy
+force due to density stratification\cite{fullerI}. As these waves propagate
+outwards towards the WD surface, they grow in amplitude until they break, as do
+ocean waves on a shore, and transfer both energy and angular momentum from the
+binary orbit to the outer envelope of the WD\cite{fullerI,fullerII}.
 
-Previous works have found that this tidal dissipation mechanism can generate
-significantly more energy than thermal radiation from the WD surface alone and
-is thus a major contributor to the WD energy budget\cite{fullerII,fullerIV}.
-However, these works parameterized the wave breaking process without
-hydrodynamical simulations. The details of tidal dissipation, namely the
-location and spatial extent of the wave breaking, affect the observable outcome:
-dissipation near the surface of the WD can be efficiently radiated away and
-simply brightens the WD, while dissipation deep in the WD causes an energy
-buildup that results in energetic flares\cite{tidal_novae}. Similar works in
-other fields find that numerical simulations capturing the strongly nonlinear
-wave breaking process find new behavior that cannot be described by linear and
-weakly nonlinear theory\cite{winters1994,barker_ogilvie}. Such fully nonlinear
-numerical simulations have not been performed for WDs.
+Previous works have found that the dissipation of IGW can generate significantly
+more energy than thermal radiation from the isolated WD surface and is thus a
+major contributor to the WD energy budget\cite{fullerII,fullerIV}. However,
+these works parameterized the wave breaking process in an ad hoc manner. The
+details of dissipation, namely the location and spatial extent of the wave
+breaking, affect the observable outcome: dissipation near the surface of the WD
+can be efficiently radiated away and simply brightens the WD, while dissipation
+deep in the WD envelope causes an energy buildup that results in energetic
+flares\cite{tidal_novae}. Works in other fields based on numerical simulations
+show that strongly nonlinear wave breaking process exhibits new behavior that
+cannot be described by linear and weakly nonlinear
+theory\cite{winters1994,barker_ogilvie}. Such fully nonlinear numerical
+simulations have not been performed for WDs.
 
-\subsection{Proposed Research}
+\subsection{Goals of Proposed Research}
 
 Characterizing the location and spatial extent of tidal dissipation in WD
 binaries will require numerical simulation to capture the turbulent cascade to
-small scales causing wave breaking. \textbf{I propose to study the dynamical
-effects of tidal dissipation via nonlinear IGW breaking in binary WDs.} To
-accomplish this, I aim to address the following three aims:
+small scales that causes wave breaking. \textbf{I propose to study the dynamical
+effects of tidal dissipation via nonlinear Internal Gravity Wave (IGW) breaking
+in binary WDs.} There are three specific goals of my proposed research:
 \begin{itemize}
     \item Characterize the location, spatial extent, and other properties of
         wave breaking in realistic WD models via direct numerical simulation.
-        The location and spatial extent will furnish a simple yet effective
-        parameterization of tidal dissipation. \autoref{s:2} describes the
-        steps required for this aim.
+        The location and spatial extent of wave breaking will furnish a simple
+        yet effective parameterization of tidal dissipation in a range of WD
+        models. \autoref{s:2} describes the steps required to acheive this goal.
 
     \item Predict signatures of tidal dissipation over a wide range of possible
-        WD systems. In particular, I will describe the impact of tidal heating
-        on the apparent temperature of a binary WD and maybe even the production
-        of observable flares. \autoref{s:3} details my plan to do so.
+        WD systems. In particular, I will study the impact of tidal heating
+        on the luminosity of WDs in binaries and explore the possibility of
+        producing of observable flares. \autoref{s:3} details my plan.
 
     \item Compute modified GW templates for LISA that account for changes in the
         phase evolution of the orbit due to tidal dissipation. \autoref{s:4}
@@ -193,95 +193,101 @@ accomplish this, I aim to address the following three aims:
 \subsection{Background and Preliminary Work}
 
 The current understanding of tidal synchronization in WD binaries is laid out
-in~\cite{fullerII}: a tidally-excited train of IGW undergoes wave breaking in
+in~\cite{fullerII}: tidal forces from the companion excites IGWs in the deep
+envelope of the WDs. These IGW propagate outwards and undergo wave breaking in
 the outer envelope of the WD, locally depositing angular momentum and
-synchronizing the WD spin to the binary orbit. A similar process may also
-operate in stellar binaries consisting of early type stars\cite{zahn75,gn89},
+synchronizing the WD spin to the binary orbit. A similar process also
+operates in binaries consisting of early type stars\cite{zahn75,gn89},
 the only major difference being in the specifics of wave
-excitation\footnote{While IGWs in stars are excited at their
-radiative-convective boundaries, IGWs in WDs are excited at sharp changes in
-composition.}. Nevertheless, direct numerical simulation of the wave breaking
-process has not been performed in either of these systems. Since wave breaking
-is a strongly nonlinear phenomenon, where a larger wave breaks down into many
-smaller-scale waves, numerical simulation is paramount to an accurate
-understanding of IGW breaking.
+excitation\footnote{While IGWs in massive stars are excited at their
+radiative-convective boundaries, the excitation of IGWs in WDs is more gradual
+and is associated with sharp composition changes in the stellar
+envelope\cite{fullerII}.}. Nevertheless, direct numerical simulation of the wave
+breaking process has not been performed in either of these systems. Since wave
+breaking is a strongly nonlinear phenomenon, where a larger wave breaks down
+into many smaller-scale waves, numerical simulation is paramount to an accurate
+understanding of the tidal dissipation process.
 
-IGW breaking has been studied in detail in atmospheric sciences. The wave
-breaking process proceeds as follows: initially, as the IGW reaches nonlinear
+IGW breaking has been studied in atmospheric sciences. The wave
+breaking process proceeds as follows: Initially, as the IGW reaches nonlinear
 amplitudes, it breaks down via the parametric subharmonic instability and
 transfers energy and angular momentum from the wave to the mean flow of the
-fluid\cite{drazin}. Subsequently, after the mean flow velocity reaches the
-horizontal phase velocity of the IGW, a critical layer through which the IGW
-cannot propagate forms. A well-known calculation shows that the IGW is nearly
-completely absorbed at this critical layer in the linear approximation and
-endows the atmosphere with a mean horizontal flow\cite{booker_bretherton,hazel}.
-However, when this mean flow absorption was numerically studied including full
-nonlinear interactions, new phenomena not described by the linear theory
-(reflection off the critical layer and sharpening of the mean flow) were
-observed\cite{jones_num,winters1994} that affected the evolution of the
-atmosphere over time. \emph{This highlights the importance of numerical
-simulation in capturing the wave breaking process.}
+fluid\cite{drazin}; after the mean flow velocity reaches the
+horizontal phase velocity of the IGW, a critical layer forms. Analytical
+calculations show that the IGW is nearly completely absorbed at this critical
+layer in the linear approximation and endows the atmosphere with a mean
+horizontal flow\cite{booker_bretherton,hazel}. However, when this mean flow
+absorption was numerically studied including full nonlinear interactions, new
+phenomena not described by the linear theory (reflection off the critical layer
+and sharpening of the mean flow) were observed\cite{jones_num,winters1994}; this
+nonlinear behavior significantly affectedthe evolution of the atmosphere over
+time. \emph{This highlights the importance of numerical simulation in capturing
+the wave breaking process.}
 
-To gain insight into the tidal dissipation process, I began by using the
+To gain insight into the tidal dissipation process, I began by adapting the
 spectral hydrodynamics code Dedalus\cite{dedalus} to study IGW breaking in a 2D
 isothermal, stratified atmosphere. A spectral code like Dedalus is ideal for
 simulating complex hydrodynamical phenomena, as spectral methods have no
-inherent numerical viscosity and so better resolve the nonlinear cascade to
-small length scales in wave breaking.
+inherent numerical viscosity and so can more accurately resolve the nonlinear
+cascade to small length scales in wave breaking.
 
-Working with Dr.\ Daniel Lecoanet (Princeton; one of the authors of the Dedalus
-code) and my advisor, Prof.\ Dong Lai, I simulated an upward-propagating IGW
-wavetrain excited at the bottom of the atmosphere. I observe the excited wave
-breaking and depositing horizontal momentum in the fluid, causing the fluid to
-acquire an average horizontal flow, consistent with previous
-studies\cite{fullerII}. I derive simple formulae for the location and spatial
-extent of the dissipation zone where the IGW is absorbed by the fluid. More
-interestingly, I observe partial reflection of the IGW at the synchronization
-layer\cite{me}, a phenomenon not considered in the current astrophysical
-literature but consistent with the aforementioned results\cite{winters1994}. A
-sample simulation is presented in \autoref{fig:nl_fluxes}. I am preparing these
-results for publication\cite{me}.
+Working with Dr.\ Daniel Lecoanet (a post-doc at Princeton University, and one
+of the authors of the Dedalus code) and my advisor, Prof.\ Dong Lai, I have
+simulated the nonlinear evolution of an upward-propagating IGW wavetrain excited
+at the bottom of the atmosphere. My simulations show the waves breaking and
+depositing horizontal momentum in the fluid, causing the fluid to acquire an
+average horizontal flow, consistent with previous studies\cite{fullerII}. I have
+derived simple formulae for the location and spatial extent of the dissipation
+zone where the IGW is absorbed by the fluid. More interestingly, my simulation
+reveals a partial reflection of the IGW at the critical layer\cite{me}, a
+phenomenon not considered in the current astrophysical literature but consistent
+with the aforementioned results\cite{winters1994}. A sample simulation is
+presented in \autoref{fig:nl_fluxes}. I am preparing these results for
+publication\cite{me}.
 
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=0.7\textwidth]{nl_fluxes.png}
+    \includegraphics[width=0.8\textwidth]{nl_fluxes.png}
     \caption{The evolution of the average horizontal flow velocity of the fluid
     $U_0$ (in units of $c_{ph,x}$ the horizontal phase velocity of the IGW) and
     horizontal momentum flux contained in the IGW $S_{px}(z)$ (in units of the
-    total excited flux $S_0$) for one of my simulations. Different colored lines
+    total excited flux $S_0$) for one of my simulations. Different lines
     correspond to different times in the simulation. Times are measured in units
     of $N^{-1}$, the inverse of the Brunt-V\"ais\"al\"a frequency (or the
-    buoyancy period), and heights in units of $H$ the scale height of the
-    density stratification. IGW are excited at $z = 2H$ and propagate to higher
-    $z$ before undergoing wave breaking. The sharp decrease in $S_{px}$ is
-    the location of the critical layer where the IGW breaks and drives $U_0$
+    buoyancy period), and heights in units of $H$ (the scale height of the
+    density stratification). IGWs are excited at $z = 2H$ and propagate to
+    higher $z$ before undergoing wave breaking. The sharp decrease in $S_{px}$
+    is the location of the critical layer where the IGW breaks and drives $U_0$
     towards $c_{ph, x}$; it moves to lower $z$ over time. The apparent decrease
-    in $S_{px}$ at later times indicates reflection off the critical
+    in $S_{px}$ at later times indicates wave reflection off the critical
     layer.}\label{fig:nl_fluxes}
 \end{figure}
 
 \subsection{Proposed Work}
 
-It is therefore clear that full numerical modeling of IGW breaking is necessary
-to fully characterize tidal dissipation. The first aim of my proposal is then:
-\textbf{I will extend my preliminary results to characterize the dynamics of
-nonlinear IGW breaking in realistic WDs.} Via numerical simulation, I will
-develop simple models for tidal dissipation that can be used to study WD
-evolution under tidal heating without performing further simulations. I will
-continue my work in the following stages:
+It is clear that full numerical modeling of IGW breaking is necessary to fully
+characterize tidal dissipation. The first aim of my proposal is to
+\textbf{extend my preliminary results concerning IGW breaking in stratified
+atmospheres to characterize the dynamics of nonlinear IGW breaking in realistic
+WD models.} Via numerical simulation, I will develop models for tidal
+dissipation that can be used to study long-term WD evolution under tidal heating
+without expensive hydrodynamical simulations. I will continue my work in the
+following stages:
 \begin{itemize}
     \item I will perform simulations examining the validity of my results in
-        more realistic geometries, including polar and spherical geometries. I
-        will continue to use Dedalus, which also supports these coordinate
-        systems.
+        spherical geometries to capture tidal effects in WD binaries. I will
+        continue to use Dedalus, which supports spherical coordinates. Although
+        3D simulations are necessarily more complex than my 3D simulations of
+        stratified atmospheres, the underlying dynamics of IGW breaking are the
+        same.
 
     \item I will extend my simulations to realistic WD models and equations of
-        state such as those in~\cite{brassard1992}, continuing to track the
-        location and spatial extent of the dissipation layer as well as any new
-        phenomena. As WDs vary widely in composition and effective temperature,
-        studying representative WD models is vital to obtaining a robust
-        characterization of tidal dissipation. My selected WD models are those
-        used in the current literature\cite{fullerII, fullerIV}.
+        state such as those in~\cite{brassard1992} as well as those generated by
+        MESA (see \autoref{s:3} below), continuing to track the location and
+        spatial extent of the dissipation layer as well as any new phenomena. As
+        WDs vary widely in composition and effective temperature, studying
+        representative WD models is vital to obtaining a robust characterization
+        of tidal dissipation.
 \end{itemize}
 
 \section{Tidal Heating Thermodynamics}\label{s:3}
