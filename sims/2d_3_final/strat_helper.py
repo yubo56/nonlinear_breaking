@@ -52,7 +52,7 @@ def horiz_mean(field, n_x):
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     return (np.sqrt(2 * np.pi) * S * g *
             KX**2) * np.exp(-S**2 * KZ**2/2) / (
                 2 * RHO0 * np.exp(-Z0 / H)
@@ -63,13 +63,13 @@ def get_flux_th(params):
         * abs(KZ / KX) * RHO0 * np.exp(-Z0 / H)
 
 def get_k_damp(params):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     k = np.sqrt(KX**2 + KZ**2)
 
     return NU * k**5 / abs(KZ * g / H * KX)
 
 def get_anal_uz(params, t, x, z):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
@@ -81,7 +81,7 @@ def get_anal_uz(params, t, x, z):
                  + 1 / (2 * KZ * H)))
 
 def get_anal_ux(params, t, x, z):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     ux_est = F * get_uz_f_ratio(params) * KZ / KX
     k_damp = get_k_damp(params)
 
@@ -99,7 +99,7 @@ def get_times(time_fracs, sim_times, start_idx):
             for time_frac in time_fracs]
 
 def set_ic(name, solver, domain, params):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
@@ -182,7 +182,7 @@ def add_lin_problem(problem):
 
 def get_solver(params):
     ''' sets up solver '''
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     x_basis = de.Fourier('x',
                          N_X,
                          interval=(0, XMAX),
@@ -222,7 +222,7 @@ def get_solver(params):
     return solver, domain
 
 def run_strat_sim(set_ICs, name, params):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     snapshots_dir = SNAPSHOTS_DIR % name
 
     solver, domain = get_solver(params)
@@ -271,7 +271,7 @@ def merge(name):
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
 
@@ -320,7 +320,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
 def plot(name, params):
     rank = CW.rank
     size = CW.size
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
 
     slice_suffix = '(x=0)'
     mean_suffix = '(mean)'
@@ -558,7 +558,7 @@ def plot(name, params):
                                   z[0, z_bot: z_top],
                                   'k-',
                                   linewidth=0.7,
-                                  label=r'x_1z_1')
+                                  label=r'$x_1z_1$')
                     axes.legend()
 
                 if var == 'ux%s' % mean_suffix:
@@ -634,7 +634,7 @@ def plot(name, params):
 
             fig.suptitle(
                 r'Config: $%s (t=%.2f, \vec{k}=(%.2f, %.2f), \omega=%.2f)$' %
-                (name, sim_time, KX, KZ, OMEGA))
+                (name.replace('_', '.'), sim_time, KX, KZ, OMEGA))
             fig.subplots_adjust(hspace=0.7, wspace=0.6)
             savefig = save_fmt_str % (t_idx)
             plt.savefig('%s/%s' % (snapshots_dir, savefig))
@@ -643,7 +643,7 @@ def plot(name, params):
 
 def write_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U', 'W']
     if NL:
@@ -716,7 +716,7 @@ def write_front(name, params):
         print('log file found, not regenerating')
 
 def plot_front(name, params):
-    exec(get_exec_dict_str('params'))
+    exec(get_exec_dict_str('params'), globals())
     N = np.sqrt(g / H)
     u_c = OMEGA / KX
     V_GZ = abs(get_vgz(g, H, KX, KZ))
