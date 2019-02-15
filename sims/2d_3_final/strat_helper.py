@@ -126,7 +126,7 @@ def add_nl_problem(problem):
         'dt(U) - uz / H' +
         '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
         '= - sponge * U' +
-        '- NL * (ux * dx(U) + uz * dz(U))' +
+        '- NL * adv_mask * (ux * dx(U) + uz * dz(U))' +
         '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)')
@@ -135,7 +135,7 @@ def add_nl_problem(problem):
         '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
         '+ NU * dz(ux) / H'
         '= - sponge * ux' +
-        '- NL * (ux * dx(ux) + uz * dz(ux))' +
+        '- NL * adv_mask * (ux * dx(ux) + uz * dz(ux))' +
         '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
         '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
         '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
@@ -148,7 +148,7 @@ def add_nl_problem(problem):
         '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
         '+ NU * dz(uz) / H'
         '= - sponge * uz - NL * (ux * dx(uz) + uz * dz(uz))' +
-        '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
+        '- NU * adv_mask * (dx(U) * dx(uz) + U_z * uz_z)' +
         '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
         '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
         '- 2 * NU * uz * U_z / H' +
@@ -200,6 +200,7 @@ def get_solver(params):
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
     NL = params['NL']
+    adv_mask = params['adv_mask']
 
     variables = ['W', 'U', 'ux', 'uz']
     if NL:
@@ -215,6 +216,11 @@ def get_solver(params):
         add_nl_problem(problem)
     else:
         add_lin_problem(problem)
+    if adv_mask:
+        problem.substitutions['adv_mask'] = \
+            '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / (S / 3)))'
+    else:
+        problem.substitutions['adv_mask'] = '1'
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
