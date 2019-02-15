@@ -760,6 +760,8 @@ def plot_front(name, params):
         Spx01 = np.array(Spx01) / flux_th
         Spx10 = np.array(Spx10) / flux_th
         Spx11 = np.array(Spx11) / flux_th
+        x_amps = np.array(x_amps)
+        z_amps = np.array(z_amps)
 
     tf = sim_times[-1]
     start_idx = get_idx(200, sim_times)
@@ -810,21 +812,6 @@ def plot_front(name, params):
         plt.xlabel(r'$z(H)$')
         plt.ylabel(r'$S_{px} / S_0$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
-        plt.close()
-
-        #####################################################################
-        # f_amps.png
-        #
-        # convolved amplitudes over time
-        #####################################################################
-        plt.plot(t,
-                 x_amps[start_idx: ],
-                 label=r'$u_x / u_{x0}$')
-        plt.plot(t,
-                 z_amps[start_idx: ],
-                 label=r'$u_z / u_{z0}$')
-        plt.legend(fontsize=6)
-        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
     else:
@@ -1029,63 +1016,55 @@ def plot_front(name, params):
         plt.close()
 
         #####################################################################
-        # f_amps.png
+        # f_refl.png
         #
-        # convolved amplitudes over time, + reflection coeff
+        # reflection coeff calculations
         #####################################################################
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
-        ax1.plot(t,
-                 x_amps[start_idx: ],
-                 label=r'$u_x / u_{x0}$',
-                 linewidth=0.7)
-        ax1.plot(t,
-                 z_amps[start_idx: ],
-                 'r:',
-                 label=r'$u_z / u_{z0}$',
-                 linewidth=0.7)
-        ax1.legend(fontsize=6)
 
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
         prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ
-        ax2.plot(t,
-                 dSpx0,
+        S_excited = (x_amps * z_amps)[start_idx: ] * \
+            np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
+        ax1.plot(t,
+                 S_excited,
                  'g:',
                  label='Incident',
                  linewidth=0.7)
-        ax2.plot(t + prop_time,
-                 dSpx0,
+        ax1.plot(t + prop_time,
+                 S_excited,
                  'b:',
                  label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
                  linewidth=0.7)
-        ax2.plot(t,
+        ax1.plot(t,
                  -dSpx_S[start_idx: ] / flux_th,
                  'k:',
                  label='Absorbed',
                  linewidth=1.0)
-        ax1.set_ylabel(r'$u / u_0$')
-        ax2.set_ylabel(r'$S_{px} / S_0$')
-        ax2.set_xlabel(r'$t$')
+        ax1.set_ylabel(r'$S_{px} / S_0$')
+        ax1.legend(fontsize=6)
         # seems prop_time is twice what it should be...
         # use interp to compare since different t values
-        shifted_dS = interp1d(t + prop_time / 2, dSpx0)
+        shifted_dS = interp1d(t + prop_time, S_excited)
+        shifted_dS2 = interp1d(t + prop_time / 2, S_excited)
         absorbed_dS = interp1d(t, -dSpx_S[start_idx: ] / flux_th)
         t_refl = np.linspace((t + prop_time)[0], t[-1], len(t))
         refl = [(shifted_dS(t) - absorbed_dS(t)) / shifted_dS(t)
                 for t in t_refl]
+        refl2 = [(shifted_dS2(t) - absorbed_dS(t)) / shifted_dS2(t)
+                 for t in t_refl]
 
-        ax3 = ax2.twinx()
-        ax3.plot(t_refl, refl, 'r', label='Reflectivity', linewidth=1.0)
+        ax2.plot(t_refl, refl, 'r:', label='Full time', linewidth=0.7)
+        ax2.plot(t_refl, refl2, 'g', label='Half time', linewidth=1.0)
 
-        ax1.text(t[0], ax1.get_ylim()[0],
-                 'Mean Reflectivity %.3f' % np.mean(refl))
+        ax2.text(t[0], 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
+                 'Means: (%.3f, %.3f)' % (np.mean(refl), np.mean(refl)))
+        ax2.set_ylabel(r'Reflectivity')
+        ax2.legend(fontsize=6)
 
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        lines3, labels3 = ax3.get_legend_handles_labels()
-        ax2.legend(lines2 + lines3,
-                   labels2 + labels3,
-                   fontsize=6)
-        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
+        ax2.set_xlabel(r'$t$')
+        plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
         plt.close()
 
     #########################################################################
@@ -1120,4 +1099,21 @@ def plot_front(name, params):
     ax1.legend(fontsize=6)
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
+    plt.close()
+
+    #####################################################################
+    # f_amps.png
+    #
+    # convolved amplitudes over time
+    #####################################################################
+    plt.plot(t,
+             x_amps[start_idx: ],
+             label=r'$u_x / u_{x0}$')
+    plt.plot(t,
+             z_amps[start_idx: ],
+             label=r'$u_z / u_{z0}$')
+    plt.legend(fontsize=6)
+    plt.ylabel(r'$u / u_0$')
+    plt.xlabel(r'$t$')
+    plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
     plt.close()
