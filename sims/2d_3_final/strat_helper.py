@@ -30,6 +30,11 @@ SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 plot_stride = 15
 
+def get_exec_dict_str(dict_name):
+    exec_str = 'for key, val in %s.items():\n\texec(key + "=" + repr(val))\n'\
+        % dict_name
+    return exec_str + 'N_X = int(N_X * INTERP_X)\nN_Z *= int(N_Z * INTERP_Z)'
+
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
@@ -47,33 +52,25 @@ def horiz_mean(field, n_x):
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
-    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
-            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
-                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
-                * params['OMEGA']**2 * params['KZ'])
+    exec(get_exec_dict_str('params'))
+    return (np.sqrt(2 * np.pi) * S * g *
+            KX**2) * np.exp(-S**2 * KZ**2/2) / (
+                2 * RHO0 * np.exp(-Z0 / H)
+                * OMEGA**2 * KZ)
 
 def get_flux_th(params):
-    return (params['F'] * get_uz_f_ratio(params))**2 / 2 \
-        * abs(params['KZ'] / params['KX']) * params['RHO0'] \
-        * np.exp(-params['Z0'] / params['H'])
+    return (F * get_uz_f_ratio(params))**2 / 2 \
+        * abs(KZ / KX) * RHO0 * np.exp(-Z0 / H)
 
 def get_k_damp(params):
-    KX = params['KX']
-    KZ = params['KZ']
-    g = params['g']
-    H = params['H']
+    exec(get_exec_dict_str('params'))
     k = np.sqrt(KX**2 + KZ**2)
 
-    return params['NU'] * k**5 / abs(KZ * g / H * KX)
+    return NU * k**5 / abs(KZ * g / H * KX)
 
 def get_anal_uz(params, t, x, z):
-    KX = params['KX']
-    KZ = params['KZ']
-    g = params['g']
-    H = params['H']
-    Z0 = params['Z0']
-    OMEGA = params['OMEGA']
-    uz_est = params['F'] * get_uz_f_ratio(params)
+    exec(get_exec_dict_str('params'))
+    uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
     return uz_est * (
@@ -84,13 +81,8 @@ def get_anal_uz(params, t, x, z):
                  + 1 / (2 * KZ * H)))
 
 def get_anal_ux(params, t, x, z):
-    KX = params['KX']
-    KZ = params['KZ']
-    g = params['g']
-    H = params['H']
-    Z0 = params['Z0']
-    OMEGA = params['OMEGA']
-    ux_est = params['F'] * get_uz_f_ratio(params) * KZ / KX
+    exec(get_exec_dict_str('params'))
+    ux_est = F * get_uz_f_ratio(params) * KZ / KX
     k_damp = get_k_damp(params)
 
     return ux_est * (
@@ -107,12 +99,13 @@ def get_times(time_fracs, sim_times, start_idx):
             for time_frac in time_fracs]
 
 def set_ic(name, solver, domain, params):
+    exec(get_exec_dict_str('params'))
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
     if not os.path.exists(snapshots_dir):
         print('No snapshots found, no IC loaded')
-        return 0, params['DT']
+        return 0, DT
 
     # snapshots exist, merge if need and then load
     print('Attempting to load snapshots')
@@ -189,18 +182,17 @@ def add_lin_problem(problem):
 
 def get_solver(params):
     ''' sets up solver '''
+    exec(get_exec_dict_str('params'))
     x_basis = de.Fourier('x',
-                         params['N_X'],
-                         interval=(0, params['XMAX']),
+                         N_X,
+                         interval=(0, XMAX),
                          dealias=3/2)
     z_basis = de.Chebyshev('z',
-                           params['N_Z'],
-                           interval=(0, params['ZMAX']),
+                           N_Z,
+                           interval=(0, ZMAX),
                            dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
     z = domain.grid(1)
-    NL = params['NL']
-    adv_mask = params['adv_mask']
 
     variables = ['W', 'U', 'ux', 'uz']
     if NL:
@@ -224,32 +216,32 @@ def get_solver(params):
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
-    solver.stop_sim_time = params['T_F']
+    solver.stop_sim_time = T_F
     solver.stop_wall_time = np.inf
     solver.stop_iteration = np.inf
     return solver, domain
 
 def run_strat_sim(set_ICs, name, params):
+    exec(get_exec_dict_str('params'))
     snapshots_dir = SNAPSHOTS_DIR % name
 
     solver, domain = get_solver(params)
 
     # Initial conditions
-    dt = params['DT']
     _, dt = set_ICs(name, solver, domain, params)
 
     cfl = CFL(solver,
               initial_dt=dt,
               cadence=5,
-              max_dt=params['DT'],
+              max_dt=DT,
               min_dt=0.007,
               safety=0.5,
               threshold=0.10)
     cfl.add_velocities(('ux', 'uz'))
-    cfl.add_frequency(params['DT'])
+    cfl.add_frequency(DT)
     snapshots = solver.evaluator.add_file_handler(
         snapshots_dir,
-        sim_dt=params['T_F'] / params['NUM_SNAPSHOTS'])
+        sim_dt=T_F / NUM_SNAPSHOTS)
     snapshots.add_system(solver.state)
 
     # Flow properties
@@ -259,17 +251,17 @@ def run_strat_sim(set_ICs, name, params):
     # Main loop
     logger.info('Starting sim...')
     while solver.ok:
-        cfl_dt = cfl.compute_dt() if params['NL'] else params['DT']
+        cfl_dt = cfl.compute_dt() if NL else DT
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
-        if curr_iter % int((params['T_F'] / params['DT']) /
-                           params['NUM_SNAPSHOTS']) == 0:
+        if curr_iter % int((T_F / DT) /
+                           NUM_SNAPSHOTS) == 0:
             logger.info('Reached time %f out of %f, timestep %f vs max %f',
                         solver.sim_time,
                         solver.stop_sim_time,
                         cfl_dt,
-                        params['DT'])
+                        DT)
             logger.info('Max u = %e' % flow.max('u'))
 
 def merge(name):
@@ -279,11 +271,12 @@ def merge(name):
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
+    exec(get_exec_dict_str('params'))
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
 
     solver, domain = get_solver(params)
-    z = domain.grid(1, scales=params['INTERP_Z'])
+    z = domain.grid(1, scales=INTERP_Z)
 
     i = 1
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -302,7 +295,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
 
             for varname in dyn_vars:
                 values = solver.state[varname]
-                values.set_scales((params['INTERP_X'], params['INTERP_Z']),
+                values.set_scales((INTERP_X, INTERP_Z),
                                   keep_data=True)
                 state_vars[varname].append(np.copy(values['g']))
                 state_vars['%s_c' % varname].append(
@@ -316,17 +309,18 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    if not params['NL']:
+    if not NL:
         state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=2)
 
-    state_vars['S_{px}'] = params['RHO0'] * np.exp(-z/ params['H']) * (
+    state_vars['S_{px}'] = RHO0 * np.exp(-z/ H) * (
         (state_vars['ux'] * state_vars['uz']) +
-        (params['NU'] * np.exp(state_vars['U']) * state_vars['ux_z']))
+        (NU * np.exp(state_vars['U']) * state_vars['ux_z']))
     return np.array(total_sim_times[start::plot_stride]), domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
     size = CW.size
+    exec(get_exec_dict_str('params'))
 
     slice_suffix = '(x=0)'
     mean_suffix = '(mean)'
@@ -334,14 +328,6 @@ def plot(name, params):
     res_suffix = ' (res)'
     snapshots_dir = SNAPSHOTS_DIR % name
     matplotlib.rcParams.update({'font.size': 6})
-    N_X = params['N_X'] * params['INTERP_X']
-    N_Z = params['N_Z'] * params['INTERP_Z']
-    KX = params['KX']
-    KZ = params['KZ']
-    g = params['g']
-    H = params['H']
-    Z0 = params['Z0']
-    OMEGA = params['OMEGA']
     V_GZ = get_vgz(g, H, KX, KZ)
 
     # available cfgs:
@@ -388,13 +374,13 @@ def plot(name, params):
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
-    if params['NL']:
+    if NL:
         dyn_vars += ['ux_z']
     sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride,
         start=0)
 
-    x = domain.grid(0, scales=params['INTERP_X'])
-    z = domain.grid(1, scales=params['INTERP_Z'])
+    x = domain.grid(0, scales=INTERP_X)
+    z = domain.grid(1, scales=INTERP_Z)
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
 
@@ -421,7 +407,7 @@ def plot(name, params):
             f2_vars, mean_vars, slice_vars, sub_vars, res_vars\
             = get_plot_vars(cfg)
 
-        uz_est = params['F'] * get_uz_f_ratio(params)
+        uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
 
         for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
@@ -436,7 +422,7 @@ def plot(name, params):
             S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
             z_top = get_front_idx(S_px_mean[t_idx],
                                   get_flux_th(params) * 0.2)
-            z_bot = get_idx(Z0 + 3 * params['S'], z[0])
+            z_bot = get_idx(Z0 + 3 * S, z[0])
 
             idx = 1
             for var in plot_vars + sub_vars + res_vars:
@@ -541,13 +527,13 @@ def plot(name, params):
                     p = axes.plot(
                         uz_est**2 / 2
                             * abs(KZ / KX)
-                            * params['RHO0'] * np.exp(-Z0 / H)
+                            * RHO0 * np.exp(-Z0 / H)
                             * np.exp(-k_damp * 2 * (z[0] - Z0)),
                         z[0],
                         'orange',
                         label=r'$x_0z_0$ (Anal.)',
                         linewidth=0.5)
-                    rho0 = params['RHO0'] * np.exp(-z / params['H'])
+                    rho0 = RHO0 * np.exp(-z / H)
                     # compute all of the S_px cross terms (00 is model)
                     Spx01 = np.sum(rho0 * state_vars['ux'][t_idx] *
                                    (state_vars['uz'][t_idx] - uz_anal),
@@ -606,21 +592,19 @@ def plot(name, params):
                 axes.set_xlim(*xlims)
                 axes.set_ylim(z[0].min(), z[0].max())
                 p = axes.plot(xlims,
-                              [params['SPONGE_LOW']
-                                  + params['SPONGE_WIDTH']] * len(xlims),
+                              [SPONGE_LOW + SPONGE_WIDTH] * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [params['SPONGE_HIGH']
-                                  - params['SPONGE_WIDTH']] * len(xlims),
+                              [SPONGE_HIGH - SPONGE_WIDTH] * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [Z0 + 3 * params['S']] * len(xlims),
+                              [Z0 + 3 * S] * len(xlims),
                               'b--',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [Z0 - 3 * params['S']] * len(xlims),
+                              [Z0 - 3 * S] * len(xlims),
                               'b--',
                               linewidth=0.5)
                 idx += 1
@@ -630,7 +614,7 @@ def plot(name, params):
                                        idx,
                                        title=r'$%s$ (kx=kx_d)' % var)
                 var_dat = state_vars[var]
-                kx_idx = round(KX / (2 * np.pi / params['XMAX']))
+                kx_idx = round(KX / (2 * np.pi / XMAX))
                 p = axes.semilogx(var_dat[t_idx][kx_idx],
                                   range(len(var_dat[t_idx][kx_idx])),
                                   linewidth=0.5)
@@ -659,15 +643,10 @@ def plot(name, params):
 
 def write_front(name, params):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
-    N_X = params['N_X'] * params['INTERP_X']
-    N_Z = params['N_Z'] * params['INTERP_Z']
-    H = params['H']
-    KX = params['KX']
-    KZ = params['KZ']
-    OMEGA = params['OMEGA']
+    exec(get_exec_dict_str('params'))
     u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U', 'W']
-    if params['NL']:
+    if NL:
         dyn_vars += ['ux_z']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
@@ -680,11 +659,11 @@ def write_front(name, params):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
             name, params, dyn_vars, plot_stride=1, start=0)
-        x = domain.grid(0, scales=params['INTERP_X'])
-        z = domain.grid(1, scales=params['INTERP_Z'])
+        x = domain.grid(0, scales=INTERP_X)
+        z = domain.grid(1, scales=INTERP_Z)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
-        rho0 = params['RHO0'] * np.exp(-z0 / H)
+        rho0 = RHO0 * np.exp(-z0 / H)
 
         ux_res_slice = []
         uz_res_slice = []
@@ -697,12 +676,12 @@ def write_front(name, params):
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
 
-        uz_est = params['F'] * get_uz_f_ratio(params)
+        uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
             # figure out what to subtract by convolution
             front_idx = get_front_idx(S_px[t_idx], flux_threshold)
-            z_bot = get_idx(params['Z0'] + 3 * params['S'], z0)
+            z_bot = get_idx(Z0 + 3 * S, z0)
 
             front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
             anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: front_idx]
@@ -717,8 +696,8 @@ def write_front(name, params):
             dux = state_vars['ux'][t_idx] - x_lin_est
             duz = state_vars['uz'][t_idx] - z_lin_est
 
-            ux_res = dux / (ux_est * np.exp((z - params['Z0']) / (2 * H)))
-            uz_res = dux / (uz_est * np.exp((z - params['Z0']) / (2 * H)))
+            ux_res = dux / (ux_est * np.exp((z - Z0) / (2 * H)))
+            uz_res = dux / (uz_est * np.exp((z - Z0) / (2 * H)))
             slice_idx = get_idx(z0[front_idx] - 1 / KZ, z0)
 
             ux_res_slice.append(ux_res[:, slice_idx - 1])
@@ -737,16 +716,10 @@ def write_front(name, params):
         print('log file found, not regenerating')
 
 def plot_front(name, params):
-    N_X = params['N_X'] * params['INTERP_X']
-    N_Z = params['N_Z'] * params['INTERP_Z']
-    H = params['H']
-    N = np.sqrt(params['g'] / H)
-    KX = params['KX']
-    KZ = params['KZ']
-    OMEGA = params['OMEGA']
+    exec(get_exec_dict_str('params'))
+    N = np.sqrt(g / H)
     u_c = OMEGA / KX
-    Z0 = params['Z0']
-    V_GZ = abs(get_vgz(params['g'], H, KX, KZ))
+    V_GZ = abs(get_vgz(g, H, KX, KZ))
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
     k_damp = get_k_damp(params)
@@ -754,7 +727,7 @@ def plot_front(name, params):
     dyn_vars = ['uz', 'ux', 'U', 'W']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
-    if params['NL']:
+    if NL:
         dyn_vars += ['ux_z']
     if not os.path.exists(logfile):
         write_front(name, params)
@@ -777,9 +750,9 @@ def plot_front(name, params):
     S_px0 = [] # S_px averaged near origin
     dSpx_S = [] # Delta S_px using S criterion
     front_pos_S = [] # front position using S criterion
-    dz = abs(1 / params['KZ'])
-    l_z = abs(2 * np.pi / params['KZ'])
-    z_b = Z0 + 3 * params['S']
+    dz = abs(1 / KZ)
+    l_z = abs(2 * np.pi / KZ)
+    z_b = Z0 + 3 * S
     z_b_idx = get_idx(z_b, z0)
     for t_idx, sim_time in enumerate(sim_times):
         front_idx_S = get_front_idx(S_px[t_idx], flux_threshold)
@@ -811,7 +784,7 @@ def plot_front(name, params):
                  np.exp(-k_damp * 2 * (z0_cut - Z0)),
                  linewidth=1.5,
                  label=r'Model')
-        plt.xlim(z_b, params['ZMAX'])
+        plt.xlim(z_b, ZMAX)
         plt.ylim(-0.1, 1.1)
         plt.legend(fontsize=6)
 
@@ -862,8 +835,8 @@ def plot_front(name, params):
         ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
                     front_pos_S[times[-1]] - dz,
                     color='grey')
-        ax1.set_xlim(z_b, params['ZMAX'])
-        ax2.set_xlim(z_b, params['ZMAX'])
+        ax1.set_xlim(z_b, ZMAX)
+        ax2.set_xlim(z_b, ZMAX)
         ax1.set_ylim(-0.1, 1.25)
         ax2.set_ylim(-0.1, 1.1)
         ax2.legend(fontsize=6)
@@ -905,7 +878,7 @@ def plot_front(name, params):
                         linewidth=0.7,
                         label=lbl)
             ax.legend(fontsize=6, loc='upper right')
-            ax.set_xlim(z_b, params['ZMAX'])
+            ax.set_xlim(z_b, ZMAX)
             ax.set_ylim(-0.6, 1.2)
             ax.set_ylabel(r'$S_{px, t=%.1f} / S_0$' % sim_times[time])
         ax_lst[-1].set_xlabel(r'$z(H)$')
@@ -947,7 +920,7 @@ def plot_front(name, params):
         front_pos_S = np.array(front_pos_S)
 
         # compute front position
-        front_vel_S = dSpx_S / (params['RHO0'] * np.exp(-front_pos_S / H) * u_c)
+        front_vel_S = dSpx_S / (RHO0 * np.exp(-front_pos_S / H) * u_c)
         front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
         front_pos_intg_S += zf - front_pos_intg_S[-1]
 
@@ -1004,9 +977,9 @@ def plot_front(name, params):
                       est_incident_flux / flux_th,
                       1]
         for mult in flux_mults:
-            tau = H * params['RHO0'] * u_c / (flux_th * mult)
+            tau = H * RHO0 * u_c / (flux_th * mult)
             pos_anal = -H * np.log(
-                (t - tf + tau * np.exp(-zf/params['H']))
+                (t - tf + tau * np.exp(-zf/H))
                 / tau)
             ax2.plot(t,
                      pos_anal,
@@ -1086,7 +1059,7 @@ def plot_front(name, params):
         [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in ux_res_slice])
     uz_ffts = np.array(
         [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in uz_res_slice])
-    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / params['XMAX'],
+    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX,
                      N_X // 2)[1: ]
     # drop endpoints
     for idx in np.linspace(0, len(ux_ffts), num_plots + 2)[1: -1]:
@@ -1095,8 +1068,8 @@ def plot_front(name, params):
         z_avg = np.mean(uz_ffts[idx - half_avg:idx + half_avg, :], 0)
         ax1.loglog(kx, x_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
         ax2.loglog(kx, z_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
-    if params['NU'] > 0:
-        visc_kx = np.sqrt(OMEGA / (2 * params['NU']))
+    if NU > 0:
+        visc_kx = np.sqrt(OMEGA / (2 * NU))
         ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
         ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
     ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
