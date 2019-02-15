@@ -31,9 +31,9 @@ FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 plot_stride = 15
 
 def get_exec_dict_str(dict_name):
-    exec_str = 'for key, val in %s.items():\n\texec(key + "=" + repr(val))\n'\
-        % dict_name
-    return exec_str + 'N_X = int(N_X * INTERP_X)\nN_Z *= int(N_Z * INTERP_Z)'
+    exec_str = 'for key, val in %s.items():\n\t' % dict_name + \
+        'exec(key + "=" + repr(val), globals())\n'
+    return exec_str + 'N_X = int(N_X * INTERP_X)\nN_Z = int(N_Z * INTERP_Z)'
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))

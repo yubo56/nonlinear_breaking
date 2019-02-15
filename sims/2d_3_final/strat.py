@@ -70,9 +70,9 @@ def run(ic, name, params_dict):
 
 if __name__ == '__main__':
     tasks = [
-       # (set_ic, 'lin_1',
-       #  build_interp_params(4, 4, overrides={'F_MULT': 0.01,
-       #                                       'Re': 0.075})),
+       (set_ic, 'lin_1',
+        build_interp_params(4, 4, overrides={'F_MULT': 0.01,
+                                             'Re': 0.075})),
        # (set_ic, 'lin_2',
        #  build_interp_params(4, 4, overrides={'F_MULT': 0.0005,
        #                                       'T_F': 10000,
@@ -94,10 +94,10 @@ if __name__ == '__main__':
        # (set_ic, 'nl_4',
        #  build_interp_params(1, 1, overrides={'F_MULT': 1,
        #                                       'Re': 0.3})),
-       (set_ic, 'nl_4_masked',
-        build_interp_params(1, 1, overrides={'F_MULT': 1,
-                                             'adv_mask': True,
-                                             'Re': 0.3})),
+       # (set_ic, 'nl_4_masked',
+       #  build_interp_params(1, 1, overrides={'F_MULT': 1,
+       #                                       'adv_mask': True,
+       #                                       'Re': 0.3})),
        # (set_ic, 'nl_5',
        #  build_interp_params(1, 1, overrides={'F_MULT': 1,
        #                                       'Re': 0.3,
