@@ -129,3 +129,6 @@ if __name__ == '__main__':
     else:
         for task in tasks:
             run(*task)
+
+# R = [0.084, 0.188, 0.265, 0.296]
+# Re = [0.7, 0.4, 0.3, 0.2]

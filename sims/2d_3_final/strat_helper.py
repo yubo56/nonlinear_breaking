@@ -1059,7 +1059,7 @@ def plot_front(name, params):
         ax2.plot(t_refl, refl2, 'g', label='Half time', linewidth=1.0)
 
         ax2.text(t[0], 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
-                 'Means: (%.3f, %.3f)' % (np.mean(refl), np.mean(refl)))
+                 'Means: (%.3f, %.3f)' % (np.mean(refl), np.mean(refl2)))
         ax2.set_ylabel(r'Reflectivity')
         ax2.legend(fontsize=6)
 
