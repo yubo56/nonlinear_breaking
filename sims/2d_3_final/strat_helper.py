@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
+from scipy.interpolate import interp1d
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -822,7 +823,7 @@ def plot_front(name, params):
         plt.plot(t,
                  z_amps[start_idx: ],
                  label=r'$u_z / u_{z0}$')
-        plt.legend()
+        plt.legend(fontsize=6)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1040,25 +1041,50 @@ def plot_front(name, params):
                  linewidth=0.7)
         ax1.plot(t,
                  z_amps[start_idx: ],
+                 'r:',
                  label=r'$u_z / u_{z0}$',
                  linewidth=0.7)
-        ax1.legend()
+        ax1.legend(fontsize=6)
 
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
         prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ
         ax2.plot(t,
                  dSpx0,
-                 label='Est. Incident',
+                 'g:',
+                 label='Incident',
                  linewidth=0.7)
         ax2.plot(t + prop_time,
                  dSpx0,
-                 label='Incident + delay',
+                 'b:',
+                 label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
                  linewidth=0.7)
         ax2.plot(t,
                  -dSpx_S[start_idx: ] / flux_th,
+                 'k:',
                  label='Absorbed',
-                 linewidth=0.7)
-        ax2.legend()
+                 linewidth=1.0)
+        ax1.set_ylabel(r'$u / u_0$')
+        ax2.set_ylabel(r'$S_{px} / S_0$')
+        ax2.set_xlabel(r'$t$')
+        # seems prop_time is twice what it should be...
+        # use interp to compare since different t values
+        shifted_dS = interp1d(t + prop_time / 2, dSpx0)
+        absorbed_dS = interp1d(t, -dSpx_S[start_idx: ] / flux_th)
+        t_refl = np.linspace((t + prop_time)[0], t[-1], len(t))
+        refl = [(shifted_dS(t) - absorbed_dS(t)) / shifted_dS(t)
+                for t in t_refl]
+
+        ax3 = ax2.twinx()
+        ax3.plot(t_refl, refl, 'r', label='Reflectivity', linewidth=1.0)
+
+        ax1.text(t[0], ax1.get_ylim()[0],
+                 'Mean Reflectivity %.3f' % np.mean(refl))
+
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        lines3, labels3 = ax3.get_legend_handles_labels()
+        ax2.legend(lines2 + lines3,
+                   labels2 + labels3,
+                   fontsize=6)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1091,7 +1117,7 @@ def plot_front(name, params):
     ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
     ax2.set_ylabel(r'$\tilde{u}_z(k_x)$')
     ax2.set_xlabel(r'$k_x$')
-    ax1.legend()
-    ax2.legend()
+    ax1.legend(fontsize=6)
+    ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
