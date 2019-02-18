@@ -1085,14 +1085,20 @@ def plot_front(name, params):
     #
     # convolved amplitudes over time
     #####################################################################
-    plt.plot(t,
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    f.subplots_adjust(hspace=0)
+    ax1.plot(t,
              x_amps[start_idx: ],
              label=r'$u_x / u_{x0}$')
-    plt.plot(t,
+    ax1.plot(t,
              z_amps[start_idx: ],
              label=r'$u_z / u_{z0}$')
-    plt.legend(fontsize=6)
-    plt.ylabel(r'$u / u_0$')
-    plt.xlabel(r'$t$')
+    ax1.legend(fontsize=6)
+    ax1.set_ylabel(r'$u / u_0$')
+    u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
+    ax2.plot(t, u0_dat)
+    ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
+    ax2.set_xlabel(r'$t$')
+    ax2.set_ylim([min(u0_dat) * 1.1, 0])
     plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
     plt.close()
