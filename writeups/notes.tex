@@ -849,7 +849,7 @@ It should then be apparent that the $u_{1z}$ solution is
             + \frac{1}{2k_zH}} & z > z_0\\
         e^{(z - z_0)/2H}e^{i(k_xx - k_z(z - z_0) - \omega t)
             + \frac{1}{2k_zH}} & z < z_0\\
-    \end{cases}.
+    \end{cases}.\label{eq:anal_forced}
 \end{equation}
 The extra phase shift comes from $\pd{}{z} \approx ik_z + \frac{1}{2H} \approx
 k_z\p*{e^{-\frac{1}{2k_zH}}}$.
@@ -1640,6 +1640,23 @@ and so the exact solution becomes
 \begin{equation}
     z(t) = -H\ln \frac{t - t_f + \tau e^{-z_f/H}}{\tau}.
 \end{equation}
+
+\section{Masking Advective Terms}
+
+Recall \autoref{eq:anal_forced} tells us the amplitude of the excited wave in
+terms of the forcing function. However, numerically, it appears that the forcing
+zone evolves a local mean flow $\bar{U}_0 < 0$ due to the nonlinear terms. The
+effect of such a term is to replace $\omega_0 \to \omega_0 - k_x\bar{U}_0 >
+\omega_0$ in \autoref{eq:anal_forced}, which has the effect of attenuating the
+forcing amplitude by $\sim \frac{1}{1 + \frac{\bar{U}_0}{c_{ph, x}}} \approx
+\p*{1 - \frac{\bar{U}_0}{c_{ph, x}}}$.
+
+The cause of this term comes from the viscous terms, which $\sim \partial_t -
+\nu \nabla^2$ (our particular implementation differs slightly). In the
+$\delta$-function forcing limit, $u_x, u_z$ are only $\mathcal{C}^0$ at $z_0$.
+The derivative jumps at $z_0$ with height dictated by the forcing strength.
+Thus, $\nabla^2 u_x, \nabla^2 u_z \sim \delta(z - z_0)$, and there is a strong
+extra contribution to the EOM at $z_0$.
 
 \section{Estimating Various Other Scales}
 

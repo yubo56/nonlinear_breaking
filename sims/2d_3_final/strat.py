@@ -41,7 +41,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     params['T_F'] = params.get('T_F', T_F)
     params['NL'] = params.get('NL', True)
-    params['adv_mask'] = params.get('adv_mask', False)
+    params['mask'] = params.get('mask', False)
     params['g'] = g
     params['OMEGA'] = OMEGA
     params['S'] = params['ZMAX'] / 512 * 4
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                                              'Re': 0.3})),
        (set_ic, 'nl_4_masked',
         build_interp_params(1, 1, overrides={'F_MULT': 1,
-                                             'adv_mask': True,
+                                             'mask': True,
                                              'Re': 0.3})),
        (set_ic, 'nl_5',
         build_interp_params(1, 1, overrides={'F_MULT': 1,

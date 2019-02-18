@@ -113,53 +113,6 @@ def set_ic(name, solver, domain, params):
     print('Loaded snapshots')
     return write, dt
 
-def add_nl_problem(problem):
-    problem.add_equation('dx(ux) + uz_z = 0')
-    problem.add_equation(
-        'dt(U) - uz / H' +
-        '- NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
-        '= - sponge * U' +
-        '- NL * adv_mask * (ux * dx(U) + uz * dz(U))' +
-        '+ NU * (dx(U) * dx(U) + U_z * U_z)' +
-        '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
-            'cos(KX * x - OMEGA * t)')
-    problem.add_equation(
-        'dt(ux) + dx(W) + (g * H) * dx(U)' +
-        '- (NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '+ NU * dz(ux) / H'
-        '= - sponge * ux' +
-        '- NL * adv_mask * (ux * dx(ux) + uz * dz(ux))' +
-        '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
-        '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
-        '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
-        '- 2 * NU * ux * U_z / H' +
-        # '+ NU * ux * (1 - exp(-U)) / H**2' +
-        '+ NU * ux * U / H**2' +
-        '- NL * (W * dx(U))')
-    problem.add_equation(
-        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
-        '- (NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '+ NU * dz(uz) / H'
-        '= - sponge * uz - NL * (ux * dx(uz) + uz * dz(uz))' +
-        '- NU * adv_mask * (dx(U) * dx(uz) + U_z * uz_z)' +
-        '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
-        '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
-        '- 2 * NU * uz * U_z / H' +
-        # '+ NU * uz * (1 - exp(-U)) / H**2' +
-        '+ NU * uz * U / H**2' +
-        '- NL * (W * dz(U))')
-    problem.add_equation('dz(ux) - ux_z = 0')
-    problem.add_equation('dz(uz) - uz_z = 0')
-    problem.add_equation('dz(U) - U_z = 0')
-
-    problem.add_bc('right(uz) = 0')
-    problem.add_bc('left(W) = 0', condition='nx == 0')
-    problem.add_bc('left(uz) = 0', condition='nx != 0')
-    problem.add_bc('left(ux) = 0')
-    problem.add_bc('right(ux) = 0')
-    problem.add_bc('right(U) = 0')
-    problem.add_bc('left(U) = 0')
-
 def add_lin_problem(problem):
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
@@ -179,6 +132,52 @@ def add_lin_problem(problem):
     problem.add_bc('right(uz) = 0')
     problem.add_bc('left(W) = 0', condition='nx == 0')
     problem.add_bc('left(uz) = 0', condition='nx != 0')
+
+def add_nl_problem(problem):
+    problem.add_equation('dx(ux) + uz_z = 0')
+    problem.add_equation(
+        'dt(U) - uz / H' +
+        '= - sponge * U' +
+        '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
+            'cos(KX * x - OMEGA * t)'
+        '+ NL_MASK * (NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
+        '- (ux * dx(U) + uz * dz(U))' +
+        '+ NU * (dx(U) * dx(U) + U_z * U_z))')
+    problem.add_equation(
+        'dt(ux) + dx(W) + (g * H) * dx(U)' +
+        '= - sponge * ux' +
+        '+ NL_MASK * ((NU * dx(dx(ux)) + NU * dz(ux_z))' +
+        '- NU * dz(ux) / H'
+        '- (ux * dx(ux) + uz * dz(ux))' +
+        '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
+        '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
+        '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
+        '- 2 * NU * ux * U_z / H' +
+        '+ NU * ux * (1 - exp(-U)) / H**2' +
+        '- (W * dx(U)))')
+    problem.add_equation(
+        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
+        '= - sponge * uz' +
+        '+ NL_MASK * ((NU * dx(dx(uz)) + NU * dz(uz_z))' +
+        '- (ux * dx(uz) + uz * dz(uz))' +
+        '- NU * dz(uz) / H'
+        '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
+        '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
+        '+ NU * uz * (dx(U) * dx(U) + U_z * U_z)' +
+        '- 2 * NU * uz * U_z / H' +
+        '+ NU * uz * (1 - exp(-U)) / H**2' +
+        '- (W * dz(U)))')
+    problem.add_equation('dz(ux) - ux_z = 0')
+    problem.add_equation('dz(uz) - uz_z = 0')
+    problem.add_equation('dz(U) - U_z = 0')
+
+    problem.add_bc('right(uz) = 0')
+    problem.add_bc('left(W) = 0', condition='nx == 0')
+    problem.add_bc('left(uz) = 0', condition='nx != 0')
+    problem.add_bc('left(ux) = 0')
+    problem.add_bc('right(ux) = 0')
+    problem.add_bc('right(U) = 0')
+    problem.add_bc('left(U) = 0')
 
 def get_solver(params):
     ''' sets up solver '''
@@ -205,14 +204,14 @@ def get_solver(params):
         '- tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['rho0'] = 'RHO0 * exp(-z / H)'
     if NL:
+        if mask:
+            problem.substitutions['NL_MASK'] = \
+                '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / (S / 3)))'
+        else:
+            problem.substitutions['NL_MASK'] = '1'
         add_nl_problem(problem)
     else:
         add_lin_problem(problem)
-    if adv_mask:
-        problem.substitutions['adv_mask'] = \
-            '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / (S / 3)))'
-    else:
-        problem.substitutions['adv_mask'] = '1'
 
     # Build solver
     solver = problem.build_solver(de.timesteppers.RK443)
