@@ -33,7 +33,6 @@ plot_stride = 15
 def populate_globals(var_dict):
     for key, val in var_dict.items():
         exec(key + "=" + repr(val), globals())
-    exec('N_X = int(N_X * INTERP_X)\nN_Z = int(N_Z * INTERP_Z)', globals())
 
 def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
@@ -126,8 +125,6 @@ def add_lin_problem(problem):
     problem.add_equation(
         'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
         '= - sponge * uz')
-    # don't really need, but too messy to refactor everywhere else
-    # problem.add_equation('dz(ux) - ux_z = 0')
 
     problem.add_bc('right(uz) = 0')
     problem.add_bc('left(W) = 0', condition='nx == 0')
@@ -137,18 +134,21 @@ def add_nl_problem(problem):
     problem.add_equation('dx(ux) + uz_z = 0')
     problem.add_equation(
         'dt(U) - uz / H' +
+        '- NU * (dx(dx(U)) + dz(U_z))'
         '= - sponge * U' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
-            'cos(KX * x - OMEGA * t)'
-        '+ NL_MASK * (NU * (dx(dx(U)) + dz(U_z) - 2 * U_z / H)' +
-        '- (ux * dx(U) + uz * dz(U))' +
+            'cos(KX * x - OMEGA * t)' +
+        '- (1 - NL_MASK) * NU * (dx(dx(U)) + dz(U_z))' +
+        '+ NL_MASK * (- (ux * dx(U) + uz * dz(U))' +
+        '- NU * 2 * U_z / H' +
         '+ NU * (dx(U) * dx(U) + U_z * U_z))')
     problem.add_equation(
         'dt(ux) + dx(W) + (g * H) * dx(U)' +
+        '- NU * (dx(dx(ux)) + dz(ux_z))' +
         '= - sponge * ux' +
-        '+ NL_MASK * ((NU * dx(dx(ux)) + NU * dz(ux_z))' +
-        '- NU * dz(ux) / H'
-        '- (ux * dx(ux) + uz * dz(ux))' +
+        '- (1 - NL_MASK) * (NU * (dx(dx(ux)) + dz(ux_z)))' +
+        '+ NL_MASK * (- (ux * dx(ux) + uz * dz(ux))'
+        '- NU * dz(ux) / H' +
         '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
         '+ NU * ux * (dx(dx(U)) + dz(U_z))' +
         '+ NU * ux * (dx(U) * dx(U) + U_z * U_z)' +
@@ -156,10 +156,11 @@ def add_nl_problem(problem):
         '+ NU * ux * (1 - exp(-U)) / H**2' +
         '- (W * dx(U)))')
     problem.add_equation(
-        'dt(uz) + dz(W) + (g * H) * dz(U) - W/H' +
+        'dt(uz) + dz(W) + (g * H) * U_z - W/H' +
+        '- NU * (dx(dx(uz)) + dz(uz_z))' +
         '= - sponge * uz' +
-        '+ NL_MASK * ((NU * dx(dx(uz)) + NU * dz(uz_z))' +
-        '- (ux * dx(uz) + uz * dz(uz))' +
+        '- (1 - NL_MASK) * (NU * (dx(dx(uz)) + dz(uz_z)))' +
+        '+ NL_MASK * (- (ux * dx(uz) + uz * dz(uz))' +
         '- NU * dz(uz) / H'
         '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
         '+ NU * uz * (dx(dx(U)) + dz(U_z))' +
@@ -183,11 +184,11 @@ def get_solver(params):
     ''' sets up solver '''
     populate_globals(params)
     x_basis = de.Fourier('x',
-                         N_X,
+                         N_X // INTERP_X,
                          interval=(0, XMAX),
                          dealias=3/2)
     z_basis = de.Chebyshev('z',
-                           N_Z,
+                           N_Z // INTERP_Z,
                            interval=(0, ZMAX),
                            dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
