@@ -88,6 +88,17 @@
         - Ask what Dong thinks about dispersion relation shortcut?
 - Try plane parallel for finite sound speed?
 
+# NOTES 02/15
+- try NL mask in forcing zone? see impact on A(t) or at least understand forcing
+  in general
+- Once we figure this out, try higher res!
+- Compare reflection/transmission to B&B67, Winters & asaro 92
+
+- story should be fine for astro
+- If wanted to try JFM, really pin down numerics (forcing) R(nu) won't need to
+  be as well pinned dow though.
+- JFM rapids? ~ ApJL
+
 # GLOBAL TODO
 - Try radial 2D setup?
 

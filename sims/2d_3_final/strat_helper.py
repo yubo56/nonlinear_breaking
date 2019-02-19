@@ -138,7 +138,6 @@ def add_nl_problem(problem):
         '= - sponge * U' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2) + Z0 / H) *' +
             'cos(KX * x - OMEGA * t)' +
-        '- (1 - NL_MASK) * NU * (dx(dx(U)) + dz(U_z))' +
         '+ NL_MASK * (- (ux * dx(U) + uz * dz(U))' +
         '- NU * 2 * U_z / H' +
         '+ NU * (dx(U) * dx(U) + U_z * U_z))')
@@ -146,7 +145,6 @@ def add_nl_problem(problem):
         'dt(ux) + dx(W) + (g * H) * dx(U)' +
         '- NU * (dx(dx(ux)) + dz(ux_z))' +
         '= - sponge * ux' +
-        '- (1 - NL_MASK) * (NU * (dx(dx(ux)) + dz(ux_z)))' +
         '+ NL_MASK * (- (ux * dx(ux) + uz * dz(ux))'
         '- NU * dz(ux) / H' +
         '- NU * (dx(U) * dx(ux) + U_z * ux_z)' +
@@ -159,7 +157,6 @@ def add_nl_problem(problem):
         'dt(uz) + dz(W) + (g * H) * U_z - W/H' +
         '- NU * (dx(dx(uz)) + dz(uz_z))' +
         '= - sponge * uz' +
-        '- (1 - NL_MASK) * (NU * (dx(dx(uz)) + dz(uz_z)))' +
         '+ NL_MASK * (- (ux * dx(uz) + uz * dz(uz))' +
         '- NU * dz(uz) / H'
         '- NU * (dx(U) * dx(uz) + U_z * uz_z)' +
