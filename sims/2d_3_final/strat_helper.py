@@ -102,15 +102,15 @@ def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
-    if not os.path.exists(snapshots_dir):
-        print('No snapshots found, no IC loaded')
-        return 0, DT
+    if os.path.exists(snapshots_dir):
+        # snapshots exist, merge if need and then load
+        print('Attempting to load snapshots')
+        write, dt = solver.load_state(filename, -1)
+        print('Loaded snapshots')
+        return write, dt
+    print('No snapshots found')
+    return 0, DT
 
-    # snapshots exist, merge if need and then load
-    print('Attempting to load snapshots')
-    write, dt = solver.load_state(filename, -1)
-    print('Loaded snapshots')
-    return write, dt
 
 def add_lin_problem(problem):
     problem.add_equation('dx(ux) + dz(uz) = 0')
@@ -252,14 +252,14 @@ def run_strat_sim(set_ICs, name, params):
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
-        if curr_iter % int((T_F / DT) /
-                           NUM_SNAPSHOTS) == 0:
+        if curr_iter % int((params['T_F'] / params['DT']) /
+                           params['NUM_SNAPSHOTS']) == 0:
             logger.info('Reached time %f out of %f, timestep %f vs max %f',
                         solver.sim_time,
                         solver.stop_sim_time,
                         cfl_dt,
-                        DT)
-            logger.info('Max u = %e' % flow.max('u'))
+                        params['DT'])
+            logger.info('Max Re = %f' %flow.max('Re'))
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -561,7 +561,7 @@ def plot(name, params):
                 if var == 'ux%s' % mean_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
-                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
+import * as uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
                             * np.exp((z[0] - Z0) / H),
                         z[0],
                         'orange',
