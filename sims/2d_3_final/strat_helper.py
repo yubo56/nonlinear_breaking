@@ -252,14 +252,14 @@ def run_strat_sim(set_ICs, name, params):
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
-        if curr_iter % int((params['T_F'] / params['DT']) /
-                           params['NUM_SNAPSHOTS']) == 0:
+        if curr_iter % int((T_F / DT) /
+                           NUM_SNAPSHOTS) == 0:
             logger.info('Reached time %f out of %f, timestep %f vs max %f',
                         solver.sim_time,
                         solver.stop_sim_time,
                         cfl_dt,
-                        params['DT'])
-            logger.info('Max Re = %f' %flow.max('Re'))
+                        DT)
+            logger.info('Max u = %e' % flow.max('u'))
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -561,7 +561,7 @@ def plot(name, params):
                 if var == 'ux%s' % mean_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
-import * as uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
+                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
                             * np.exp((z[0] - Z0) / H),
                         z[0],
                         'orange',
