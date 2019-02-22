@@ -204,7 +204,7 @@ def get_solver(params):
     if NL:
         if mask:
             problem.substitutions['NL_MASK'] = \
-                '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / (S / 3)))'
+                '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / S))'
         else:
             problem.substitutions['NL_MASK'] = '1'
         add_nl_problem(problem)
@@ -263,8 +263,22 @@ def run_strat_sim(set_ICs, name, params):
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
-    if not os.path.exists(filename):
+    dir_expr = '{s}/{s}_s{idx}'
+
+    idx = 1
+    to_merge = False
+
+    snapshots_piece_dir = dir_expr.format(s=snapshots_dir, idx=idx)
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=idx)
+
+    while os.path.exists(snapshots_piece_dir):
+        if not os.path.exists(filename):
+            to_merge = True
+        idx += 1
+        snapshots_piece_dir = dir_expr.format(s=snapshots_dir, idx=idx)
+        filename = FILENAME_EXPR.format(s=snapshots_dir, idx=idx)
+
+    if to_merge:
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
@@ -1096,6 +1110,5 @@ def plot_front(name, params):
     ax2.plot(t, u0_dat)
     ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
     ax2.set_xlabel(r'$t$')
-    ax2.set_ylim([min(u0_dat) * 1.1, 0])
     plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
     plt.close()
