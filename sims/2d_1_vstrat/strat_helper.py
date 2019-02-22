@@ -28,7 +28,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 15
+plot_stride = 5
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -57,7 +57,7 @@ def get_uz_f_ratio(params):
                 2 * RHO0 * OMEGA**2 * KZ)
 
 def get_flux_th(params):
-    return 0.5 * (F * get_uz_f_ratio(params))**2 / 2 * abs(KZ / KX) * RHO0
+    return (F * get_uz_f_ratio(params))**2 / 2 * abs(KZ / KX) * RHO0
 
 def get_k_damp(params):
     populate_globals(params)
@@ -70,7 +70,7 @@ def get_anal_uz(params, t, x, z):
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
-    return -np.sqrt(2) * uz_est * (
+    return uz_est * (
         np.exp(-k_damp
                  * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
@@ -81,7 +81,7 @@ def get_anal_ux(params, t, x, z):
     ux_est = F * get_uz_f_ratio(params) * KZ / KX
     k_damp = get_k_damp(params)
 
-    return sqrt(2) * ux_est * (
+    return ux_est * (
         np.exp(-k_damp * (z[0] - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (KZ * H)))
@@ -190,6 +190,7 @@ def run_strat_sim(set_ICs, name, params):
         snapshots_dir,
         sim_dt=T_F / NUM_SNAPSHOTS)
     snapshots.add_system(solver.state)
+    snapshots.add_task("integ(RHO0 * ux * uz, 'x') / XMAX", name='S_{px}')
 
     # Flow properties
     flow = GlobalFlowProperty(solver, cadence=10)
