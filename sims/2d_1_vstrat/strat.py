@@ -13,7 +13,6 @@ XMAX = H
 ZMAX = H
 
 NUM_SNAPSHOTS = 300
-TARGET_DISP_RAT = 0.7
 
 PARAMS_RAW = {'XMAX': XMAX,
               'ZMAX': ZMAX,
@@ -38,18 +37,18 @@ def build_interp_params(interp_x, interp_z, overrides=None):
 
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * 50
+    T_F = abs(ZMAX / VG_Z) * 20
 
     params['T_F'] = T_F
     params['g'] = g
     params['OMEGA'] = OMEGA
-    params['S'] = params['ZMAX'] / 512 * 4
+    params['S'] = 1 / params['KZ'] # params['ZMAX'] / params['N_Z'] * 8
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = params.get('DT', min(0.1 / OMEGA, 0.1))
+    params['DT'] = params.get('DT', min(0.05 / OMEGA, 0.05))
     params['F'] = params.get('F_MULT', 1) * \
-        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
+        (OMEGA / KZ) / get_uz_f_ratio(params) \
     # for nabla^n visc, u / (nu * kx^{n-1}) = 1
     params['NU'] = params.get('Re', 1) * \
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
@@ -69,7 +68,8 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (set_ic, 'vstrat',
-         build_interp_params(4, 4, overrides={'Re': 40,
+         build_interp_params(4, 4, overrides={'Re': 200,
+                                              'F_MULT': 0.01,
                                               'NL': True,
                                               'UZ0_COEFF': 1})),
         # (set_ic, 'vstrat_highres',

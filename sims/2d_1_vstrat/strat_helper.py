@@ -54,12 +54,10 @@ def get_uz_f_ratio(params):
     populate_globals(params)
     return (np.sqrt(2 * np.pi) * S * g *
             KX**2) * np.exp(-S**2 * KZ**2/2) / (
-                2 * RHO0 * np.exp(-Z0 / H)
-                * OMEGA**2 * KZ)
+                2 * RHO0 * OMEGA**2 * KZ)
 
 def get_flux_th(params):
-    return (F * get_uz_f_ratio(params))**2 / 2 \
-        * abs(KZ / KX) * RHO0 * np.exp(-Z0 / H)
+    return 0.5 * (F * get_uz_f_ratio(params))**2 / 2 * abs(KZ / KX) * RHO0
 
 def get_k_damp(params):
     populate_globals(params)
@@ -72,9 +70,8 @@ def get_anal_uz(params, t, x, z):
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
-    return uz_est * (
-        -np.exp((z - Z0) / 2 * H)
-        * np.exp(-k_damp
+    return -np.sqrt(2) * uz_est * (
+        np.exp(-k_damp
                  * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (2 * KZ * H)))
@@ -84,9 +81,8 @@ def get_anal_ux(params, t, x, z):
     ux_est = F * get_uz_f_ratio(params) * KZ / KX
     k_damp = get_k_damp(params)
 
-    return ux_est * (
-        np.exp((z - Z0) / 2 * H)
-        * np.exp(-k_damp * (z[0] - Z0))
+    return sqrt(2) * ux_est * (
+        np.exp(-k_damp * (z[0] - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (KZ * H)))
 
@@ -114,14 +110,12 @@ def set_ic(name, solver, domain, params):
     z = domain.grid(1)
 
     # turns on at Z0 + ZMAX / 2 w/ width 2 * lambda_z, turns off at sponge zone
-    zmax = params['ZMAX']
-    KZ = params['KZ']
-    z_bot = (params['Z0'] + params['ZMAX']) / 2
+    z_bot = (Z0 + ZMAX) / 2
     width = abs(np.pi / KZ)
-    z_top = z_bot + 2.5 * width
-    ux['g'] = params['OMEGA'] / params['KX'] * params['UZ0_COEFF'] * (
+    z_top = z_bot + 2 * width
+    ux['g'] = OMEGA / KX * UZ0_COEFF * (
         np.tanh((z - z_bot) / width) -
-        np.tanh((z - z_top) / (0.3 * (zmax - z_top)))) / 2
+        np.tanh((z - z_top) / (0.3 * (ZMAX - z_top)))) / 2
     return 0, DT
 
 
@@ -143,26 +137,28 @@ def get_solver(params):
     problem.substitutions['sponge'] = 'SPONGE_STRENGTH * 0.5 * ' +\
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
+    problem.substitutions['mask'] = \
+        '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / S))'
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(rho) - RHO0 * uz / H' +
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(rho))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(rho))))))' +
         '= -sponge * rho' +
-        '- (ux * dx(rho) + uz * dz(rho))' +
+        '- mask * (ux * dx(rho) + uz * dz(rho))' +
         '+ F * exp(-(z - Z0)**2 / (2 * S**2)) *cos(KX * x - OMEGA * t)')
     problem.add_equation(
         'dt(ux) + dx(P) / RHO0' +
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(ux))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(ux))))))' +
         '= - sponge * ux' +
-        '- (ux * dx(ux) + uz * dz(ux))')
+        '- mask * (ux * dx(ux) + uz * dz(ux))')
     problem.add_equation(
         'dt(uz) + dz(P) / RHO0 + rho * g / RHO0' +
         '- NU * (N_Z/N_X)**6 * dx(dx(dx(dx(dx(dx(uz))))))' +
         '- NU * dz(dz(dz(dz(dz(dz(uz))))))' +
         '= -sponge * uz' +
-        '- (ux * dx(uz) + uz * dz(uz))')
+        '- mask * (ux * dx(uz) + uz * dz(uz))')
     problem.add_equation('P = 0', condition='nx == 0 and nz == 0')
 
     # Build solver
@@ -206,14 +202,14 @@ def run_strat_sim(set_ICs, name, params):
         solver.step(cfl_dt)
         curr_iter = solver.iteration
 
-        if curr_iter % int((params['T_F'] / params['DT']) /
-                           params['NUM_SNAPSHOTS']) == 0:
+        if curr_iter % int((T_F / DT) /
+                           NUM_SNAPSHOTS) == 0:
             logger.info('Reached time %f out of %f, timestep %f vs max %f',
                         solver.sim_time,
                         solver.stop_sim_time,
                         cfl_dt,
-                        params['DT'])
-            logger.info('Max Re = %f' %flow.max('Re'))
+                        DT)
+            logger.info('Max u = %f' %flow.max('u'))
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -260,14 +256,14 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     for key in state_vars.keys():
         state_vars[key] = np.array(state_vars[key])
 
-    state_vars['rho'] += params['RHO0']
-    state_vars['rho1'] = state_vars['rho'] - params['RHO0']
+    state_vars['rho'] += RHO0
+    state_vars['rho1'] = state_vars['rho'] - RHO0
     state_vars['P1'] = state_vars['P']
     # compatibility
     state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=-1) * \
-        params['N_Z'] * params['INTERP_Z'] / params['ZMAX']
+        N_Z / ZMAX
 
-    state_vars['F_px'] = state_vars['rho'] * (state_vars['ux'] *
+    state_vars['S_{px}'] = state_vars['rho'] * (state_vars['ux'] *
                                               state_vars['uz'])
     return sim_times[start::plot_stride], domain, state_vars
 
@@ -313,6 +309,12 @@ def plot(name, params):
         return ret
 
     plot_cfgs = [
+        {
+            'save_fmt_str': 'p_%03i.png',
+            'slice_vars': ['uz'],
+            'mean_vars': ['ux', 'S_{px}'],
+            'res_vars_vars': ['uz'],
+        },
         {
             'save_fmt_str': 'm_%03i.png',
             'plot_vars': ['ux', 'uz', 'rho1', 'P1'],
@@ -373,11 +375,11 @@ def plot(name, params):
                     # divide by analytical profile and normalize
                     if var == 'uz%s' % res_suffix:
                         var_dat = (state_vars['uz'][t_idx] - uz_anal - uz_mean)\
-                            / (uz_est * np.exp((z - Z0) / (2 * H)))
+                            / uz_est
                         title = 'u_z'
                     elif var == 'ux%s' % res_suffix:
                         var_dat = (state_vars['ux'][t_idx] - ux_anal - ux_mean)\
-                            / (ux_est * np.exp((z - Z0) / (2 * H)))
+                            / ux_est
                         title = 'u_x'
                     else:
                         raise ValueError('lol wtf is %s' % var)
@@ -436,7 +438,9 @@ def plot(name, params):
                 if var in slice_vars:
                     var_dat = state_vars[var][:, z_b:]
                 else:
-                    var_dat, var_min, var_max = state_vars[var][:, z_b:]
+                    var_dat = state_vars[var][0][:, z_b:]
+                    var_min = state_vars[var][1][:, z_b:]
+                    var_max = state_vars[var][2][:, z_b:]
 
                 p = axes.plot(var_dat[t_idx],
                               z[0],
@@ -450,8 +454,8 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
-                        uz_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
+                        -uz_est * (0 * z[0] + 1), z[0], 'g',
+                        uz_est * (0 * z[0] + 1), z[0], 'g',
                         linewidth=0.5)
 
                 if var == 'ux%s' % slice_suffix:
@@ -461,8 +465,8 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -ux_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
-                        ux_est * np.exp((z[0] - Z0) / (2 * H)), z[0], 'g',
+                        -ux_est, z[0], 'g',
+                        ux_est, z[0], 'g',
                         linewidth=0.5)
 
                 if var == 'S_{px}%s' % mean_suffix:
@@ -470,21 +474,20 @@ def plot(name, params):
                     p = axes.plot(
                         uz_est**2 / 2
                             * abs(KZ / KX)
-                            * RHO0 * np.exp(-Z0 / H)
+                            * RHO0
                             * np.exp(-k_damp * 2 * (z[0] - Z0)),
                         z[0],
                         'orange',
                         label=r'$x_0z_0$ (Anal.)',
                         linewidth=0.5)
-                    rho0 = RHO0 * np.exp(-z / H)
                     # compute all of the S_px cross terms (00 is model)
-                    Spx01 = np.sum(rho0 * state_vars['ux'][t_idx] *
+                    Spx01 = np.sum(RHO0 * state_vars['ux'][t_idx] *
                                    (state_vars['uz'][t_idx] - uz_anal),
                                    axis=0) / N_X
-                    Spx10 = np.sum(rho0 * state_vars['uz'][t_idx] *
+                    Spx10 = np.sum(RHO0 * state_vars['uz'][t_idx] *
                                    (state_vars['ux'][t_idx] - ux_anal),
                                    axis=0) / N_X
-                    Spx11 = np.sum(rho0 * (state_vars['ux'][t_idx] - ux_anal) *
+                    Spx11 = np.sum(RHO0 * (state_vars['ux'][t_idx] - ux_anal) *
                                    (state_vars['uz'][t_idx] - uz_anal),
                                    axis=0) / N_X
                     p = axes.plot(Spx01[z_bot: z_top],
@@ -535,11 +538,13 @@ def plot(name, params):
                 axes.set_xlim(*xlims)
                 axes.set_ylim(z[0].min(), z[0].max())
                 p = axes.plot(xlims,
-                              [SPONGE_LOW + SPONGE_WIDTH] * len(xlims),
+                              [SPONGE_LOW + SPONGE_WIDTH * SPONGE_LOW]\
+                                * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
-                              [SPONGE_HIGH - SPONGE_WIDTH] * len(xlims),
+                              [SPONGE_HIGH - SPONGE_WIDTH *
+                               (ZMAX - SPONGE_HIGH)] * len(xlims),
                               'r:',
                               linewidth=0.5)
                 p = axes.plot(xlims,
@@ -604,7 +609,6 @@ def write_front(name, params):
         z = domain.grid(1, scales=INTERP_Z)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
-        rho0 = RHO0 * np.exp(-z0 / H)
 
         ux_res_slice = []
         uz_res_slice = []
@@ -646,9 +650,9 @@ def write_front(name, params):
 
             x_amps.append(x_amp)
             z_amps.append(z_amp)
-            Spx01.append(np.sum(rho0 * x_lin_est * duz, axis=0) / N_X)
-            Spx10.append(np.sum(rho0 * z_lin_est * dux, axis=0) / N_X)
-            Spx11.append(np.sum(rho0 * dux * duz, axis=0) / N_X)
+            Spx01.append(np.sum(RHO0 * x_lin_est * duz, axis=0) / N_X)
+            Spx10.append(np.sum(RHO0 * z_lin_est * dux, axis=0) / N_X)
+            Spx11.append(np.sum(RHO0 * dux * duz, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx01, Spx10, Spx11,
@@ -684,7 +688,7 @@ def plot_front(name, params):
         z_amps = np.array(z_amps)
 
     tf = sim_times[-1]
-    start_idx = get_idx(200, sim_times)
+    start_idx = get_idx(600, sim_times)
     t = sim_times[start_idx: ]
     dt = np.mean(np.gradient(sim_times[1: -1])) # should be T_F / NUM_SNAPSHOTS
 
@@ -1009,10 +1013,10 @@ def plot_front(name, params):
         z_avg = np.mean(uz_ffts[idx - half_avg:idx + half_avg, :], 0)
         ax1.loglog(kx, x_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
         ax2.loglog(kx, z_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
-    if NU > 0:
-        visc_kx = np.sqrt(OMEGA / (2 * NU))
-        ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
-        ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
+    # if NU > 0:
+    #     visc_kx = np.sqrt(OMEGA / (2 * NU))
+    #     ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
+    #     ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
     ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
     ax2.set_ylabel(r'$\tilde{u}_z(k_x)$')
     ax2.set_xlabel(r'$k_x$')
