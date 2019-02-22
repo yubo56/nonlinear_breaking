@@ -23,11 +23,11 @@ PARAMS_RAW = {'XMAX': XMAX,
               'KZ': -8 * np.pi / H,
               'H': H,
               'RHO0': 1,
-              'Z0': 0.15 * ZMAX,
-              'SPONGE_STRENGTH': 10,
+              'Z0': 0.2 * ZMAX,
+              'SPONGE_STRENGTH': 15,
               'SPONGE_WIDTH': 0.5,
-              'SPONGE_HIGH': 0.93 * ZMAX,
-              'SPONGE_LOW': 0.07 * ZMAX,
+              'SPONGE_HIGH': 0.95 * ZMAX,
+              'SPONGE_LOW': 0.03 * ZMAX,
               'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
 
 def build_interp_params(interp_x, interp_z, overrides=None):
@@ -46,13 +46,12 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['S'] = params['ZMAX'] / 512 * 4
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
-    params['N_X'] //= interp_x
-    params['N_Z'] //= interp_z
-    params['DT'] = min(0.1 / OMEGA, 0.1)
-    params['F'] = params.get('F_MULT', 0.1) * \
-        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params)
+    # omega * DT << 1 is required, as is DT << 1/N = 1
+    params['DT'] = params.get('DT', min(0.1 / OMEGA, 0.1))
+    params['F'] = params.get('F_MULT', 1) * \
+        (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
     # for nabla^n visc, u / (nu * kx^{n-1}) = 1
-    params['NU'] = params.get('NU_MULT', 1) * \
+    params['NU'] = params.get('Re', 1) * \
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
     params['UZ0_COEFF'] = params.get('UZ0_COEFF', 1)
@@ -70,12 +69,12 @@ def run(ic, name, params_dict):
 if __name__ == '__main__':
     tasks = [
         (set_ic, 'vstrat',
-         build_interp_params(4, 4, overrides={'NU_MULT': 40,
-                                              'USE_CFL': True,
+         build_interp_params(4, 4, overrides={'Re': 40,
+                                              'NL': True,
                                               'UZ0_COEFF': 1})),
         # (set_ic, 'vstrat_highres',
-        #  build_interp_params(1, 1, overrides={'NU_MULT': 100,
-        #                                       'USE_CFL': True,
+        #  build_interp_params(1, 1, overrides={'Re': 100,
+        #                                       'NL': True,
         #                                       'UZ0_COEFF': 1})),
     ]
     if '-plot' in sys.argv:

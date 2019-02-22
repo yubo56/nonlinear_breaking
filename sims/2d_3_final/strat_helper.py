@@ -102,15 +102,15 @@ def set_ic(name, solver, domain, params):
     snapshots_dir = SNAPSHOTS_DIR % name
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
 
-    if not os.path.exists(snapshots_dir):
-        print('No snapshots found, no IC loaded')
-        return 0, DT
+    if os.path.exists(snapshots_dir):
+        # snapshots exist, merge if need and then load
+        print('Attempting to load snapshots')
+        write, dt = solver.load_state(filename, -1)
+        print('Loaded snapshots')
+        return write, dt
+    print('No snapshots found')
+    return 0, DT
 
-    # snapshots exist, merge if need and then load
-    print('Attempting to load snapshots')
-    write, dt = solver.load_state(filename, -1)
-    print('Loaded snapshots')
-    return write, dt
 
 def add_lin_problem(problem):
     problem.add_equation('dx(ux) + dz(uz) = 0')
