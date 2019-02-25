@@ -28,7 +28,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 5
+plot_stride = 15
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -52,9 +52,8 @@ def horiz_mean(field, n_x):
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
     populate_globals(params)
-    return (np.sqrt(2 * np.pi) * S * g *
-            KX**2) * np.exp(-S**2 * KZ**2/2) / (
-                2 * RHO0 * OMEGA**2 * KZ)
+    return (np.sqrt(2 * np.pi) * S * g * KX**2)\
+        * np.exp(-S**2 * KZ**2/2) / (2 * RHO0 * OMEGA**2 * KZ)
 
 def get_flux_th(params):
     return (F * get_uz_f_ratio(params))**2 / 2 * abs(KZ / KX) * RHO0
@@ -138,7 +137,8 @@ def get_solver(params):
         '(2 + tanh((z - SPONGE_HIGH) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH))) - ' +\
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['mask'] = \
-        '0.5 * (1 + tanh((z - (Z0 + 4 * S)) / S))'
+        '0.5 * (1 + tanh((z - (Z0 + 3 * S)) / (S / 2)))'
+    # problem.substitutions['mask'] = '1'
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(rho) - RHO0 * uz / H' +

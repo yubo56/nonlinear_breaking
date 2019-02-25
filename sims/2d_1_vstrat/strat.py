@@ -42,7 +42,7 @@ def build_interp_params(interp_x, interp_z, overrides=None):
     params['T_F'] = T_F
     params['g'] = g
     params['OMEGA'] = OMEGA
-    params['S'] = 1 / params['KZ'] # params['ZMAX'] / params['N_Z'] * 2
+    params['S'] = abs(1 / params['KZ'])
     params['INTERP_X'] = interp_x
     params['INTERP_Z'] = interp_z
     # omega * DT << 1 is required, as is DT << 1/N = 1
@@ -73,12 +73,30 @@ if __name__ == '__main__':
                                               'T_MULT': 3,
                                               'NL': True,
                                               'UZ0_COEFF': 0})),
-        (set_ic, 'vstrat',
-         build_interp_params(4, 4, overrides={'Re': 200,
-                                              'F_MULT': 0.05,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.1})),
+        # (set_ic, 'vstrat_nl_1',
+        #  build_interp_params(4, 4, overrides={'Re': 1e5,
+        #                                       'F_MULT': 0.02,
+        #                                       'T_MULT': 10,
+        #                                       'NL': True,
+        #                                       'UZ0_COEFF': 1.2})),
+        # (set_ic, 'vstrat_nl_2',
+        #  build_interp_params(4, 4, overrides={'Re': 5.5e3,
+        #                                       'F_MULT': 0.02,
+        #                                       'T_MULT': 10,
+        #                                       'NL': True,
+        #                                       'UZ0_COEFF': 1.2})),
+        # (set_ic, 'vstrat_nl_3',
+        #  build_interp_params(4, 4, overrides={'Re': 300,
+        #                                       'F_MULT': 0.02,
+        #                                       'T_MULT': 10,
+        #                                       'NL': True,
+        #                                       'UZ0_COEFF': 1.2})),
+        # (set_ic, 'vstrat_nl_4',
+        #  build_interp_params(4, 4, overrides={'Re': 5.5e3,
+        #                                       'F_MULT': 0.02,
+        #                                       'T_MULT': 10,
+        #                                       'NL': True,
+        #                                       'UZ0_COEFF': 0.8})),
     ]
     if '-plot' in sys.argv:
         for _, name, params_dict in tasks:
