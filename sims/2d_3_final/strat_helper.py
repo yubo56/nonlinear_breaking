@@ -669,7 +669,7 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=1, start=0)
+            name, params, dyn_vars, plot_stride=4, start=0)
         x = domain.grid(0, scales=INTERP_X)
         z = domain.grid(1, scales=INTERP_Z)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -695,12 +695,13 @@ def write_front(name, params):
             z_bot = get_idx(Z0 + 3 * S, z0)
 
             front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
+            norm = np.outer(np.ones(N_X), np.exp(-z0[z_bot: front_idx] / H))
             anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: front_idx]
             anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: front_idx]
             x_amp = np.sum(state_vars['ux'][t_idx, :, z_bot: front_idx]
-                           * anal_ux) / np.sum(anal_ux**2)
+                           * anal_ux / norm) / np.sum(anal_ux**2 / norm)
             z_amp = np.sum(state_vars['uz'][t_idx, :, z_bot: front_idx]
-                           * anal_uz) / np.sum(anal_uz**2)
+                           * anal_uz / norm) / np.sum(anal_uz**2 / norm)
             x_lin_est = x_amp * get_anal_ux(params, sim_time, x, z)
             z_lin_est = z_amp * get_anal_uz(params, sim_time, x, z)
 
@@ -1014,7 +1015,9 @@ def plot_front(name, params):
         f.subplots_adjust(hspace=0)
 
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
-        prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ
+        # extrapolate 3/4 of distance, convolution is evenly weighted between
+        # z_b, z_c
+        prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ * 3/4
         S_excited = (x_amps * z_amps)[start_idx: ] * \
             np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
@@ -1037,19 +1040,15 @@ def plot_front(name, params):
         # seems prop_time is twice what it should be...
         # use interp to compare since different t values
         shifted_dS = interp1d(t + prop_time, S_excited)
-        shifted_dS2 = interp1d(t + prop_time / 2, S_excited)
         absorbed_dS = interp1d(t, -dSpx_S[start_idx: ] / flux_th)
         t_refl = np.linspace((t + prop_time)[0], t[-1], len(t))
         refl = [(shifted_dS(t) - absorbed_dS(t)) / shifted_dS(t)
                 for t in t_refl]
-        refl2 = [(shifted_dS2(t) - absorbed_dS(t)) / shifted_dS2(t)
-                 for t in t_refl]
 
         ax2.plot(t_refl, refl, 'r:', label='Full time', linewidth=0.7)
-        ax2.plot(t_refl, refl2, 'g', label='Half time', linewidth=1.0)
 
         ax2.text(t[0], 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
-                 'Means: (%.3f, %.3f)' % (np.mean(refl), np.mean(refl2)))
+                 'Mean: %.3f' % np.mean(refl))
         ax2.set_ylabel(r'Reflectivity')
         ax2.legend(fontsize=6)
 

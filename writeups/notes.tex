@@ -1680,6 +1680,23 @@ relation then shows that ($k_0 = \abs*{\vec{k}_0} = \sqrt{k_{x0}^2 + k_{z0}^2}$)
 Thus, in the small dissipation limit we can treat the artificial viscosity the
 same as a vertical damping length.
 
+\subsection{Energy Dissipation Thickness}
+
+The wave action $I = \frac{E}{\tilde{\omega}} = \frac{E}{\omega_0 -
+k_x\bar{U}_0}$ is a conserved quantity for an adiabatically varying shear flow
+$\bar{U}_0(z)$. Then, writing $E = I\tilde{\omega}$, we can compute the energy
+dissipation as a function of $z$:
+\begin{align*}
+    \pd{E}{z} &= -Ik_x\pd{\bar{U}_0}{z},\\
+        &= -\frac{E_0}{\omega_0} k_x \pd{\bar{U}_0}{z},\\
+        &= -\frac{E_0}{N} \abs*{\vec{k}_0} \pd{\bar{U}_0}{z},\\
+        &= -E_0 \frac{\abs*{\vec{k}_0}}{\sqrt{\mathrm{Ri}}}.
+\end{align*}
+
+In most astrophysical applications, $k_z \gg k_x$, and so we find that the
+characteristic dissipation lengthscale is $\sim
+\frac{\sqrt{\mathrm{Ri}}}{k_{z0}}$.
+
 \clearpage
 
 \appendix

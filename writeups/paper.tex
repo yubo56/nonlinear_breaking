@@ -115,6 +115,48 @@
 
 \section{Introduction}
 
+Compact white dwarf (WD) binary systems, with orbital periods in the range of
+minutes to hours, are important for a range of astrophysical problems. They are
+the most important sources of gravitational waves (GWs) for the Laser
+Interferometric Space Antenna (LISA)\cite{lisa}. They are also thought to
+produce interesting optical transients such as underluminous
+supernovae\cite{underlum}, Ca-rich fast transients\cite{carich}, and tidal
+novae\cite{tidal_novae}. Most importantly, they have been proposed as the likely
+progenitors of type Ia supernovae (e.g.~\cite{Ia0,webbink} or more
+recently\cite{Ia1,Ia2}). While presently only a few tens of compact WD binaries
+are known\cite{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
+expand the catalog to a few hundreds\cite{lsst_wd} (results based on
+\emph{Gaia}'s second data release have already begun to
+appear\cite{gaiaDD,gaiaDD2}), and the Large Synoptic Survey Telescope (LSST,
+first light scheduled for 2020) will likely detect a few thousand
+more\cite{lsst_wd}. These observations will significantly advance the
+understanding of WD binaries and their evolution. My proposed theoretical and
+computational research is well-timed to take advantage of these new advances.
+
+In spite of the broad importance of WD binaries, the evolution of these systems
+prior to their final mergers is not well understood. Much of this uncertainty
+comes from our imprecise understanding of tidal interactions, which play an
+important role during a compact WD binary's inspiral\cite{fullerII}. Previous
+studies have shown that these interactions manifest as tidal excitation of
+internal gravity waves (IGW), waves in the WD fluid restored by the buoyancy
+force due to density stratification\cite{fullerI}. As these waves propagate
+outwards towards the WD surface, they grow in amplitude until they break, as do
+ocean waves on a shore, and transfer both energy and angular momentum from the
+binary orbit to the outer envelope of the WD\cite{fullerI,fullerII}.
+
+Previous works have found that the dissipation of IGW can generate significantly
+more energy than thermal radiation from the isolated WD surface and is thus a
+major contributor to the WD energy budget\cite{fullerII,fullerIV}. However,
+these works parameterized the wave breaking process in an ad hoc manner. The
+details of dissipation, namely the location and spatial extent of the wave
+breaking, affect the observable outcome: dissipation near the surface of the WD
+can be efficiently radiated away and simply brightens the WD, while dissipation
+deep in the WD envelope causes an energy buildup that results in energetic
+flares\cite{tidal_novae}. Works in other fields based on numerical simulations
+show that strongly nonlinear wave breaking behaves differently than predictions
+based in linear and weakly nonlinear theory\cite{winters1994,barker_ogilvie}.
+Such fully nonlinear numerical simulations have not been performed for WDs.
+
 % Usual WD binaries introduction, from proposals
 
 % IGW tidal dissipation has been thoroughly studied in many astrophysical
@@ -132,77 +174,95 @@
 % known to play a crucial role in IGW wavebreaking (Sutherland x2).
 
 % We study IGW breaking in the plane-parallel approximation in 2D. Known to
-% describe both wave steepening (Kloyermeister 1991) and captures mean flow
+% describe both wave steepening (klostermeyer 1991) and captures mean flow
 % absorption (Booker & Bretherton). While the details of breaking are presently
 % understood to be 3D (Winters & d'Asaro), we argue in (section) that our
 % results should be qualitatively similar to 3D (both 2D and 3D exhibit KHI, and
 % since we are able to resolve KHI, the spinup in 3D should be similar?).
 
-In \autoref{s:equations}, we will cover the numerical setup. In \autoref{s:lin}, we
-will discuss the agreement of our simulation in the low-amplitude limit with
-analytical linear theory. In \autoref{s:nonlin} we will present a few reference
-simulations illustrating critical layer absorption depositing horizontal angular
-momentum into the fluid.
+In \autoref{s:equations}, we will describe the system of equations we will
+use to analyze IGW breaking. In \autoref{s:theory}, we discuss relevant
+analytical results. In \autoref{s:sim} we present the results of numerical
+simulations. Finally, in \autoref{s:discussion} we discuss the results of the
+preceeding section.
 
-\section{Equations}\label{s:equations}
+\section{Problem Description}\label{s:equations}
 
 We consider an incompressible, isothermal fluid, representative of degenerate
-matter in WD bulks, in 2D. We assume a barotropic equation of state as a first
-approximation. As we are interested in the behavior of the wave far from the
-center of the WD, we approximate the gravitational field as uniform. We model
-the background density stratification as $\rho_0(x, z) = \rho_0(z) = \rho_0(z=0)
-e^{-z/H}$ for some reference density $\rho_0(z=0) = \at{\rho_0(z)}_{z = 0}$.
+matter in WD bulks, in 2D. We neglect temperature variations and assume a
+barotropic equation of state as a first approximation. As we are interested in
+the behavior of the wave far from the center of the WD, we approximate the
+gravitational field as uniform. We model the background density stratification
+as $\rho_0(x, z) = \rho_0(z) = \rho_0(z=0) e^{-z/H}$ for some reference density
+$\rho_0(z=0) = \at{\rho_0(z)}_{z = 0}$.
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
-\begin{subequations}\label{se:fc_orig}
+\begin{subequations}\label{se:nl_orig}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \md{\rho}{t} &= 0 ,\label{eq:fc_density}\\
-        \md{\vec{u}}{t} + \frac{\vec{\nabla}P}{\rho} + g\hat{z} &= 0.
+        \md{\rho}{t} &= 0 ,\label{eq:nl_density}\\
+        \md{\vec{u}}{t} + \frac{\vec{\nabla}p}{\rho} + g\hat{z} &=
+            0.\label{eq:nl_mom}.
     \end{align}
 \end{subequations}
-$\md{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$ is the material
-derivative. $\vec{u}, \rho, P$ are the fluid dynamical variables and $-g\hat{z}$
-is constant gravitational acceleration. Note that at hydrostatic equilibrium
-$\pd{}{t} = 0$ we have $\vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 = \rho_0
-gH$. A shear flow $u_x(x, z, t) = u_x(z)$ is permitted in hydrostatic
-equilibrium, but we will initially consider no shear flow in equilibrium.
+$\md{}{t} = \pd{}{t} + \p*{\vec{u} \cdot \vec{\nabla}}$ is the Lagrangian or
+material derivative. $\vec{u}, \rho, p$ denote the velocity field, density and
+pressure respectively. We denote $-g\hat{z}$ constant gravitational
+acceleration. Note that at hydrostatic equilibrium $\pd{}{t} = 0$ we have
+$\vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 = \rho_0 gH$. A shear flow
+$u_x(x, z, t) = u_x(z)$ is permitted in hydrostatic equilibrium, but we will
+initially consider no shear flow in equilibrium.
 
-\section{Internal Gravity Waves: Linear Theory}
+In practice, it is convenient to introduce coordinate $\Upsilon = \ln
+\frac{\rho}{\rho_0}$. This both identically enforces $\rho > 0$ and avoids
+numerical issues if $\rho$ is small. We also define reduced pressure $P =
+\frac{p}{\rho}$. Then, we may rewrite the second two equations of
+\autoref{se:nl_orig} as
+\begin{subequations}\label{se:nl_upsilon}
+    \begin{align}
+        \md{\Upsilon}{t} + u_z \pd{\ln \rho_0}{z} &= 0,\label{eq:nl_up_density}
+            \\
+        \md{\vec{u}}{t} + \vec{\nabla}P + P\vec{\nabla}\Upsilon + g\hat{z} &= 0.
+    \end{align}
+\end{subequations}
+Note that in the new coordinates, hydrostatic equilibrium corresponds to
+$\Upsilon_0 = 1, P_0 = gH$.
 
-\subsection{Analytical Properties}
+\section{Internal Gravity Wave Theory}\label{s:theory}
+
+\subsection{Analytical Properties: Linear}
 
 In the small perturbation limit, where flow velocities are small compared to the
 characteristic space and time scales $\pd{}{t} \gg \vec{u} \cdot \vec{\nabla}$,
-we linearize \autoref{se:fc_orig} by ignoring the advective components of the
-material derivative, defining $\rho_1 \equiv \rho - \rho_0 \ll \rho_0 \ll
-\rho_0$ and $P_1 \equiv P - P_0 \ll P_0$ deviations from equilibrium and obtain:
+we may linearize \autoref{se:nl_upsilon}. We ignore the advective components of the
+material derivative and consider small deviations $\Upsilon_1 = \Upsilon -
+\Upsilon_0, P_1 = P - P_0$ about hydrostatic equilibrium:
 \begin{subequations}\label{se:lin_homo}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \pd{\rho_1}{t} - \frac{u_{z} \rho_0}{H} &= 0,\\
-        \pd{\vec{u}}{t} + \frac{\vec{\nabla}P_1}{\rho_0}
-            + \frac{\rho_1 g\hat{z}}{\rho_0}
+        \pd{\Upsilon_1}{t} - \frac{u_{z}}{H} &= 0,\\
+        \pd{\vec{u}}{t} + \vec{\nabla}P_1
+            + \p*{1 + \Upsilon_1} g\hat{z}
             &= 0.
     \end{align}
 \end{subequations}
 
-It is well known that the solutions to the $F = 0$ homogeneous
-\autoref{se:lin_homo} are of form\cite{drazin,sutherland0}:
+This can be solved to obtain solutions up to undetermined amplitude $A$ the
+well-known result\cite{drazin,sutherland0}:
 \begin{subequations}\label{se:lin_sol}
     \begin{align}
         u_z\p*{x, z, t} &= Ae^{z/2H}e^{i(k_{0x}x + k_{0z}z - \omega_0 t)},\\
         \omega_0^2 &= \frac{N^2k_{0x}^2}{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}},
+            \label{eq:disp_rel}
     \end{align}
 \end{subequations}
-up to undetermined amplitude $A$, and
+where
 \begin{equation}
     N^2 \equiv g^2\p*{\rd{\rho}{P} - \at{\pd{\rho}{P}}_{ad}}
         = \frac{g}{H},
 \end{equation}
-is the Brunt-V\"ais\"al\"a/buoyancy frequency for our incompressible,
-exponentially stratified atmosphere.
+the Brunt-V\"ais\"al\"a frequency is constant
 
 In the weak stratification limit $k_{0z}H \gg 1$, the solution exhibits the
 following characteristics:
@@ -212,12 +272,13 @@ following characteristics:
 
     \item The phase and group velocities can be computed respectively:
         \begin{align}
-            \vec{c}_{ph} &= \frac{Nk_{0x}}{k_{0x}^2 + k_{0z}^2 + 1/4H^2} \hat{k},\\
+            \vec{c}_{ph} &=
+                \p*{\frac{\hat{x}}{k_{0x}} + \frac{\hat{z}}{k_{0z}}}\omega,\\
             \vec{c}_{g} &= \frac{N\p*{k_{0x}k_{0z}\hat{x}
                 - \p*{k_{0z}^2 + \frac{1}{4H^2}}\hat{z}}}
                 {\p*{k_{0x}^2 + k_{0z}^2 + \frac{1}{4H^2}}^{3/2}} \nonumber\\
-                &\approx \frac{Nk_{0z}}{k_{0x}^2 + k_{0z}^2}\p*{k_{0x}\hat{x} -
-                k_{0z}\hat{z}}.
+                &\approx \frac{\omega k_{0z}}{\abs*{\vec{k}_0}^{3/2}}
+                    \p*{k_{0x}\hat{x} - k_{0z}\hat{z}}.
         \end{align}
         We recover the usual result $\vec{c}_{ph} \cdot \vec{c}_g = 0$
         (e.g.\ \cite{drazin,sutherland1}). Note that an IGW transporting energy
@@ -226,129 +287,133 @@ following characteristics:
     \item The time-averaged total $x$-momentum flux in the $\hat{z}$ direction
         can be computed. Since the linear solution is separable as $f(x, z, t) =
         f(z)e^{i(k_{0x}x - \omega_0 t)}$, $x$ averaging and time averaging are
-        equivalent, so we may write ($\ev*{\dots}_x$ denotes $x$-averaging)
+        equivalent, so we may write
         \begin{align}
             S_{px, z} &\equiv \ev*{\rho u_x u_z}_x \equiv
                 \frac{1}{L_x}\int_0^{L_x}\limits \rho u_x u_z\;\mathrm{d}x
                     \nonumber\\
-                &\approx -\frac{A^2}{2}\rho_0(z=0)\frac{k_{0z}}{k_{0x}}.
+                &\approx -\frac{A^2}{2}\rho_0(z=0)\frac{k_{0z}}{k_{0x}},
                     \label{eq:fpx_lin}
         \end{align}
-
-    \item Finally, it may be noted that horizontally averaged horizontal
-        momentum $p_x = \ev*{\rho u_x}_x$ obeys $\pd{p_x}{t} + \pd{S_{px}}{z} =
-        0$. Since flux is transported on the group velocity
-        timescale\cite{sutherland0}, this simplifies to the known expression for
-        the wave-induced horizontal mean flow\cite{sutherland0,sutherland1}
-        \begin{equation}
-            \bar{U}_0 \equiv \ev*{u_x}_x = \frac{\ev*{u_xu_z}_x}{c_{gz}}
-        \end{equation}
-        We've denoted $c_{gz} = \at{\pd{\omega}{k_{z}}}_{k_{z0}}$ the vertical group
-        velocity. This may also be rewritten
-        \begin{equation}
-            \bar{U}_0 = -\frac{A^2}{2}e^{\frac{z - z_0}{H}}
-                \frac{k_{0z}}{k_{0x}}c_{gz}, \label{eq:u0_lin}
-        \end{equation}
-        where $c_{gz} = -\frac{Nk_{0x}k_{0z}}{\p*{k_{0x}^2 + k_{0z}^2 +
-        \frac{1}{4H^2}}^{3/2}}$.
+        where $\ev*{\dots}_x$ denotes $x$-averaging.
 \end{itemize}
 
 \subsection{Wave Generation}
 
 To model a continuous IGW wave train excited deep in the WD interior propagating
-towards the surface without unnecessary computational cost, we excite an
-IGW wave train from the bottom of the simulation domain. We use a volumetric
-forcing term to excite IGW at some $z_0 > 0$ interior to the simulation
-domain\footnote{Interfacial forcing at the bottom boundary incurs severe CFL
-timestepping constraints, as we use a Chebyshev polynomial basis along the $z$
-axis in our spectral method which has very small grid spacing at the
-boundaries.}. Our forcing excites both IGWs propagating upwards, imitating a
+towards the surface, we use a volumetric forcing term to excite IGW near the
+bottom of the simulation domain\footnote{Interfacial forcing at the bottom
+boundary incurs strong stability limits, as we use a Chebyshev polynomial basis
+along the $z$ axis in our spectral method which has very small grid spacing at
+the boundaries.}. Our forcing excites both IGWs propagating upwards, imitating a
 wave tidally excited deeper in the WD, and downwards, which are damped away by
-damping layers (see \autoref{ss:numerics}) before inducing strict
-Courant-Friedrichs-Lewy (CFL) timestepping constraints.
+the damping layers described in \autoref{ss:damping}.
 
 As not to interfere with the incompressibility constraint, we force the system
-on the density equation, replacing \autoref{eq:fc_density} with
+on the density equation. This constitutes replacing \autoref{eq:nl_up_density}
+with
 \begin{equation}
-    \md{\rho}{t} = Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
+    \md{\Upsilon}{t} + u_z\pd{\ln \rho_0}{z}
+        = Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
             \cos \p*{k_{0x}x - \omega_0 t}.\label{eq:vol_drive}
 \end{equation}
 Using a narrow Gaussian profile excites a broad $k_z$ wavenumber spectrum, and
-only the $k_{0z}$ satisfying the IGW's dispersion relation for the given
-$k_{0x}, \omega_0(k_{0x}, k_{0z})$ will propagate.
+only the $k_{0z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the
+given $k_{0x}, \omega_0(k_{0x}, k_{0z})$ will propagate.
 
-The linearized \autoref{eq:vol_drive}, obtained by dropping the advective term
-in the material derivative, can be solved analytically up to good accuracy. We
-may first approximate the driving term using $e^{\frac{-(z - z_0)^2}{2\sigma^2}}
-\approx \sqrt{2\pi \sigma^2}\delta(z - z_0)$ if $\sigma \to 0$\footnote{$\sigma$
-must be large enough to be numerically resolved by the spectral code.}. This
-system is solved exactly by matching the two homogeneous solutions above and
-below $z_0$. We may then approximately relax the solution to $k_{0z}\sigma
-\lesssim 1$: an extra factor of $e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises
-compared to the $\delta$-function solution (evaluating the Fourier Transform
-of $e^{-\frac{(z - z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
+In the linearized system, the effect of this forcing can be solved analytically
+up to good accuracy: we first approximate the driving term using
+$e^{\frac{-(z - z_0)^2}{2\sigma^2}} \approx \sqrt{2\pi \sigma^2}\delta(z -
+z_0)$, the $\sigma \to 0$ limit\footnote{In practice, $\sigma$ must be large
+enough to be numerically resolved by the spectral code.}. This system is solved
+exactly by matching the two homogeneous solutions above and below $z_0$. We may
+then approximately relax the solution to nonzero $\sigma$: an extra factor of
+$e^{-\frac{(k_{0z}\sigma)^2}{2}}$ arises compared to the $\delta$-function
+solution (evaluating the Fourier Transform of $e^{-\frac{(z -
+z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 \begin{align}
-    u_{1z}&(x, z, t) ={} \frac{Fgk_{0x}^2}{\rho_0(z_0)\omega_0^2}
+    u_{1z}&(x, z, t) ={} \frac{Fgk_{0x}^2}{\omega_0^2}
         \frac{1}{2ik_{0z}}\frac{e^{\frac{-(k_{0z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
-        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x + k_{0z}(z - z_0) - \omega_0 t)
-            + \frac{1}{2k_{0z}H}}
+        e^{\frac{z - z_0}{2H}}e^{i\p*{k_{0x}x + k_{0z}(z - z_0) - \omega_0 t
+            + \frac{1}{2k_{0z}H}}}
             & z > z_0\\
-        e^{\frac{z - z_0}{2H}}e^{i(k_{0x}x - k_{0z}(z - z_0) - \omega_0 t)
-            + \frac{1}{2k_{0z}H}}
+        e^{\frac{z - z_0}{2H}}e^{i\p*{k_{0x}x - k_{0z}(z - z_0) - \omega_0 t
+            + \frac{1}{2k_{0z}H}}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
 The $z > z_0$ solution models an upwards-propagating IGW wavetrain inbound on
-the simulation domain from below. The solution for $u_{1x}(x, z, t)$ moreover is
-just $u_{1x} \approx \frac{k_{0z} u_{1z}}{k_{0x}}e^{\frac{1}{2k_{0z}H}}$.
+the simulation domain from below. The solution for $u_{1x}(x, z, t)$ is
+correspondingly $u_{1x} \approx \frac{k_{0z} u_{1z}}{k_{0x}}e^{\frac{i}{2k_{0z}H}}$.
 
-\section{Numerical Simulation}
+\subsection{Wave Breaking}
+
+In developing the results above, we have neglected advective terms $\pd{}{t} \gg
+\vec{u} \cdot \vec{\nabla}$. However, since $\abs*{\vec{u}} \propto e^{z/2H}$,
+any nonzero amplitude IGW will eventually violate the linearity criterion. This
+regime is relevant in practice since the IGW grows to nonlinear amplitudes
+before it reaches the surface of the WD\cite{fullerI,fullerII}. We can coarsely
+estimate the height at which this happens by $\abs*{\vec{u}}(z) \gtrsim
+\frac{\omega}{\abs*{\vec{k}}}$. This corresponds to when the Lagrangian
+displacement $\vec{\xi} \equiv \vec{u} / \omega$ satisfies $\vec{\xi} \cdot
+\vec{k} \gtrsim 1$, the same criterion used in\cite{fullerI}.
+
+The general understanding of nonlinear IGW breaking is that the waves'
+interactions with the mean flow of the fluid transfer horizontal momentum from
+the waves into the fluid; such a process has been conjectured to be responsible
+for tidal synchronization in stellar binaries\cite{zahn75,gn89} as well as the
+quasi-biennial oscillation\cite{lindzen_qbo}. The details of this process have
+been laid out in a few key papers: IGWs are globally unstable to resonant
+three-wave interactions\cite{drazin}, causing energy transfer out of the IGW to
+daughter modes. These steeper daughter modes facilitate wave breaking,
+depositing horizontal momentum in the fluid's mean flow\cite{klostermeyer}. Once
+the mean flow reaches the horizontal phase velocity of the parent IGW, a
+critical layer forms at which the frequency of the IGW is Doppler-shifted to
+zero. The interaction of the parent IGW with the mean flow was first studied in
+the inviscid, linear regime in~\cite{booker_bretherton}, which found nearly
+complete absorption. This result was reproduced with nonzero
+viscosity\cite{hazel}, but weakly nonlinear theory\cite{brown_stewartson} and
+fully nonlinear simulations\cite{winters1994} suggest that nonlinear effects can
+induce reflection.
+
+An estimate of where these mean flow effects become important can be made using
+the wave-induced mean flow formula\cite{eliassen_palm_cite,sutherland0}:
+\begin{equation}
+     \ev*{u_x} = \bar{U}_0 \equiv \frac{1}{L_x}
+        \int\limits u_x\;\mathrm{d}x = \frac{\ev*{u_xu_z}_x}{c_{g,z}},
+\end{equation}
+where $\ev*{\dots}x$ denotes horizontal averaging. Setting $\bar{U}_0 = c_{ph,
+x}$ the critical layer condition, we can solve that $\vec{\xi} \cdot \vec{k}
+= \sqrt{\frac{k_x}{k_z}}$ is where the mean flow attains the horizontal phase
+velocity. In an astrophysical context, $N \gg \omega$ and $k_z \gg k_x$. Thus,
+wave breaking may occur significantly earlier than assumed in current
+astrophysics literature.
+
+\section{Internal Gravity Wave Numerical Simulation}\label{s:sim}
+
+To study IGW breaking as a weak perturbation grows to nonlinear amplitudes, we
+perform direct numerical simulation using Dedalus\cite{dedalus} a spectral
+numerical method. Our region of interest is strictly interior to the WD and so
+our simulation must strive to eliminate boundary effects resulting from
+nonphysical boundaries. To do so, we adopt periodic boundary conditions in the
+$x$ direction and damping layers (described in \autoref{ss:damping}) in the $z$
+direction to damp perturbations exiting the domain. Correspondingly, we use a
+Fourier basis in the $x$ direction and a Chebyshev in the $z$ direction.
 
 \subsection{Numerical Parameters}\label{ss:numerics}
 
 We nondimensionalize by taking $H = N = \rho_0(z=0) = 1$ in
-\autoref{se:fc_orig}.
+\autoref{se:nl_orig}.
 
-where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zones. A
-Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
-regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
-\frac{\omega}{\abs*{k_{0z}}}\frac{L_z}{2\pi N_z}$ was found to be suitable for
-$N_z = 1024$, where $k_{0z}$ is the wavenumber of the excited linear mode.
-%%%
-
-% Description of spectral method, basis functions, initial conditions
 % Grid Size
 % Viscosity + diffusivity, damping layers (to simulate radiative BC)
 % timestepping? RK443, (CFL limiter??)
 
-The exact implementation of these equations in Dedalus is described in
-\autoref{ss:strat_impl}.
-
-\section{Linear Regime}\label{s:lin}
-
-We first test our numerical simulation with a ``linear'' simulation, where
-all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
-\rho_0$ and $\vec{u} \cdot \vec{\nabla} \ll \partial_t$. We emphasize that our
-``linear'' simulations solve the full nonlinear equations, just in the weak
-perturbation limit.
-
-$\omega$ is chosen by inverting $\omega(k_{0x}, k_{0z})$ dispersion relation for fixed
-$k_{0x} = 2\pi / L_x$ and some desired $k_{0z} = -2\pi/H$, and $\sigma \lesssim
-\frac{1}{k_{0z}}$ is used to excite a broad band of $k_z$ modes including the
-desired $k_{0z}$ mode.
-
-\subsection{Numerical Simulation}\label{ss:lin_ns}
-
-% Nonlinear: Critical layer absorption (viscous = Hazel, nonlin = Winters),
-% wave-induced mean flow, horizontal momentum flux
-
-We simulate using Dedalus\cite{dedalus} a spectral numerical method. We use a
-Fourier basis in the $x$ direction and a Chebyshev in the $z$ direction. Our
-simulation starts with all perturbation quantities at zero, an initial condition
-at rest. Our parameters are chosen to be as similar as possible to the later
-nonlinear simulations (\autoref{s:nonlin}). We choose as follows:
+Our
+simulation starts with all perturbation quantities at zero. We choose as
+follows:
 \begin{itemize}
     \item $k_{0x}$: Astrophysical IGWs have $k_{0x} \ll k_{0z}$, so we choose $k_{0x}
         = \frac{2\pi}{L_x}$ the smallest permitted wavenumber permitted by
@@ -374,14 +439,52 @@ nonlinear simulations (\autoref{s:nonlin}). We choose as follows:
         physically representative but gives more wavenumber space for the
         nonlinear cascade. We then invert $\omega_0 = \omega(k_{0x}, k_{0z})$.
 
-    \item We choose $\nu$ $1/10$ that of the nonlinear simulation, to verify
-        that the undamped linear solution is recovered.
-
     \item We choose $F$ forcing strength $1/20$ that of the nonlinear
         simulation, which keeps the flow amplitude sufficiently small to be
         treated in the linear approximation at all points in the simulation
         domain.
 \end{itemize}
+
+\subsection{Damping Layers}\label{ss:damping}
+
+To imitate an infinite fluid using a finite simulation domain, we use periodic
+boundary conditions in the $x$ direction and damping layers at the top and
+bottom of the $z$ direction. This damps waves that reach the edge of the
+simulation domain without inducing nonphysical reflection. Specifically, these
+are implemented by introducing linear damping terms to \autoref{se:nl_upsilon}:
+\begin{align}
+    \md{\Upsilon}{t} + u_z \pd{\ln \rho_0}{z} &=
+        -\Gamma(z)\Upsilon,\nonumber\\
+    \md{\vec{u}}{t} + \vec{\nabla}P + P\vec{\nabla}\Upsilon + g\hat{z} &=
+        - \Gamma(z)\vec{u},\nonumber\\
+    \frac{1}{2\tau}\s*{2 + \tanh \frac{z - z_T}{\Delta z}
+        + \tanh \frac{z_B - z}{\Delta z}} &= \Gamma(z),\label{eq:Gamma}
+\end{align}
+where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zone.
+This strongly damps perturbations below $z_B$ and above $z_T$ with damping time
+$\tau$, negligibly affects dynamics between $z_B, z_T$ and has transition width
+governed by $\Delta z$; we use $\Delta z = 0.025L_z$. This prescription, used in
+similar studies\cite{lecoanet_damp}, has the advantage of being smooth,
+important for spectral methods. As these damping terms are linear, they are
+retained in the linearized equations of motion as well.
+
+The full implementation of the fluid equations in Dedalus is described in
+\autoref{ss:strat_impl}.
+
+\subsection{Linear Regime}\label{ss:lin}
+
+We first test our numerical simulation with a ``linear'' simulation, where
+all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
+\rho_0$ and $\vec{u} \cdot \vec{\nabla} \ll \partial_t$. We emphasize that our
+``linear'' simulations solve the full nonlinear equations, just in the weak
+perturbation limit.
+
+$\omega$ is chosen by inverting $\omega(k_{0x}, k_{0z})$ dispersion relation for fixed
+$k_{0x} = 2\pi / L_x$ and some desired $k_{0z} = -2\pi/H$, and $\sigma \lesssim
+\frac{1}{k_{0z}}$ is used to excite a broad band of $k_z$ modes including the
+desired $k_{0z}$ mode.
+
+\subsection{Numerical Simulation}\label{ss:lin_ns}
 
 A representative snapshot of this simulation
 is provided in \autoref{fig:linear_nonu}. Key features to note:
@@ -390,10 +493,6 @@ is provided in \autoref{fig:linear_nonu}. Key features to note:
 
     \item $S_{px}$ is seen to be constant, as would be expected by
         \autoref{eq:fpx_lin}.
-
-    \item $\bar{U}_0$ agrees with \autoref{eq:u0_lin} at lower $z$ but deviates
-        significantly at higher $z$. This deviation is caused by the top damping
-        zone that does not conserve horizontal momentum.
 \end{itemize}
 We also include a qualitatively similar snapshot of the same simulation run
 using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
@@ -415,9 +514,14 @@ using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
     }\label{fig:linear_nu}
 \end{figure}
 
-\subsection{Nonlinear Regime}\label{s:nonlin}
-
 \subsection{Mean Flow Critical Layer Absorption}
+
+A
+Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
+regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
+\frac{\omega}{\abs*{k_{0z}}}\frac{L_z}{2\pi N_z}$ was found to be suitable for
+$N_z = 1024$, where $k_{0z}$ is the wavenumber of the excited linear mode.
+%%%
 
 In past studies of IGWs in WDs (cite Fuller \& Lai), $\xi_z \equiv
 \frac{u_z}{\omega_0}$ the Lagrangian fluid displacement was often used towards
@@ -431,7 +535,7 @@ This is consistent with the picture put forth in e.g.\ Goldreich and Nicholson
 (cite).
 
 A purely horizontal shear flow $\bar{U}_0(z) \hat{x}$ can be seen in
-\autoref{se:fc_orig} to have the effect of modifying time derivatives
+\autoref{se:nl_orig} to have the effect of modifying time derivatives
 $\partial_t$ to their frequency in the comoving frame of the fluid $\partial_t -
 \bar{U}_0(z)\partial_x$. For a critical value $\omega_0 - \bar{U}_c k_{0x} = 0$,
 the frequency of the linear wave in the fluid's frame of reference vanishes and
@@ -481,11 +585,6 @@ are:
         $\vec{u} \cdot \vec{\nabla}$ being of the same order as the time
         derivative $\partial_t$ for flow velocities $\vec{u} \sim
         \frac{\omega_0}{k_{0z}}$ at the grid spacing.
-
-    \item We choose $F$ such that $\bar{U}_0(z)$ predicted by
-        \autoref{eq:u0_lin} exceeds $\bar{U}_c$ critical velocity for $z <
-        L_z$, i.e.\ the wave-induced mean flow is sufficiently large within the
-        simulation domain to induce critical layer absorption.
 \end{itemize}
 
 Two representative snapshots from our simulation are provided in
@@ -550,6 +649,8 @@ where the Richardson number does not go nearly as low.
     viscosity.}\label{fig:nl1_f_ri}
 \end{figure}
 
+\section{Discussion}\label{s:discussion}
+
 \clearpage
 \onecolumngrid
 \appendix
@@ -569,7 +670,7 @@ background fields satisfy hydrostatic equilibrium $\vec{\nabla}\varpi_0 +
 we find $\varpi_0 = gH$. We further change variables to $\Upsilon = \ln \rho -
 \ln \rho_0$ and $\varpi_1 = \varpi - \varpi_0$ deviations from the background
 state to obtain a system of equations at most quadratic in fluid fields:
-\begin{subequations}\label{se:fc_var}
+\begin{subequations}\label{se:nl_var}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
         \pd{\Upsilon}{t} + \p*{\vec{u} \cdot \vec{\nabla}} \Upsilon
@@ -591,7 +692,7 @@ The nonlinear terms in the above equations will transfer energy from lower
 wavenumbers to higher wavenumbers. Since spectral codes have no numerical
 dissipation, artificial dissipation must be added. To ensure the dissipitive
 system conserves horizontal momentum, we begin by adding dissipitive terms to
-the flux-conservative form of the Euler fluid equations \autoref{se:fc_orig} (we
+the flux-conservative form of the Euler fluid equations \autoref{se:nl_orig} (we
 use stress tensor $\tau_{ij} = P\delta_{ij}$):
 \begin{subequations}
     \begin{align}
@@ -607,7 +708,7 @@ The same $\nu$ is used for both the diffusive and viscous term, though this is
 not required. Since the dissipation is not physical and is purely used for
 numerical stability, we choose it such that hydrostatic equilibrium is not
 modified. Some algebraic manipulation to re-cast it in the form of
-\autoref{se:fc_var} gives
+\autoref{se:nl_var} gives
 \begin{subequations}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} &= 0,\\
@@ -657,9 +758,7 @@ equations as simulated in Dedalus:
             &+ 2\nu \p*{\p*{\p*{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_z -
                 \frac{1}{H}\partial_z u_{z}}
             -\Gamma(z) u_z - \p*{\vec{u} \cdot \vec{\nabla}}u_z
-            - T_1 \pd{\Upsilon}{z},\\
-        \Gamma(z) &= 7.5\s*{2 + \tanh \frac{z - z_T}{(L_z - z_T) / 2}
-            + \tanh \frac{z_B - z}{z_B / 2}},\label{eq:Gamma}
+            - T_1 \pd{\Upsilon}{z}.
     \end{align}
 \end{subequations}
 
