@@ -722,7 +722,7 @@ def write_front(name, params):
             ux_res_slice.append(ux_res[:, slice_idx - 1])
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
-            amps.append(x_amp)
+            amps.append(amp)
             Spx01.append(np.sum(rho0 * x_lin_est * duz, axis=0) / N_X)
             Spx10.append(np.sum(rho0 * z_lin_est * dux, axis=0) / N_X)
             Spx11.append(np.sum(rho0 * dux * duz, axis=0) / N_X)
@@ -1035,7 +1035,7 @@ def plot_front(name, params):
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
         prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ * 3/4
-        S_excited = amps**2[start_idx: ] * \
+        S_excited = (amps**2)[start_idx: ] * \
             np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  S_excited,
