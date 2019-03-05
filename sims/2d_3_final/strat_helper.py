@@ -28,7 +28,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 15
+plot_stride = 10
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -74,21 +74,20 @@ def get_anal_uz(params, t, x, z):
 
     return uz_est * (
         -np.exp((z - Z0) / 2 * H)
-        * np.exp(-k_damp
-                 * (z - Z0))
+        * np.exp(-k_damp * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (2 * KZ * H)))
 
 def get_anal_ux(params, t, x, z):
     populate_globals(params)
-    ux_est = F * get_uz_f_ratio(params) * KZ / KX
+    uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
-    return ux_est * (
-        np.exp((z - Z0) / 2 * H)
-        * np.exp(-k_damp * (z[0] - Z0))
-        * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (KZ * H)))
+    return uz_est * np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z[0] - Z0)) * (
+        KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
+        - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
+            / (2 * H * KX)
+    )
 
 def get_idx(z, z0):
     return int(len(np.where(z0 < z)[0]))
@@ -303,6 +302,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
         # load into state_vars
         for idx in range(len(sim_times))[start::plot_stride]:
             solver.load_state(filename, idx)
+            print(solver.sim_time, sim_times[idx])
 
             for varname in dyn_vars:
                 values = solver.state[varname]
@@ -669,7 +669,7 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=4, start=0)
+            name, params, dyn_vars, plot_stride=1, start=0)
         x = domain.grid(0, scales=INTERP_X)
         z = domain.grid(1, scales=INTERP_Z)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
@@ -681,8 +681,7 @@ def write_front(name, params):
         Spx01 = []
         Spx10 = []
         Spx11 = []
-        x_amps = []
-        z_amps = []
+        amps = []
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
@@ -693,17 +692,25 @@ def write_front(name, params):
             # figure out what to subtract by convolution
             front_idx = get_front_idx(S_px[t_idx], flux_threshold)
             z_bot = get_idx(Z0 + 3 * S, z0)
+            z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
-            front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
-            norm = np.outer(np.ones(N_X), np.exp(-z0[z_bot: front_idx] / H))
+            if NL:
+                # front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
+                front_idx = z_top
+            else:
+                front_idx = get_idx(SPONGE_HIGH - 2 * SPONGE_WIDTH, z0)
             anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: front_idx]
+            norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
             anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: front_idx]
+            norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
             x_amp = np.sum(state_vars['ux'][t_idx, :, z_bot: front_idx]
-                           * anal_ux / norm) / np.sum(anal_ux**2 / norm)
+                           * anal_ux / norm_x) / np.sum(anal_ux**2/ norm_x)
             z_amp = np.sum(state_vars['uz'][t_idx, :, z_bot: front_idx]
-                           * anal_uz / norm) / np.sum(anal_uz**2 / norm)
-            x_lin_est = x_amp * get_anal_ux(params, sim_time, x, z)
-            z_lin_est = z_amp * get_anal_uz(params, sim_time, x, z)
+                           * anal_uz / norm_z) / np.sum(anal_uz**2 / norm_z)
+            amp = (x_amp + z_amp) / 2
+            print(amp, x_amp, z_amp)
+            x_lin_est = amp * (KX / KZ) * get_anal_ux(params, sim_time, x, z)
+            z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
 
             dux = state_vars['ux'][t_idx] - x_lin_est
             duz = state_vars['uz'][t_idx] - z_lin_est
@@ -715,15 +722,14 @@ def write_front(name, params):
             ux_res_slice.append(ux_res[:, slice_idx - 1])
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
-            x_amps.append(x_amp)
-            z_amps.append(z_amp)
+            amps.append(x_amp)
             Spx01.append(np.sum(rho0 * x_lin_est * duz, axis=0) / N_X)
             Spx10.append(np.sum(rho0 * z_lin_est * dux, axis=0) / N_X)
             Spx11.append(np.sum(rho0 * dux * duz, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx01, Spx10, Spx11,
-                         x_amps, z_amps, u0, ux_res_slice, uz_res_slice), data)
+                         np.array(amps), u0, ux_res_slice, uz_res_slice), data)
     else:
         print('log file found, not regenerating')
 
@@ -746,18 +752,15 @@ def plot_front(name, params):
 
     print('Loading data')
     with open(logfile, 'rb') as data:
-        z0, sim_times, S_px, Spx01, Spx10, Spx11, x_amps, z_amps, \
+        z0, sim_times, S_px, Spx01, Spx10, Spx11, amps, \
             u0, ux_res_slice, uz_res_slice = pickle.load(data)
         Spx01 = np.array(Spx01) / flux_th
         Spx10 = np.array(Spx10) / flux_th
         Spx11 = np.array(Spx11) / flux_th
-        x_amps = np.array(x_amps)
-        z_amps = np.array(z_amps)
 
     tf = sim_times[-1]
     start_idx = get_idx(200, sim_times)
     t = sim_times[start_idx: ]
-    dt = np.mean(np.gradient(sim_times[1: -1])) # should be T_F / NUM_SNAPSHOTS
 
     S_px0 = [] # S_px averaged near origin
     dSpx_S = [] # Delta S_px using S criterion
@@ -803,6 +806,19 @@ def plot_front(name, params):
         plt.xlabel(r'$z(H)$')
         plt.ylabel(r'$S_{px} / S_0$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+        #####################################################################
+        # f_amps.png
+        #
+        # convolved amplitudes over time
+        #####################################################################
+        plt.plot(t,
+                 amps[start_idx: ],
+                 label=r'$A$')
+        plt.legend(fontsize=6)
+        plt.xlabel(r'$t (N^{-1})$')
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
     else:
@@ -933,7 +949,8 @@ def plot_front(name, params):
 
         # compute front position
         front_vel_S = dSpx_S / (RHO0 * np.exp(-front_pos_S / H) * u_c)
-        front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
+        front_pos_intg_S = np.cumsum((front_vel_S * np.gradient(sim_times))
+                                      [start_idx: ])
         front_pos_intg_S += zf - front_pos_intg_S[-1]
 
         # estimate incident Delta S_px if all from S_px0 that's viscously
@@ -1018,7 +1035,7 @@ def plot_front(name, params):
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
         prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ * 3/4
-        S_excited = (x_amps * z_amps)[start_idx: ] * \
+        S_excited = amps**2[start_idx: ] * \
             np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  S_excited,
@@ -1056,6 +1073,24 @@ def plot_front(name, params):
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
         plt.close()
 
+        #####################################################################
+        # f_amps.png
+        #
+        # convolved amplitudes over time
+        #####################################################################
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f.subplots_adjust(hspace=0)
+        ax1.plot(t,
+                 amps[start_idx: ],
+                 label=r'$A$')
+        ax1.legend(fontsize=6)
+        u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
+        ax2.plot(t, u0_dat)
+        ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
+        ax2.set_xlabel(r'$t (N^{-1})$')
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
+        plt.close()
+
     #########################################################################
     # fft.png
     #
@@ -1088,26 +1123,4 @@ def plot_front(name, params):
     ax1.legend(fontsize=6)
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
-    plt.close()
-
-    #####################################################################
-    # f_amps.png
-    #
-    # convolved amplitudes over time
-    #####################################################################
-    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-    f.subplots_adjust(hspace=0)
-    ax1.plot(t,
-             x_amps[start_idx: ],
-             label=r'$u_x / u_{x0}$')
-    ax1.plot(t,
-             z_amps[start_idx: ],
-             label=r'$u_z / u_{z0}$')
-    ax1.legend(fontsize=6)
-    ax1.set_ylabel(r'$u / u_0$')
-    u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
-    ax2.plot(t, u0_dat)
-    ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
-    ax2.set_xlabel(r'$t$')
-    plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
     plt.close()
