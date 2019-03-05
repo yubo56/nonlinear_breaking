@@ -52,8 +52,9 @@ def horiz_mean(field, n_x):
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
     populate_globals(params)
-    return (np.sqrt(2 * np.pi) * S * g * KX**2)\
-        * np.exp(-S**2 * KZ**2/2) / (2 * RHO0 * OMEGA**2 * KZ)
+    return (np.sqrt(2 * np.pi) * S * g *
+            KX**2) * np.exp(-S**2 * KZ**2/2) / (
+                2 * RHO0 * OMEGA**2 * KZ)
 
 def get_flux_th(params):
     return (F * get_uz_f_ratio(params))**2 / 2 * abs(KZ / KX) * RHO0
@@ -108,13 +109,17 @@ def set_ic(name, solver, domain, params):
     ux = solver.state['ux']
     z = domain.grid(1)
 
-    # turns on at Z0 + ZMAX / 2 w/ width 2 * lambda_z, turns off at sponge zone
-    z_bot = (Z0 + ZMAX) / 2
-    width = abs(np.pi / KZ)
-    z_top = z_bot + 2 * width
+    # turns on at Z0 + ZMAX / 2 w/ width lambda_z / 2 * pi, turns off at sponge zone
+    z_bot = (Z0 + ZMAX) * 0.4
+    width = abs(1.5 / KZ)
+    z_top = SPONGE_HIGH - 3 * (ZMAX - SPONGE_HIGH) * SPONGE_WIDTH
     ux['g'] = OMEGA / KX * UZ0_COEFF * (
         np.tanh((z - z_bot) / width) -
-        np.tanh((z - z_top) / (0.3 * (ZMAX - z_top)))) / 2
+        np.tanh((z - z_top) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)))) / 2
+    print(z_bot, z_top, width, ZMAX )
+    plt.plot(z[0, :], ux['g'][0, :])
+    plt.savefig('abc.png')
+    raise ValueError('foo');
     return 0, DT
 
 
