@@ -180,11 +180,11 @@ def get_solver(params):
     ''' sets up solver '''
     populate_globals(params)
     x_basis = de.Fourier('x',
-                         N_X // INTERP_X,
+                         N_X,
                          interval=(0, XMAX),
                          dealias=3/2)
     z_basis = de.Chebyshev('z',
-                           N_Z // INTERP_Z,
+                           N_Z,
                            interval=(0, ZMAX),
                            dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
@@ -217,14 +217,14 @@ def get_solver(params):
     solver.stop_iteration = np.inf
     return solver, domain
 
-def run_strat_sim(set_ICs, name, params):
+def run_strat_sim(name, params):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
 
     solver, domain = get_solver(params)
 
     # Initial conditions
-    _, dt = set_ICs(name, solver, domain, params)
+    _, dt = set_ic(name, solver, domain, params)
 
     cfl = CFL(solver,
               initial_dt=dt,
@@ -286,7 +286,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     merge(name)
 
     solver, domain = get_solver(params)
-    z = domain.grid(1, scales=INTERP_Z)
+    z = domain.grid(1, scales=1)
 
     i = 1
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -306,7 +306,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
 
             for varname in dyn_vars:
                 values = solver.state[varname]
-                values.set_scales((INTERP_X, INTERP_Z),
+                values.set_scales((1, 1),
                                   keep_data=True)
                 state_vars[varname].append(np.copy(values['g']))
                 state_vars['%s_c' % varname].append(
@@ -390,8 +390,8 @@ def plot(name, params):
     sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride,
         start=0)
 
-    x = domain.grid(0, scales=INTERP_X)
-    z = domain.grid(1, scales=INTERP_Z)
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
 
@@ -670,8 +670,8 @@ def write_front(name, params):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
             name, params, dyn_vars, plot_stride=1, start=0)
-        x = domain.grid(0, scales=INTERP_X)
-        z = domain.grid(1, scales=INTERP_Z)
+        x = domain.grid(0, scales=1)
+        z = domain.grid(1, scales=1)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
