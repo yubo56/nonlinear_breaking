@@ -71,43 +71,43 @@ if __name__ == '__main__':
                               'N_X': 64,
                               'N_Z': 256,
                               'Re_inv': 0.075})),
-       ('lin_2',
-        get_params(overrides={'F_MULT': 0.0005,
-                              'T_F': 4000,
-                              'DT': 0.1,
-                              'NL': False,
-                              'N_X': 64,
-                              'N_Z': 256,
-                              'Re_inv': 0})),
-       ('nl_1_masked',
-        get_params(overrides={'F_MULT': 1,
-                              'mask': True,
-                              'NL': True,
-                              'Re_inv': 0.7})),
-       ('nl_4_masked',
-        get_params(overrides={'F_MULT': 1,
-                              'mask': True,
-                              'NL': True,
-                                'Re_inv': 0.3})),
-       ('nl_6_masked',
-        get_params(overrides={'F_MULT': 1,
-                              'mask': True,
-                              'Re_inv': 0.2})),
+       # ('lin_2',
+       #  get_params(overrides={'F_MULT': 0.0005,
+       #                        'T_F': 4000,
+       #                        'DT': 0.1,
+       #                        'NL': False,
+       #                        'N_X': 64,
+       #                        'N_Z': 256,
+       #                        'Re_inv': 0})),
+       # ('nl_1_masked',
+       #  get_params(overrides={'F_MULT': 1,
+       #                        'mask': True,
+       #                        'NL': True,
+       #                        'Re_inv': 0.7})),
+       # ('nl_4_masked',
+       #  get_params(overrides={'F_MULT': 1,
+       #                        'mask': True,
+       #                        'NL': True,
+       #                          'Re_inv': 0.3})),
+       # ('nl_6_masked',
+       #  get_params(overrides={'F_MULT': 1,
+       #                        'mask': True,
+       #                        'Re_inv': 0.2})),
     ]
     if '-plot' in sys.argv:
-        for _, name, params_dict in tasks:
+        for name, params_dict in tasks:
             plot(name, params_dict)
 
     elif '-merge' in sys.argv:
-        for _, name, _ in tasks:
+        for name, _ in tasks:
             merge(name)
 
     elif '-write' in sys.argv:
-        for _, name, params_dict in tasks:
+        for name, params_dict in tasks:
             write_front(name, params_dict)
 
     elif '-front' in sys.argv:
-        for _, name, params_dict in tasks:
+        for name, params_dict in tasks:
             plot_front(name, params_dict)
 
     else:
