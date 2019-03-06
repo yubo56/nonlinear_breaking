@@ -116,10 +116,6 @@ def set_ic(name, solver, domain, params):
     ux['g'] = OMEGA / KX * UZ0_COEFF * (
         np.tanh((z - z_bot) / width) -
         np.tanh((z - z_top) / (SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)))) / 2
-    print(z_bot, z_top, width, ZMAX )
-    plt.plot(z[0, :], ux['g'][0, :])
-    plt.savefig('abc.png')
-    raise ValueError('foo');
     return 0, DT
 
 
