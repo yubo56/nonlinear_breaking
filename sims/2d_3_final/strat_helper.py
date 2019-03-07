@@ -110,7 +110,6 @@ def set_ic(name, solver, domain, params):
     print('No snapshots found')
     return 0, DT
 
-
 def add_lin_problem(problem):
     problem.add_equation('dx(ux) + dz(uz) = 0')
     problem.add_equation(
@@ -297,22 +296,11 @@ def load(name, params, dyn_vars, plot_stride, start=0):
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
             sim_times = np.array(dat['scales']['sim_time'])
-        # we let the file close before trying to reopen it again in load
-
-        # load into state_vars
-        for idx in range(len(sim_times))[start::plot_stride]:
-            solver.load_state(filename, idx)
-            print(solver.sim_time, sim_times[idx])
-
             for varname in dyn_vars:
-                values = solver.state[varname]
-                values.set_scales((1, 1),
-                                  keep_data=True)
-                state_vars[varname].append(np.copy(values['g']))
-                state_vars['%s_c' % varname].append(
-                    np.copy(np.abs(values['c'])))
+                state_vars[varname].extend(
+                    dat['tasks'][varname][start::plot_stride])
 
-        total_sim_times.extend(sim_times)
+        total_sim_times.extend(sim_times[start::plot_stride])
         i += 1
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
@@ -326,7 +314,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     state_vars['S_{px}'] = RHO0 * np.exp(-z/ H) * (
         (state_vars['ux'] * state_vars['uz']) +
         (NU * np.exp(state_vars['U']) * state_vars['ux_z']))
-    return np.array(total_sim_times[start::plot_stride]), domain, state_vars
+    return np.array(total_sim_times), domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -343,7 +331,6 @@ def plot(name, params):
 
     # available cfgs:
     # plot_vars: 2D plot
-    # c_vars: horizontally-summed vertical chebyshev components
     # f_vars: vertically-summed Fourier components
     # f2_vars: 2D plot w/ horizontal Fourier transform
     # slice_vars: sliced at x=0
@@ -354,7 +341,6 @@ def plot(name, params):
         ''' unpacks above variables from cfg shorthand '''
         ret_vars = [
             cfg.get('plot_vars', []),
-            [i + '_c' for i in cfg.get('c_vars', [])],
             [i + '_f' for i in cfg.get('f_vars', [])],
             cfg.get('f2_vars', []),
             [i + mean_suffix for i in cfg.get('mean_vars', [])],
@@ -414,7 +400,7 @@ def plot(name, params):
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
 
     for cfg in plot_cfgs:
-        n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
+        n_cols, n_rows, save_fmt_str, plot_vars, f_vars,\
             f2_vars, mean_vars, slice_vars, sub_vars, res_vars\
             = get_plot_vars(cfg)
 
@@ -619,18 +605,6 @@ def plot(name, params):
                               'b--',
                               linewidth=0.5)
                 idx += 1
-            for var in c_vars:
-                axes = fig.add_subplot(n_rows,
-                                       n_cols,
-                                       idx,
-                                       title=r'$%s$ (kx=kx_d)' % var)
-                var_dat = state_vars[var]
-                kx_idx = round(KX / (2 * np.pi / XMAX))
-                p = axes.semilogx(var_dat[t_idx][kx_idx],
-                                  range(len(var_dat[t_idx][kx_idx])),
-                                  linewidth=0.5)
-                idx += 1
-
             for var in f_vars:
                 axes = fig.add_subplot(n_rows,
                                        n_cols,
@@ -669,7 +643,7 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=1, start=0)
+            name, params, dyn_vars, plot_stride=10, start=0)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
