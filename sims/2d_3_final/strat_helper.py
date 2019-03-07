@@ -693,16 +693,21 @@ def write_front(name, params):
             z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
             anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: z_top]
-            norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
             anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: z_top]
+            norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
             norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
-            x_amp = np.sum(state_vars['ux'][t_idx, :, z_bot: z_top]
-                           * anal_ux / norm_x) / np.sum(anal_ux**2/ norm_x)
-            z_amp = np.sum(state_vars['uz'][t_idx, :, z_bot: z_top]
-                           * anal_uz / norm_z) / np.sum(anal_uz**2 / norm_z)
-            amp = (x_amp + z_amp) / 2
-            print(amp, x_amp, z_amp)
-            x_lin_est = amp * (KX / KZ) * get_anal_ux(params, sim_time, x, z)
+
+            t_slice = np.s_[t_idx, :, z_bot:z_top]
+            amp = (
+                np.sum(
+                    state_vars['ux'][t_slice] * anal_ux * KX**2 / norm_x +
+                    state_vars['uz'][t_slice] * anal_uz * KZ**2 / norm_z)
+            ) / (
+                np.sum(
+                    anal_ux**2 * KX**2 / norm_x +
+                    anal_uz**2 * KZ**2 / norm_z))
+            print(amp)
+            x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
             z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
 
             dux = state_vars['ux'][t_idx] - x_lin_est

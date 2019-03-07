@@ -39,17 +39,19 @@ PARAMS_DEFAULT = {'XMAX': XMAX,
 
 def get_params(overrides=None):
     params = {**PARAMS_DEFAULT, **(overrides or {})}
+    g = params['g']
     KX = params['KX']
     KZ = params['KZ']
-
-    g = params['g']
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
 
-    params['OMEGA'] = OMEGA
-    params['T_F'] = abs(ZMAX / VG_Z) * 6
-    params['S'] = params['ZMAX'] / 512 * 4
-    params['DT'] = min(0.1 / OMEGA, 0.1)
+    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * 6
+    PARAMS_DEFAULT['OMEGA'] = OMEGA
+    PARAMS_DEFAULT['S'] = PARAMS_DEFAULT['ZMAX'] / 512 * 4
+    PARAMS_DEFAULT['DT'] = min(0.1 / OMEGA, 0.1)
+
+    # second override unfortunately
+    params = {**PARAMS_DEFAULT, **(overrides or {})}
 
     params['F'] = params['F_MULT'] * \
         (TARGET_DISP_RAT * OMEGA / KZ) / get_uz_f_ratio(params) \
@@ -64,31 +66,31 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
-       ('lin_1_masked',
-        get_params(overrides={'F_MULT': 0.01,
-                              'mask': True,
-                              'NL': True,
-                              'N_X': 64,
-                              'N_Z': 256,
-                              'Re_inv': 0.075})),
-       ('lin_2',
-        get_params(overrides={'F_MULT': 0.0005,
-                              'T_F': 4000,
-                              'DT': 0.1,
-                              'NL': False,
-                              'N_X': 64,
-                              'N_Z': 256,
-                              'Re_inv': 0})),
+       # ('lin_1_masked',
+       #  get_params(overrides={'F_MULT': 0.01,
+       #                        'mask': True,
+       #                        'NL': True,
+       #                        'N_X': 64,
+       #                        'N_Z': 256,
+       #                        'Re_inv': 0.075})),
+       # ('lin_2',
+       #  get_params(overrides={'F_MULT': 0.0005,
+       #                        'T_F': 4000,
+       #                        'DT': 0.1,
+       #                        'NL': False,
+       #                        'N_X': 64,
+       #                        'N_Z': 256,
+       #                        'Re_inv': 0})),
        # ('nl_1_masked',
        #  get_params(overrides={'F_MULT': 1,
        #                        'mask': True,
        #                        'NL': True,
        #                        'Re_inv': 0.7})),
-       # ('nl_4_masked',
-       #  get_params(overrides={'F_MULT': 1,
-       #                        'mask': True,
-       #                        'NL': True,
-       #                          'Re_inv': 0.3})),
+       ('nl_4_masked',
+        get_params(overrides={'F_MULT': 1,
+                              'mask': True,
+                              'NL': True,
+                              'Re_inv': 0.3})),
        # ('nl_6_masked',
        #  get_params(overrides={'F_MULT': 1,
        #                        'mask': True,
