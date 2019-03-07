@@ -1048,9 +1048,11 @@ def plot_front(name, params):
                  amps[start_idx: ],
                  label=r'$A$')
         ax1.legend(fontsize=6)
-        u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
-        ax2.plot(t, u0_dat)
-        ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
+        u0_at_front = np.array([u0[idx + start_idx, z_idx] / (OMEGA / KX)
+                                for idx, z_idx in
+                                    enumerate(front_idxs[start_idx: ])])
+        ax2.plot(t, u0_at_front)
+        ax2.set_ylabel(r'$\bar{U}_0(z_c) / c_{ph,x}$')
         ax2.set_xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
