@@ -101,11 +101,5 @@
 
 # GLOBAL TODO
 - try vstrat Spx?
-- convolve against lin-down!
-    - compute delta uz w/ reflection
-
-
-- stiffer damping zone
-- `add_bc(uz), should increase CFL timestepping
-    - add_bc(ux, uz, rho) plus P, kx = 0
-- snapshots_add_task("integ(ux * ux * rho0, 'x')", name='fx') (3D R-B)
+- E disp
+- snapshots.add_task("integ(ux * ux * rho0, 'x')", name='fx') (3D R-B)
