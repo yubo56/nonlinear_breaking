@@ -28,7 +28,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 10
+plot_stride = 15
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -140,9 +140,9 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
             offset_down = offset
 
     dux2 = dux - amp_down * np.roll(get_anal_ux(down_params, sim_time,
-                                                x, z), offset, axis=0)
+                                                x, z), offset_down, axis=0)
     duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
-                                                x, z), offset, axis=0)
+                                                x, z), offset_down, axis=0)
     return amp, amp_down, dux2, duz2
 
 def set_ic(name, solver, domain, params):
@@ -411,12 +411,12 @@ def plot(name, params):
         {
             'save_fmt_str': 's_%03i.png',
             'slice_vars': ['uz', 'ux'],
-            'mean_vars': ['S_{px}'],
+            'mean_vars': ['S_{px}', 'ux'],
         },
-        {
-            'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['uz', 'ux', 'W', 'U'],
-        },
+        # {
+        #     'save_fmt_str': 'm_%03i.png',
+        #     'plot_vars': ['uz', 'ux', 'W', 'U'],
+        # },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -474,13 +474,13 @@ def plot(name, params):
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
+                    amp, amp_down, dux2, duz2 = \
+                        subtract_lins(params, state_vars, t_idx, sim_time, x, z)
                     if var == 'uz%s' % res_suffix:
-                        var_dat = (state_vars['uz'][t_idx] - uz_anal - uz_mean)\
-                            / (uz_est * np.exp((z - Z0) / (2 * H)))
+                        var_dat = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_z'
                     elif var == 'ux%s' % res_suffix:
-                        var_dat = (state_vars['ux'][t_idx] - ux_anal - ux_mean)\
-                            / (ux_est * np.exp((z - Z0) / (2 * H)))
+                        var_dat = dux2 / (ux_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_x'
                     else:
                         raise ValueError('lol wtf is %s' % var)
@@ -620,17 +620,6 @@ def plot(name, params):
                         z[0],
                         'green',
                         linewidth=0.5)
-                # if var in mean_vars:
-                #     p = axes.plot(
-                #         var_min[t_idx],
-                #         z[0],
-                #         'r:',
-                #         linewidth=0.2)
-                #     p = axes.plot(
-                #         var_max[t_idx],
-                #         z[0],
-                #         'r:',
-                #         linewidth=0.2)
 
                 plt.xticks(rotation=30)
                 plt.yticks(rotation=30)
@@ -692,7 +681,7 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=40, start=0)
+            name, params, dyn_vars, plot_stride=2, start=0)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
         z0 = z[0]
@@ -1118,5 +1107,3 @@ def plot_front(name, params):
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
-
-
