@@ -105,15 +105,14 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
 
     anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
     anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
-    norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
-    norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
+    norm = np.exp(-z/H)[pos_slice]
 
     amp = np.sum(
-        state_vars['ux'][t_slice] * anal_ux * KX**2 / norm_x +
-        state_vars['uz'][t_slice] * anal_uz * KZ**2 / norm_z
+        state_vars['ux'][t_slice] * anal_ux * KX**2 * norm +
+        state_vars['uz'][t_slice] * anal_uz * KZ**2 * norm
     ) / np.sum(
-        anal_ux**2 * KX**2 / norm_x +
-        anal_uz**2 * KZ**2 / norm_z)
+        anal_ux**2 * KX**2 * norm +
+        anal_uz**2 * KZ**2 * norm)
     x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
     z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
 
@@ -129,12 +128,12 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
     for offset in range(N_X):
         curr = np.sum(
             np.roll(dux[pos_slice], -offset, axis=0)
-                * down_anal_ux * KX**2 / norm_x +
+                * down_anal_ux * KX**2 / norm +
             np.roll(duz[pos_slice], -offset, axis=0)
-                * down_anal_uz * KZ**2 / norm_z
+                * down_anal_uz * KZ**2 / norm
         ) / np.sum(
-            down_anal_ux**2 * KX**2 / norm_x +
-            down_anal_uz**2 * KZ**2 / norm_z)
+            down_anal_ux**2 * KX**2 / norm +
+            down_anal_uz**2 * KZ**2 / norm)
         if curr > amp_down:
             amp_down = curr
             offset_down = offset
@@ -664,7 +663,7 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params):
+def write_front(name, params, stride=2):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     u_c = OMEGA / KX
@@ -681,7 +680,7 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=2, start=0)
+            name, params, dyn_vars, plot_stride=stride, start=0)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
         z0 = z[0]
@@ -714,7 +713,7 @@ def write_front(name, params):
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
             amps.append(amp)
-            amps.append(amp_down)
+            amps_down.append(amp_down)
             Spx11.append(np.sum(rho0 * dux2 * duz2, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
@@ -751,7 +750,7 @@ def plot_front(name, params):
     start_idx = get_idx(200, sim_times)
     t = sim_times[start_idx: ]
 
-    S_px0 = -amps**2 * flux_th
+    S_px0 = amps**2 * flux_th
     dSpx = [] # Delta S_px
     front_pos = []
     front_idxs = []
@@ -806,7 +805,8 @@ def plot_front(name, params):
         #####################################################################
         plt.plot(t,
                  amps[start_idx: ],
-                 label=r'$A$')
+                 label=r'$A$',
+                 linewidth=0.7)
         plt.legend(fontsize=6)
         plt.xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
@@ -919,8 +919,6 @@ def plot_front(name, params):
 
         zf = np.max(front_pos[-5: -1])
 
-        front_pos = np.array(front_pos)
-
         # compute front position
         front_vel_S = dSpx / (RHO0 * np.exp(-front_pos / H) * u_c)
         front_pos_intg_S = np.cumsum((front_vel_S * np.gradient(sim_times))
@@ -930,10 +928,10 @@ def plot_front(name, params):
         # estimate incident Delta S_px if all from S_px0 that's viscously
         # damped, compare to other Delta S_px criteria/from data
         color_idx = 0
-        dSpx0 = -S_px0[start_idx: ] / flux_th * \
+        dSpx0 = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
-                 -S_px0[start_idx: ] / flux_th,
+                 S_px0[start_idx: ] / flux_th,
                  '%s-' % PLT_COLORS[color_idx],
                  label=r'$\Delta S_{px,0}|_{z=z_0}$',
                  linewidth=0.7)
@@ -972,8 +970,8 @@ def plot_front(name, params):
         # three multipliers are (i) average incident flux, (ii) estimated
         # incident flux extrapolated from nu and (iii) full flux
         mean_incident = -np.mean(dSpx)
-        est_incident_flux = -np.mean(S_px0 *
-                                      np.exp(-k_damp * 2 * (front_pos - Z0)))
+        est_incident_flux = np.mean(S_px0 *
+                                    np.exp(-k_damp * 2 * (front_pos - Z0)))
         flux_mults = [mean_incident / flux_th,
                       est_incident_flux / flux_th,
                       1]
@@ -1007,7 +1005,7 @@ def plot_front(name, params):
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
         prop_time = (front_pos[start_idx: ] - Z0 - 3 * S - l_z - dz) / V_GZ
-        S_excited = (amps**2)[start_idx: ] * \
+        S_excited = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  S_excited,
@@ -1059,18 +1057,30 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        # f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f, ax1 = plt.subplots(1, 1, sharex=True)
         f.subplots_adjust(hspace=0)
-        ax1.plot(t,
-                 amps[start_idx: ],
-                 label=r'$A$',
-                 linewidth=0.7)
-        u0_at_front = np.array([u0[idx + start_idx, z_idx] / (OMEGA / KX)
-                                for idx, z_idx in
-                                    enumerate(front_idxs[start_idx: ])])
-        ax2.plot(t, u0_at_front, linewidth=0.7)
-        ax2.set_ylabel(r'$\bar{U}_0(z_c) / c_{ph,x}$')
-        ax2.set_xlabel(r'$t (N^{-1})$')
+        a1ln = ax1.plot(t,
+                       amps[start_idx::],
+                       'g',
+                       label=r'$A$',
+                       linewidth=0.7)
+        ax3 = ax1.twinx()
+        a3ln = ax3.plot(t,
+                        amps_down[start_idx::],
+                        'r:',
+                        label=r'$A_R$',
+                        linewidth=0.7)
+        ax1.set_ylabel(r'$A$')
+        lns = a1ln + a3ln
+        ax1.legend(lns, [l.get_label() for l in lns], loc=0)
+
+        # u0_at_front = np.array([u0[idx + start_idx, z_idx] / (OMEGA / KX)
+        #                         for idx, z_idx in
+        #                             enumerate(front_idxs[start_idx: ])])
+        # ax2.plot(t, u0_at_front, 'b', linewidth=0.7)
+        # ax2.set_ylabel(r'$\bar{U}_0(z_c) / c_{ph,x}$')
+        # ax2.set_xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 

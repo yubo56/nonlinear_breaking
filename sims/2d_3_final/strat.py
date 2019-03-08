@@ -91,10 +91,10 @@ if __name__ == '__main__':
                               'mask': True,
                               'NL': True,
                               'Re_inv': 0.3})),
-       # ('nl_6_masked',
-       #  get_params(overrides={'F_MULT': 1,
-       #                        'mask': True,
-       #                        'Re_inv': 0.2})),
+       ('nl_6_masked',
+        get_params(overrides={'F_MULT': 1,
+                              'mask': True,
+                              'Re_inv': 0.2})),
     ]
     if '-plot' in sys.argv:
         for name, params_dict in tasks:
