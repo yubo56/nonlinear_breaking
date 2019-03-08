@@ -14,114 +14,116 @@ ZMAX = H
 
 NUM_SNAPSHOTS = 300
 
-PARAMS_RAW = {'XMAX': XMAX,
-              'ZMAX': ZMAX,
-              'N_X': 256,
-              'N_Z': 1024,
+PARAMS_DEFAULT = {'XMAX': XMAX,
+                  'ZMAX': ZMAX,
+                  'N_X': 64,
+                  'N_Z': 256,
+
               'KX': 2 * np.pi / XMAX,
               'KZ': -2 * np.pi / (H / 8),
-              'H': H,
-              'RHO0': 1,
-              'Z0': 0.2 * ZMAX,
-              'SPONGE_STRENGTH': 5,
-              'SPONGE_WIDTH': 0.6,
-              'SPONGE_HIGH': 0.95 * ZMAX,
-              'SPONGE_LOW': 0.05 * ZMAX,
-              'NUM_SNAPSHOTS': NUM_SNAPSHOTS}
+                  'g': H,
+                  'H': H,
+                  'RHO0': 1,
+                  'Z0': 0.2 * ZMAX,
+                  'Re_inv': 1,
 
-def build_interp_params(interp_x, interp_z, overrides=None):
-    params = {**PARAMS_RAW, **(overrides or {})}
+                  'F_MULT': 1,
+                  'SPONGE_STRENGTH': 15,
+                  'SPONGE_WIDTH': 0.5,
+                  'SPONGE_HIGH': 0.95 * ZMAX,
+                  'SPONGE_LOW': 0.03 * ZMAX,
+                  'T_MULT': 5,
+
+                  'NUM_SNAPSHOTS': NUM_SNAPSHOTS,
+                  'NL': True}
+
+def get_params(overrides=None):
+    params = {**PARAMS_DEFAULT, **(overrides or {})}
+    g = params['g']
     KX = params['KX']
     KZ = params['KZ']
-    g = H # N^2 = 1
-
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
-    T_F = abs(ZMAX / VG_Z) * params.get('T_MULT', 5)
 
-    params['T_F'] = T_F
-    params['g'] = g
-    params['OMEGA'] = OMEGA
-    params['S'] = abs(1 / params['KZ'])
-    params['INTERP_X'] = interp_x
-    params['INTERP_Z'] = interp_z
-    # omega * DT << 1 is required, as is DT << 1/N = 1
-    params['DT'] = params.get('DT', min(0.1 / OMEGA, 0.1))
-    params['F'] = params.get('F_MULT', 1) * \
+    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * params['T_MULT']
+    PARAMS_DEFAULT['OMEGA'] = OMEGA
+    PARAMS_DEFAULT['S'] = abs(1 / params['KZ'])
+    PARAMS_DEFAULT['DT'] = min(0.1 / OMEGA, 0.1)
+
+    # second override unfortunately
+    params = {**PARAMS_DEFAULT, **(overrides or {})}
+
+    params['F'] = params['F_MULT'] * \
         (OMEGA / KZ) / get_uz_f_ratio(params) \
     # for nabla^n visc, u / (nu * kx^{n-1}) = 1
-    params['NU'] = params.get('Re', 1) * \
+    params['NU'] = params['Re_inv'] * \
         OMEGA * (params['ZMAX'] / (2 * np.pi * params['N_Z']))**5 / abs(KZ)
 
-    params['UZ0_COEFF'] = params.get('UZ0_COEFF', 1)
     if CW.rank == 0: # print only on root process
         print(params)
     return params
 
-def run(ic, name, params_dict):
-    try:
-        run_strat_sim(ic, name, params_dict)
-    except FloatingPointError as e:
-        print(e)
-        pass
-
 if __name__ == '__main__':
     tasks = [
-        (set_ic, 'vstrat_lin',
-         build_interp_params(4, 4, overrides={'Re': 200,
-                                              'F_MULT': 0.01,
-                                              'T_MULT': 3,
-                                              'NL': True,
-                                              'UZ0_COEFF': 0})),
-        (set_ic, 'vstrat_nl_1',
-         build_interp_params(4, 4, overrides={'Re': 1e5,
-                                              'F_MULT': 0.02,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.2})),
-        (set_ic, 'vstrat_nl_2',
-         build_interp_params(4, 4, overrides={'Re': 5.5e3,
-                                              'F_MULT': 0.02,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.2})),
-        (set_ic, 'vstrat_nl_3',
-         build_interp_params(4, 4, overrides={'Re': 300,
-                                              'F_MULT': 0.02,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.2})),
-        (set_ic, 'vstrat_nl_4',
-         build_interp_params(4, 4, overrides={'Re': 5.5e3,
-                                              'F_MULT': 0.02,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 0.8})),
-        (set_ic, 'vstrat_nl_2_highA',
-         build_interp_params(4, 4, overrides={'Re': 5.5e3,
-                                              'F_MULT': 0.07,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.2})),
-        (set_ic, 'vstrat_nl_2_higherA',
-         build_interp_params(4, 4, overrides={'Re': 5.5e3,
-                                              'F_MULT': 0.15,
-                                              'T_MULT': 10,
-                                              'NL': True,
-                                              'UZ0_COEFF': 1.2})),
+        ('vstrat_lin',
+         get_params(overrides={'Re_inv': 200,
+                                     'F_MULT': 0.01,
+                                     'T_MULT': 3,
+                                     'NL': True,
+                                     'UZ0_COEFF': 0})),
+        ('vstrat_nl_1',
+         get_params(overrides={'Re_inv': 1e5,
+                                     'F_MULT': 0.02,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 1.2})),
+        ('vstrat_nl_2',
+         get_params(overrides={'Re_inv': 5.5e3,
+                                     'F_MULT': 0.02,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 1.2})),
+        ('vstrat_nl_3',
+         get_params(overrides={'Re_inv': 300,
+                                     'F_MULT': 0.02,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 1.2})),
+        ('vstrat_nl_4',
+         get_params(overrides={'Re_inv': 5.5e3,
+                                     'F_MULT': 0.02,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 0.8})),
+        ('vstrat_nl_2_highA',
+         get_params(overrides={'Re_inv': 5.5e3,
+                                     'F_MULT': 0.07,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 1.2})),
+        ('vstrat_nl_2_higherA',
+         get_params(overrides={'Re_inv': 5.5e3,
+                                     'F_MULT': 0.15,
+                                     'T_MULT': 10,
+                                     'NL': True,
+                                     'UZ0_COEFF': 1.2})),
     ]
     if '-plot' in sys.argv:
-        for _, name, params_dict in tasks:
+        for name, params_dict in tasks:
             plot(name, params_dict)
 
     elif '-merge' in sys.argv:
-        for _, name, _ in tasks:
+        for name, _ in tasks:
             merge(name)
 
+    elif '-write' in sys.argv:
+        for name, params_dict in tasks:
+            write_front(name, params_dict)
+
     elif '-front' in sys.argv:
-        for _, name, params_dict in tasks:
+        for name, params_dict in tasks:
             plot_front(name, params_dict)
 
     else:
         for task in tasks:
-            run(*task)
+            run_strat_sim(*task)

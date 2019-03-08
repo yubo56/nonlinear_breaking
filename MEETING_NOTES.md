@@ -100,7 +100,9 @@
 - JFM rapids? ~ ApJL
 
 # GLOBAL TODO
-- Try radial 2D setup?
+- try vstrat Spx?
+- convolve against lin-down!
+    - compute delta uz w/ reflection
 
 
 - stiffer damping zone

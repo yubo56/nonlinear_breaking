@@ -71,7 +71,7 @@ def get_anal_uz(params, t, x, z):
     k_damp = get_k_damp(params)
 
     return uz_est * (
-        np.exp(-k_damp
+        -np.exp(-k_damp
                  * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (2 * KZ * H)))
@@ -82,7 +82,7 @@ def get_anal_ux(params, t, x, z):
     k_damp = get_k_damp(params)
 
     return ux_est * (
-        np.exp(-k_damp * (z[0] - Z0))
+        -np.exp(-k_damp * (z[0] - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
                  + 1 / (KZ * H)))
 
@@ -122,11 +122,11 @@ def set_ic(name, solver, domain, params):
 def get_solver(params):
     ''' sets up solver '''
     x_basis = de.Fourier('x',
-                         N_X // INTERP_X,
+                         N_X,
                          interval=(0, XMAX),
                          dealias=3/2)
     z_basis = de.Fourier('z',
-                         N_Z // INTERP_Z,
+                         N_Z,
                          interval=(0, ZMAX),
                          dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
@@ -139,7 +139,6 @@ def get_solver(params):
         'tanh((z - SPONGE_LOW) / (SPONGE_WIDTH * (SPONGE_LOW))))'
     problem.substitutions['mask'] = \
         '0.5 * (1 + tanh((z - (Z0 + 3 * S)) / (S / 2)))'
-    # problem.substitutions['mask'] = '1'
     problem.add_equation('dx(ux) + dz(uz) = 0', condition='nx != 0 or nz != 0')
     problem.add_equation(
         'dt(rho) - RHO0 * uz / H' +
@@ -169,14 +168,14 @@ def get_solver(params):
     solver.stop_iteration = np.inf
     return solver, domain
 
-def run_strat_sim(set_ICs, name, params):
+def run_strat_sim(name, params):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
 
     solver, domain = get_solver(params)
 
     # Initial conditions
-    _, dt = set_ICs(name, solver, domain, params)
+    _, dt = set_ic(name, solver, domain, params)
 
     cfl = CFL(solver,
               initial_dt=dt,
@@ -215,8 +214,22 @@ def run_strat_sim(set_ICs, name, params):
 
 def merge(name):
     snapshots_dir = SNAPSHOTS_DIR % name
-    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
-    if not os.path.exists(filename):
+    dir_expr = '{s}/{s}_s{idx}'
+
+    idx = 1
+    to_merge = False
+
+    snapshots_piece_dir = dir_expr.format(s=snapshots_dir, idx=idx)
+    filename = FILENAME_EXPR.format(s=snapshots_dir, idx=idx)
+
+    while os.path.exists(snapshots_piece_dir):
+        if not os.path.exists(filename):
+            to_merge = True
+        idx += 1
+        snapshots_piece_dir = dir_expr.format(s=snapshots_dir, idx=idx)
+        filename = FILENAME_EXPR.format(s=snapshots_dir, idx=idx)
+
+    if to_merge:
         post.merge_analysis(snapshots_dir)
 
 def load(name, params, dyn_vars, plot_stride, start=0):
@@ -225,7 +238,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     merge(name)
 
     solver, domain = get_solver(params)
-    z = domain.grid(1, scales=INTERP_Z)
+    z = domain.grid(1, scales=1)
 
     i = 1
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -236,21 +249,11 @@ def load(name, params, dyn_vars, plot_stride, start=0):
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
             sim_times = np.array(dat['scales']['sim_time'])
-        # we let the file close before trying to reopen it again in load
-
-        # load into state_vars
-        for idx in range(len(sim_times))[start::plot_stride]:
-            solver.load_state(filename, idx)
-
             for varname in dyn_vars:
-                values = solver.state[varname]
-                values.set_scales((INTERP_X, INTERP_Z),
-                                  keep_data=True)
-                state_vars[varname].append(np.copy(values['g']))
-                state_vars['%s_c' % varname].append(
-                    np.copy(np.abs(values['c'])))
+                state_vars[varname].extend(
+                    dat['tasks'][varname][start::plot_stride])
 
-        total_sim_times.extend(sim_times)
+        total_sim_times.extend(sim_times[start::plot_stride])
         i += 1
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
@@ -267,7 +270,7 @@ def load(name, params, dyn_vars, plot_stride, start=0):
 
     state_vars['S_{px}'] = state_vars['rho'] * (state_vars['ux'] *
                                               state_vars['uz'])
-    return sim_times[start::plot_stride], domain, state_vars
+    return np.array(total_sim_times), domain, state_vars
 
 def plot(name, params):
     rank = CW.rank
@@ -286,7 +289,6 @@ def plot(name, params):
 
     # available cfgs:
     # plot_vars: 2D plot
-    # c_vars: horizontally-summed vertical chebyshev components
     # f_vars: vertically-summed Fourier components
     # f2_vars: 2D plot w/ horizontal Fourier transform
     # slice_vars: sliced at x=0
@@ -297,7 +299,6 @@ def plot(name, params):
         ''' unpacks above variables from cfg shorthand '''
         ret_vars = [
             cfg.get('plot_vars', []),
-            [i + '_c' for i in cfg.get('c_vars', [])],
             [i + '_f' for i in cfg.get('f_vars', [])],
             cfg.get('f2_vars', []),
             [i + mean_suffix for i in cfg.get('mean_vars', [])],
@@ -326,8 +327,8 @@ def plot(name, params):
     dyn_vars = ['uz', 'ux', 'rho', 'P']
     sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride)
 
-    x = domain.grid(0, scales=INTERP_X)
-    z = domain.grid(1, scales=INTERP_Z)[: , z_b:]
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)[: , z_b:]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
 
@@ -350,7 +351,7 @@ def plot(name, params):
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
 
     for cfg in plot_cfgs:
-        n_cols, n_rows, save_fmt_str, plot_vars, c_vars, f_vars,\
+        n_cols, n_rows, save_fmt_str, plot_vars, f_vars,\
             f2_vars, mean_vars, slice_vars, sub_vars, res_vars\
             = get_plot_vars(cfg)
 
@@ -558,18 +559,6 @@ def plot(name, params):
                               'b--',
                               linewidth=0.5)
                 idx += 1
-            for var in c_vars:
-                axes = fig.add_subplot(n_rows,
-                                       n_cols,
-                                       idx,
-                                       title=r'$%s$ (kx=kx_d)' % var)
-                var_dat = state_vars[var]
-                kx_idx = round(KX / (2 * np.pi / XMAX))
-                p = axes.semilogx(var_dat[t_idx][kx_idx],
-                                  range(len(var_dat[t_idx][kx_idx])),
-                                  linewidth=0.5)
-                idx += 1
-
             for var in f_vars:
                 axes = fig.add_subplot(n_rows,
                                        n_cols,
@@ -606,59 +595,62 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=1, start=0)
-        x = domain.grid(0, scales=INTERP_X)
-        z = domain.grid(1, scales=INTERP_Z)
+            name, params, dyn_vars, plot_stride=1, start=10)
+        x = domain.grid(0, scales=1)
+        z = domain.grid(1, scales=1)
         xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
 
         ux_res_slice = []
         uz_res_slice = []
-        Spx01 = []
-        Spx10 = []
         Spx11 = []
-        x_amps = []
-        z_amps = []
+        amps = []
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
+        u0_z = horiz_mean(state_vars['ux_z'], N_X)
 
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            # figure out what to subtract by convolution
-            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+            # figure out what to subtract by convolution over lambda_z
             z_bot = get_idx(Z0 + 3 * S, z0)
+            z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
-            front_idx = (front_idx + z_bot) // 2 # convolve only over bottom half
-            anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: front_idx]
-            anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: front_idx]
-            x_amp = np.sum(state_vars['ux'][t_idx, :, z_bot: front_idx]
-                           * anal_ux) / np.sum(anal_ux**2)
-            z_amp = np.sum(state_vars['uz'][t_idx, :, z_bot: front_idx]
-                           * anal_uz) / np.sum(anal_uz**2)
-            x_lin_est = x_amp * get_anal_ux(params, sim_time, x, z)
-            z_lin_est = z_amp * get_anal_uz(params, sim_time, x, z)
+            anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: z_top]
+            anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: z_top]
+            norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
+            norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
+
+            t_slice = np.s_[t_idx, :, z_bot:z_top]
+            amp = (
+                np.sum(
+                    state_vars['ux'][t_slice] * anal_ux * KX**2 / norm_x +
+                    state_vars['uz'][t_slice] * anal_uz * KZ**2 / norm_z)
+            ) / (
+                np.sum(
+                    anal_ux**2 * KX**2 / norm_x +
+                    anal_uz**2 * KZ**2 / norm_z))
+            print(amp)
+            x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
+            z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
 
             dux = state_vars['ux'][t_idx] - x_lin_est
             duz = state_vars['uz'][t_idx] - z_lin_est
 
             ux_res = dux / (ux_est * np.exp((z - Z0) / (2 * H)))
             uz_res = dux / (uz_est * np.exp((z - Z0) / (2 * H)))
-            slice_idx = get_idx(z0[front_idx] - 1 / KZ, z0)
+            slice_idx = get_idx(z0[z_top] - 1 / KZ, z0)
 
             ux_res_slice.append(ux_res[:, slice_idx - 1])
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
-            x_amps.append(x_amp)
-            z_amps.append(z_amp)
-            Spx01.append(np.sum(RHO0 * x_lin_est * duz, axis=0) / N_X)
-            Spx10.append(np.sum(RHO0 * z_lin_est * dux, axis=0) / N_X)
+            amps.append(amp)
             Spx11.append(np.sum(RHO0 * dux * duz, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
-            pickle.dump((z0, sim_times, S_px, Spx01, Spx10, Spx11,
-                         x_amps, z_amps, u0, ux_res_slice, uz_res_slice), data)
+            pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
+                         np.array(amps), ux_res_slice, uz_res_slice), data)
     else:
         print('log file found, not regenerating')
 
@@ -681,37 +673,34 @@ def plot_front(name, params):
 
     print('Loading data')
     with open(logfile, 'rb') as data:
-        z0, sim_times, S_px, Spx01, Spx10, Spx11, x_amps, z_amps, \
-            u0, ux_res_slice, uz_res_slice = pickle.load(data)
-        Spx01 = np.array(Spx01) / flux_th
-        Spx10 = np.array(Spx10) / flux_th
+        z0, sim_times, S_px, Spx11, u0, u0_z, \
+            amps, ux_res_slice, uz_res_slice = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
-        x_amps = np.array(x_amps)
-        z_amps = np.array(z_amps)
 
     tf = sim_times[-1]
     start_idx = get_idx(600, sim_times)
     t = sim_times[start_idx: ]
-    dt = np.mean(np.gradient(sim_times[1: -1])) # should be T_F / NUM_SNAPSHOTS
 
     S_px0 = [] # S_px averaged near origin
-    dSpx_S = [] # Delta S_px using S criterion
-    front_pos_S = [] # front position using S criterion
+    dSpx = [] # Delta S_px using S criterion
+    front_pos = [] # front position using S criterion
+    front_idxs = []
     dz = abs(1 / KZ)
     l_z = abs(2 * np.pi / KZ)
     z_b = Z0 + 3 * S
     z_b_idx = get_idx(z_b, z0)
     for t_idx, sim_time in enumerate(sim_times):
-        front_idx_S = get_front_idx(S_px[t_idx], flux_threshold)
-        z_cS = z0[front_idx_S]
-        front_pos_S.append(z_cS)
+        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+        z_c = z0[front_idx]
+        front_pos.append(z_c)
+        front_idxs.append(front_idx)
 
         # measure flux incident at dz critical layer
         dz_idx = get_idx(dz, z0)
         S_px0.append(-np.mean(S_px[
             t_idx, get_idx(z_b, z0): get_idx(z_b + l_z, z0)]))
-        dSpx_S.append(-np.mean(S_px[
-            t_idx, get_idx(z_cS - l_z - dz, z0): get_idx(z_cS - dz, z0)]))
+        dSpx.append(-np.mean(S_px[
+            t_idx, get_idx(z_c - l_z - dz, z0): get_idx(z_c - dz, z0)]))
 
     times = get_times([1/8, 3/8, 5/8, 7/8], sim_times, start_idx)
     fig = plt.figure()
@@ -738,6 +727,19 @@ def plot_front(name, params):
         plt.xlabel(r'$z(H)$')
         plt.ylabel(r'$S_{px} / S_0$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+        #####################################################################
+        # f_amps.png
+        #
+        # convolved amplitudes over time
+        #####################################################################
+        plt.plot(t,
+                 amps[start_idx: ],
+                 label=r'$A$')
+        plt.legend(fontsize=6)
+        plt.xlabel(r'$t (N^{-1})$')
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
     else:
@@ -769,18 +771,17 @@ def plot_front(name, params):
                      '%s:' % color,
                      linewidth=0.7)
         # text showing min Ri
-        u0_z = np.gradient(u0[:, z_b_idx: ], axis=1) /\
-            np.outer(np.ones(len(sim_times)), np.gradient(z0[z_b_idx: ]))
         ax1.text(z_b + 0.2, 0.8,
-                 'Min Ri: %.3f' % (N / u0_z.max())**2)
+                 'Min Ri: %.3f' % (N / u0_z.max())**2,
+                 fontsize=8)
         # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
                  np.exp(-k_damp * 2 * (z0_cut - Z0)),
                  linewidth=1.5,
                  label=r'$\nu$-only')
         # indicate vertical averaging wavelength
-        ax2.axvspan(front_pos_S[times[-1]] - dz - l_z,
-                    front_pos_S[times[-1]] - dz,
+        ax2.axvspan(front_pos[times[-1]] - dz - l_z,
+                    front_pos[times[-1]] - dz,
                     color='grey')
         ax1.set_xlim(z_b, ZMAX)
         ax2.set_xlim(z_b, ZMAX)
@@ -816,39 +817,25 @@ def plot_front(name, params):
                     Spx_avg / flux_th,
                     linewidth=0.7,
                     label=r'$u_xu_z$')
-            for lbl, Spx in zip([r'$u_x\delta u_z$', r'$\delta u_x u_z$',
-                                 r'$\delta u_x \delta u_z$'],
-                                [Spx01, Spx10, Spx11]):
-                Spx_avg = np.sum(Spx[time - 2: time + 2, : ], axis=0) / 4
-                ax.plot(z0[z_b_idx: z_t_idx],
-                        Spx_avg[z_b_idx: z_t_idx],
-                        linewidth=0.7,
-                        label=lbl)
+            Spx_avg = np.sum(Spx11[time - 2: time + 2, : ], axis=0) / 4
+            ax.plot(z0[z_b_idx: z_t_idx],
+                    Spx_avg[z_b_idx: z_t_idx],
+                    linewidth=0.7,
+                    label=r'$\delta u_x \delta u_z$')
             ax.legend(fontsize=6, loc='upper right')
             ax.set_xlim(z_b, ZMAX)
             ax.set_ylim(-0.6, 1.2)
             ax.set_ylabel(r'$S_{px, t=%.1f} / S_0$' % sim_times[time])
         ax_lst[-1].set_xlabel(r'$z(H)$')
-        Spx01_amp = []
-        Spx10_amp = []
         Spx11_mean = []
         for time in range(start_idx, len(sim_times)):
             z_t_idx = get_front_idx(S_px[time], get_flux_th(params) * 0.3)
             half_idx = (z_t_idx + z_b_idx) // 2
             try:
-                Spx01_last = Spx01[time, z_b_idx: half_idx]
-                Spx01_amp.append((np.max(Spx01_last) - np.min(Spx01_last)) / 2)
-                Spx10_last = Spx10[time, z_b_idx: half_idx]
-                Spx10_amp.append((np.max(Spx10_last) - np.min(Spx10_last)) / 2)
                 Spx11_last = Spx11[time, z_b_idx: half_idx]
                 Spx11_mean.append(np.mean(Spx11_last))
             except: # sometimes front idx is weird spot?
                 continue
-        print('%s: Amp 01 = %.3f, Amp 10 = %.3f, Mean 11 = %.3f' %
-              (name,
-               np.mean(Spx01_amp),
-               np.mean(Spx10_amp),
-               np.mean(Spx11_mean)))
         plt.savefig('%s/fluxes_time.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -860,22 +847,23 @@ def plot_front(name, params):
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
-        zf = np.max(front_pos_S[-5: -1])
+        zf = np.max(front_pos[-5: -1])
 
         S_px0 = np.array(S_px0)
-        dSpx_S = np.array(dSpx_S)
-        front_pos_S = np.array(front_pos_S)
+        dSpx = np.array(dSpx)
+        front_pos = np.array(front_pos)
 
         # compute front position
-        front_vel_S = dSpx_S / (RHO0 * np.exp(-front_pos_S / H) * u_c)
-        front_pos_intg_S = np.cumsum(front_vel_S[start_idx: ]) * dt
+        front_vel_S = dSpx / (RHO0 * np.exp(-front_pos / H) * u_c)
+        front_pos_intg_S = np.cumsum((front_vel_S * np.gradient(sim_times))
+                                      [start_idx: ])
         front_pos_intg_S += zf - front_pos_intg_S[-1]
 
         # estimate incident Delta S_px if all from S_px0 that's viscously
         # damped, compare to other Delta S_px criteria/from data
         color_idx = 0
         dSpx0 = -S_px0[start_idx: ] / flux_th * \
-            np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
+            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  -S_px0[start_idx: ] / flux_th,
                  '%s-' % PLT_COLORS[color_idx],
@@ -889,7 +877,7 @@ def plot_front(name, params):
                  linewidth=0.7)
         color_idx += 1
         ax1.plot(t,
-                 -dSpx_S[start_idx: ] / flux_th,
+                 -dSpx[start_idx: ] / flux_th,
                  '%s-' % PLT_COLORS[color_idx],
                  label=r'$\Delta S_{px}(z_{c})$',
                  linewidth=0.7)
@@ -907,7 +895,7 @@ def plot_front(name, params):
                  linewidth=0.7)
         color_idx += 1
         ax2.plot(t,
-                 front_pos_S[start_idx: ],
+                 front_pos[start_idx: ],
                  '%s-' % PLT_COLORS[color_idx],
                  label='Data (S)',
                  linewidth=0.7)
@@ -915,9 +903,9 @@ def plot_front(name, params):
 
         # three multipliers are (i) average incident flux, (ii) estimated
         # incident flux extrapolated from nu and (iii) full flux
-        mean_incident = -np.mean(dSpx_S[len(dSpx_S) // 8: ])
+        mean_incident = -np.mean(dSpx[len(dSpx) // 8: ])
         est_generated_flux = -np.mean(S_px0[len(S_px0) // 8: ])
-        mean_pos = np.max(front_pos_S[len(front_pos_S) // 3: ])
+        mean_pos = np.max(front_pos[len(front_pos) // 3: ])
         est_incident_flux = est_generated_flux *\
             np.exp(-k_damp * 2 * (mean_pos - Z0))
         flux_mults = [mean_incident / flux_th,
@@ -946,13 +934,15 @@ def plot_front(name, params):
         #
         # reflection coeff calculations
         #####################################################################
-        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
-        prop_time = (front_pos_S[start_idx: ] - Z0) / V_GZ
-        S_excited = (x_amps * z_amps)[start_idx: ] * \
-            np.exp(-k_damp * 2 * (front_pos_S[start_idx: ] - (z_b + l_z / 2)))
+        # extrapolate 3/4 of distance, convolution is evenly weighted between
+        # z_b, z_c
+        prop_time = (front_pos[start_idx: ] - Z0 - np.pi / KZ) / V_GZ
+        S_excited = (amps**2)[start_idx: ] * \
+            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  S_excited,
                  'g:',
@@ -964,33 +954,56 @@ def plot_front(name, params):
                  label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
                  linewidth=0.7)
         ax1.plot(t,
-                 -dSpx_S[start_idx: ] / flux_th,
+                 -dSpx[start_idx: ] / flux_th,
                  'k:',
                  label='Absorbed',
                  linewidth=1.0)
         ax1.set_ylabel(r'$S_{px} / S_0$')
         ax1.legend(fontsize=6)
-        # seems prop_time is twice what it should be...
-        # use interp to compare since different t values
         shifted_dS = interp1d(t + prop_time, S_excited)
-        shifted_dS2 = interp1d(t + prop_time / 2, S_excited)
-        absorbed_dS = interp1d(t, -dSpx_S[start_idx: ] / flux_th)
+        absorbed_dS = interp1d(t, -dSpx[start_idx: ] / flux_th)
         t_refl = np.linspace((t + prop_time)[0], t[-1], len(t))
         refl = [(shifted_dS(t) - absorbed_dS(t)) / shifted_dS(t)
                 for t in t_refl]
-        refl2 = [(shifted_dS2(t) - absorbed_dS(t)) / shifted_dS2(t)
-                 for t in t_refl]
 
-        ax2.plot(t_refl, refl, 'r:', label='Full time', linewidth=0.7)
-        ax2.plot(t_refl, refl2, 'g', label='Half time', linewidth=1.0)
+        ax2.plot(t_refl, refl, 'r:', linewidth=0.7)
 
-        ax2.text(t[0], 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
-                 'Means: (%.3f, %.3f)' % (np.mean(refl), np.mean(refl2)))
+        ax2.text(t[0],
+                 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
+                 'Mean: (%.3f)' % np.mean(refl),
+                 fontsize=8)
         ax2.set_ylabel(r'Reflectivity')
-        ax2.legend(fontsize=6)
-
         ax2.set_xlabel(r'$t$')
+
+        ri_vals = np.array([(N / u0_z[idx + start_idx, z_idx])**2
+                            for idx, z_idx in
+                                enumerate(front_idxs[start_idx: ])])
+        ax3.plot(t, ri_vals)
+        ax3.set_ylim([0, 3])
+        ax3.set_ylabel(r"Ri $(N / U0')^2$")
+        ax3.text(t[0], 0.5,
+                 'Min Ri: %.3f' % ri_vals.min(),
+                 fontsize=8)
+
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
+        plt.close()
+
+        #####################################################################
+        # f_amps.png
+        #
+        # convolved amplitudes over time
+        #####################################################################
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f.subplots_adjust(hspace=0)
+        ax1.plot(t,
+                 amps[start_idx: ],
+                 label=r'$A$')
+        ax1.legend(fontsize=6)
+        u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
+        ax2.plot(t, u0_dat)
+        ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
+        ax2.set_xlabel(r'$t (N^{-1})$')
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
     #########################################################################
@@ -1027,25 +1040,3 @@ def plot_front(name, params):
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
 
-    #####################################################################
-    # f_amps.png
-    #
-    # convolved amplitudes over time
-    #####################################################################
-    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-    f.subplots_adjust(hspace=0)
-    ax1.plot(t,
-             x_amps[start_idx: ],
-             label=r'$u_x / u_{x0}$')
-    ax1.plot(t,
-             z_amps[start_idx: ],
-             label=r'$u_z / u_{z0}$')
-    ax1.legend(fontsize=6)
-    ax1.set_ylabel(r'$u / u_0$')
-    u0_dat = u0[start_idx:, get_idx(Z0, z0)] / (OMEGA / KX)
-    ax2.plot(t, u0_dat)
-    ax2.set_ylabel(r'$\bar{U}_0 / c_{ph,x}$')
-    ax2.set_xlabel(r'$t$')
-    ax2.set_ylim([min(u0_dat) * 1.1, 0])
-    plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
-    plt.close()
