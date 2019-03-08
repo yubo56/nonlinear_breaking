@@ -96,6 +96,55 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
+def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
+    z0 = z[0]
+    z_bot = get_idx(Z0 + 3 * S, z0)
+    z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+    pos_slice = np.s_[:, z_bot:z_top]
+    t_slice = np.s_[t_idx, :, z_bot:z_top]
+
+    anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
+    anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
+    norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
+    norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
+
+    amp = np.sum(
+        state_vars['ux'][t_slice] * anal_ux * KX**2 / norm_x +
+        state_vars['uz'][t_slice] * anal_uz * KZ**2 / norm_z
+    ) / np.sum(
+        anal_ux**2 * KX**2 / norm_x +
+        anal_uz**2 * KZ**2 / norm_z)
+    x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
+    z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
+
+    dux = state_vars['ux'][t_idx] - x_lin_est
+    duz = state_vars['uz'][t_idx] - z_lin_est
+
+    # find phase offset + amp for downward reflected wave
+    down_params = {**params, **{'KZ': -KZ}}
+    down_anal_ux = get_anal_ux(down_params, sim_time, x, z)[pos_slice]
+    down_anal_uz = get_anal_uz(down_params, sim_time, x, z)[pos_slice]
+    amp_down = 0
+    offset_down = 0
+    for offset in range(N_X):
+        curr = np.sum(
+            np.roll(dux[pos_slice], -offset, axis=0)
+                * down_anal_ux * KX**2 / norm_x +
+            np.roll(duz[pos_slice], -offset, axis=0)
+                * down_anal_uz * KZ**2 / norm_z
+        ) / np.sum(
+            down_anal_ux**2 * KX**2 / norm_x +
+            down_anal_uz**2 * KZ**2 / norm_z)
+        if curr > amp_down:
+            amp_down = curr
+            offset_down = offset
+
+    dux2 = dux - amp_down * np.roll(get_anal_ux(down_params, sim_time,
+                                                x, z), offset, axis=0)
+    duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
+                                                x, z), offset, axis=0)
+    return amp, amp_down, dux2, duz2
+
 def set_ic(name, solver, domain, params):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -643,10 +692,9 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=2, start=0)
+            name, params, dyn_vars, plot_stride=40, start=0)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
-        xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
 
@@ -654,6 +702,7 @@ def write_front(name, params):
         uz_res_slice = []
         Spx11 = []
         amps = []
+        amps_down = []
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
@@ -666,40 +715,23 @@ def write_front(name, params):
             z_bot = get_idx(Z0 + 3 * S, z0)
             z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
-            anal_ux = get_anal_ux(params, sim_time, x, z)[:, z_bot: z_top]
-            anal_uz = get_anal_uz(params, sim_time, x, z)[:, z_bot: z_top]
-            norm_x = np.outer(np.ones(N_X), np.sum(anal_ux**2, axis=0))
-            norm_z = np.outer(np.ones(N_X), np.sum(anal_uz**2, axis=0))
-
-            t_slice = np.s_[t_idx, :, z_bot:z_top]
-            amp = (
-                np.sum(
-                    state_vars['ux'][t_slice] * anal_ux * KX**2 / norm_x +
-                    state_vars['uz'][t_slice] * anal_uz * KZ**2 / norm_z)
-            ) / (
-                np.sum(
-                    anal_ux**2 * KX**2 / norm_x +
-                    anal_uz**2 * KZ**2 / norm_z))
-            print(amp)
-            x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
-            z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
-
-            dux = state_vars['ux'][t_idx] - x_lin_est
-            duz = state_vars['uz'][t_idx] - z_lin_est
-
-            ux_res = dux / (ux_est * np.exp((z - Z0) / (2 * H)))
-            uz_res = dux / (uz_est * np.exp((z - Z0) / (2 * H)))
+            amp, amp_down, dux2, duz2 =\
+                subtract_lins(params, state_vars, t_idx, sim_time, x, z)
+            ux_res = dux2 / (ux_est * np.exp((z - Z0) / (2 * H)))
+            uz_res = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
             slice_idx = get_idx(z0[z_top] - 1 / KZ, z0)
 
             ux_res_slice.append(ux_res[:, slice_idx - 1])
             uz_res_slice.append(uz_res[:, slice_idx - 1])
 
             amps.append(amp)
-            Spx11.append(np.sum(rho0 * dux * duz, axis=0) / N_X)
+            amps.append(amp_down)
+            Spx11.append(np.sum(rho0 * dux2 * duz2, axis=0) / N_X)
 
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
-                         np.array(amps), ux_res_slice, uz_res_slice), data)
+                         np.array(amps), np.array(amps_down),
+                         ux_res_slice, uz_res_slice), data)
     else:
         print('log file found, not regenerating')
 
@@ -722,8 +754,8 @@ def plot_front(name, params):
 
     print('Loading data')
     with open(logfile, 'rb') as data:
-        z0, sim_times, S_px, Spx11, u0, u0_z, \
-            amps, ux_res_slice, uz_res_slice = pickle.load(data)
+        z0, sim_times, S_px, Spx11, u0, u0_z, amps, amps_down, \
+            ux_res_slice, uz_res_slice = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
