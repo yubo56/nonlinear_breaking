@@ -128,12 +128,12 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
     for offset in range(N_X):
         curr = np.sum(
             np.roll(dux[pos_slice], -offset, axis=0)
-                * down_anal_ux * KX**2 / norm +
+                * down_anal_ux * KX**2 * norm +
             np.roll(duz[pos_slice], -offset, axis=0)
-                * down_anal_uz * KZ**2 / norm
+                * down_anal_uz * KZ**2 * norm
         ) / np.sum(
-            down_anal_ux**2 * KX**2 / norm +
-            down_anal_uz**2 * KZ**2 / norm)
+            down_anal_ux**2 * KX**2 * norm +
+            down_anal_uz**2 * KZ**2 * norm)
         if curr > amp_down:
             amp_down = curr
             offset_down = offset
@@ -431,17 +431,14 @@ def plot(name, params):
 
     # preprocess
     for var in dyn_vars + ['S_{px}']:
-        state_vars[var + mean_suffix] = (
-            horiz_mean(state_vars[var], N_X),
-            np.min(state_vars[var], axis=1),
-            np.max(state_vars[var], axis=1))
+        state_vars[var + mean_suffix] = horiz_mean(state_vars[var], N_X)
 
     for var in dyn_vars:
         state_vars[var + slice_suffix] = np.copy(state_vars[var][:, 0, :])
 
     for var in dyn_vars:
         # can't figure out how to numpy this together
-        means = state_vars[var + mean_suffix][0]
+        means = state_vars[var + mean_suffix]
         state_vars[var + sub_suffix] = np.copy(state_vars[var])
         for idx, _ in enumerate(state_vars[var + sub_suffix]):
             mean = means[idx]
@@ -461,10 +458,10 @@ def plot(name, params):
             uz_anal = get_anal_uz(params, sim_time, x, z)
             ux_anal = get_anal_ux(params, sim_time, x, z)
             uz_mean = np.outer(np.ones(N_X),
-                               state_vars['uz%s' % mean_suffix][0][t_idx])
+                               state_vars['uz%s' % mean_suffix][t_idx])
             ux_mean = np.outer(np.ones(N_X),
-                               state_vars['ux%s' % mean_suffix][0][t_idx])
-            S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
+                               state_vars['ux%s' % mean_suffix][t_idx])
+            S_px_mean = state_vars['S_{px}%s' % mean_suffix]
             z_top = get_front_idx(S_px_mean[t_idx],
                                   get_flux_th(params) * 0.2)
             z_bot = get_idx(Z0 + 3 * S, z[0])
@@ -535,10 +532,7 @@ def plot(name, params):
 
             for var in mean_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
-                if var in slice_vars:
-                    var_dat = state_vars[var]
-                else:
-                    var_dat, var_min, var_max = state_vars[var]
+                var_dat = state_vars[var][:, z_b:]
 
                 p = axes.plot(var_dat[t_idx],
                               z[0],

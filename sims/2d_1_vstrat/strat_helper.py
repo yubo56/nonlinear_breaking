@@ -93,6 +93,53 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
+def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
+    z0 = z[0]
+    z_bot = get_idx(Z0 + 3 * S, z0)
+    z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+    pos_slice = np.s_[:, z_bot:z_top]
+    t_slice = np.s_[t_idx, :, z_bot:z_top]
+
+    anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
+    anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
+
+    amp = np.sum(
+        state_vars['ux'][t_slice] * anal_ux * KX**2 +
+        state_vars['uz'][t_slice] * anal_uz * KZ**2
+    ) / np.sum(
+        anal_ux**2 * KX**2 +
+        anal_uz**2 * KZ**2)
+    x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
+    z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
+
+    dux = state_vars['ux'][t_idx] - x_lin_est
+    duz = state_vars['uz'][t_idx] - z_lin_est
+
+    # find phase offset + amp for downward reflected wave
+    down_params = {**params, **{'KZ': -KZ}}
+    down_anal_ux = get_anal_ux(down_params, sim_time, x, z)[pos_slice]
+    down_anal_uz = get_anal_uz(down_params, sim_time, x, z)[pos_slice]
+    amp_down = 0
+    offset_down = 0
+    for offset in range(N_X):
+        curr = np.sum(
+            np.roll(dux[pos_slice], -offset, axis=0)
+                * down_anal_ux * KX**2 +
+            np.roll(duz[pos_slice], -offset, axis=0)
+                * down_anal_uz * KZ**2
+        ) / np.sum(
+            down_anal_ux**2 * KX**2 +
+            down_anal_uz**2 * KZ**2)
+        if curr > amp_down:
+            amp_down = curr
+            offset_down = offset
+
+    dux2 = dux - amp_down * np.roll(get_anal_ux(down_params, sim_time,
+                                                x, z), offset_down, axis=0)
+    duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
+                                                x, z), offset_down, axis=0)
+    return amp, amp_down, dux2, duz2
+
 def set_ic(name, solver, domain, params):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -253,6 +300,9 @@ def load(name, params, dyn_vars, plot_stride, start=0):
                 state_vars[varname].extend(
                     dat['tasks'][varname][start::plot_stride])
 
+            state_vars['S_{px}(mean)'].extend(
+                dat['tasks']['S_{px}'][start::plot_stride, 0, :])
+
         total_sim_times.extend(sim_times[start::plot_stride])
         i += 1
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -267,9 +317,6 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     # compatibility
     state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=-1) * \
         N_Z / ZMAX
-
-    state_vars['S_{px}'] = state_vars['rho'] * (state_vars['ux'] *
-                                              state_vars['uz'])
     return np.array(total_sim_times), domain, state_vars
 
 def plot(name, params):
@@ -329,23 +376,23 @@ def plot(name, params):
 
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)[: , z_b:]
-    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
-    x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z[0])
+    z0 = z[0]
+    z1s = np.ones(np.shape(z0))
+    xmesh, zmesh = quad_mesh(x=x[:, 0], y=z0)
+    x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z0)
 
     # preprocess
-    for var in dyn_vars + ['S_{px}', 'ux_z']:
-        state_vars[var + mean_suffix] = (
-            horiz_mean(state_vars[var], N_X),
-            np.min(state_vars[var], axis=1),
-            np.max(state_vars[var], axis=1))
+    for var in dyn_vars + ['ux_z']:
+        state_vars[var + mean_suffix] = horiz_mean(state_vars[var], N_X)
 
     for var in dyn_vars:
         state_vars[var + slice_suffix] = np.copy(state_vars[var][:, 0, :])
 
     for var in dyn_vars:
         # can't figure out how to numpy this together
-        means = state_vars[var + mean_suffix][0]
+        means = state_vars[var + mean_suffix]
         state_vars[var + sub_suffix] = np.copy(state_vars[var])
+        print(var)
         for idx, _ in enumerate(state_vars[var + sub_suffix]):
             mean = means[idx]
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
@@ -364,25 +411,25 @@ def plot(name, params):
             uz_anal = get_anal_uz(params, sim_time, x, z)
             ux_anal = get_anal_ux(params, sim_time, x, z)
             uz_mean = np.outer(np.ones(N_X),
-                               state_vars['uz%s' % mean_suffix][0][t_idx])
+                               state_vars['uz%s' % mean_suffix][t_idx])
             ux_mean = np.outer(np.ones(N_X),
-                               state_vars['ux%s' % mean_suffix][0][t_idx])
-            S_px_mean = state_vars['S_{px}%s' % mean_suffix][0]
+                               state_vars['ux%s' % mean_suffix][t_idx])
+            S_px_mean = state_vars['S_{px}%s' % mean_suffix]
             z_top = get_front_idx(S_px_mean[t_idx],
                                   get_flux_th(params) * 0.2)
-            z_bot = get_idx(Z0 + 3 * S, z[0])
+            z_bot = get_idx(Z0 + 3 * S, z0)
 
             idx = 1
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
+                    amp, amp_down, dux2, duz2 = \
+                        subtract_lins(params, state_vars, t_idx, sim_time, x, z)
                     if var == 'uz%s' % res_suffix:
-                        var_dat = (state_vars['uz'][t_idx] - uz_anal - uz_mean)\
-                            / uz_est
+                        var_dat = duz2 / uz_est
                         title = 'u_z'
                     elif var == 'ux%s' % res_suffix:
-                        var_dat = (state_vars['ux'][t_idx] - ux_anal - ux_mean)\
-                            / ux_est
+                        var_dat = dux2 / ux_est
                         title = 'u_x'
                     else:
                         raise ValueError('lol wtf is %s' % var)
@@ -438,48 +485,40 @@ def plot(name, params):
 
             for var in mean_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
-                if var in slice_vars:
-                    var_dat = state_vars[var][:, z_b:]
-                else:
-                    var_dat = state_vars[var][0][:, z_b:]
-                    var_min = state_vars[var][1][:, z_b:]
-                    var_max = state_vars[var][2][:, z_b:]
+                var_dat = state_vars[var][:, z_b:]
 
                 p = axes.plot(var_dat[t_idx],
-                              z[0],
+                              z0,
                               'r-',
                               linewidth=0.7,
                               label='Data')
                 if var == 'uz%s' % slice_suffix:
                     p = axes.plot(
                         uz_anal[0, :],
-                        z[0],
+                        z0,
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -uz_est * (0 * z[0] + 1), z[0], 'g',
-                        uz_est * (0 * z[0] + 1), z[0], 'g',
+                        -uz_est * z1s, z0, 'g',
+                        uz_est * z1s, z0, 'g',
                         linewidth=0.5)
 
                 if var == 'ux%s' % slice_suffix:
                     p = axes.plot(
                         ux_anal[0, :],
-                        z[0],
+                        z0,
                         'orange',
                         linewidth=0.5)
                     p = axes.plot(
-                        -ux_est, z[0], 'g',
-                        ux_est, z[0], 'g',
+                        -ux_est, z0, 'g',
+                        ux_est, z0, 'g',
                         linewidth=0.5)
 
                 if var == 'S_{px}%s' % mean_suffix:
                     k_damp = get_k_damp(params)
                     p = axes.plot(
-                        uz_est**2 / 2
-                            * abs(KZ / KX)
-                            * RHO0
-                            * np.exp(-k_damp * 2 * (z[0] - Z0)),
-                        z[0],
+                        uz_est**2 / 2 * abs(KZ / KX) * RHO0 * z1s,
+                        z0,
                         'orange',
                         label=r'$x_0z_0$ (Anal.)',
                         linewidth=0.5)
@@ -513,33 +552,21 @@ def plot(name, params):
                 if var == 'ux%s' % mean_suffix:
                     # mean flow = E[ux * uz] / V_GZ
                     p = axes.plot(
-                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ))
-                            * np.exp((z[0] - Z0) / H),
-                        z[0],
+                        uz_est**2 * abs(KZ) / KX / (2 * abs(V_GZ)) * z1s,
+                        z0,
                         'orange',
                         linewidth=0.5)
                     # critical = omega / kx
-                    p = axes.plot(OMEGA / KX * np.ones(np.shape(z[0])),
-                        z[0],
+                    p = axes.plot(OMEGA / KX * z1s,
+                        z0,
                         'green',
                         linewidth=0.5)
-                # if var in mean_vars:
-                #     p = axes.plot(
-                #         var_min[t_idx],
-                #         z[0],
-                #         'r:',
-                #         linewidth=0.2)
-                #     p = axes.plot(
-                #         var_max[t_idx],
-                #         z[0],
-                #         'r:',
-                #         linewidth=0.2)
 
                 plt.xticks(rotation=30)
                 plt.yticks(rotation=30)
                 xlims = [var_dat.min(), var_dat.max()]
                 axes.set_xlim(*xlims)
-                axes.set_ylim(z[0].min(), z[0].max())
+                axes.set_ylim(z0.min(), z0.max())
                 p = axes.plot(xlims,
                               [SPONGE_LOW + SPONGE_WIDTH * SPONGE_LOW]\
                                 * len(xlims),
@@ -638,8 +665,8 @@ def write_front(name, params):
             dux = state_vars['ux'][t_idx] - x_lin_est
             duz = state_vars['uz'][t_idx] - z_lin_est
 
-            ux_res = dux / (ux_est * np.exp((z - Z0) / (2 * H)))
-            uz_res = dux / (uz_est * np.exp((z - Z0) / (2 * H)))
+            ux_res = dux / ux_est
+            uz_res = dux / uz_est
             slice_idx = get_idx(z0[z_top] - 1 / KZ, z0)
 
             ux_res_slice.append(ux_res[:, slice_idx - 1])
@@ -675,7 +702,8 @@ def plot_front(name, params):
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, u0_z, \
             amps, ux_res_slice, uz_res_slice = pickle.load(data)
-        Spx11 = np.array(Spx11) / flux_th
+    Spx11 = np.array(Spx11) / flux_th
+    z1s = np.ones(np.shape(z0))
 
     tf = sim_times[-1]
     start_idx = get_idx(600, sim_times)
@@ -717,7 +745,7 @@ def plot_front(name, params):
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
         plt.plot(z0_cut,
-                 np.exp(-k_damp * 2 * (z0_cut - Z0)),
+                 z1s,
                  linewidth=1.5,
                  label=r'Model')
         plt.xlim(z_b, ZMAX)
@@ -776,7 +804,7 @@ def plot_front(name, params):
                  fontsize=8)
         # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
-                 np.exp(-k_damp * 2 * (z0_cut - Z0)),
+                 z1s,
                  linewidth=1.5,
                  label=r'$\nu$-only')
         # indicate vertical averaging wavelength
@@ -809,7 +837,7 @@ def plot_front(name, params):
             z_t_idx = get_front_idx(S_px[time],
                                     get_flux_th(params) * 0.2)
             ax.plot(z0_cut,
-                    np.exp(-k_damp * 2 * (z0_cut - Z0)),
+                    z1s,
                     linewidth=1.5,
                     label=r'$u_{x0}u_{z0}$')
             Spx_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
@@ -854,7 +882,7 @@ def plot_front(name, params):
         front_pos = np.array(front_pos)
 
         # compute front position
-        front_vel_S = dSpx / (RHO0 * np.exp(-front_pos / H) * u_c)
+        front_vel_S = dSpx / (RHO0 * u_c)
         front_pos_intg_S = np.cumsum((front_vel_S * np.gradient(sim_times))
                                       [start_idx: ])
         front_pos_intg_S += zf - front_pos_intg_S[-1]
@@ -862,8 +890,7 @@ def plot_front(name, params):
         # estimate incident Delta S_px if all from S_px0 that's viscously
         # damped, compare to other Delta S_px criteria/from data
         color_idx = 0
-        dSpx0 = -S_px0[start_idx: ] / flux_th * \
-            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
+        dSpx0 = -S_px0[start_idx: ] / flux_th
         ax1.plot(t,
                  -S_px0[start_idx: ] / flux_th,
                  '%s-' % PLT_COLORS[color_idx],
@@ -906,16 +933,13 @@ def plot_front(name, params):
         mean_incident = -np.mean(dSpx[len(dSpx) // 8: ])
         est_generated_flux = -np.mean(S_px0[len(S_px0) // 8: ])
         mean_pos = np.max(front_pos[len(front_pos) // 3: ])
-        est_incident_flux = est_generated_flux *\
-            np.exp(-k_damp * 2 * (mean_pos - Z0))
+        est_incident_flux = est_generated_flux
         flux_mults = [mean_incident / flux_th,
                       est_incident_flux / flux_th,
                       1]
         for mult in flux_mults:
             tau = H * RHO0 * u_c / (flux_th * mult)
-            pos_anal = -H * np.log(
-                (t - tf + tau * np.exp(-zf/H))
-                / tau)
+            pos_anal = -H * np.log((t - tf + tau) / tau)
             ax2.plot(t,
                      pos_anal,
                      '%s:' % PLT_COLORS[color_idx],
@@ -941,8 +965,7 @@ def plot_front(name, params):
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
         prop_time = (front_pos[start_idx: ] - Z0 - np.pi / KZ) / V_GZ
-        S_excited = (amps**2)[start_idx: ] * \
-            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
+        S_excited = (amps**2)[start_idx: ]
         ax1.plot(t,
                  S_excited,
                  'g:',

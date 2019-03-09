@@ -16,7 +16,7 @@ NUM_SNAPSHOTS = 300
 
 PARAMS_DEFAULT = {'XMAX': XMAX,
                   'ZMAX': ZMAX,
-                  'N_X': 64,
+                  'N_X': 128,
                   'N_Z': 256,
 
               'KX': 2 * np.pi / XMAX,
@@ -70,6 +70,7 @@ if __name__ == '__main__':
         #                        'F_MULT': 0.01,
         #                        'T_MULT': 3,
         #                        'NL': True,
+        #                        'N_X': 64,
         #                        'UZ0_COEFF': 0})),
         ('vstrat_nl_2',
          get_params(overrides={'Re_inv': 6e3,
