@@ -688,7 +688,7 @@ def plot_front(name, params):
     z1s = np.ones(np.shape(z0))
 
     tf = sim_times[-1]
-    start_idx = get_idx(600, sim_times)
+    start_idx = 0
     t = sim_times[start_idx: ]
 
     S_px0 = amps**2 * flux_th
