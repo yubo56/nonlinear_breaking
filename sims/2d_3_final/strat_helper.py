@@ -1079,8 +1079,8 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        # f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-        f, ax1 = plt.subplots(1, 1, sharex=True)
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        # f, ax1 = plt.subplots(1, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         a1ln = ax1.plot(t,
                        amps[start_idx::],
@@ -1097,12 +1097,12 @@ def plot_front(name, params):
         lns = a1ln + a3ln
         ax1.legend(lns, [l.get_label() for l in lns], loc=0)
 
-        # u0_at_front = np.array([u0[idx + start_idx, z_idx] / (OMEGA / KX)
-        #                         for idx, z_idx in
-        #                             enumerate(front_idxs[start_idx: ])])
-        # ax2.plot(t, u0_at_front, 'b', linewidth=0.7)
-        # ax2.set_ylabel(r'$\bar{U}_0(z_c) / c_{ph,x}$')
-        # ax2.set_xlabel(r'$t (N^{-1})$')
+        z_bot = get_idx(Z0 + 3 * S, z0)
+        z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+        u0_at_zone = np.max(u0[start_idx: , z_bot:z_top], axis=1) / u_c
+        ax2.plot(t, u0_at_zone, 'b', linewidth=0.7)
+        ax2.set_ylabel(r'$\bar{U}_0(z_0) / c_{ph,x}$')
+        ax2.set_xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
