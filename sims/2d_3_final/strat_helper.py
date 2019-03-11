@@ -680,8 +680,8 @@ def write_front(name, params, stride=2):
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
 
-        ux_res_slice = []
-        uz_res_slice = []
+        ux_res_sum = []
+        uz_res_sum = []
         Spx11 = []
         amps = []
         amps_down = []
@@ -699,12 +699,14 @@ def write_front(name, params, stride=2):
 
             amp, amp_down, dux2, duz2 =\
                 subtract_lins(params, state_vars, t_idx, sim_time, x, z)
-            ux_res = dux2 / (ux_est * np.exp((z - Z0) / (2 * H)))
-            uz_res = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
-            slice_idx = get_idx(z0[z_top] - 1 / KZ, z0)
+            norm = np.exp((z - Z0) / (2 * H))
+            ux_res = (dux2 / norm)[:, z_bot: z_top]
+            uz_res = (duz2 / norm)[:, z_bot: z_top]
 
-            ux_res_slice.append(ux_res[:, slice_idx - 1])
-            uz_res_slice.append(uz_res[:, slice_idx - 1])
+            ux_fft = (np.abs(np.fft.fft(ux_res, axis=0) / N_X)[0: N_X//2])**2
+            uz_fft = (np.abs(np.fft.fft(uz_res, axis=0) / N_X)[0: N_X//2])**2
+            ux_res_sum.append(np.sum(ux_fft, axis=1))
+            uz_res_sum.append(np.sum(uz_fft, axis=1))
 
             amps.append(amp)
             amps_down.append(amp_down)
@@ -713,7 +715,7 @@ def write_front(name, params, stride=2):
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
                          np.array(amps), np.array(amps_down),
-                         ux_res_slice, uz_res_slice), data)
+                         ux_res_sum, uz_res_sum), data)
     else:
         print('log file found, not regenerating')
 
@@ -737,7 +739,7 @@ def plot_front(name, params):
     print('Loading data')
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, u0_z, amps, amps_down, \
-            ux_res_slice, uz_res_slice = pickle.load(data)
+            ux_res_sum, uz_res_sum = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
@@ -1086,20 +1088,21 @@ def plot_front(name, params):
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     f.subplots_adjust(hspace=0)
     num_plots = 5
-    half_avg = 8
     ux_ffts = np.array(
-        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in ux_res_slice])
+        [(np.abs(np.fft.fft(i) / N_X)[0: N_X//2])**2 for i in ux_res_sum])
     uz_ffts = np.array(
-        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in uz_res_slice])
-    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX,
-                     N_X // 2)[1: ]
+        [(np.abs(np.fft.fft(i) / N_X)[0: N_X//2])**2 for i in uz_res_sum])
+    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)
     # drop endpoints
-    for idx in np.linspace(0, len(ux_ffts), num_plots + 2)[1: -1]:
-        idx = int(idx)
-        x_avg = np.mean(ux_ffts[idx - half_avg:idx + half_avg, :], 0)
-        z_avg = np.mean(uz_ffts[idx - half_avg:idx + half_avg, :], 0)
-        ax1.loglog(kx, x_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
-        ax2.loglog(kx, z_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
+    for idx in times:
+        ax1.loglog(kx,
+                   ux_ffts[idx],
+                   label='t=%.1f' % sim_times[idx],
+                   linewidth=0.7)
+        ax2.loglog(kx,
+                   uz_ffts[idx],
+                   label='t=%.1f' % sim_times[idx],
+                   linewidth=0.7)
     if NU > 0:
         visc_kx = np.sqrt(OMEGA / (2 * NU))
         ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
