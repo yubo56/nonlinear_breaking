@@ -1117,21 +1117,24 @@ def plot_front(name, params):
     uz_est = F * get_uz_f_ratio(params)
     ux_est = uz_est * KZ / KX
 
+    times = get_times([1/8, 3/8, 5/8, 7/8, 1], sim_times, start_idx)
     # kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)[ : num_modes]
     for idx in times:
-        ax1.plot(ux_ffts[idx, : num_modes] / ux_est**2,
-                 label='t=%.1f' % sim_times[idx],
-                 linewidth=0.7)
-        ax2.plot(uz_ffts[idx, : num_modes] / uz_est**2,
-                 label='t=%.1f' % sim_times[idx],
-                 linewidth=0.7)
+        ax1.semilogy(ux_ffts[idx, : num_modes] / ux_est**2,
+                     label='t=%.1f' % sim_times[idx],
+                     linewidth=0.7)
+        ax2.semilogy(uz_ffts[idx, : num_modes] / uz_est**2,
+                     label='t=%.1f' % sim_times[idx],
+                     linewidth=0.7)
     # if NU > 0:
     #     visc_kx = np.sqrt(OMEGA / (2 * NU))
     #     ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
     #     ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
     ax1.set_ylabel(r'$\left|\tilde{u}_x\rho_0\right|^2(k_x)$')
     ax2.set_ylabel(r'$\left|\tilde{u}_z\rho_0\right|^2(k_x)$')
-    ax2.set_xlabel(r'$k_x$ index')
+    ax2.set_xlabel(r'$k_x/k_{x0}$')
+    ax1.set_ylim([1e-6, 1])
+    ax2.set_ylim([1e-6, 1])
     ax1.legend(fontsize=6)
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)

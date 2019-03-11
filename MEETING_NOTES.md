@@ -102,4 +102,4 @@
 # GLOBAL TODO
 - try vstrat Spx?
 - E disp
-- snapshots.add_task("integ(ux * ux * rho0, 'x')", name='fx') (3D R-B)
+- Finish trying power law calculation?
