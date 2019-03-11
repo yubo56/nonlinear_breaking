@@ -86,8 +86,7 @@ def get_anal_ux(params, t, x, z):
     return uz_est * np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z[0] - Z0)) * (
         KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
         - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
-            / (2 * H * KX)
-    )
+            / (2 * H * KX))
 
 def get_idx(z, z0):
     return int(len(np.where(z0 < z)[0]))
@@ -680,8 +679,8 @@ def write_front(name, params, stride=2):
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
 
-        ux_res_sum = []
-        uz_res_sum = []
+        ux_ffts = []
+        uz_ffts = []
         Spx11 = []
         amps = []
         amps_down = []
@@ -700,13 +699,19 @@ def write_front(name, params, stride=2):
             amp, amp_down, dux2, duz2 =\
                 subtract_lins(params, state_vars, t_idx, sim_time, x, z)
             norm = np.exp((z - Z0) / (2 * H))
+            # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
+            # uz_res = (state_vars['uz'][t_idx] / norm)[:, z_bot: z_top]
             ux_res = (dux2 / norm)[:, z_bot: z_top]
             uz_res = (duz2 / norm)[:, z_bot: z_top]
 
-            ux_fft = (np.abs(np.fft.fft(ux_res, axis=0) / N_X)[0: N_X//2])**2
-            uz_fft = (np.abs(np.fft.fft(uz_res, axis=0) / N_X)[0: N_X//2])**2
-            ux_res_sum.append(np.sum(ux_fft, axis=1))
-            uz_res_sum.append(np.sum(uz_fft, axis=1))
+            ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
+            uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
+            # by using only half of the fft, all non-DC bins are half as high as
+            # they should be
+            ux_fft[1: ] *= 4
+            uz_fft[1: ] *= 4
+            ux_ffts.append(np.mean(ux_fft, axis=1))
+            uz_ffts.append(np.mean(uz_fft, axis=1))
 
             amps.append(amp)
             amps_down.append(amp_down)
@@ -715,7 +720,7 @@ def write_front(name, params, stride=2):
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
                          np.array(amps), np.array(amps_down),
-                         ux_res_sum, uz_res_sum), data)
+                         np.array(ux_ffts), np.array(uz_ffts)), data)
     else:
         print('log file found, not regenerating')
 
@@ -739,7 +744,7 @@ def plot_front(name, params):
     print('Loading data')
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, u0_z, amps, amps_down, \
-            ux_res_sum, uz_res_sum = pickle.load(data)
+            ux_ffts, uz_ffts = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
@@ -1087,30 +1092,27 @@ def plot_front(name, params):
     #########################################################################
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     f.subplots_adjust(hspace=0)
-    num_plots = 5
-    ux_ffts = np.array(
-        [(np.abs(np.fft.fft(i) / N_X)[0: N_X//2])**2 for i in ux_res_sum])
-    uz_ffts = np.array(
-        [(np.abs(np.fft.fft(i) / N_X)[0: N_X//2])**2 for i in uz_res_sum])
-    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)
-    # drop endpoints
+    num_modes = 10
+    uz_est = F * get_uz_f_ratio(params)
+    ux_est = uz_est * KZ / KX
+
+    # kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)[ : num_modes]
     for idx in times:
-        ax1.loglog(kx,
-                   ux_ffts[idx],
-                   label='t=%.1f' % sim_times[idx],
-                   linewidth=0.7)
-        ax2.loglog(kx,
-                   uz_ffts[idx],
-                   label='t=%.1f' % sim_times[idx],
-                   linewidth=0.7)
-    if NU > 0:
-        visc_kx = np.sqrt(OMEGA / (2 * NU))
-        ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
-        ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
-    ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
-    ax2.set_ylabel(r'$\tilde{u}_z(k_x)$')
-    ax2.set_xlabel(r'$k_x$')
+        ax1.plot(ux_ffts[idx, : num_modes] / ux_est**2,
+                 label='t=%.1f' % sim_times[idx],
+                 linewidth=0.7)
+        ax2.plot(uz_ffts[idx, : num_modes] / uz_est**2,
+                 label='t=%.1f' % sim_times[idx],
+                 linewidth=0.7)
+    # if NU > 0:
+    #     visc_kx = np.sqrt(OMEGA / (2 * NU))
+    #     ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
+    #     ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
+    ax1.set_ylabel(r'$\left|\tilde{u}_x\rho_0\right|^2(k_x)$')
+    ax2.set_ylabel(r'$\left|\tilde{u}_z\rho_0\right|^2(k_x)$')
+    ax2.set_xlabel(r'$k_x$ index')
     ax1.legend(fontsize=6)
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
+
