@@ -17,6 +17,7 @@ import numpy as np
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 from scipy.interpolate import interp1d
+from scipy.optimize import minimize
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -67,7 +68,7 @@ def get_k_damp(params):
 
     return NU * k**5 / abs(KZ * g / H * KX)
 
-def get_anal_uz(params, t, x, z):
+def get_anal_uz(params, t, x, z, phi=0):
     populate_globals(params)
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
@@ -76,16 +77,17 @@ def get_anal_uz(params, t, x, z):
         -np.exp((z - Z0) / 2 * H)
         * np.exp(-k_damp * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (2 * KZ * H)))
+                 + 1 / (2 * KZ * H) - phi))
 
-def get_anal_ux(params, t, x, z):
+def get_anal_ux(params, t, x, z, phi=0):
     populate_globals(params)
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
     return uz_est * np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z[0] - Z0)) * (
-        KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
-        - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H))
+        KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
+                         + 1 / (2 * KZ * H) - phi)
+        - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H) - phi)
             / (2 * H * KX))
 
 def get_idx(z, z0):
@@ -141,7 +143,26 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
                                                 x, z), offset_down, axis=0)
     duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
                                                 x, z), offset_down, axis=0)
-    return amp, amp_down, dux2, duz2
+    def obj_func(p):
+        amp, offset = p
+        resx = dux[pos_slice] - amp *\
+            get_anal_ux(down_params, sim_time, x, z, phi=offset)[pos_slice]
+        resz = duz[pos_slice] - amp *\
+            get_anal_uz(down_params, sim_time, x, z, phi=offset)[pos_slice]
+        return np.sum(resx**2 * KZ**2 + resz**2 * KZ**2 * norm)
+
+    offset_guess = (offset_down * KX * XMAX / N_X)
+    fit = minimize(obj_func,
+                   [amp_down, offset_guess],
+                   bounds=[(0, 1), (offset_guess - 0.1, offset_guess + 0.1)])
+    amp_down, offset_down = fit.x
+    print('Got fit', amp_down, offset_down)
+
+    dux2 = dux - amp_down *\
+        get_anal_ux(down_params, sim_time, x, z, phi=offset_down)
+    duz2 = duz - amp_down *\
+        get_anal_uz(down_params, sim_time, x, z, phi=offset_down)
+    return amp, amp_down, offset_down, dux2, duz2
 
 def set_ic(name, solver, domain, params):
     populate_globals(params)
@@ -469,7 +490,7 @@ def plot(name, params):
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
-                    amp, amp_down, dux2, duz2 = \
+                    amp, amp_down, _, dux2, duz2 = \
                         subtract_lins(params, state_vars, t_idx, sim_time, x, z)
                     if var == 'uz%s' % res_suffix:
                         var_dat = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
@@ -696,7 +717,7 @@ def write_front(name, params, stride=2):
             z_bot = get_idx(Z0 + 3 * S, z0)
             z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
-            amp, amp_down, dux2, duz2 =\
+            amp, amp_down, _, dux2, duz2 =\
                 subtract_lins(params, state_vars, t_idx, sim_time, x, z)
             norm = np.exp((z - Z0) / (2 * H))
             # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
