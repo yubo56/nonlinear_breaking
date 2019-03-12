@@ -560,7 +560,7 @@ def plot(name, params):
 
             for var in mean_vars + slice_vars:
                 axes = fig.add_subplot(n_rows, n_cols, idx, title=r'$%s$' % var)
-                var_dat = state_vars[var][:, z_b:]
+                var_dat = state_vars[var]
 
                 p = axes.plot(var_dat[t_idx],
                               z[0],
