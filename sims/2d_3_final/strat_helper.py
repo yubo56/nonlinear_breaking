@@ -29,6 +29,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
+Z_TOP_MULT = 1
 plot_stride = 15
 
 def populate_globals(var_dict):
@@ -48,8 +49,9 @@ def get_front_idx(S_px, flux_threshold):
         max_pos -= 1
     return max_pos
 
-def horiz_mean(field, n_x):
-    return np.sum(field, axis=1) / n_x
+def horiz_mean(field, n_x, axis=1):
+    ''' horizontal direction (axis = 1) is uniform spacing, just mean '''
+    return np.sum(field, axis=axis) / n_x
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
@@ -98,30 +100,35 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
-def subtract_lins(params, state_vars, t_idx, sim_time, x, z, z_top_mult=1):
-    z0 = z[0]
-    z_bot = get_idx(Z0 + 3 * S, z0)
-    z_top = get_idx(Z0 + 3 * S + 2 * z_top_mult * np.pi / abs(KZ), z0)
+def subtract_lins(params, state_vars, t_idx, sim_time, domain):
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
+    dx = domain.grid_spacing(0, scales=1)
+    dz = domain.grid_spacing(1, scales=1)
+
+    z_bot = get_idx(Z0 + 3 * S, z[0])
+    z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
     pos_slice = np.s_[:, z_bot:z_top]
     t_slice = np.s_[t_idx, :, z_bot:z_top]
+    dxdz = np.outer(dx, dz)[pos_slice]
     def obj_func(p, ux, uz, params):
         amp, offset = p
         resx = ux[pos_slice] - amp *\
             get_anal_ux(params, sim_time, x, z, phi=offset)[pos_slice]
         resz = uz[pos_slice] - amp *\
             get_anal_uz(params, sim_time, x, z, phi=offset)[pos_slice]
-        return np.sum(resx**2 * KZ**2 + resz**2 * KZ**2 * norm)
+        return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2 * norm) * dxdz)
 
     anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
     anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
     norm = np.exp(-z/H)[pos_slice]
 
-    amp = np.sum(
+    amp = np.sum((
         state_vars['ux'][t_slice] * anal_ux * KX**2 * norm +
         state_vars['uz'][t_slice] * anal_uz * KZ**2 * norm
-    ) / np.sum(
+    ) * dxdz) / np.sum((
         anal_ux**2 * KX**2 * norm +
-        anal_uz**2 * KZ**2 * norm)
+        anal_uz**2 * KZ**2 * norm) * dxdz)
     dphi = 0
     # fit = minimize(obj_func,
     #                [amp, 0],
@@ -141,14 +148,14 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z, z_top_mult=1):
     amp_down = 0
     offset_down = 0
     for offset in range(N_X):
-        curr = np.sum(
+        curr = np.sum((
             np.roll(dux[pos_slice], -offset, axis=0)
                 * down_anal_ux * KX**2 * norm +
             np.roll(duz[pos_slice], -offset, axis=0)
                 * down_anal_uz * KZ**2 * norm
-        ) / np.sum(
+        ) * dxdz) / np.sum((
             down_anal_ux**2 * KX**2 * norm +
-            down_anal_uz**2 * KZ**2 * norm)
+            down_anal_uz**2 * KZ**2 * norm) * dxdz)
         if curr > amp_down:
             amp_down = curr
             offset_down = offset
@@ -480,11 +487,11 @@ def plot(name, params):
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
 
-        for t_idx, sim_time in list(enumerate(sim_times))[rank::size]:
+        for t_idx, time in list(enumerate(sim_times))[rank::size]:
             fig = plt.figure(dpi=400)
 
-            uz_anal = get_anal_uz(params, sim_time, x, z)
-            ux_anal = get_anal_ux(params, sim_time, x, z)
+            uz_anal = get_anal_uz(params, time, x, z)
+            ux_anal = get_anal_ux(params, time, x, z)
             uz_mean = np.outer(np.ones(N_X),
                                state_vars['uz%s' % mean_suffix][t_idx])
             ux_mean = np.outer(np.ones(N_X),
@@ -499,7 +506,7 @@ def plot(name, params):
                 if res_suffix in var:
                     # divide by analytical profile and normalize
                     amp, _, amp_down, _, dux2, duz2 = \
-                        subtract_lins(params, state_vars, t_idx, sim_time, x, z)
+                        subtract_lins(params, state_vars, t_idx, time, domain)
                     if var == 'uz%s' % res_suffix:
                         var_dat = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_z'
@@ -602,15 +609,16 @@ def plot(name, params):
                         linewidth=0.5)
                     rho0 = RHO0 * np.exp(-z / H)
                     # compute all of the S_px cross terms (00 is model)
-                    Spx01 = np.sum(rho0 * state_vars['ux'][t_idx] *
-                                   (state_vars['uz'][t_idx] - uz_anal),
-                                   axis=0) / N_X
-                    Spx10 = np.sum(rho0 * state_vars['uz'][t_idx] *
-                                   (state_vars['ux'][t_idx] - ux_anal),
-                                   axis=0) / N_X
-                    Spx11 = np.sum(rho0 * (state_vars['ux'][t_idx] - ux_anal) *
-                                   (state_vars['uz'][t_idx] - uz_anal),
-                                   axis=0) / N_X
+                    Spx01 = horiz_mean(rho0 * state_vars['ux'][t_idx] *
+                                       (state_vars['uz'][t_idx] - uz_anal),
+                                       N_X, axis=0)
+                    Spx10 = horiz_mean(rho0 * state_vars['uz'][t_idx] *
+                                       (state_vars['ux'][t_idx] - ux_anal),
+                                       N_X, axis=0)
+                    Spx11 = horiz_mean(rho0 *
+                                       (state_vars['ux'][t_idx] - ux_anal) *
+                                       (state_vars['uz'][t_idx] - uz_anal),
+                                       N_X, axis=0)
                     p = axes.plot(Spx01[z_bot: z_top],
                                   z[0, z_bot: z_top],
                                   'g:',
@@ -637,7 +645,7 @@ def plot(name, params):
                         'orange',
                         linewidth=0.5)
                     # critical = omega / kx
-                    p = axes.plot(OMEGA / KX * np.ones(np.shape(z[0])),
+                    p = axes.plot(OMEGA / KX * np.ones_like(z[0]),
                         z[0],
                         'green',
                         linewidth=0.5)
@@ -678,7 +686,7 @@ def plot(name, params):
 
             fig.suptitle(
                 r'Config: $%s (t=%.2f, \vec{k}=(%.2f, %.2f), \omega=%.2f)$' %
-                (name.replace('_', '.'), sim_time, KX, KZ, OMEGA))
+                (name.replace('_', '.'), time, KX, KZ, OMEGA))
             fig.subplots_adjust(hspace=0.7, wspace=0.6)
             savefig = save_fmt_str % (t_idx)
             plt.savefig('%s/%s' % (snapshots_dir, savefig))
@@ -705,6 +713,7 @@ def write_front(name, params, stride=2):
             name, params, dyn_vars, plot_stride=stride, start=0)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
+        dz = domain.grid_spacing(1, scales=1)[0]
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
 
@@ -721,12 +730,11 @@ def write_front(name, params, stride=2):
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            mult = 1 # z_top_mult
             z_bot = get_idx(Z0 + 3 * S, z0)
-            z_top = get_idx(Z0 + 3 * S + 2 * mult * np.pi / abs(KZ), z0)
+            z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
 
             amp, _, amp_down, _, dux2, duz2 =\
-                subtract_lins(params, state_vars, t_idx, sim_time, x, z, mult)
+                subtract_lins(params, state_vars, t_idx, sim_time, domain)
             norm = np.exp((z - Z0) / (2 * H))
             # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
             # uz_res = (state_vars['uz'][t_idx] / norm)[:, z_bot: z_top]
@@ -739,12 +747,15 @@ def write_front(name, params, stride=2):
             # they should be
             ux_fft[1: ] *= 4
             uz_fft[1: ] *= 4
-            ux_ffts.append(np.mean(ux_fft, axis=1))
-            uz_ffts.append(np.mean(uz_fft, axis=1))
+            dz_window = np.outer(np.ones_like(z[:, 0]), dz[z_bot: z_top])
+            ux_ffts.append(np.sum(ux_fft * dz_window, axis=1) /
+                           np.sum(dz_window, axis=1))
+            uz_ffts.append(np.sum(uz_fft * dz_window, axis=1) /
+                           np.sum(dz_window, axis=1))
 
             amps.append(amp)
             amps_down.append(amp_down)
-            Spx11.append(np.sum(rho0 * dux2 * duz2, axis=0) / N_X)
+            Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
 
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
@@ -1108,7 +1119,7 @@ def plot_front(name, params):
         ax1.legend(lns, [l.get_label() for l in lns], loc=0)
 
         z_bot = get_idx(Z0 + 3 * S, z0)
-        z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+        z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
         u0_at_zone = np.max(u0[start_idx: , z_bot:z_top], axis=1) / u_c
         ax2.plot(t, u0_at_zone, 'b', linewidth=0.7)
         ax2.set_ylabel(r'$\bar{U}_0(z_0) / c_{ph,x}$')
