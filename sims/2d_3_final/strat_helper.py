@@ -39,7 +39,8 @@ def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vgz(g, h, kx, kz):
-    return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
+    return -get_omega(g, h, kx, kz) * kx * kz /\
+        (kx**2 + kz**2 + 0.25 / h**2)**(3/2)
 
 def get_front_idx(S_px, flux_threshold):
     max_pos = len(S_px) - 1
@@ -103,6 +104,13 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
     z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
     pos_slice = np.s_[:, z_bot:z_top]
     t_slice = np.s_[t_idx, :, z_bot:z_top]
+    def obj_func(p, ux, uz, params):
+        amp, offset = p
+        resx = ux[pos_slice] - amp *\
+            get_anal_ux(params, sim_time, x, z, phi=offset)[pos_slice]
+        resz = uz[pos_slice] - amp *\
+            get_anal_uz(params, sim_time, x, z, phi=offset)[pos_slice]
+        return np.sum(resx**2 * KZ**2 + resz**2 * KZ**2 * norm)
 
     anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
     anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
@@ -114,11 +122,17 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
     ) / np.sum(
         anal_ux**2 * KX**2 * norm +
         anal_uz**2 * KZ**2 * norm)
-    x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
-    z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
+    dphi = 0
+    # fit = minimize(obj_func,
+    #                [amp, 0],
+    #                (state_vars['ux'][t_idx], state_vars['uz'][t_idx], params),
+    #                bounds=[(0, 1.5), (-0.5, 0.5)])
+    # amp, dphi = fit.x
 
-    dux = state_vars['ux'][t_idx] - x_lin_est
-    duz = state_vars['uz'][t_idx] - z_lin_est
+    dux = state_vars['ux'][t_idx] -\
+        amp * get_anal_ux(params, sim_time, x, z, phi=dphi)
+    duz = state_vars['uz'][t_idx] -\
+        amp * get_anal_uz(params, sim_time, x, z, phi=dphi)
 
     # find phase offset + amp for downward reflected wave
     down_params = {**params, **{'KZ': -KZ}}
@@ -143,26 +157,20 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
                                                 x, z), offset_down, axis=0)
     duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
                                                 x, z), offset_down, axis=0)
-    def obj_func(p):
-        amp, offset = p
-        resx = dux[pos_slice] - amp *\
-            get_anal_ux(down_params, sim_time, x, z, phi=offset)[pos_slice]
-        resz = duz[pos_slice] - amp *\
-            get_anal_uz(down_params, sim_time, x, z, phi=offset)[pos_slice]
-        return np.sum(resx**2 * KZ**2 + resz**2 * KZ**2 * norm)
 
-    offset_guess = (offset_down * KX * XMAX / N_X)
+    dphi_down = (offset_down * KX * XMAX / N_X)
     fit = minimize(obj_func,
-                   [amp_down, offset_guess],
-                   bounds=[(0, 1), (offset_guess - 0.1, offset_guess + 0.1)])
-    amp_down, offset_down = fit.x
-    print('Got fit', amp_down, offset_down)
+                   [amp_down, dphi_down],
+                   (dux, duz, down_params),
+                   bounds=[(0, 1), (dphi_down - 0.1, dphi_down + 0.1)])
+    amp_down, dphi_down = fit.x
+    print('Got fits', amp, dphi, amp_down, dphi_down)
 
     dux2 = dux - amp_down *\
-        get_anal_ux(down_params, sim_time, x, z, phi=offset_down)
+        get_anal_ux(down_params, sim_time, x, z, phi=dphi_down)
     duz2 = duz - amp_down *\
-        get_anal_uz(down_params, sim_time, x, z, phi=offset_down)
-    return amp, amp_down, offset_down, dux2, duz2
+        get_anal_uz(down_params, sim_time, x, z, phi=dphi_down)
+    return amp, dphi, amp_down, dphi_down, dux2, duz2
 
 def set_ic(name, solver, domain, params):
     populate_globals(params)
@@ -490,7 +498,7 @@ def plot(name, params):
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
-                    amp, amp_down, _, dux2, duz2 = \
+                    amp, _, amp_down, _, dux2, duz2 = \
                         subtract_lins(params, state_vars, t_idx, sim_time, x, z)
                     if var == 'uz%s' % res_suffix:
                         var_dat = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
@@ -717,7 +725,7 @@ def write_front(name, params, stride=2):
             z_bot = get_idx(Z0 + 3 * S, z0)
             z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
 
-            amp, amp_down, _, dux2, duz2 =\
+            amp, _, amp_down, _, dux2, duz2 =\
                 subtract_lins(params, state_vars, t_idx, sim_time, x, z)
             norm = np.exp((z - Z0) / (2 * H))
             # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
@@ -1026,7 +1034,9 @@ def plot_front(name, params):
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
-        prop_time = (front_pos[start_idx: ] - Z0 - 3 * S - l_z - dz) / V_GZ
+
+        # prop_time = (front_pos[start_idx: ] - Z0 - 3 * S - l_z - dz) / V_GZ
+        prop_time = 0
         S_excited = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
