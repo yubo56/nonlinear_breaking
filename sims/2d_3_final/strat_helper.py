@@ -98,10 +98,10 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
-def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
+def subtract_lins(params, state_vars, t_idx, sim_time, x, z, z_top_mult=1):
     z0 = z[0]
     z_bot = get_idx(Z0 + 3 * S, z0)
-    z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+    z_top = get_idx(Z0 + 3 * S + 2 * z_top_mult * np.pi / abs(KZ), z0)
     pos_slice = np.s_[:, z_bot:z_top]
     t_slice = np.s_[t_idx, :, z_bot:z_top]
     def obj_func(p, ux, uz, params):
@@ -721,12 +721,12 @@ def write_front(name, params, stride=2):
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            # figure out what to subtract by convolution over lambda_z
+            mult = 1 # z_top_mult
             z_bot = get_idx(Z0 + 3 * S, z0)
-            z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+            z_top = get_idx(Z0 + 3 * S + 2 * mult * np.pi / abs(KZ), z0)
 
             amp, _, amp_down, _, dux2, duz2 =\
-                subtract_lins(params, state_vars, t_idx, sim_time, x, z)
+                subtract_lins(params, state_vars, t_idx, sim_time, x, z, mult)
             norm = np.exp((z - Z0) / (2 * H))
             # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
             # uz_res = (state_vars['uz'][t_idx] / norm)[:, z_bot: z_top]
@@ -1044,11 +1044,11 @@ def plot_front(name, params):
                  'g:',
                  label='Incident',
                  linewidth=0.7)
-        ax1.plot(t + prop_time,
-                 S_excited,
-                 'b:',
-                 label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
-                 linewidth=0.7)
+        # ax1.plot(t + prop_time,
+        #          S_excited,
+        #          'b:',
+        #          label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
+        #          linewidth=0.7)
         ax1.plot(t,
                  -dSpx[start_idx: ] / flux_th,
                  'k:',
