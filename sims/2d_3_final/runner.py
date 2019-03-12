@@ -22,9 +22,7 @@ from scipy.optimize import minimize
 from dedalus import public as de
 from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 
-SNAPSHOTS_DIR = 'snapshots_%s'
-FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-plot_stride = 15
+snapshots_dir = 'snapshots_yubo'
 
 def get_uz_f_ratio(S, KX, KZ, OMEGA, RHO0, Z0, H):
     ''' get uz(z = z0) / F '''
@@ -49,7 +47,6 @@ if __name__ == '__main__':
     N = np.sqrt(g / H)
     RHO0 = 1
     Z0 = 0.2 * ZMAX
-    Re_inv = 1
 
     F_MULT = 1
     SPONGE_STRENGTH = 15
@@ -66,8 +63,11 @@ if __name__ == '__main__':
     F = (TARGET_DISP_RAT * OMEGA / KZ) \
         / get_uz_f_ratio(S, KX, KZ, OMEGA, RHO0, Z0, H) \
         * np.exp(-Z0 / (2 * H))
-    NU = 0.3 *  OMEGA * ZMAX / (2 * np.pi * N_Z) / abs(KZ)
-    snapshots_dir = SNAPSHOTS_DIR % 'yubo'
+
+    # reference viscosity for 256x1024 @ Re_inv = 0.3
+    # (snapshots_nl_4 on yubo's simulations)
+    NU_0 = 0.3 *  OMEGA * ZMAX / (2 * np.pi * 1024) / abs(KZ)
+    NU = NU_0
 
     x_basis = de.Fourier('x',
                          N_X,
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
     # Initial conditions
     if os.path.exists(snapshots_dir):
-        filename = FILENAME_EXPR.format(s=snapshots_dir, idx=1)
+        filename = '{s}/{s}_s{idx}.h5'.format(s=snapshots_dir, idx=1)
         # try to load snapshots_s1
         print('Attempting to load snapshots in', filename)
         _, dt = solver.load_state(filename, -1)
