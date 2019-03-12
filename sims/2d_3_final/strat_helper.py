@@ -101,15 +101,33 @@ def get_times(time_fracs, sim_times, start_idx):
             for time_frac in time_fracs]
 
 def subtract_lins(params, state_vars, t_idx, sim_time, domain):
+    # ux_field = domain.new_field(name='ux')
+    # uz_field = domain.new_field(name='uz')
+    # ux_field.require_grid_space()
+    # uz_field.require_grid_space()
+    # np.copyto(ux_field.data, state_vars['ux'][t_idx])
+    # np.copyto(uz_field.data, state_vars['uz'][t_idx])
+    # ux_field.set_scales(2, keep_data=True)
+    # uz_field.set_scales(2, keep_data=True)
+
+    # x = domain.grid(0, scales=2)
+    # z = domain.grid(1, scales=2)
+    # dx = domain.grid_spacing(0, scales=2)
+    # dz = domain.grid_spacing(1, scales=2)
+    # ux = ux_field['g']
+    # uz = uz_field['g']
+
+    ux = state_vars['ux'][t_idx]
+    uz = state_vars['uz'][t_idx]
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
     dx = domain.grid_spacing(0, scales=1)
     dz = domain.grid_spacing(1, scales=1)
 
+    NX_scale = len(x)
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
     pos_slice = np.s_[:, z_bot:z_top]
-    t_slice = np.s_[t_idx, :, z_bot:z_top]
     dxdz = np.outer(dx, dz)[pos_slice]
     def obj_func(p, ux, uz, params):
         amp, offset = p
@@ -124,22 +142,20 @@ def subtract_lins(params, state_vars, t_idx, sim_time, domain):
     norm = np.exp(-z/H)[pos_slice]
 
     amp = np.sum((
-        state_vars['ux'][t_slice] * anal_ux * KX**2 * norm +
-        state_vars['uz'][t_slice] * anal_uz * KZ**2 * norm
+        ux[pos_slice] * anal_ux * KX**2 * norm +
+        uz[pos_slice] * anal_uz * KZ**2 * norm
     ) * dxdz) / np.sum((
         anal_ux**2 * KX**2 * norm +
         anal_uz**2 * KZ**2 * norm) * dxdz)
     dphi = 0
     # fit = minimize(obj_func,
     #                [amp, 0],
-    #                (state_vars['ux'][t_idx], state_vars['uz'][t_idx], params),
+    #                (ux[t_idx], uz[t_idx], params),
     #                bounds=[(0, 1.5), (-0.5, 0.5)])
     # amp, dphi = fit.x
 
-    dux = state_vars['ux'][t_idx] -\
-        amp * get_anal_ux(params, sim_time, x, z, phi=dphi)
-    duz = state_vars['uz'][t_idx] -\
-        amp * get_anal_uz(params, sim_time, x, z, phi=dphi)
+    dux = ux - amp * get_anal_ux(params, sim_time, x, z, phi=dphi)
+    duz = uz - amp * get_anal_uz(params, sim_time, x, z, phi=dphi)
 
     # find phase offset + amp for downward reflected wave
     down_params = {**params, **{'KZ': -KZ}}
@@ -147,7 +163,7 @@ def subtract_lins(params, state_vars, t_idx, sim_time, domain):
     down_anal_uz = get_anal_uz(down_params, sim_time, x, z)[pos_slice]
     amp_down = 0
     offset_down = 0
-    for offset in range(N_X):
+    for offset in range(NX_scale):
         curr = np.sum((
             np.roll(dux[pos_slice], -offset, axis=0)
                 * down_anal_ux * KX**2 * norm +
@@ -165,7 +181,7 @@ def subtract_lins(params, state_vars, t_idx, sim_time, domain):
     duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
                                                 x, z), offset_down, axis=0)
 
-    dphi_down = (offset_down * KX * XMAX / N_X)
+    dphi_down = (offset_down * KX * XMAX / NX_scale)
     fit = minimize(obj_func,
                    [amp_down, dphi_down],
                    (dux, duz, down_params),
@@ -177,6 +193,14 @@ def subtract_lins(params, state_vars, t_idx, sim_time, domain):
         get_anal_ux(down_params, sim_time, x, z, phi=dphi_down)
     duz2 = duz - amp_down *\
         get_anal_uz(down_params, sim_time, x, z, phi=dphi_down)
+
+    # np.copyto(ux_field.data, dux2)
+    # np.copyto(uz_field.data, duz2)
+    # ux_field.set_scales(1, keep_data=True)
+    # uz_field.set_scales(1, keep_data=True)
+    # dux2 = ux_field['g']
+    # duz2 = uz_field['g']
+
     return amp, dphi, amp_down, dphi_down, dux2, duz2
 
 def set_ic(name, solver, domain, params):
