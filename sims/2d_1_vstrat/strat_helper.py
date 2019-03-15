@@ -17,6 +17,7 @@ import numpy as np
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 from scipy.interpolate import interp1d
+from scipy.optimize import minimize
 
 from dedalus import public as de
 from dedalus.tools import post
@@ -28,6 +29,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
+Z_TOP_MULT = 1
 plot_stride = 15
 
 def populate_globals(var_dict):
@@ -38,7 +40,8 @@ def get_omega(g, h, kx, kz):
     return np.sqrt((g / h) * kx**2 / (kx**2 + kz**2 + 0.25 / h**2))
 
 def get_vgz(g, h, kx, kz):
-    return get_omega(g, h, kx, kz) / (kx**2 + kz**2 + 0.25 / h**2) * kz
+    return -get_omega(g, h, kx, kz) * kx * kz /\
+        (kx**2 + kz**2 + 0.25 / h**2)**(3/2)
 
 def get_front_idx(S_px, flux_threshold):
     max_pos = len(S_px) - 1
@@ -46,8 +49,9 @@ def get_front_idx(S_px, flux_threshold):
         max_pos -= 1
     return max_pos
 
-def horiz_mean(field, n_x):
-    return np.sum(field, axis=1) / n_x
+def horiz_mean(field, n_x, axis=1):
+    ''' horizontal direction (axis = 1) is uniform spacing, just mean '''
+    return np.sum(field, axis=axis) / n_x
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
@@ -65,7 +69,7 @@ def get_k_damp(params):
 
     return NU * k**5 / abs(KZ * g / H * KX)
 
-def get_anal_uz(params, t, x, z):
+def get_anal_uz(params, t, x, z, phi=0):
     populate_globals(params)
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
@@ -74,17 +78,17 @@ def get_anal_uz(params, t, x, z):
         -np.exp(-k_damp
                  * (z - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (2 * KZ * H)))
+                 + 1 / (2 * KZ * H) - phi))
 
-def get_anal_ux(params, t, x, z):
+def get_anal_ux(params, t, x, z, phi=0):
     populate_globals(params)
-    ux_est = F * get_uz_f_ratio(params) * KZ / KX
+    ux_est = -F * get_uz_f_ratio(params) * KZ / KX
     k_damp = get_k_damp(params)
 
     return ux_est * (
         -np.exp(-k_damp * (z[0] - Z0))
         * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (KZ * H)))
+                 + 1 / (KZ * H) - phi))
 
 def get_idx(z, z0):
     return int(len(np.where(z0 < z)[0]))
@@ -93,43 +97,78 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
-def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
-    z0 = z[0]
-    z_bot = get_idx(Z0 + 3 * S, z0)
-    z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+def subtract_lins(params, state_vars, t_idx, sim_time, domain):
+    # ux_field = domain.new_field(name='ux')
+    # uz_field = domain.new_field(name='uz')
+    # ux_field.require_grid_space()
+    # uz_field.require_grid_space()
+    # np.copyto(ux_field.data, state_vars['ux'][t_idx])
+    # np.copyto(uz_field.data, state_vars['uz'][t_idx])
+    # ux_field.set_scales(2, keep_data=True)
+    # uz_field.set_scales(2, keep_data=True)
+
+    # x = domain.grid(0, scales=2)
+    # z = domain.grid(1, scales=2)
+    # dx = domain.grid_spacing(0, scales=2)
+    # dz = domain.grid_spacing(1, scales=2)
+    # ux = ux_field['g']
+    # uz = uz_field['g']
+
+    ux = state_vars['ux'][t_idx]
+    uz = state_vars['uz'][t_idx]
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
+    dx = domain.grid_spacing(0, scales=1)
+    dz = domain.grid_spacing(1, scales=1)
+
+    NX_scale = len(x)
+    z_bot = get_idx(Z0 + 3 * S, z[0])
+    z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
     pos_slice = np.s_[:, z_bot:z_top]
-    t_slice = np.s_[t_idx, :, z_bot:z_top]
+    dxdz = np.outer(dx, dz)[pos_slice]
+    def obj_func(p, ux, uz, params):
+        amp, offset = p
+        resx = ux[pos_slice] - amp *\
+            get_anal_ux(params, sim_time, x, z, phi=offset)[pos_slice]
+        resz = uz[pos_slice] - amp *\
+            get_anal_uz(params, sim_time, x, z, phi=offset)[pos_slice]
+        return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2) * dxdz)
 
     anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
     anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
 
-    amp = np.sum(
-        state_vars['ux'][t_slice] * anal_ux * KX**2 +
-        state_vars['uz'][t_slice] * anal_uz * KZ**2
-    ) / np.sum(
+    amp = np.sum((
+        ux[pos_slice] * anal_ux * KX**2 +
+        uz[pos_slice] * anal_uz * KZ**2
+    ) * dxdz) / np.sum((
         anal_ux**2 * KX**2 +
-        anal_uz**2 * KZ**2)
-    x_lin_est = amp * get_anal_ux(params, sim_time, x, z)
-    z_lin_est = amp * get_anal_uz(params, sim_time, x, z)
+        anal_uz**2 * KZ**2) * dxdz)
+    dphi = 0
+    # fit = minimize(obj_func,
+    #                [amp, 0],
+    #                (ux[t_idx], uz[t_idx], params),
+    #                bounds=[(0, 1.5), (-0.5, 0.5)])
+    # amp, dphi = fit.x
 
-    dux = state_vars['ux'][t_idx] - x_lin_est
-    duz = state_vars['uz'][t_idx] - z_lin_est
+    dux = ux - amp * get_anal_ux(params, sim_time, x, z, phi=dphi)
+    duz = uz - amp * get_anal_uz(params, sim_time, x, z, phi=dphi)
 
     # find phase offset + amp for downward reflected wave
     down_params = {**params, **{'KZ': -KZ}}
     down_anal_ux = get_anal_ux(down_params, sim_time, x, z)[pos_slice]
     down_anal_uz = get_anal_uz(down_params, sim_time, x, z)[pos_slice]
+
     amp_down = 0
     offset_down = 0
-    for offset in range(N_X):
-        curr = np.sum(
+    for offset in range(NX_scale):
+        curr = np.sum((
             np.roll(dux[pos_slice], -offset, axis=0)
                 * down_anal_ux * KX**2 +
             np.roll(duz[pos_slice], -offset, axis=0)
                 * down_anal_uz * KZ**2
-        ) / np.sum(
+        ) * dxdz) / np.sum((
             down_anal_ux**2 * KX**2 +
-            down_anal_uz**2 * KZ**2)
+            down_anal_uz**2 * KZ**2) * dxdz)
         if curr > amp_down:
             amp_down = curr
             offset_down = offset
@@ -138,7 +177,28 @@ def subtract_lins(params, state_vars, t_idx, sim_time, x, z):
                                                 x, z), offset_down, axis=0)
     duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
                                                 x, z), offset_down, axis=0)
-    return amp, amp_down, dux2, duz2
+
+    dphi_down = (offset_down * KX * XMAX / NX_scale)
+    fit = minimize(obj_func,
+                   [amp_down, dphi_down],
+                   (dux, duz, down_params),
+                   bounds=[(0, 1), (dphi_down - 0.1, dphi_down + 0.1)])
+    amp_down, dphi_down = fit.x
+    print('Got fits', amp, dphi, amp_down, dphi_down)
+
+    dux2 = dux - amp_down *\
+        get_anal_ux(down_params, sim_time, x, z, phi=dphi_down)
+    duz2 = duz - amp_down *\
+        get_anal_uz(down_params, sim_time, x, z, phi=dphi_down)
+
+    # np.copyto(ux_field.data, dux2)
+    # np.copyto(uz_field.data, duz2)
+    # ux_field.set_scales(1, keep_data=True)
+    # uz_field.set_scales(1, keep_data=True)
+    # dux2 = ux_field['g']
+    # duz2 = uz_field['g']
+
+    return amp, dphi, amp_down, dphi_down, dux2, duz2
 
 def set_ic(name, solver, domain, params):
     populate_globals(params)
@@ -422,8 +482,8 @@ def plot(name, params):
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
-                    amp, amp_down, dux2, duz2 = \
-                        subtract_lins(params, state_vars, t_idx, sim_time, x, z)
+                    amp, _, amp_down, _, dux2, duz2 = \
+                        subtract_lins(params, state_vars, t_idx, time, domain)
                     if var == 'uz%s' % res_suffix:
                         var_dat = duz2 / uz_est
                         title = 'u_z'
@@ -621,16 +681,17 @@ def write_front(name, params):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=1, start=10)
+            name, params, dyn_vars, plot_stride=1, start=100)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
-        xmesh, zmesh = quad_mesh(x=x[:, 0], y=z[0])
+        dz = domain.grid_spacing(1, scales=1)[0]
         z0 = z[0]
 
-        ux_res_slice = []
-        uz_res_slice = []
+        ux_ffts = []
+        uz_ffts = []
         Spx11 = []
         amps = []
+        amps_down = []
 
         S_px = state_vars['S_{px}(mean)']
         u0 = horiz_mean(state_vars['ux'], N_X)
@@ -639,27 +700,34 @@ def write_front(name, params):
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
-            # figure out what to subtract by convolution over lambda_z
             z_bot = get_idx(Z0 + 3 * S, z0)
-            z_top = get_idx(Z0 + 3 * S + 2 * np.pi / abs(KZ), z0)
+            z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
 
-            amp, amp_down, dux2, duz2 =\
-                subtract_lins(params, state_vars, t_idx, sim_time, x, z)
-            ux_res = dux2 / ux_est
-            uz_res = duz2 / uz_est
-            slice_idx = get_idx(z0[z_top] - 1 / KZ, z0)
+            amp, _, amp_down, _, dux2, duz2 =\
+                subtract_lins(params, state_vars, t_idx, sim_time, domain)
+            ux_res = dux2[:, z_bot: z_top]
+            uz_res = duz2[:, z_bot: z_top]
 
-            ux_res_slice.append(ux_res[:, slice_idx - 1])
-            uz_res_slice.append(uz_res[:, slice_idx - 1])
+            ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
+            uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
+            # by using only half of the fft, all non-DC bins are half as high as
+            # they should be
+            ux_fft[1: ] *= 4
+            uz_fft[1: ] *= 4
+            dz_window = np.outer(np.ones_like(z[:, 0]), dz[z_bot: z_top])
+            ux_ffts.append(np.sum(ux_fft * dz_window, axis=1) /
+                           np.sum(dz_window, axis=1))
+            uz_ffts.append(np.sum(uz_fft * dz_window, axis=1) /
+                           np.sum(dz_window, axis=1))
 
             amps.append(amp)
             amps_down.append(amp_down)
-            Spx11.append(np.sum(rho0 * dux2 * duz2, axis=0) / N_X)
+            Spx11.append(horiz_mean(RHO0 * dux2 * duz2, N_X, axis=0))
 
         with open(logfile, 'wb') as data:
             pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
                          np.array(amps), np.array(amps_down),
-                         ux_res_slice, uz_res_slice), data)
+                         np.array(ux_ffts), np.array(uz_ffts)), data)
     else:
         print('log file found, not regenerating')
 
@@ -683,8 +751,8 @@ def plot_front(name, params):
     print('Loading data')
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, u0_z, amps, amps_down, \
-            ux_res_slice, uz_res_slice = pickle.load(data)
-    Spx11 = np.array(Spx11) / flux_th
+            ux_ffts, uz_ffts = pickle.load(data)
+        Spx11 = np.array(Spx11) / flux_th
     z1s = np.ones(np.shape(z0))
 
     tf = sim_times[-1]
@@ -941,18 +1009,21 @@ def plot_front(name, params):
         # dSpx0 is visc-extrapolated flux, time shift it and compare to amps
         # extrapolate 3/4 of distance, convolution is evenly weighted between
         # z_b, z_c
-        prop_time = (front_pos[start_idx: ] - Z0 - 3 * S - l_z - dz) / V_GZ
-        S_excited = S_px0[start_idx: ] / flux_th
+
+        # prop_time = (front_pos[start_idx: ] - Z0 - 3 * S - l_z - dz) / V_GZ
+        prop_time = 0
+        S_excited = S_px0[start_idx: ] / flux_th * \
+            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
         ax1.plot(t,
                  S_excited,
                  'g:',
                  label='Incident',
                  linewidth=0.7)
-        ax1.plot(t + prop_time,
-                 S_excited,
-                 'b:',
-                 label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
-                 linewidth=0.7)
+        # ax1.plot(t + prop_time,
+        #          S_excited,
+        #          'b:',
+        #          label=r'Incident + $\frac{\Delta z}{c_{g,z}}$',
+        #          linewidth=0.7)
         ax1.plot(t,
                  -dSpx[start_idx: ] / flux_th,
                  'k:',
@@ -969,7 +1040,7 @@ def plot_front(name, params):
         ax2.plot(t_refl, refl, 'r:', linewidth=0.7)
 
         ax2.text(t[0],
-                 0.85 * ax2.get_ylim()[0] + 0.15 * ax2.get_ylim()[1],
+                 0.85 * ax2.get_ylim()[0] + 0.85 * ax2.get_ylim()[1],
                  'Mean: (%.3f)' % np.mean(refl),
                  fontsize=8)
         ax2.set_ylabel(r'Reflectivity')
@@ -993,8 +1064,8 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        # f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-        f, ax1 = plt.subplots(1, 1, sharex=True)
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        # f, ax1 = plt.subplots(1, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         a1ln = ax1.plot(t,
                        amps[start_idx::],
@@ -1011,12 +1082,12 @@ def plot_front(name, params):
         lns = a1ln + a3ln
         ax1.legend(lns, [l.get_label() for l in lns], loc=0)
 
-        # u0_at_front = np.array([u0[idx + start_idx, z_idx] / (OMEGA / KX)
-        #                         for idx, z_idx in
-        #                             enumerate(front_idxs[start_idx: ])])
-        # ax2.plot(t, u0_at_front, 'b', linewidth=0.7)
-        # ax2.set_ylabel(r'$\bar{U}_0(z_c) / c_{ph,x}$')
-        # ax2.set_xlabel(r'$t (N^{-1})$')
+        z_bot = get_idx(Z0 + 3 * S, z0)
+        z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
+        u0_at_zone = np.max(u0[start_idx: , z_bot:z_top], axis=1) / u_c
+        ax2.plot(t, u0_at_zone, 'b', linewidth=0.7)
+        ax2.set_ylabel(r'$\bar{U}_0(z_0) / c_{ph,x}$')
+        ax2.set_xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1027,28 +1098,28 @@ def plot_front(name, params):
     #########################################################################
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     f.subplots_adjust(hspace=0)
-    num_plots = 5
-    half_avg = 8
-    ux_ffts = np.array(
-        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in ux_res_slice])
-    uz_ffts = np.array(
-        [np.abs(np.fft.fft(i) / N_X)[1: N_X//2] for i in uz_res_slice])
-    kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX,
-                     N_X // 2)[1: ]
-    # drop endpoints
-    for idx in np.linspace(0, len(ux_ffts), num_plots + 2)[1: -1]:
-        idx = int(idx)
-        x_avg = np.mean(ux_ffts[idx - half_avg:idx + half_avg, :], 0)
-        z_avg = np.mean(uz_ffts[idx - half_avg:idx + half_avg, :], 0)
-        ax1.loglog(kx, x_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
-        ax2.loglog(kx, z_avg, label='t=%.1f' % sim_times[idx], linewidth=0.7)
+    num_modes = 10
+    uz_est = F * get_uz_f_ratio(params)
+    ux_est = uz_est * KZ / KX
+
+    times = get_times([1/8, 3/8, 5/8, 7/8, 1], sim_times, start_idx)
+    # kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)[ : num_modes]
+    for idx in times:
+        ax1.semilogy(ux_ffts[idx, : num_modes] / ux_est**2,
+                     label='t=%.1f' % sim_times[idx],
+                     linewidth=0.7)
+        ax2.semilogy(uz_ffts[idx, : num_modes] / uz_est**2,
+                     label='t=%.1f' % sim_times[idx],
+                     linewidth=0.7)
     # if NU > 0:
     #     visc_kx = np.sqrt(OMEGA / (2 * NU))
     #     ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
     #     ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
-    ax1.set_ylabel(r'$\tilde{u}_x(k_x)$')
-    ax2.set_ylabel(r'$\tilde{u}_z(k_x)$')
-    ax2.set_xlabel(r'$k_x$')
+    ax1.set_ylabel(r'$\left|\tilde{u}_x\rho_0\right|^2(k_x)$')
+    ax2.set_ylabel(r'$\left|\tilde{u}_z\rho_0\right|^2(k_x)$')
+    ax2.set_xlabel(r'$k_x/k_{x0}$')
+    ax1.set_ylim([1e-6, 1])
+    ax2.set_ylim([1e-6, 1])
     ax1.legend(fontsize=6)
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
