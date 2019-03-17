@@ -30,7 +30,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
-plot_stride = 15
+plot_stride = 4
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -468,13 +468,13 @@ def plot(name, params):
         },
         {
             'save_fmt_str': 's_%03i.png',
-            'slice_vars': ['uz', 'ux'],
+            'slice_vars': ['uz', 'ux_z'],
             'mean_vars': ['S_{px}', 'ux'],
         },
-        # {
-        #     'save_fmt_str': 'm_%03i.png',
-        #     'plot_vars': ['uz', 'ux', 'W', 'U'],
-        # },
+        {
+            'save_fmt_str': 'm_%03i.png',
+            'plot_vars': ['uz', 'ux', 'W', 'U'],
+        },
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
@@ -734,26 +734,31 @@ def write_front(name, params, stride=2):
     if not os.path.exists(logfile):
         print('log file not found, generating')
         sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=stride, start=0)
+            name, params, dyn_vars, plot_stride=stride, start=10)
         x = domain.grid(0, scales=1)
         z = domain.grid(1, scales=1)
         dz = domain.grid_spacing(1, scales=1)[0]
         z0 = z[0]
         rho0 = RHO0 * np.exp(-z0 / H)
 
+        ri_vals = []
         ux_ffts = []
         uz_ffts = []
-        Spx11 = []
         amps = []
         amps_down = []
+        Spx11 = []
 
         S_px = horiz_mean(state_vars['S_{px}'], N_X)
         u0 = horiz_mean(state_vars['ux'], N_X)
-        u0_z = horiz_mean(state_vars['ux_z'], N_X)
 
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
+            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+            search_ux_z = state_vars['ux_z'][t_idx, :,
+                                             front_idx - 10: front_idx + 10]
+            ri_vals.append(np.median((g / H) * np.min(1 / search_ux_z**2, axis=1)))
+
             z_bot = get_idx(Z0 + 3 * S, z0)
             z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
 
@@ -782,7 +787,7 @@ def write_front(name, params, stride=2):
             Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
 
         with open(logfile, 'wb') as data:
-            pickle.dump((z0, sim_times, S_px, Spx11, u0, u0_z,
+            pickle.dump((z0, sim_times, S_px, Spx11, u0, np.array(ri_vals),
                          np.array(amps), np.array(amps_down),
                          np.array(ux_ffts), np.array(uz_ffts)), data)
     else:
@@ -807,7 +812,7 @@ def plot_front(name, params):
 
     print('Loading data')
     with open(logfile, 'rb') as data:
-        z0, sim_times, S_px, Spx11, u0, u0_z, amps, amps_down, \
+        z0, sim_times, S_px, Spx11, u0, ri_vals, amps, amps_down, \
             ux_ffts, uz_ffts = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
@@ -905,10 +910,6 @@ def plot_front(name, params):
             #          S_px_avg / flux_th,
             #          '%s:' % color,
             #          linewidth=0.7)
-        # text showing min Ri
-        ax1.text(z_b + 0.2, 0.8,
-                 'Min Ri: %.3f' % (N / u0_z.max())**2,
-                 fontsize=8)
         # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
                  np.exp(-k_damp * 2 * (z0_cut - Z0)),
@@ -1106,15 +1107,12 @@ def plot_front(name, params):
         ax2.set_ylabel(r'Reflectivity')
         ax2.set_xlabel(r'$t$')
 
-        ri_vals = np.array([(N / u0_z[idx + start_idx, z_idx])**2
-                            for idx, z_idx in
-                                enumerate(front_idxs[start_idx: ])])
-        ax3.plot(t, ri_vals)
-        ax3.set_ylim([0, 3])
-        ax3.set_ylabel(r"Ri $(N / U0')^2$")
-        ax3.text(t[0], 0.5,
-                 'Min Ri: %.3f' % ri_vals.min(),
-                 fontsize=8)
+        ax3.plot(t, ri_vals[start_idx: ], linewidth=0.7)
+        ax3.set_ylim([0, 0.6])
+        ax3.set_ylabel(r"Ri $(N / U_0')^2$")
+        # ax3.text(t[0], 0.5,
+        #          'Min Ri: %.3f' % ri_vals.min(),
+        #          fontsize=8)
 
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
         plt.close()

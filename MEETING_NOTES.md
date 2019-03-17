@@ -99,7 +99,11 @@
   be as well pinned dow though.
 - JFM rapids? ~ ApJL
 
+# NOTES (upcoming)
+- checked my integrations, integrating against (kx, kz) + 0.5 * (kx, -kz) + 0.5
+  * (2kx, -2kz) recovers correct amplitudes (to 0.0003)
+- TODO: convert all indicies to linear interpolations?
+
 # GLOBAL TODO
-- try vstrat Spx?
 - E disp
 - Finish trying power law calculation?
