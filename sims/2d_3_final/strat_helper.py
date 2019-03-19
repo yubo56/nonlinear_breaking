@@ -763,6 +763,7 @@ def write_front(name, params, stride=2):
         uz_est = F * get_uz_f_ratio(params)
         ux_est = uz_est * KZ / KX
         for t_idx, sim_time in enumerate(sim_times):
+            # heuristic: search near front_idx at each x
             front_idx = get_front_idx(S_px[t_idx], flux_threshold)
             search_ux_z = state_vars['ux_z'][t_idx, :,
                                              front_idx - 10: front_idx + 10]
@@ -773,18 +774,23 @@ def write_front(name, params, stride=2):
 
             width_arr = []
             for x_idx in range(N_X):
-                def get_eq(f, z0, val):
-                    idx = np.where(f > val)[0]
-                    if len(idx):
-                        idx = idx[0]
-                        df_grid = f[idx] - f[idx - 1]
-                        dz_grid = z0[idx] - z0[idx - 1]
-                        df_val = val - f[idx - 1]
+                ux_slice = state_vars['ux'][t_idx, x_idx]
+                def interp_idx(f, idx, val):
+                    df_grid = f[idx] - f[idx - 1]
+                    dz_grid = z0[idx] - z0[idx - 1]
+                    df_val = val - f[idx - 1]
+                    if val > f[idx - 1] and val < f[idx]:
                         return z0[idx - 1] + dz_grid * df_val / df_grid
-                    else:
-                        return 0
-                z_top = get_eq(state_vars['ux'][t_idx, x_idx], z0, u_c)
-                z_bot = get_eq(state_vars['ux'][t_idx, x_idx], z0, 0.3 * u_c)
+                    return z0[idx]
+                z_top_where = np.where(ux_slice[front_idx - 5: ] > u_c)[0]
+                z_bot_where = np.where(
+                    ux_slice[ : front_idx + 5] < 0.3 * u_c)[0]
+
+                if not len(z_top_where) or not len(z_bot_where):
+                    width_arr.append(ZMAX)
+                    continue
+                z_top = interp_idx(ux_slice, z_top_where[0] + front_idx - 5, u_c)
+                z_bot = interp_idx(ux_slice, z_bot_where[-1] + 1, 0.3 * u_c)
                 width_arr.append(z_top - z_bot)
             width_med.append(np.median(width_arr))
             width_min.append(np.min(width_arr))
@@ -1150,13 +1156,6 @@ def plot_front(name, params):
                  linewidth=1.0)
         ax2.set_ylabel(r'$S_{px} / S_0$')
         ax2.legend(fontsize=6, loc='lower right')
-
-        # z_bot = get_idx(Z0 + 3 * S, z0)
-        # z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
-        # u0_at_zone = np.max(u0[start_idx: , z_bot:z_top], axis=1) / u_c
-        # ax2.plot(t, u0_at_zone, 'b', linewidth=0.7)
-        # ax2.set_ylabel(r'$\bar{U}_0(z_0) / c_{ph,x}$')
-        # ax2.set_xlabel(r'$t (N^{-1})$')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1195,17 +1194,27 @@ def plot_front(name, params):
         ax1.set_xlabel(r'$t$')
         ax1.set_ylim([0, 0.5])
 
-        ax2.plot(t, ri_med[start_idx: ], 'g', linewidth=0.7)
-        ax2.plot(t, ri_min[start_idx: ], 'r:', linewidth=0.5)
-        ax2.plot(t, ri_max[start_idx: ], 'r:', linewidth=0.5)
-        ax2.set_ylim([0, 0.6])
-        ax2.set_ylabel(r"Ri $(N / U_0')^2$")
+        ax2.plot(t, width_med[start_idx: ], 'g', linewidth=0.7)
+        ax2.plot(t, width_min[start_idx: ], 'r:', linewidth=0.5)
+        ax2.plot(t, width_max[start_idx: ], 'r:', linewidth=0.5)
+        ax2.set_ylim([0, 1])
+        ax2.set_ylabel(r"$\Delta z$")
 
-        ax3.plot(t, width_med[start_idx: ], 'g', linewidth=0.7)
-        ax3.plot(t, width_min[start_idx: ], 'r:', linewidth=0.5)
-        ax3.plot(t, width_max[start_idx: ], 'r:', linewidth=0.5)
-        ax3.set_ylim([0, 1.5])
-        ax3.set_ylabel(r"$\Delta z$")
+        ri_width = N**2 * width_med**2 / (0.7 * u_c)**2
+        ax3.plot(t,
+                 ri_med[start_idx: ],
+                 'r',
+                 linewidth=0.7,
+                 label='Global (median)')
+        ax3.plot(t,
+                 ri_min[start_idx: ],
+                 'r:',
+                 linewidth=0.5,
+                 label='Global (min)')
+        ax3.plot(t, ri_width[start_idx: ], 'g', linewidth=0.7, label='Width')
+        ax3.set_ylim([0, 0.6])
+        ax3.set_ylabel(r"Ri $(N / U_0')^2$")
+        ax3.legend(fontsize=6)
 
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
         plt.close()
