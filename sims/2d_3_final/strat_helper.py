@@ -1197,7 +1197,7 @@ def plot_front(name, params):
         ax2.plot(t, width_med[start_idx: ], 'g', linewidth=0.7)
         ax2.plot(t, width_min[start_idx: ], 'r:', linewidth=0.5)
         ax2.plot(t, width_max[start_idx: ], 'r:', linewidth=0.5)
-        ax2.set_ylim([0, 1])
+        ax2.set_ylim([0, 0.1])
         ax2.set_ylabel(r"$\Delta z$")
 
         ri_width = N**2 * width_med**2 / (0.7 * u_c)**2
@@ -1209,7 +1209,7 @@ def plot_front(name, params):
         ax3.plot(t,
                  ri_min[start_idx: ],
                  'r:',
-                 linewidth=0.5,
+                 linewidth=0.7,
                  label='Global (min)')
         ax3.plot(t, ri_width[start_idx: ], 'g', linewidth=0.7, label='Width')
         ax3.set_ylim([0, 0.6])
