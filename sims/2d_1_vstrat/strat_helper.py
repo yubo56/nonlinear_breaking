@@ -30,7 +30,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
-stride = 4
+plot_stride = 4
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -110,7 +110,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
-    t_t = np.array([[[t]] for t in sim_times])
+    t_t = np.array([np.full((np.size(x), np.size(z)), t) for t in sim_times])
 
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
@@ -346,7 +346,7 @@ def merge(name):
     if to_merge:
         post.merge_analysis(snapshots_dir)
 
-def load(name, params, dyn_vars, stride, start=0):
+def load(name, params, dyn_vars, plot_stride, start=0):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
@@ -365,20 +365,13 @@ def load(name, params, dyn_vars, stride, start=0):
             sim_times = np.array(dat['scales']['sim_time'])
             for varname in dyn_vars:
                 state_vars[varname].extend(
-                    dat['tasks'][varname][start::stride])
+                    dat['tasks'][varname][start::plot_stride])
 
             state_vars['S_{px}(mean)'].extend(
-                dat['tasks']['S_{px}'][start::stride, 0, :])
+                dat['tasks']['S_{px}'][start::plot_stride, 0, :])
 
-        simlen = len(sim_times)
-        total_sim_times.extend(sim_times[start::stride])
+        total_sim_times.extend(sim_times[start::plot_stride])
         i += 1
-        if simlen <= start:
-            start -= simlen
-        else:
-            start = (((simlen - start - 1) // stride) + 1) * stride\
-                + start - simlen
-        print('next start is:', start)
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
     # cast to np arrays
@@ -446,7 +439,7 @@ def plot(name, params):
     ]
 
     dyn_vars = ['uz', 'ux', 'rho', 'P']
-    sim_times, domain, state_vars = load(name, params, dyn_vars, stride)
+    sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride)
 
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)[: , z_b:]
@@ -695,7 +688,7 @@ def write_front(name, params, stride=2):
     flux_threshold = flux_th * 0.3
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, stride=stride, start=10)
+        name, params, dyn_vars, plot_stride=stride, start=10)
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
     dz = domain.grid_spacing(1, scales=1)[0]
@@ -715,7 +708,7 @@ def write_front(name, params, stride=2):
     phis_down = []
     Spx11 = []
 
-    S_px = horiz_mean(state_vars['S_{px}'], N_X)
+    S_px = state_vars['S_{px}(mean)']
     u0 = horiz_mean(state_vars['ux'], N_X)
 
     uz_est = F * get_uz_f_ratio(params)

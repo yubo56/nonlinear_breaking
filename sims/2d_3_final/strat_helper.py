@@ -127,7 +127,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
-    t_t = np.array([[[t]] for t in sim_times])
+    t_t = np.array([np.full((np.size(x), np.size(z)), t) for t in sim_times])
 
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
@@ -428,15 +428,9 @@ def load(name, params, dyn_vars, stride, start=0):
                 state_vars[varname].extend(
                     dat['tasks'][varname][start::stride])
 
-        simlen = len(sim_times)
         total_sim_times.extend(sim_times[start::stride])
+        start -= min(start, len(sim_times))
         i += 1
-        if simlen <= start:
-            start -= simlen
-        else:
-            start = (((simlen - start - 1) // stride) + 1) * stride\
-                + start - simlen
-        print('next start is:', start)
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
     # cast to np arrays
@@ -748,7 +742,7 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=2):
+def write_front(name, params, stride=1):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     u_c = OMEGA / KX
@@ -777,10 +771,8 @@ def write_front(name, params, stride=2):
     width_max = []
     ux_ffts = []
     uz_ffts = []
-    amps = []
-    phis = []
-    amps_down = []
-    phis_down = []
+    ux_top_ffts = []
+    uz_top_ffts = []
     Spx11 = []
 
     S_px = horiz_mean(state_vars['S_{px}'], N_X)
@@ -826,24 +818,34 @@ def write_front(name, params, stride=2):
         width_min.append(np.min(width_arr))
         width_max.append(np.max(width_arr))
 
-        z_bot = get_idx(Z0 + 3 * S, z0)
-        z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
-
+        window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
         norm = np.exp((z - Z0) / (2 * H))
-        ux_res = (dux2 / norm)[:, z_bot: z_top]
-        uz_res = (duz2 / norm)[:, z_bot: z_top]
 
+        z_bot_l = get_idx(Z0 + 3 * S, z0)
+        z_bot_r = get_idx(Z0 + 3 * S + window_width, z0)
+        area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
+        ux_res = (dux2 / norm)[:, z_bot_l: z_bot_r]
+        uz_res = (duz2 / norm)[:, z_bot_l: z_bot_r]
         ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
         uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
-        # by using only half of the fft, all non-DC bins are half as high as
-        # they should be
-        ux_fft[1: ] *= 4
-        uz_fft[1: ] *= 4
-        dz_window = np.outer(np.ones_like(z[:, 0]), dz[z_bot: z_top])
-        ux_ffts.append(np.sum(ux_fft * dz_window, axis=1) /
-                       np.sum(dz_window, axis=1))
-        uz_ffts.append(np.sum(uz_fft * dz_window, axis=1) /
-                       np.sum(dz_window, axis=1))
+
+        z_top_coord = SPONGE_HIGH - 3 * SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)
+        z_top_r = get_idx(z_top_coord, z0)
+        z_top_l = get_idx(z_top_coord - window_width, z0)
+        area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
+        ux_top = (state_vars['ux'][t_idx] / norm)[:, z_top_l: z_top_r]
+        uz_top = (state_vars['uz'][t_idx] / norm)[:, z_top_l: z_top_r]
+        ux_top_fft = (np.abs(np.fft.rfft(ux_top, axis=0) / N_X))**2
+        uz_top_fft = (np.abs(np.fft.rfft(uz_top, axis=0) / N_X))**2
+
+        # single fft, fft_arr, dxdz area element
+        for fft, arr, area in zip([ux_fft, uz_fft, ux_top_fft, uz_top_fft],
+                                 [ux_ffts, uz_ffts, ux_top_ffts, uz_top_ffts],
+                                 [area_bot, area_bot, area_top, area_top]):
+            # by using only half of the fft, all non-DC bins are half as high as
+            # they should be
+            fft[1: ] *= 4
+            arr.append(np.sum(fft * area, axis=1) / np.sum(area, axis=1))
 
         Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
 
@@ -854,7 +856,9 @@ def write_front(name, params, stride=2):
             np.array(width_med), np.array(width_min), np.array(width_max),
             amp_inc, np.array(amps), np.array(phis),
             np.array(amps_down), np.array(phis_down),
-            np.array(ux_ffts), np.array(uz_ffts)), data)
+            np.array(ux_ffts), np.array(uz_ffts),
+            np.array(ux_top_ffts), np.array(uz_top_ffts),
+        ), data)
 
 def plot_front(name, params):
     populate_globals(params)
@@ -881,7 +885,7 @@ def plot_front(name, params):
         z0, sim_times, S_px, Spx11, u0, ri_med, ri_min, ri_max,\
             width_med, width_min, width_max,\
             amp_inc, amps_retro, phis_retro, amps_down, phis_down, \
-            ux_ffts, uz_ffts = pickle.load(data)
+            ux_ffts, uz_ffts, ux_top_ffts, uz_top_ffts = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
@@ -1217,7 +1221,7 @@ def plot_front(name, params):
 
         amps_down_interp = interp1d(t - prop_time, amps_down[start_idx: ])
         amps_interp = interp1d(t + prop_time, amps[start_idx: ])
-        refl_amp = np.array([amps_down_interp(t) for t in t_refl]) * \
+        refl_amp = np.array([amps_down_interp(t) / amp_inc for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
 
         ax1.plot(t, refl, 'r:', linewidth=0.7, label='Flux')
