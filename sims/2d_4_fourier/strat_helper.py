@@ -58,42 +58,54 @@ def horiz_mean(field, n_x, axis=1):
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
-    populate_globals(params)
-    return (np.sqrt(2 * np.pi) * S * g *
-            KX**2) * np.exp(-S**2 * KZ**2/2) / (
-                2 * RHO0 * np.exp(-Z0 / H)
-                * OMEGA**2 * KZ)
+    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
+            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
+                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+                * params['OMEGA']**2 * params['KZ'])
 
 def get_flux_th(params):
-    return (F * get_uz_f_ratio(params))**2 / 2 \
-        * abs(KZ / KX) * RHO0 * np.exp(-Z0 / H)
+    return (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+        * abs(params['KZ'] / params['KX']) * params['RHO0']\
+        * np.exp(-params['Z0'] / params['H'])
 
 def get_k_damp(params):
-    populate_globals(params)
-    k = np.sqrt(KX**2 + KZ**2)
+    k = np.sqrt(params['KX']**2 + params['KZ']**2)
 
-    return NU * k**5 / abs(KZ * g / H * KX)
+    return params['NU'] * k**5 /\
+        abs(params['KZ'] * params['g'] / params['H'] * params['KX'])
 
 def get_anal_uz(params, t, x, z, phi=0):
-    populate_globals(params)
+    uz_est = params['F'] * get_uz_f_ratio(params)
+    k_damp = get_k_damp(params)
+
+    return uz_est * (
+        -np.exp((z - params['Z0']) / 2 * params['H'])
+        * np.exp(-k_damp * (z - params['Z0']))
+        * np.sin(params['KX'] * x
+                 + params['KZ'] * (z - params['Z0'])
+                 - params['OMEGA'] * t
+                 + 1 / (2 * params['KZ'] * params['H'])
+                 - phi))
+
+def get_anal_ux(params, t, x, z, phi=0):
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
     return uz_est * (
-        -np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z - Z0))
-        * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (2 * KZ * H) - phi))
-
-def get_anal_ux(params, t, x, z, phi=0):
-    populate_globals(params)
-    uz_est = F * get_uz_f_ratio(params)
-    k_damp = get_k_damp(params)
-
-    return uz_est * np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z[0] - Z0)) * (
-        KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                         + 1 / (2 * KZ * H) - phi)
-        - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H) - phi)
-            / (2 * H * KX))
+        np.exp((z - params['Z0']) / 2 * params['H'])
+        * np.exp(-k_damp * (z[0] - params['Z0'])) * (
+            params['KZ'] / params['KX']
+            * np.sin(params['KX'] * x
+                     + params['KZ'] * (z - params['Z0'])
+                     - params['OMEGA'] * t
+                     + 1 / (2 * params['KZ'] * params['H'])
+                     - phi)
+            - np.cos(params['KX'] * x
+                     + params['KZ'] * (z - params['Z0'])
+                     - params['OMEGA'] * t
+                     + 1 / (2 * params['KZ'] * params['H'])
+                     - phi)
+                / (2 * params['H'] * params['KX'])))
 
 def get_idx(z, z0):
     return int(len(np.where(z0 < z)[0]))
@@ -102,36 +114,42 @@ def get_times(time_fracs, sim_times, start_idx):
     return [int((len(sim_times) - start_idx) * time_frac + start_idx - 1)
             for time_frac in time_fracs]
 
-def subtract_lins(params, state_vars, t_idx, sim_time, domain):
-    # ux_field = domain.new_field(name='ux')
-    # uz_field = domain.new_field(name='uz')
-    # ux_field.require_grid_space()
-    # uz_field.require_grid_space()
-    # np.copyto(ux_field.data, state_vars['ux'][t_idx])
-    # np.copyto(uz_field.data, state_vars['uz'][t_idx])
-    # ux_field.set_scales(2, keep_data=True)
-    # uz_field.set_scales(2, keep_data=True)
+def subtract_lins(params, state_vars, sim_times, domain):
+    '''
+    first subtract out reflected wave at each time, floating amp + phi
+    then subtract out incident wave for time-independent amp, phi
+    finally, subtract out retrograde wave at each time, floating amp + phi
+    '''
+    down_params = {**params, **{'KZ': -KZ}}
+    global N_X, N_Z
+    xstride = N_X // 256
+    zstride = N_Z // 1024
+    N_X = 256
+    N_Z = 1024
 
-    # x = domain.grid(0, scales=2)
-    # z = domain.grid(1, scales=2)
-    # dx = domain.grid_spacing(0, scales=2)
-    # dz = domain.grid_spacing(1, scales=2)
-    # ux = ux_field['g']
-    # uz = uz_field['g']
+    x = domain.grid(0, scales=xstride)
+    z = domain.grid(1, scales=zstride)
+    x_t = np.array([x] * len(sim_times)) # all-time
+    z_t = np.array([z] * len(sim_times))
+    grid_ones = np.ones_like(x + z)
+    t_t = np.array([[[t]] for t in sim_times])
 
-    ux = state_vars['ux'][t_idx]
-    uz = state_vars['uz'][t_idx]
-    x = domain.grid(0, scales=256 / params['N_X'])
-    z = domain.grid(1, scales=1024 / params['N_Z'])
-    dx = domain.grid_spacing(0, scales=256 / params['N_X'])
-    dz = domain.grid_spacing(1, scales=1024 / params['N_Z'])
-
-    NX_scale = len(x)
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
     pos_slice = np.s_[:, z_bot:z_top]
+    time_slice = np.s_[:, :, z_bot:z_top]
+
+    dx = domain.grid_spacing(0, scales=xstride)
+    dz = domain.grid_spacing(1, scales=zstride)
     dxdz = np.outer(dx, dz)[pos_slice]
-    def obj_func(p, ux, uz, params):
+    norm = np.exp(-z/H)[pos_slice]
+
+    ux = state_vars['ux']
+    uz = state_vars['uz']
+    dphi_pixel = KX * XMAX / N_X * 2
+
+    def obj_func(p, ux, uz, sim_time, params):
+        ''' objective function for single-time minimization '''
         amp, offset = p
         resx = ux[pos_slice] - amp *\
             get_anal_ux(params, sim_time, x, z, phi=offset)[pos_slice]
@@ -139,72 +157,77 @@ def subtract_lins(params, state_vars, t_idx, sim_time, domain):
             get_anal_uz(params, sim_time, x, z, phi=offset)[pos_slice]
         return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2 * norm) * dxdz)
 
-    anal_ux = get_anal_ux(params, sim_time, x, z)[pos_slice]
-    anal_uz = get_anal_uz(params, sim_time, x, z)[pos_slice]
-    norm = np.exp(-z/H)[pos_slice]
+    def obj_func_all_time(p, ux, uz, params):
+        ''' objective function for all-time minimization '''
+        amp, offset = p
+        resx = ux[time_slice] - amp *\
+            get_anal_ux(params, t_t, x_t, z_t, phi=offset)[time_slice]
+        resz = uz[time_slice] - amp *\
+            get_anal_uz(params, t_t, x_t, z_t, phi=offset)[time_slice]
+        return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2 * norm) * dxdz)
 
-    amp = np.sum((
-        ux[pos_slice] * anal_ux * KX**2 * norm +
-        uz[pos_slice] * anal_uz * KZ**2 * norm
-    ) * dxdz) / np.sum((
-        anal_ux**2 * KX**2 * norm +
-        anal_uz**2 * KZ**2 * norm) * dxdz)
-    dphi = 0
-    # fit = minimize(obj_func,
-    #                [amp, 0],
-    #                (ux[t_idx], uz[t_idx], params),
-    #                bounds=[(0, 1.5), (-0.5, 0.5)])
-    # amp, dphi = fit.x
+    def get_fits(fit_params, dux, duz):
+        ''' for fit_params, fits dux, dux up to A, dphi at all times '''
+        amps = []
+        dphis = []
+        duxs = []
+        duzs = []
+        for t_idx, sim_time in enumerate(sim_times):
+            fit_anal_ux = get_anal_ux(fit_params, sim_time, x, z)[pos_slice]
+            fit_anal_uz = get_anal_uz(fit_params, sim_time, x, z)[pos_slice]
 
-    dux = ux - amp * get_anal_ux(params, sim_time, x, z, phi=dphi)
-    duz = uz - amp * get_anal_uz(params, sim_time, x, z, phi=dphi)
+            amp_est = 0
+            off_est = 0
+            # nearest-pixel search only for upwards
+            for offset in range(N_X):
+                curr = np.sum((
+                    np.roll(dux[t_idx][pos_slice], -offset, axis=0)
+                        * fit_anal_ux * KX**2 * norm +
+                    np.roll(duz[t_idx][pos_slice], -offset, axis=0)
+                        * fit_anal_uz * KZ**2 * norm
+                ) * dxdz) / np.sum((
+                    fit_anal_ux**2 * KX**2 * norm +
+                    fit_anal_uz**2 * KZ**2 * norm) * dxdz)
+                if curr > amp_est:
+                    amp_est = curr
+                    off_est = offset
 
-    # find phase offset + amp for downward reflected wave
-    down_params = {**params, **{'KZ': -KZ}}
-    down_anal_ux = get_anal_ux(down_params, sim_time, x, z)[pos_slice]
-    down_anal_uz = get_anal_uz(down_params, sim_time, x, z)[pos_slice]
+            dphi_est = (off_est * KX * XMAX / N_X)
+            fit = minimize(obj_func,
+                           [amp_est, dphi_est],
+                           (dux[t_idx], duz[t_idx], sim_time, fit_params),
+                           bounds=[(0, 1.5),
+                                   (dphi_est - dphi_pixel,
+                                    dphi_est + dphi_pixel)])
+            amp, dphi = fit.x
+            amps.append(amp)
+            dphis.append(dphi)
+            print('Got fits', amp, dphi)
 
-    amp_down = 0
-    offset_down = 0
-    for offset in range(NX_scale):
-        curr = np.sum((
-            np.roll(dux[pos_slice], -offset, axis=0)
-                * down_anal_ux * KX**2 * norm +
-            np.roll(duz[pos_slice], -offset, axis=0)
-                * down_anal_uz * KZ**2 * norm
-        ) * dxdz) / np.sum((
-            down_anal_ux**2 * KX**2 * norm +
-            down_anal_uz**2 * KZ**2 * norm) * dxdz)
-        if curr > amp_down:
-            amp_down = curr
-            offset_down = offset
+            duxs.append(
+                dux[t_idx] -
+                amp * get_anal_ux(fit_params, sim_time, x, z, phi=dphi))
+            duzs.append(
+                duz[t_idx] -
+                amp * get_anal_uz(fit_params, sim_time, x, z, phi=dphi))
+        return amps, dphis, np.array(duxs), np.array(duzs)
 
-    dux2 = dux - amp_down * np.roll(get_anal_ux(down_params, sim_time,
-                                                x, z), offset_down, axis=0)
-    duz2 = duz - amp_down * np.roll(get_anal_uz(down_params, sim_time,
-                                                x, z), offset_down, axis=0)
+    fit_incident = minimize(obj_func_all_time,
+                            [1, 0],
+                            (ux, uz, params),
+                            bounds=[(0.5, 1.5), (-1, 1)])
+    amp, dphi = fit_incident.x
+    print(amp, dphi)
+    ux_inc_subbed = ux - amp * get_anal_ux(params, t_t, x_t, z_t, phi=dphi)
+    uz_inc_subbed = uz - amp * get_anal_uz(params, t_t, x_t, z_t, phi=dphi)
 
-    dphi_down = (offset_down * KX * XMAX / NX_scale)
-    fit = minimize(obj_func,
-                   [amp_down, dphi_down],
-                   (dux, duz, down_params),
-                   bounds=[(0, 1), (dphi_down - 0.1, dphi_down + 0.1)])
-    amp_down, dphi_down = fit.x
-    print('Got fits', amp, dphi, amp_down, dphi_down)
+    amps_down, dphis_down, ux_down_subbed, uz_down_subbed =\
+        get_fits(down_params, ux_inc_subbed, uz_inc_subbed)
 
-    dux2 = dux - amp_down *\
-        get_anal_ux(down_params, sim_time, x, z, phi=dphi_down)
-    duz2 = duz - amp_down *\
-        get_anal_uz(down_params, sim_time, x, z, phi=dphi_down)
+    amps_retro, dphis_retro, duxs, duzs =\
+        get_fits(params, ux_down_subbed, uz_down_subbed)
 
-    # np.copyto(ux_field.data, dux2)
-    # np.copyto(uz_field.data, duz2)
-    # ux_field.set_scales(1, keep_data=True)
-    # uz_field.set_scales(1, keep_data=True)
-    # dux2 = ux_field['g']
-    # duz2 = uz_field['g']
-
-    return amp, dphi, amp_down, dphi_down, dux2, duz2
+    return amp, amps_retro, dphis_retro, amps_down, dphis_down, duxs, duzs
 
 def set_ic(name, solver, domain, params):
     populate_globals(params)
@@ -513,6 +536,8 @@ def plot(name, params):
         for idx, _ in enumerate(state_vars[var + sub_suffix]):
             mean = means[idx]
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
+    _, _, _, _, _, dux2s, duz2s = \
+        subtract_lins(params, state_vars, sim_times, domain)
 
     for cfg in plot_cfgs:
         n_cols, n_rows, save_fmt_str, plot_vars, f_vars,\
@@ -540,8 +565,8 @@ def plot(name, params):
             for var in plot_vars + sub_vars + res_vars:
                 if res_suffix in var:
                     # divide by analytical profile and normalize
-                    amp, _, amp_down, _, dux2, duz2 = \
-                        subtract_lins(params, state_vars, t_idx, time, domain)
+                    dux2 = dux2s[t_idx]
+                    duz2 = duz2s[t_idx]
                     if var == 'uz%s' % res_suffix:
                         var_dat = duz2 / (uz_est * np.exp((z - Z0) / (2 * H)))
                         title = 'u_z'
@@ -742,104 +767,100 @@ def write_front(name, params, stride=2):
     flux_th = get_flux_th(params)
     flux_threshold = flux_th * 0.3
 
-    # generate if does not exist
-    if not os.path.exists(logfile):
-        print('log file not found, generating')
-        sim_times, domain, state_vars = load(
-            name, params, dyn_vars, plot_stride=stride, start=10)
-        x = domain.grid(0, scales=N_X / params['N_X'])
-        z = domain.grid(1, scales=N_Z / params['N_Z'])
-        dz = domain.grid_spacing(1, scales=N_Z / params['N_Z'])[0]
-        z0 = z[0]
-        rho0 = RHO0 * np.exp(-z0 / H)
+    sim_times, domain, state_vars = load(
+        name, params, dyn_vars, plot_stride=stride, start=10)
+    x = domain.grid(0, scales=N_X / params['N_X'])
+    z = domain.grid(1, scales=N_Z / params['N_Z'])
+    dz = domain.grid_spacing(1, scales=N_Z / params['N_Z'])[0]
+    z0 = z[0]
+    rho0 = RHO0 * np.exp(-z0 / H)
 
-        ri_med = []
-        ri_min = []
-        ri_max = []
-        width_med = []
-        width_min = []
-        width_max = []
-        ux_ffts = []
-        uz_ffts = []
-        amps = []
-        amps_down = []
-        Spx11 = []
+    ri_med = []
+    ri_min = []
+    ri_max = []
+    width_med = []
+    width_min = []
+    width_max = []
+    ux_ffts = []
+    uz_ffts = []
+    amps = []
+    phis = []
+    amps_down = []
+    phis_down = []
+    Spx11 = []
 
-        S_px = horiz_mean(state_vars['S_{px}'], N_X)
-        u0 = horiz_mean(state_vars['ux'], N_X)
+    S_px = horiz_mean(state_vars['S_{px}'], N_X)
+    u0 = horiz_mean(state_vars['ux'], N_X)
 
-        uz_est = F * get_uz_f_ratio(params)
-        ux_est = uz_est * KZ / KX
-        for t_idx, sim_time in enumerate(sim_times):
-            # heuristic: search near front_idx at each x
-            front_idx = get_front_idx(S_px[t_idx], flux_threshold)
-            search_ux_z = state_vars['ux_z'][t_idx, :,
-                                             front_idx - 10: front_idx + 10]
-            ri_arr = (g / H) * np.min(1 / search_ux_z**2, axis=1)
-            ri_med.append(np.median(ri_arr))
-            ri_min.append(np.min(ri_arr))
-            ri_max.append(np.max(ri_arr))
+    uz_est = F * get_uz_f_ratio(params)
+    ux_est = uz_est * KZ / KX
+    amp_inc, amps, phis, amps_down, phis_down, dux2s, duz2s =\
+        subtract_lins(params, state_vars, sim_times, domain)
+    for t_idx, sim_time in enumerate(sim_times):
+        dux2 = dux2s[t_idx]
+        duz2 = duz2s[t_idx]
+        # heuristic: search near front_idx at each x
+        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+        search_ux_z = state_vars['ux_z'][t_idx, :,
+                                         front_idx - 10: front_idx + 10]
+        ri_arr = (g / H) * np.min(1 / search_ux_z**2, axis=1)
+        ri_med.append(np.median(ri_arr))
+        ri_min.append(np.min(ri_arr))
+        ri_max.append(np.max(ri_arr))
 
-            width_arr = []
-            for x_idx in range(N_X):
-                ux_slice = state_vars['ux'][t_idx, x_idx]
-                def interp_idx(f, idx, val):
-                    df_grid = f[idx] - f[idx - 1]
-                    dz_grid = z0[idx] - z0[idx - 1]
-                    df_val = val - f[idx - 1]
-                    if val > f[idx - 1] and val < f[idx]:
-                        return z0[idx - 1] + dz_grid * df_val / df_grid
-                    return z0[idx]
-                z_top_where = np.where(ux_slice[front_idx - 5: ] > u_c)[0]
-                z_bot_where = np.where(
-                    ux_slice[ : front_idx + 5] < 0.3 * u_c)[0]
+        width_arr = []
+        for x_idx in range(N_X):
+            ux_slice = state_vars['ux'][t_idx, x_idx]
+            def interp_idx(f, idx, val):
+                df_grid = f[idx] - f[idx - 1]
+                dz_grid = z0[idx] - z0[idx - 1]
+                df_val = val - f[idx - 1]
+                if val > f[idx - 1] and val < f[idx]:
+                    return z0[idx - 1] + dz_grid * df_val / df_grid
+                return z0[idx]
+            z_top_where = np.where(ux_slice[front_idx - 5: ] > u_c)[0]
+            z_bot_where = np.where(
+                ux_slice[ : front_idx + 5] < 0.3 * u_c)[0]
 
-                if not len(z_top_where) or not len(z_bot_where):
-                    width_arr.append(ZMAX)
-                    continue
-                z_top = interp_idx(ux_slice, z_top_where[0] + front_idx - 5, u_c)
-                z_bot = interp_idx(ux_slice, z_bot_where[-1] + 1, 0.3 * u_c)
-                width_arr.append(z_top - z_bot)
-            width_med.append(np.median(width_arr))
-            width_min.append(np.min(width_arr))
-            width_max.append(np.max(width_arr))
+            if not len(z_top_where) or not len(z_bot_where):
+                width_arr.append(ZMAX)
+                continue
+            z_top = interp_idx(ux_slice, z_top_where[0] + front_idx - 5, u_c)
+            z_bot = interp_idx(ux_slice, z_bot_where[-1] + 1, 0.3 * u_c)
+            width_arr.append(z_top - z_bot)
+        width_med.append(np.median(width_arr))
+        width_min.append(np.min(width_arr))
+        width_max.append(np.max(width_arr))
 
-            z_bot = get_idx(Z0 + 3 * S, z0)
-            z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
+        z_bot = get_idx(Z0 + 3 * S, z0)
+        z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z0)
 
-            amp, _, amp_down, _, dux2, duz2 =\
-                subtract_lins(params, state_vars, t_idx, sim_time, domain)
-            norm = np.exp((z - Z0) / (2 * H))
-            # ux_res = (state_vars['ux'][t_idx] / norm)[:, z_bot: z_top]
-            # uz_res = (state_vars['uz'][t_idx] / norm)[:, z_bot: z_top]
-            ux_res = (dux2 / norm)[:, z_bot: z_top]
-            uz_res = (duz2 / norm)[:, z_bot: z_top]
+        norm = np.exp((z - Z0) / (2 * H))
+        ux_res = (dux2 / norm)[:, z_bot: z_top]
+        uz_res = (duz2 / norm)[:, z_bot: z_top]
 
-            ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
-            uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
-            # by using only half of the fft, all non-DC bins are half as high as
-            # they should be
-            ux_fft[1: ] *= 4
-            uz_fft[1: ] *= 4
-            dz_window = np.outer(np.ones_like(z[:, 0]), dz[z_bot: z_top])
-            ux_ffts.append(np.sum(ux_fft * dz_window, axis=1) /
-                           np.sum(dz_window, axis=1))
-            uz_ffts.append(np.sum(uz_fft * dz_window, axis=1) /
-                           np.sum(dz_window, axis=1))
+        ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
+        uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
+        # by using only half of the fft, all non-DC bins are half as high as
+        # they should be
+        ux_fft[1: ] *= 4
+        uz_fft[1: ] *= 4
+        dz_window = np.outer(np.ones_like(z[:, 0]), dz[z_bot: z_top])
+        ux_ffts.append(np.sum(ux_fft * dz_window, axis=1) /
+                       np.sum(dz_window, axis=1))
+        uz_ffts.append(np.sum(uz_fft * dz_window, axis=1) /
+                       np.sum(dz_window, axis=1))
 
-            amps.append(amp)
-            amps_down.append(amp_down)
-            Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
+        Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
 
-        with open(logfile, 'wb') as data:
-            pickle.dump((
-                z0, sim_times, S_px, Spx11, u0,
-                np.array(ri_med), np.array(ri_min), np.array(ri_max),
-                np.array(width_med), np.array(width_min), np.array(width_max),
-                np.array(amps), np.array(amps_down),
-                np.array(ux_ffts), np.array(uz_ffts)), data)
-    else:
-        print('log file found, not regenerating')
+    with open(logfile, 'wb') as data:
+        pickle.dump((
+            z0, sim_times, S_px, Spx11, u0,
+            np.array(ri_med), np.array(ri_min), np.array(ri_max),
+            np.array(width_med), np.array(width_min), np.array(width_max),
+            amp_inc, np.array(amps), np.array(phis),
+            np.array(amps_down), np.array(phis_down),
+            np.array(ux_ffts), np.array(uz_ffts)), data)
 
 def plot_front(name, params):
     populate_globals(params)
@@ -857,18 +878,22 @@ def plot_front(name, params):
     if NL:
         dyn_vars += ['ux_z']
     if not os.path.exists(logfile):
+        print('Generating logfile')
         write_front(name, params)
+    else:
+        print('Loading data')
 
-    print('Loading data')
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, ri_med, ri_min, ri_max,\
             width_med, width_min, width_max,\
-            amps, amps_down,  ux_ffts, uz_ffts = pickle.load(data)
+            amp_inc, amps_retro, phis_retro, amps_down, phis_down, \
+            ux_ffts, uz_ffts = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
     start_idx = get_idx(200, sim_times)
     t = sim_times[start_idx: ]
+    amps = np.full(np.shape(amps_down), amp_inc)
 
     S_px0 = amps**2 * flux_th
     dSpx = [] # Delta S_px
@@ -884,10 +909,8 @@ def plot_front(name, params):
         front_pos.append(z_c)
         front_idxs.append(front_idx)
 
-        # measure flux incident at dz below critical layer, averaged
+        # measure flux incident at dz below critical layer, no averaging
         dz_idx = get_idx(dz, z0)
-        # dSpx.append(-np.mean(S_px[
-        #     t_idx, get_idx(z_c - l_z / 2 - dz, z0): get_idx(z_c - dz, z0)]))
         dSpx.append(-S_px[t_idx, get_idx(z_c - dz, z0)])
     dSpx = np.array(dSpx)
     front_pos = np.array(front_pos)
@@ -926,7 +949,18 @@ def plot_front(name, params):
         #####################################################################
         plt.plot(t,
                  amps[start_idx: ],
-                 label=r'$A$',
+                 'g',
+                 label=r'$A_i$',
+                 linewidth=1.0)
+        plt.plot(t,
+                 amps_down[start_idx: ],
+                 'r',
+                 label=r'$A_d$',
+                 linewidth=0.7)
+        plt.plot(t,
+                 amps_retro[start_idx: ],
+                 'k',
+                 label=r'$A_r$',
                  linewidth=0.7)
         plt.legend(fontsize=6)
         plt.xlabel(r'$t (N^{-1})$')
@@ -1134,20 +1168,24 @@ def plot_front(name, params):
         #####################################################################
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
-        a1ln = ax1.plot(t,
-                       amps[start_idx::],
-                       'g',
-                       label=r'$A$',
-                       linewidth=0.7)
-        ax3 = ax1.twinx()
-        a3ln = ax3.plot(t,
-                        amps_down[start_idx::],
-                        'r:',
-                        label=r'$A_R$',
-                        linewidth=0.7)
+        ax1.plot(t,
+                amps[start_idx::],
+                'g',
+                label=r'$A_i$',
+                linewidth=1.0)
+        ax1.plot(t,
+                 amps_down[start_idx::],
+                 'r',
+                 label=r'$A_d$',
+                 linewidth=0.7)
+        ax1.plot(t,
+                amps_retro[start_idx::],
+                'k',
+                label=r'$A_r$',
+                linewidth=0.7)
         ax1.set_ylabel(r'$A$')
-        lns = a1ln + a3ln
-        ax1.legend(lns, [l.get_label() for l in lns], loc=0, fontsize=6)
+        ax1.set_ylim(bottom=0)
+        ax1.legend(loc=0, fontsize=6)
 
         t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
         S_excited = S_px0[start_idx: ] / flux_th * \
@@ -1185,8 +1223,7 @@ def plot_front(name, params):
 
         amps_down_interp = interp1d(t - prop_time, amps_down[start_idx: ])
         amps_interp = interp1d(t + prop_time, amps[start_idx: ])
-        refl_amp = np.array([amps_down_interp(t) / amps_interp(t)
-                             for t in t_refl]) * \
+        refl_amp = np.array([amps_down_interp(t) / amp_inc for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
 
         ax1.plot(t, refl, 'r:', linewidth=0.7, label='Flux')
@@ -1260,4 +1297,3 @@ def plot_front(name, params):
     ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
-
