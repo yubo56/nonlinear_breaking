@@ -58,42 +58,54 @@ def horiz_mean(field, n_x, axis=1):
 
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
-    populate_globals(params)
-    return (np.sqrt(2 * np.pi) * S * g *
-            KX**2) * np.exp(-S**2 * KZ**2/2) / (
-                2 * RHO0 * np.exp(-Z0 / H)
-                * OMEGA**2 * KZ)
+    return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
+            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
+                2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
+                * params['OMEGA']**2 * params['KZ'])
 
 def get_flux_th(params):
-    return (F * get_uz_f_ratio(params))**2 / 2 \
-        * abs(KZ / KX) * RHO0 * np.exp(-Z0 / H)
+    return (params['F'] * get_uz_f_ratio(params))**2 / 2 \
+        * abs(params['KZ'] / params['KX']) * params['RHO0']\
+        * np.exp(-params['Z0'] / params['H'])
 
 def get_k_damp(params):
-    populate_globals(params)
-    k = np.sqrt(KX**2 + KZ**2)
+    k = np.sqrt(params['KX']**2 + params['KZ']**2)
 
-    return NU * k**5 / abs(KZ * g / H * KX)
+    return params['NU'] * k**5 /\
+        abs(params['KZ'] * params['g'] / params['H'] * params['KX'])
 
 def get_anal_uz(params, t, x, z, phi=0):
-    populate_globals(params)
+    uz_est = params['F'] * get_uz_f_ratio(params)
+    k_damp = get_k_damp(params)
+
+    return uz_est * (
+        -np.exp((z - params['Z0']) / 2 * params['H'])
+        * np.exp(-k_damp * (z - params['Z0']))
+        * np.sin(params['KX'] * x
+                 + params['KZ'] * (z - params['Z0'])
+                 - params['OMEGA'] * t
+                 + 1 / (2 * params['KZ'] * params['H'])
+                 - phi))
+
+def get_anal_ux(params, t, x, z, phi=0):
     uz_est = F * get_uz_f_ratio(params)
     k_damp = get_k_damp(params)
 
     return uz_est * (
-        -np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z - Z0))
-        * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                 + 1 / (2 * KZ * H) - phi))
-
-def get_anal_ux(params, t, x, z, phi=0):
-    populate_globals(params)
-    uz_est = F * get_uz_f_ratio(params)
-    k_damp = get_k_damp(params)
-
-    return uz_est * np.exp((z - Z0) / 2 * H) * np.exp(-k_damp * (z[0] - Z0)) * (
-        KZ / KX * np.sin(KX * x + KZ * (z - Z0) - OMEGA * t
-                         + 1 / (2 * KZ * H) - phi)
-        - np.cos(KX * x + KZ * (z - Z0) - OMEGA * t + 1 / (2 * KZ * H) - phi)
-            / (2 * H * KX))
+        np.exp((z - params['Z0']) / 2 * params['H'])
+        * np.exp(-k_damp * (z[0] - params['Z0'])) * (
+            params['KZ'] / params['KX']
+            * np.sin(params['KX'] * x
+                     + params['KZ'] * (z - params['Z0'])
+                     - params['OMEGA'] * t
+                     + 1 / (2 * params['KZ'] * params['H'])
+                     - phi)
+            - np.cos(params['KX'] * x
+                     + params['KZ'] * (z - params['Z0'])
+                     - params['OMEGA'] * t
+                     + 1 / (2 * params['KZ'] * params['H'])
+                     - phi)
+                / (2 * params['H'] * params['KX'])))
 
 def get_idx(z, z0):
     return int(len(np.where(z0 < z)[0]))
@@ -103,8 +115,8 @@ def get_times(time_fracs, sim_times, start_idx):
             for time_frac in time_fracs]
 
 def subtract_lins(params, state_vars, t_idx, sim_time, domain):
-    # first, subtract off linear solution, then get amplitudes of retrograde and
-    # reflected components
+    # fit middle third of data to incident + retrograde + reflected:
+    # all constant amplitude, incident is constant dphi, other two have
     down_params = {**params, **{'KZ': -KZ}}
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
@@ -816,7 +828,7 @@ def plot_front(name, params):
     logfile = '%s/data.pkl' % snapshots_dir
     if NL:
         dyn_vars += ['ux_z']
-    if not os.path.exists(logfile):
+    if True: #not os.path.exists(logfile):
         print('Generating logfile')
         write_front(name, params)
     else:
