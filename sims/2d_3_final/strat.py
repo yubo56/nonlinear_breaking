@@ -45,7 +45,7 @@ def get_params(overrides=None):
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
 
-    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * 2
+    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * 3
     PARAMS_DEFAULT['OMEGA'] = OMEGA
     PARAMS_DEFAULT['S'] = PARAMS_DEFAULT['ZMAX'] / 512 * 4
     PARAMS_DEFAULT['DT'] = min(0.1 / OMEGA, 0.1)
@@ -66,35 +66,37 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
-       # ('lin_1_masked',
-       #  get_params(overrides={'F_MULT': 0.01,
-       #                        'mask': True,
-       #                        'NL': True,
-       #                        'N_X': 64,
-       #                        'N_Z': 256,
-       #                        'Re_inv': 0.075})),
-       # ('lin_2',
-       #  get_params(overrides={'F_MULT': 0.0005,
-       #                        'T_F': 4000,
-       #                        'DT': 0.1,
-       #                        'NL': False,
-       #                        'N_X': 64,
-       #                        'N_Z': 256,
-       #                        'Re_inv': 0})),
+       ('lin_1_masked',
+        get_params(overrides={'F_MULT': 0.01,
+                              'mask': True,
+                              'N_X': 64,
+                              'N_Z': 256,
+                              'Re_inv': 0.075})),
+       ('lin_2',
+        get_params(overrides={'F_MULT': 0.0005,
+                              'T_F': 4000,
+                              'DT': 0.1,
+                              'NL': False,
+                              'N_X': 64,
+                              'N_Z': 256,
+                              'Re_inv': 0})),
        ('nl_1_masked',
         get_params(overrides={'F_MULT': 1,
                               'mask': True,
-                              'NL': True,
                               'Re_inv': 0.7})),
-       ('nl_4_masked',
+       ('nl_3_masked',
         get_params(overrides={'F_MULT': 1,
                               'mask': True,
-                              'NL': True,
-                              'Re_inv': 0.3})),
-       ('nl_6_masked',
-        get_params(overrides={'F_MULT': 1,
-                              'mask': True,
-                              'Re_inv': 0.2})),
+                              'Re_inv': 0.5})),
+       # ('nl_4_masked',
+       #  get_params(overrides={'F_MULT': 1,
+       #                        'mask': True,
+       #                        'NL': True,
+       #                        'Re_inv': 0.3})),
+       # ('nl_6_masked',
+       #  get_params(overrides={'F_MULT': 1,
+       #                        'mask': True,
+       #                        'Re_inv': 0.2})),
     ]
     if '-plot' in sys.argv:
         for name, params_dict in tasks:
