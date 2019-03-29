@@ -30,7 +30,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
-plot_stride = 4
+stride = 4
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -346,7 +346,7 @@ def merge(name):
     if to_merge:
         post.merge_analysis(snapshots_dir)
 
-def load(name, params, dyn_vars, plot_stride, start=0):
+def load(name, params, dyn_vars, stride, start=0):
     populate_globals(params)
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
@@ -365,13 +365,20 @@ def load(name, params, dyn_vars, plot_stride, start=0):
             sim_times = np.array(dat['scales']['sim_time'])
             for varname in dyn_vars:
                 state_vars[varname].extend(
-                    dat['tasks'][varname][start::plot_stride])
+                    dat['tasks'][varname][start::stride])
 
             state_vars['S_{px}(mean)'].extend(
-                dat['tasks']['S_{px}'][start::plot_stride, 0, :])
+                dat['tasks']['S_{px}'][start::stride, 0, :])
 
-        total_sim_times.extend(sim_times[start::plot_stride])
+        simlen = len(sim_times)
+        total_sim_times.extend(sim_times[start::stride])
         i += 1
+        if simlen <= start:
+            start -= simlen
+        else:
+            start = (((simlen - start - 1) // stride) + 1) * stride\
+                + start - simlen
+        print('next start is:', start)
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
     # cast to np arrays
@@ -439,7 +446,7 @@ def plot(name, params):
     ]
 
     dyn_vars = ['uz', 'ux', 'rho', 'P']
-    sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride)
+    sim_times, domain, state_vars = load(name, params, dyn_vars, stride)
 
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)[: , z_b:]
@@ -688,7 +695,7 @@ def write_front(name, params, stride=2):
     flux_threshold = flux_th * 0.3
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride=stride, start=10)
+        name, params, dyn_vars, stride=stride, start=10)
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
     dz = domain.grid_spacing(1, scales=1)[0]

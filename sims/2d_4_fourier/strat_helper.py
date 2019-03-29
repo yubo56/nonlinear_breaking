@@ -30,7 +30,7 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
-plot_stride = 4
+stride = 4
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -127,8 +127,8 @@ def subtract_lins(params, state_vars, sim_times, domain):
     N_X = 256
     N_Z = 1024
 
-    x = domain.grid(0, scales=xstride)
-    z = domain.grid(1, scales=zstride)
+    x = domain.grid(0, scales=1 / xstride)
+    z = domain.grid(1, scales=1 / zstride)
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
@@ -139,8 +139,8 @@ def subtract_lins(params, state_vars, sim_times, domain):
     pos_slice = np.s_[:, z_bot:z_top]
     time_slice = np.s_[:, :, z_bot:z_top]
 
-    dx = domain.grid_spacing(0, scales=xstride)
-    dz = domain.grid_spacing(1, scales=zstride)
+    dx = domain.grid_spacing(0, scales=1 / xstride)
+    dz = domain.grid_spacing(1, scales=1 / zstride)
     dxdz = np.outer(dx, dz)[pos_slice]
     norm = np.exp(-z/H)[pos_slice]
 
@@ -160,6 +160,9 @@ def subtract_lins(params, state_vars, sim_times, domain):
     def obj_func_all_time(p, ux, uz, params):
         ''' objective function for all-time minimization '''
         amp, offset = p
+        print(np.shape(ux), np.shape(ux[time_slice]), np.shape(x_t),
+              np.shape(z_t), np.shape(t_t),
+              np.shape(get_anal_ux(params, t_t, x_t, z_t, phi=offset)))
         resx = ux[time_slice] - amp *\
             get_anal_ux(params, t_t, x_t, z_t, phi=offset)[time_slice]
         resz = uz[time_slice] - amp *\
@@ -407,7 +410,7 @@ def merge(name):
     if to_merge:
         post.merge_analysis(snapshots_dir)
 
-def load(name, params, dyn_vars, plot_stride, start=0):
+def load(name, params, dyn_vars, stride, start=0):
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
     global N_X, N_Z
@@ -430,20 +433,28 @@ def load(name, params, dyn_vars, plot_stride, start=0):
     while os.path.exists(filename):
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
-            assert(N_X == len(dat['scales']['kx']),
-                   '%d, %d' % (N_X, len(dat['scales']['kx'])))
-            assert(N_Z == len(dat['scales']['kz']),
-                   '%d, %d' % (N_Z, len(dat['scales']['kz'])))
             sim_times = np.array(dat['scales']['sim_time'])
             for varname in dyn_vars:
-                state_vars[varname].extend(
-                    dat['tasks'][varname]
-                    [start::plot_stride, ::xstride, ::zstride])
-                print(np.shape(dat['tasks'][varname][start::plot_stride, ::xstride, ::zstride]))
+                assert params['N_X'] == np.shape(dat['tasks'][varname])[1],\
+                    'Z: %d, %d' % (params['N_X'],
+                                   np.shape(dat['tasks'][varname]))
+                assert params['N_Z'] == np.shape(dat['tasks'][varname])[2],\
+                    'Z: %d, %d' % (params['N_Z'],
+                                   np.shape(dat['tasks'][varname]))
+                to_append = dat['tasks'][varname]\
+                    [start::stride, ::xstride, ::zstride]
+                state_vars[varname].extend(to_append)
+            print(np.shape(to_append))
 
-        total_sim_times.extend(sim_times[start::plot_stride])
+        simlen = len(sim_times)
+        total_sim_times.extend(sim_times[start::stride])
         i += 1
-        start -= min(start, len(sim_times))
+        if simlen <= start:
+            start -= simlen
+        else:
+            start = (((simlen - start - 1) // stride) + 1) * stride\
+                + start - simlen
+        print('next start is:', start)
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
     # cast to np arrays
@@ -513,7 +524,7 @@ def plot(name, params):
     ]
 
     dyn_vars = ['uz', 'ux', 'U', 'W']
-    sim_times, domain, state_vars = load(name, params, dyn_vars, plot_stride,
+    sim_times, domain, state_vars = load(name, params, dyn_vars, stride,
         start=0)
 
     x = domain.grid(0, scales=256 / params['N_X'])
@@ -753,14 +764,14 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=2):
+def write_front(name, params, stride=4):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
     N_X = 256
     N_Z = 1024
     u_c = OMEGA / KX
-    dyn_vars = ['uz', 'ux', 'U', 'W']
+    dyn_vars = ['uz', 'ux', 'U']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
 
@@ -768,7 +779,7 @@ def write_front(name, params, stride=2):
     flux_threshold = flux_th * 0.3
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, plot_stride=stride, start=10)
+        name, params, dyn_vars, stride=stride, start=10)
     x = domain.grid(0, scales=N_X / params['N_X'])
     z = domain.grid(1, scales=N_Z / params['N_Z'])
     dz = domain.grid_spacing(1, scales=N_Z / params['N_Z'])[0]
@@ -872,7 +883,7 @@ def plot_front(name, params):
     flux_threshold = flux_th * 0.3
     k_damp = get_k_damp(params)
 
-    dyn_vars = ['uz', 'ux', 'U', 'W']
+    dyn_vars = ['uz', 'ux', 'U']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
     if NL:
