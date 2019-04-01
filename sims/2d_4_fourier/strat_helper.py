@@ -160,9 +160,6 @@ def subtract_lins(params, state_vars, sim_times, domain):
     def obj_func_all_time(p, ux, uz, params):
         ''' objective function for all-time minimization '''
         amp, offset = p
-        print(np.shape(ux), np.shape(ux[time_slice]), np.shape(x_t),
-              np.shape(z_t), np.shape(t_t),
-              np.shape(get_anal_ux(params, t_t, x_t, z_t, phi=offset)))
         resx = ux[time_slice] - amp *\
             get_anal_ux(params, t_t, x_t, z_t, phi=offset)[time_slice]
         resz = uz[time_slice] - amp *\
@@ -444,7 +441,6 @@ def load(name, params, dyn_vars, stride, start=0):
                 to_append = dat['tasks'][varname]\
                     [start::stride, ::xstride, ::zstride]
                 state_vars[varname].extend(to_append)
-            print(np.shape(to_append))
 
         simlen = len(sim_times)
         total_sim_times.extend(sim_times[start::stride])
@@ -454,7 +450,6 @@ def load(name, params, dyn_vars, stride, start=0):
         else:
             start = (((simlen - start - 1) // stride) + 1) * stride\
                 + start - simlen
-        print('next start is:', start)
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
 
     # cast to np arrays
@@ -764,7 +759,7 @@ def plot(name, params):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=1):
+def write_front(name, params, stride=4):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
@@ -844,17 +839,17 @@ def write_front(name, params, stride=1):
         window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
         norm = np.exp((z - Z0) / (2 * H))
 
-        z_bot_l = get_idx(Z0 + 3 * S, z0)
-        z_bot_r = get_idx(Z0 + 3 * S + window_width, z0)
+        z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
+        z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
         area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
         ux_res = (dux2 / norm)[:, z_bot_l: z_bot_r]
         uz_res = (duz2 / norm)[:, z_bot_l: z_bot_r]
         ux_fft = (np.abs(np.fft.rfft(ux_res, axis=0) / N_X))**2
         uz_fft = (np.abs(np.fft.rfft(uz_res, axis=0) / N_X))**2
 
-        z_top_coord = SPONGE_HIGH - 3 * SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)
-        z_top_r = get_idx(z_top_coord, z0)
-        z_top_l = get_idx(z_top_coord - window_width, z0)
+        # z_top_coord = SPONGE_HIGH - 3 * SPONGE_WIDTH * (ZMAX - SPONGE_HIGH)
+        z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
+        z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
         area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
         ux_top = (state_vars['ux'][t_idx] / norm)[:, z_top_l: z_top_r]
         uz_top = (state_vars['uz'][t_idx] / norm)[:, z_top_l: z_top_r]
@@ -968,23 +963,34 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        plt.plot(t,
+        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        ax1.plot(t,
                  amps[start_idx: ],
                  'g',
                  label=r'$A_i$',
                  linewidth=1.0)
-        plt.plot(t,
+        ax1.plot(t,
                  amps_down[start_idx: ],
                  'r',
                  label=r'$A_d$',
                  linewidth=0.7)
-        plt.plot(t,
+        ax1.plot(t,
                  amps_retro[start_idx: ],
                  'k',
                  label=r'$A_r$',
                  linewidth=0.7)
-        plt.legend(fontsize=6)
-        plt.xlabel(r'$t (N^{-1})$')
+        ax1.legend(fontsize=6)
+        ax1.set_xlabel(r'$t (N^{-1})$')
+        ax2.plot(t,
+                 np.unwrap(phis_down[start_idx: ]),
+                 'r',
+                 label=r'$\phi_d$',
+                 linewidth=0.7)
+        ax2.plot(t,
+                 np.unwrap(phis_retro[start_idx: ]),
+                 'k',
+                 label=r'$\phi_r$',
+                 linewidth=0.7)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1187,7 +1193,7 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
         f.subplots_adjust(hspace=0)
         ax1.plot(t,
                 amps[start_idx::],
@@ -1208,21 +1214,32 @@ def plot_front(name, params):
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=6)
 
+        ax2.plot(t,
+                 np.unwrap(phis_down[start_idx: ]),
+                 'r',
+                 label=r'$\phi_d$',
+                 linewidth=0.7)
+        ax2.plot(t,
+                 np.unwrap(phis_retro[start_idx: ]),
+                 'k',
+                 label=r'$\phi_r$',
+                 linewidth=0.7)
+
         t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
         S_excited = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
-        ax2.plot(t + prop_time,
+        ax3.plot(t + prop_time,
                  S_excited,
                  'b:',
                  label=r'Incident + $\frac{\Delta z}{c_{ph,z}}$',
                  linewidth=0.7)
-        ax2.plot(t,
+        ax3.plot(t,
                  -dSpx[start_idx: ] / flux_th,
                  'k:',
                  label='Absorbed',
                  linewidth=1.0)
-        ax2.set_ylabel(r'$S_{px} / S_0$')
-        ax2.legend(fontsize=6, loc='lower right')
+        ax3.set_ylabel(r'$S_{px} / S_0$')
+        ax3.legend(fontsize=6, loc='lower right')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1290,31 +1307,38 @@ def plot_front(name, params):
     #
     # plot FFTs of residuals
     #########################################################################
-    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-    f.subplots_adjust(hspace=0)
-    num_modes = 10
+    f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharey=True, sharex=True)
+    f.subplots_adjust(wspace=0)
+    num_modes = 20
     uz_est = F * get_uz_f_ratio(params)
     ux_est = uz_est * KZ / KX
 
     times = get_times([1/8, 3/8, 5/8, 7/8, 1], sim_times, start_idx)
-    # kx = np.linspace(0, 2 * np.pi * (N_X // 2) / XMAX, N_X // 2)[ : num_modes]
-    for idx in times:
-        ax1.semilogy(ux_ffts[idx, : num_modes] / ux_est**2,
-                     label='t=%.1f' % sim_times[idx],
+    for t_idx, color in zip(times, PLT_COLORS):
+        ax1.semilogy(ux_ffts[t_idx, : num_modes] / ux_est**2,
+                     color,
+                     label='t=%.1f' % sim_times[t_idx],
                      linewidth=0.7)
-        ax2.semilogy(uz_ffts[idx, : num_modes] / uz_est**2,
-                     label='t=%.1f' % sim_times[idx],
+        ax2.semilogy(uz_ffts[t_idx, : num_modes] / uz_est**2,
+                     color,
+                     label='t=%.1f' % sim_times[t_idx],
                      linewidth=0.7)
-    # if NU > 0:
-    #     visc_kx = np.sqrt(OMEGA / (2 * NU))
-    #     ax1.axvline(x=visc_kx, linewidth=1.5, color='red')
-    #     ax2.axvline(x=visc_kx, linewidth=1.5, color='red')
-    ax1.set_ylabel(r'$\left|\tilde{u}_x\rho_0\right|^2(k_x)$')
-    ax2.set_ylabel(r'$\left|\tilde{u}_z\rho_0\right|^2(k_x)$')
-    ax2.set_xlabel(r'$k_x/k_{x0}$')
-    ax1.set_ylim([1e-6, 1])
-    ax2.set_ylim([1e-6, 1])
+        ax3.semilogy(ux_top_ffts[t_idx, : num_modes] / ux_est**2,
+                     color,
+                     label='t=%.1f' % sim_times[t_idx],
+                     linewidth=0.7)
+        ax4.semilogy(uz_top_ffts[t_idx, : num_modes] / uz_est**2,
+                     color,
+                     label='t=%.1f' % sim_times[t_idx],
+                     linewidth=0.7)
+    ax1.set_ylabel(r'$\left|\tilde{u}_{x, z}\rho_0\right|^2(k_x)(z_0)$')
+    ax3.set_ylabel(r'$\left|\tilde{u}_{x, z}\rho_0\right|^2(k_x)(z_t)$')
+    ax3.set_xlabel(r'$k_x/k_{x0}$')
+    ax4.set_xlabel(r'$k_x/k_{x0}$')
+    ax1.set_ylim([1e-8, 1])
+    ax2.set_ylim([1e-8, 1])
+    ax3.set_ylim([1e-8, 1])
+    ax4.set_ylim([1e-8, 1])
     ax1.legend(fontsize=6)
-    ax2.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
