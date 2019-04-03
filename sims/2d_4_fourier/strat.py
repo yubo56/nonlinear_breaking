@@ -68,6 +68,10 @@ if __name__ == '__main__':
     tasks = [
         ('yubo_nu0p5_hres',
          get_params(overrides={'Re_inv': 0.05})),
+        ('yubo_nu0p5_shres',
+         get_params(overrides={'Re_inv': 0.05,
+                               'N_X': 1024,
+                               'N_Z': 4096})),
         ('yubo_nu1_hres',
          get_params(overrides={'Re_inv': 0.1})),
         ('yubo_nu1_vhres',
@@ -79,6 +83,7 @@ if __name__ == '__main__':
         # ('yubo_nu2_width',
         #  get_params(overrides={'Re_inv': 0.2,
         #                        'N_X': 256,
+        #                        'NUM_SNAPSHOTS': 1500,
         #                        'N_Z': 1024})),
         ('yubo_nu3_width',
          get_params(overrides={'Re_inv': 0.3,
