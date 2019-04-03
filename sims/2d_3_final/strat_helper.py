@@ -30,7 +30,8 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
-stride = 4
+STRIDE = 4
+AVG_IDX = 4
 
 def populate_globals(var_dict):
     for key, val in var_dict.items():
@@ -46,11 +47,23 @@ def get_vgz(g, h, kx, kz):
     return -get_omega(g, h, kx, kz) * kx * kz /\
         (kx**2 + kz**2 + 0.25 / h**2)**(3/2)
 
-def get_front_idx(S_px, flux_threshold):
-    max_pos = len(S_px) - 1
-    while S_px[max_pos] < flux_threshold and max_pos >= 0:
-        max_pos -= 1
-    return max_pos
+def get_front_idx(_S_px, t_idx, flux_threshold):
+    '''
+    bracket the front location as the average of:
+    1) uppermost point where flux exceeds threshold,
+    2) lowermost point where flux is still below threshold (above forcing zone)
+    '''
+    # examine time-averaged
+    S_px = np.mean(_S_px[max(0, t_idx - AVG_IDX):
+                         min(len(_S_px), t_idx + AVG_IDX)], axis=0)
+
+    max_idx = len(S_px) - 1
+    while S_px[max_idx] < flux_threshold and max_idx >= 0:
+        max_idx -= 1
+    min_idx = int(len(S_px) * (Z0 + 10 * S) / ZMAX)
+    while S_px[min_idx] > flux_threshold and min_idx < max_idx:
+        min_idx += 1
+    return (min_idx + max_idx) // 2
 
 def horiz_mean(field, n_x, axis=1):
     ''' horizontal direction (axis = 1) is uniform spacing, just mean '''
@@ -127,7 +140,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
-    t_t = np.array([np.full((np.size(x), np.size(z)), t) for t in sim_times])
+    t_t = np.array([[[t]] for t in sim_times])
 
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
@@ -428,10 +441,17 @@ def load(name, params, dyn_vars, stride, start=0):
                 state_vars[varname].extend(
                     dat['tasks'][varname][start::stride])
 
+        simlen = len(sim_times)
         total_sim_times.extend(sim_times[start::stride])
-        start -= min(start, len(sim_times))
+        print('Loaded %d times' % len(sim_times[start::stride]))
         i += 1
+        if simlen <= start:
+            start -= simlen
+        else:
+            start = (((simlen - start - 1) // stride) + 1) * stride\
+                + start - simlen
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
+    print('Loaded total %d times' % len(total_sim_times))
 
     # cast to np arrays
     for key in state_vars.keys():
@@ -445,9 +465,7 @@ def load(name, params, dyn_vars, stride, start=0):
         (NU * np.exp(state_vars['U']) * state_vars['ux_z']))
     return np.array(total_sim_times), domain, state_vars
 
-def plot(name, params):
-    rank = CW.rank
-    size = CW.size
+def plot(name, params, stride=STRIDE):
     populate_globals(params)
 
     slice_suffix = '(x=0)'
@@ -546,8 +564,7 @@ def plot(name, params):
             ux_mean = np.outer(np.ones(N_X),
                                state_vars['ux%s' % mean_suffix][t_idx])
             S_px_mean = state_vars['S_{px}%s' % mean_suffix]
-            z_top = get_front_idx(S_px_mean[t_idx],
-                                  get_flux_th(params) * 0.2)
+            z_top = get_front_idx(S_px_mean, t_idx, get_flux_th(params) * 0.2)
             z_bot = get_idx(Z0 + 3 * S, z0)
 
             idx = 1
@@ -746,7 +763,7 @@ def write_front(name, params, stride=4):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     u_c = OMEGA / KX
-    dyn_vars = ['uz', 'ux', 'U', 'W']
+    dyn_vars = ['uz', 'ux', 'U']
     if NL:
         dyn_vars += ['ux_z']
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -786,7 +803,7 @@ def write_front(name, params, stride=4):
         dux2 = dux2s[t_idx]
         duz2 = duz2s[t_idx]
         # heuristic: search near front_idx at each x
-        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+        front_idx = get_front_idx(S_px, t_idx, flux_threshold)
         search_ux_z = state_vars['ux_z'][t_idx, :,
                                          front_idx - 10: front_idx + 10]
         ri_arr = (g / H) * np.min(1 / search_ux_z**2, axis=1)
@@ -897,19 +914,24 @@ def plot_front(name, params):
     dSpx = [] # Delta S_px
     front_pos = []
     front_idxs = []
-    dz = abs(1 / KZ)
+    dz = abs(3 / KZ)
     l_z = abs(2 * np.pi / KZ)
     z_b = Z0 + 3 * S
     z_b_idx = get_idx(z_b, z0)
     for t_idx, sim_time in enumerate(sim_times):
-        front_idx = get_front_idx(S_px[t_idx], flux_threshold)
+        front_idx = get_front_idx(S_px, t_idx, flux_threshold)
         z_c = z0[front_idx]
         front_pos.append(z_c)
         front_idxs.append(front_idx)
 
-        # measure flux incident at dz below critical layer, no averaging
-        dz_idx = get_idx(dz, z0)
-        dSpx.append(-S_px[t_idx, get_idx(z_c - dz, z0)])
+        # measure flux incident at dz below critical layer, small time/space avg
+        z_bot_idx = get_idx(z_c - dz, z0)
+        z_top_idx = get_idx(z_c + dz, z0)
+        S_below = np.mean(S_px[max(t_idx - AVG_IDX, 0): t_idx + AVG_IDX,
+                               z_bot_idx])
+        S_above = np.mean(S_px[max(t_idx - AVG_IDX, 0): t_idx + AVG_IDX,
+                               z_top_idx])
+        dSpx.append(S_above - S_below)
     dSpx = np.array(dSpx)
     front_pos = np.array(front_pos)
 
@@ -991,33 +1013,32 @@ def plot_front(name, params):
                      / abs(V_PZ)
 
         for time, color in zip(times, PLT_COLORS):
-            S_px_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
-            # mean flow
+            u0_avg = np.mean(u0[time - AVG_IDX: time + AVG_IDX,
+                                z_b_idx: ], axis=0)
+            S_px_avg = np.mean(S_px[time - AVG_IDX: time + AVG_IDX,
+                                    z_b_idx: ], axis=0)
+            # time-averaged mean flow
             ax1.plot(z0_cut,
-                     u0[time, z_b_idx: ] / u_c,
+                     u0_avg / u_c,
                      '%s-' % color,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-            # plot S_px sliced at time
-            ax2.plot(z0_cut,
-                     S_px[time, z_b_idx: ] / flux_th,
-                     '%s-' % color,
-                     linewidth=0.7,
-                     label=r't=%.1f$N^{-1}$' % sim_times[time])
-            # plot S_px averaged in ~ 1 period
+            # S_px sliced at time
             # ax2.plot(z0_cut,
-            #          S_px_avg / flux_th,
+            #          S_px[time, z_b_idx: ] / flux_th,
             #          '%s:' % color,
-            #          linewidth=0.7)
+            #          linewidth=0.5)
+            # S_px time-averaged
+            ax2.plot(z0_cut,
+                     S_px_avg / flux_th,
+                     '%s-' % color,
+                     linewidth=0.7,
+                     label=r't=%.1f$N^{-1}$' % sim_times[time])
         # overlay analytical flux including viscous dissipation
         ax2.plot(z0_cut,
                  np.exp(-k_damp * 2 * (z0_cut - Z0)),
                  linewidth=1.5,
                  label=r'$\nu$-only')
-        # indicate vertical averaging wavelength
-        # ax2.axvspan(front_pos[times[-1]] - dz - l_z,
-        #             front_pos[times[-1]] - dz,
-        #             color='grey')
         ax1.set_xlim(z_b, ZMAX)
         ax2.set_xlim(z_b, ZMAX)
         ax1.set_ylim(-0.1, 1.25)
@@ -1028,62 +1049,6 @@ def plot_front(name, params):
         ax2.set_ylabel(r'$S_{px} / S_0$')
         ax2.set_xlabel(r'$z(H)$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
-        plt.close()
-
-        #####################################################################
-        # fluxes_time.png
-        #
-        # plot breakdown of fluxes at a few times
-        #####################################################################
-        times = get_times([1/8, 1/5, 7/8], sim_times, start_idx)
-        f, ax_lst = plt.subplots(len(times), 1, sharex=True)
-        f.subplots_adjust(hspace=0)
-
-        # plot residuals at a few times
-        for ax, time in zip(ax_lst, times):
-            z_t_idx = get_front_idx(S_px[time],
-                                    get_flux_th(params) * 0.2)
-            ax.plot(z0_cut,
-                    np.exp(-k_damp * 2 * (z0_cut - Z0)),
-                    linewidth=1.5,
-                    label=r'$u_{x0}u_{z0}$')
-            Spx_avg = np.sum(S_px[time - 2: time + 2, z_b_idx: ], axis=0) / 4
-            ax.plot(z0_cut,
-                    Spx_avg / flux_th,
-                    linewidth=0.7,
-                    label=r'$u_xu_z$')
-            Spx_avg = np.sum(Spx11[time - 2: time + 2, : ], axis=0) / 4
-            ax.plot(z0[z_b_idx: z_t_idx],
-                    Spx_avg[z_b_idx: z_t_idx],
-                    'b:',
-                    linewidth=0.7,
-                    label=r'$\delta u_x \delta u_z$')
-            ax.plot(z0_cut,
-                    amps[time] * np.exp(-k_damp * 2 * (z0_cut - Z0)),
-                    'g:',
-                    linewidth=0.7,
-                    label=r'$A_0$')
-            ax.plot(z0[z_b_idx: z_t_idx],
-                    amps_down[time] *
-                        np.exp(-k_damp * 2 * (z0_cut[ :z_t_idx - z_b_idx] - Z0)),
-                    'r:',
-                    linewidth=0.7,
-                    label=r'$A_R$')
-            ax.legend(fontsize=6, loc='upper right')
-            ax.set_xlim(z_b, ZMAX)
-            ax.set_ylim(-0.6, 1.2)
-            ax.set_ylabel(r'$S_{px, t=%.1f} / S_0$' % sim_times[time])
-        ax_lst[-1].set_xlabel(r'$z(H)$')
-        Spx11_mean = []
-        for time in range(start_idx, len(sim_times)):
-            z_t_idx = get_front_idx(S_px[time], get_flux_th(params) * 0.3)
-            half_idx = (z_t_idx + z_b_idx) // 2
-            try:
-                Spx11_last = Spx11[time, z_b_idx: half_idx]
-                Spx11_mean.append(np.mean(Spx11_last))
-            except: # sometimes front idx is weird spot?
-                continue
-        plt.savefig('%s/fluxes_time.png' % snapshots_dir, dpi=400)
         plt.close()
 
         #####################################################################
@@ -1126,7 +1091,7 @@ def plot_front(name, params):
                  linewidth=0.7)
         color_idx += 1
         ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
-        ax1.legend(fontsize=6)
+        ax1.legend(fontsize=6, loc='lower right')
 
         # compare forecasts of front position using two predictors integrated
         # from incident flux in data
@@ -1149,24 +1114,21 @@ def plot_front(name, params):
         mean_incident = -np.mean(dSpx)
         est_incident_flux = np.mean(S_px0 *
                                     np.exp(-k_damp * 2 * (front_pos - Z0)))
-        flux_mults = [mean_incident / flux_th,
-                      est_incident_flux / flux_th,
-                      1]
-        for mult in flux_mults:
-            tau = H * RHO0 * u_c / (flux_th * mult)
-            pos_anal = -H * np.log(
-                (t - tf + tau * np.exp(-zf/H))
-                / tau)
-            ax2.plot(t,
-                     pos_anal,
-                     '%s:' % PLT_COLORS[color_idx],
-                     label='Model ($%.2f S_{px,0}$)' % mult,
-                     linewidth=0.7)
-            color_idx += 1
+        tau = H * RHO0 * u_c / mean_incident
+        pos_anal = -H * np.log(
+            (t - tf + tau * np.exp(-zf/H))
+            / tau)
+        ax2.plot(t,
+                 pos_anal,
+                 '%s:' % PLT_COLORS[color_idx],
+                 label='Avg Absorbed $%.2fS_{px,0}$' %
+                    (mean_incident / flux_th),
+                 linewidth=0.7)
+        color_idx += 1
         ax2.set_ylabel(r'$z_c$')
         ax2.set_xlabel(r't')
-        ax2.set_ylim([zf, 10])
-        ax2.legend(fontsize=6)
+        ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
+        ax2.legend(fontsize=6, loc='upper right')
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1206,14 +1168,14 @@ def plot_front(name, params):
                  'k',
                  label=r'$\phi_r$',
                  linewidth=0.7)
+        ax2.set_ylabel(r'$\phi$')
 
-        t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
         S_excited = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
-        ax3.plot(t + prop_time,
+        ax3.plot(t,
                  S_excited,
                  'b:',
-                 label=r'Incident + $\frac{\Delta z}{c_{ph,z}}$',
+                 label=r'Incident',
                  linewidth=0.7)
         ax3.plot(t,
                  -dSpx[start_idx: ] / flux_th,
@@ -1230,6 +1192,7 @@ def plot_front(name, params):
         #
         # reflection coeff calculations
         #####################################################################
+        t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
         f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
@@ -1237,17 +1200,13 @@ def plot_front(name, params):
         shifted_dS = interp1d(t + prop_time, S_excited)
         refl = [(shifted_dS(t) - absorbed_dS(t)) / shifted_dS(t)
                 for t in t_refl]
-        # unshift_dS = interp1d(t, S_excited)
-        # un_refl = [(unshift_dS(t) - absorbed_dS(t)) / unshift_dS(t)
-        #            for t in t_refl]
 
         amps_down_interp = interp1d(t - prop_time, amps_down[start_idx: ])
         amps_interp = interp1d(t + prop_time, amps[start_idx: ])
         refl_amp = np.array([amps_down_interp(t) / amp_inc for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
 
-        ax1.plot(t, refl, 'r:', linewidth=0.7, label='Flux')
-        # ax1.plot(t, un_refl, 'b:', linewidth=0.7, label='Unshifted Flux')
+        ax1.plot(t_refl, refl, 'r:', linewidth=0.7, label='Flux')
         ax1.plot(t_refl, refl_amp**2, 'g:', linewidth=0.7, label='Amp')
 
         ax1.text(0.85 * t[-1],
