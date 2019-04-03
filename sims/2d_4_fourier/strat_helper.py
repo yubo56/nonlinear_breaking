@@ -852,16 +852,12 @@ def write_front(name, params, stride=4):
         width_max.append(np.max(width_arr))
 
         window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
-        norm = np.exp((z - Z0) / (2 * H))
 
         z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
         z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
         area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
-        ux_bot = (state_vars['ux'][t_idx])[:, z_bot_l: z_bot_r]
-        uz_bot = (state_vars['uz'][t_idx])[:, z_bot_l: z_bot_r]
-        rho_bot = rho0[z_bot_l: z_bot_r]
-        S_bot_fft = np.abs(np.fft.rfft(
-            ux_bot * uz_bot * rho_bot / flux_th, axis=0) / N_X)
+        S_bot = state_vars['S_{px}'][t_idx, :, z_bot_l: z_bot_r]
+        S_bot_fft = np.abs(np.fft.rfft(S_bot / flux_th, axis=0) / N_X)
         # by using only half of the fft, all non-DC bins are half as high as
         # they should be
         S_bot_fft[1: ] *= 2
@@ -873,12 +869,9 @@ def write_front(name, params, stride=4):
         z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
         z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
         area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
-        ux_top = (state_vars['ux'][t_idx])[:, z_top_l: z_top_r]
-        uz_top = (state_vars['uz'][t_idx])[:, z_top_l: z_top_r]
-        rho_top = rho0[z_top_l: z_top_r]
-        S_top_fft = np.abs(np.fft.rfft(
-            ux_top * uz_top * rho_top, axis=0) / N_X)
-        S_top_fft[1: ] *= 4
+        S_top = state_vars['S_{px}'][t_idx, :, z_top_l: z_top_r]
+        S_top_fft = np.abs(np.fft.rfft(S_top / flux_th, axis=0) / N_X)
+        S_top_fft[1: ] *= 2
         S_top_ffts.append(np.sum(S_top_fft * area_top, axis=1) /
                           np.sum(area_top, axis=1))
 
