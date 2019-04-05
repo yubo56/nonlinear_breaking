@@ -220,22 +220,28 @@ def subtract_lins(params, state_vars, sim_times, domain):
                 amp * get_anal_uz(fit_params, sim_time, x, z, phi=dphi))
         return amps, dphis, np.array(duxs), np.array(duzs)
 
-    fit_incident = minimize(obj_func_all_time,
-                            [1, 0],
-                            (ux, uz, params),
-                            bounds=[(0.5, 1.5), (-1, 1)])
-    amp, dphi = fit_incident.x
-    print(amp, dphi)
-    ux_inc_subbed = ux - amp * get_anal_ux(params, t_t, x_t, z_t, phi=dphi)
-    uz_inc_subbed = uz - amp * get_anal_uz(params, t_t, x_t, z_t, phi=dphi)
+    # fit_incident = minimize(obj_func_all_time,
+    #                         [1, 0],
+    #                         (ux, uz, params),
+    #                         bounds=[(0.5, 1.5), (-1, 1)])
+    # amp, dphi = fit_incident.x
+    # print(amp, dphi)
+    # ux_inc_subbed = ux - amp * get_anal_ux(params, t_t, x_t, z_t, phi=dphi)
+    # uz_inc_subbed = uz - amp * get_anal_uz(params, t_t, x_t, z_t, phi=dphi)
 
-    amps_down, dphis_down, ux_down_subbed, uz_down_subbed =\
+    # amps_down, dphis_down, ux_down_subbed, uz_down_subbed =\
+    #     get_fits(down_params, ux_inc_subbed, uz_inc_subbed)
+
+    # amps_retro, dphis_retro, duxs, duzs =\
+    #     get_fits(params, ux_down_subbed, uz_down_subbed)
+
+    amps, dphis, ux_inc_subbed, uz_inc_subbed =\
+        get_fits(params, ux, uz)
+
+    amps_down, dphis_down, duxs, duzs =\
         get_fits(down_params, ux_inc_subbed, uz_inc_subbed)
 
-    amps_retro, dphis_retro, duxs, duzs =\
-        get_fits(params, ux_down_subbed, uz_down_subbed)
-
-    return amp, amps_retro, dphis_retro, amps_down, dphis_down, duxs, duzs
+    return amps, dphis, amps_down, dphis_down, duxs, duzs
 
 def set_ic(name, solver, domain, params):
     populate_globals(params)
@@ -543,7 +549,7 @@ def plot(name, params, stride=STRIDE):
         for idx, _ in enumerate(state_vars[var + sub_suffix]):
             mean = means[idx]
             state_vars[var + sub_suffix][idx] -= np.tile(mean, (N_X, 1))
-    _, _, _, _, _, dux2s, duz2s = \
+    _, _, _, _, dux2s, duz2s = \
         subtract_lins(params, state_vars, sim_times, domain)
 
     for cfg in plot_cfgs:
@@ -762,7 +768,7 @@ def plot(name, params, stride=STRIDE):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=4):
+def write_front(name, params, stride=1):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     u_c = OMEGA / KX
@@ -798,7 +804,7 @@ def write_front(name, params, stride=4):
 
     uz_est = F * get_uz_f_ratio(params)
     ux_est = uz_est * KZ / KX
-    amp_inc, amps, phis, amps_down, phis_down, dux2s, duz2s =\
+    amps, phis, amps_down, phis_down, dux2s, duz2s =\
         subtract_lins(params, state_vars, sim_times, domain)
     for t_idx, sim_time in enumerate(sim_times):
         dux2 = dux2s[t_idx]
@@ -867,7 +873,7 @@ def write_front(name, params, stride=4):
             z0, sim_times, S_px, Spx11, u0,
             np.array(ri_med), np.array(ri_min), np.array(ri_max),
             np.array(width_med), np.array(width_min), np.array(width_max),
-            amp_inc, np.array(amps), np.array(phis),
+            np.array(amps), np.array(phis),
             np.array(amps_down), np.array(phis_down),
             np.array(S_bot_ffts), np.array(S_top_ffts),
         ), data)
@@ -896,14 +902,13 @@ def plot_front(name, params):
     with open(logfile, 'rb') as data:
         z0, sim_times, S_px, Spx11, u0, ri_med, ri_min, ri_max,\
             width_med, width_min, width_max,\
-            amp_inc, amps_retro, phis_retro, amps_down, phis_down, \
+            amps, phis, amps_down, phis_down, \
             S_bot_ffts, S_top_ffts = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
     start_idx = get_idx(200, sim_times)
     t = sim_times[start_idx: ]
-    amps = np.full(np.shape(amps_down), amp_inc)
 
     S_px0 = amps**2 * flux_th
     dSpx = [] # Delta S_px
@@ -972,11 +977,6 @@ def plot_front(name, params):
                  amps_down[start_idx: ],
                  'r',
                  label=r'$A_d$',
-                 linewidth=0.7)
-        ax1.plot(t,
-                 amps_retro[start_idx: ],
-                 'k',
-                 label=r'$A_r$',
                  linewidth=0.7)
         ax1.legend(fontsize=6)
         ax1.set_xlabel(r'$t (N^{-1})$')
@@ -1140,11 +1140,6 @@ def plot_front(name, params):
                  'r',
                  label=r'$A_d$',
                  linewidth=0.7)
-        ax1.plot(t,
-                amps_retro[start_idx::],
-                'k',
-                label=r'$A_r$',
-                linewidth=0.7)
         ax1.set_ylabel(r'$A$')
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=6)
@@ -1197,8 +1192,10 @@ def plot_front(name, params):
         refl = [(incident_dS(t) - absorbed_dS(t)) / incident_dS(t)
                 for t in t_refl]
 
+        amps_interp = interp1d(t + prop_time, amps[start_idx: ])
         amps_down_interp = interp1d(t - prop_time, amps_down[start_idx: ])
-        refl_amp = np.array([amps_down_interp(t) / amp_inc for t in t_refl]) * \
+        refl_amp = np.array([amps_down_interp(t) / amps_interp(t)
+                             for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
 
         ax1.plot(t_refl, refl, 'r:', linewidth=0.7, label='Flux')

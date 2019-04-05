@@ -32,6 +32,7 @@ PARAMS_DEFAULT = {'XMAX': XMAX,
                   'SPONGE_WIDTH': 0.5,
                   'SPONGE_HIGH': 0.95 * ZMAX,
                   'SPONGE_LOW': 0.03 * ZMAX,
+                  'STRIDE': 1,
 
                   'NUM_SNAPSHOTS': NUM_SNAPSHOTS,
                   'NL': True,
