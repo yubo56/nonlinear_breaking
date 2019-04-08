@@ -136,7 +136,7 @@ def get_times(time_fracs, sim_times, start_idx):
             for time_frac in time_fracs]
 
 def get_stats(arr):
-    return np.median(arr), np.percentile(arr, 5), np.percentile(arr, 95)
+    return np.median(arr), np.percentile(arr, 16), np.percentile(arr, 84)
 
 def subtract_lins(params, state_vars, sim_times, domain):
     '''
@@ -1030,7 +1030,7 @@ def plot_front(name, params):
                  linewidth=0.7)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
-        avg_refl, avg_ri = get_stats([0])
+        avg_refl, avg_reflA, avg_ri = tuple([[0, 0, 0]] * 3)
 
     else:
         #####################################################################
@@ -1236,13 +1236,15 @@ def plot_front(name, params):
         incident_dS = my_interp(t + prop_time, S_excited)
         refl = [(incident_dS(t) - absorbed_dS(t)) / incident_dS(t)
                 for t in t_refl]
-        avg_refl = get_stats(refl[int(len(refl) * 2 / 3): ])
 
         amps_interp = my_interp(t + prop_time, amps[start_idx: ])
         amps_down_interp = my_interp(t - prop_time, amps_down[start_idx: ])
         refl_amp = np.array([amps_down_interp(t) / amps_interp(t)
                              for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
+
+        avg_refl = get_stats(refl[int(len(refl) * 2 / 3): ])
+        avg_reflA = get_stats(refl_amp[int(len(refl_amp) * 2/3): ])
 
         ax1.plot(t_refl, refl, 'r:', linewidth=0.7, label='Flux')
         ax1.plot(t_refl, refl_amp**2, 'g:', linewidth=0.7, label='Amp')
@@ -1310,4 +1312,4 @@ def plot_front(name, params):
     plt.close()
 
     # return aggregated values
-    return avg_refl, avg_ri
+    return avg_refl, avg_reflA, avg_ri

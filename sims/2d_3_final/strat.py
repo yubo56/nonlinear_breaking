@@ -116,9 +116,13 @@ if __name__ == '__main__':
         for name, params_dict in tasks:
             ret = plot_front(name, params_dict)
             rets.append((params_dict['Re_inv'], ret))
-        for nu, ((x1, x2, x3), (y1, y2, y3)) in rets:
-            print('(%.2f, ((%.4f, %.4f, %.4f), (%.4f, %.4f, %.4f))),' %
-                  (nu, x1, x2, x3, y1, y2, y3))
+        for nu, ((x1, x2, x3), (y1, y2, y3), (z1, z2, z3)) in rets:
+            fmt = '(%.4f, %.4f, %.4f)'
+            print('(%.2f, (%s, %s, %s)),' %
+                  (nu,
+                   fmt % (x1, x2, x3),
+                   fmt % (y1, y2, y3),
+                   fmt % (z1, z2, z3)))
 
     else:
         for task in tasks:
