@@ -105,8 +105,13 @@ if __name__ == '__main__':
             write_front(name, params_dict)
 
     elif '-front' in sys.argv:
+        rets = []
         for name, params_dict in tasks:
-            plot_front(name, params_dict)
+            ret = plot_front(name, params_dict)
+            rets.append((params_dict['Re_inv'], ret))
+        for nu, ((x1, x2, x3), (y1, y2, y3)) in rets:
+            print('(%.2f, ((%.4f, %.4f, %.4f), (%.4f, %.4f, %.4f))),' %
+                  (nu, x1, x2, x3, y1, y2, y3))
 
     else:
         for task in tasks:
