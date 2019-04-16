@@ -188,13 +188,13 @@ preceeding section.
 
 \section{Problem Description}\label{s:equations}
 
-We consider an incompressible, isothermal fluid, representative of degenerate
-matter in WD bulks, in 2D. We neglect temperature variations and assume a
+We consider a two-dimensional incompressible, isothermal fluid, representative
+of degenerate matter in WDs. We neglect temperature variations and assume a
 barotropic equation of state as a first approximation. As we are interested in
-the behavior of the wave far from the center of the WD, we approximate the
-gravitational field as uniform. We model the background density stratification
-as $\rho_0(x, z) = \rho_0(z) = \rho_0(z=0) e^{-z/H}$ for some reference density
-$\rho_0(z=0) = \at{\rho_0(z)}_{z = 0}$.
+dynamics far from the center of the WD, we approximate the gravitational field
+as uniform. We model the background density stratification as $\rho_0(x, z) =
+\rho_0(z) = \rho_0(z=0) e^{-z/H}$ for some reference density $\rho_0(z=0) =
+\at{\rho_0(z)}_{z = 0}$.
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
@@ -267,7 +267,7 @@ the Brunt-V\"ais\"al\"a frequency is constant
 In the weak stratification limit $k_{0z}H \gg 1$, the solution exhibits the
 following characteristics:
 \begin{itemize}
-    \item The amplitude of the perturbations grows like $e^{z/2H}$. Thus, the
+    \item The amplitude of the wave grows like $e^{z/2H}$. Thus, the
         linear approximation is violated for sufficiently large $z$.
 
     \item The phase and group velocities can be computed respectively:
@@ -346,19 +346,21 @@ z_0)^2}{2\sigma^2}}$ at $k_z = k_{0z}$), and we obtain
 \end{align}
 The $z > z_0$ solution models an upwards-propagating IGW wavetrain inbound on
 the simulation domain from below. The solution for $u_{1x}(x, z, t)$ is
-correspondingly $u_{1x} \approx \frac{k_{0z} u_{1z}}{k_{0x}}e^{\frac{i}{2k_{0z}H}}$.
+correspondingly $u_{1x} \approx \frac{k_{0z}
+u_{1z}}{k_{0x}}e^{\frac{i}{2k_{0z}H}}$.
 
 \subsection{Wave Breaking}
 
 In developing the results above, we have neglected advective terms $\pd{}{t} \gg
 \vec{u} \cdot \vec{\nabla}$. However, since $\abs*{\vec{u}} \propto e^{z/2H}$,
 any nonzero amplitude IGW will eventually violate the linearity criterion. This
-regime is relevant in practice since the IGW grows to nonlinear amplitudes
+regime is relevant in practice since the IGW may grow to nonlinear amplitudes
 before it reaches the surface of the WD\cite{fullerI,fullerII}. We can coarsely
-estimate the height at which this happens by $\abs*{\vec{u}}(z) \gtrsim
-\frac{\omega}{\abs*{\vec{k}}}$. This corresponds to when the Lagrangian
-displacement $\vec{\xi} \equiv \vec{u} / \omega$ satisfies $\vec{\xi} \cdot
-\vec{k} \gtrsim 1$, the same criterion used in\cite{fullerI}.
+estimate the height at which this happens by when the Lagrangian displacement
+$\vec{\xi}$ of a fluid parcel satisfies
+\begin{equation}
+    \vec{\xi} \cdot \vec{k} \gtrsim 1.\label{eq:nl}
+\end{equation}
 
 The general understanding of nonlinear IGW breaking is that the waves'
 interactions with the mean flow of the fluid transfer horizontal momentum from
@@ -379,70 +381,86 @@ fully nonlinear simulations\cite{winters1994} suggest that nonlinear effects can
 induce reflection.
 
 An estimate of where these mean flow effects become important can be made using
-the wave-induced mean flow formula\cite{eliassen_palm_cite,sutherland0}:
+the wave-induced mean flow\cite{eliassen_palm_cite,sutherland0}:
 \begin{equation}
      \ev*{u_x} = \bar{U}_0 \equiv \frac{1}{L_x}
         \int\limits u_x\;\mathrm{d}x = \frac{\ev*{u_xu_z}_x}{c_{g,z}},
 \end{equation}
-where $\ev*{\dots}x$ denotes horizontal averaging. Setting $\bar{U}_0 = c_{ph,
-x}$ the critical layer condition, we can solve that $\vec{\xi} \cdot \vec{k}
-= \sqrt{\frac{k_x}{k_z}}$ is where the mean flow attains the horizontal phase
-velocity. In an astrophysical context, $N \gg \omega$ and $k_z \gg k_x$. Thus,
-wave breaking may occur significantly earlier than assumed in current
-astrophysics literature.
+where $\ev*{\dots}_x$ denotes horizontal averaging. Setting $\bar{U}_0 = c_{ph,
+x}$ the critical layer condition, we recover $\frac{u_xk_x}{\omega} = \xi_x k_x
+\sim 1$, roughly equivalent to the nonlinearity criterion \autoref{eq:nl}.
 
 \section{Internal Gravity Wave Numerical Simulation}\label{s:sim}
 
 To study IGW breaking as a weak perturbation grows to nonlinear amplitudes, we
 perform direct numerical simulation using Dedalus\cite{dedalus} a spectral
-numerical method. Our region of interest is strictly interior to the WD and so
-our simulation must strive to eliminate boundary effects resulting from
-nonphysical boundaries. To do so, we adopt periodic boundary conditions in the
-$x$ direction and damping layers (described in \autoref{ss:damping}) in the $z$
-direction to damp perturbations exiting the domain. Correspondingly, we use a
-Fourier basis in the $x$ direction and a Chebyshev in the $z$ direction.
+numerical method. Our simulation domain is smaller than our full physical
+domain, so we adopt reflection-suppressing boundary conditions. We use periodic
+boundary conditions in the $x$ direction and damping layers (described in
+\autoref{ss:damping}) in the $z$ direction to damp perturbations exiting the
+top and bottom of the domain. We use a Fourier basis in the $x$ direction and
+either a Chebyshev or Fourier basis in the $z$ direction; our results were
+robust to either set of basis functions. We varied the number of $x, z$ modes
+(denoted $N_x, N_z$ respectively), and used $3/2$ dealiasing\cite{boyd}.
+
+The time integration uses a split implicit-explicit first-order scheme where
+certain terms are treated implicitly using for- ward Euler, and the remaining
+terms are treated explicitly using backward Euler. A third-order, four-stage
+DIRK-ERK scheme\cite{ascher} is used with adaptive timesteps taken to be
+the advective Courant-Friedrichs-Lewy (CFL) time given by $0.7 \min (\Delta
+x / u_x,\Delta z / u_z)$. The minimum is taken over every grid point in
+the domain and $\Delta x,\Delta z$ are the grid spacings in the $x$ and $z$
+directions respectively.
 
 \subsection{Numerical Parameters}\label{ss:numerics}
 
 We nondimensionalize by taking $H = N = \rho_0(z=0) = 1$ in
 \autoref{se:nl_orig}.
 
-% Grid Size
-% Viscosity + diffusivity, damping layers (to simulate radiative BC)
-% timestepping? RK443, (CFL limiter??)
-
-Our
-simulation starts with all perturbation quantities at zero. We choose as
-follows:
+Denote $L_x, L_z$ to be the physical dimensions of the simulation domain. The
+physics of our simulation is fixed by six parameters: $L_x, L_z$, and $k_{0x},
+\omega_0, F, \nu$. We describe and choose these parameters below:
 \begin{itemize}
-    \item $k_{0x}$: Astrophysical IGWs have $k_{0x} \ll k_{0z}$, so we choose $k_{0x}
-        = \frac{2\pi}{L_x}$ the smallest permitted wavenumber permitted by
-        periodic boundary conditions.
+    \item $L_z$: Since the wave amplitude grows $\sim e^{z/2H}$, we choose $L_z
+        = 10H$ to give $\sim e^4$ apmlitude growth between the damping zones.
 
-    \item We choose $\omega_0$ by choosing it to produce a desired $k_{0z}$.
-        Astrophysical systems generally also exhibit $k_{0z}H \gg 1$, where the
-        stratification height is significantly larger than the vertical
-        wavelength. However, in order for the simulation to both be well-damped
-        at grid resolutions and be neglibily damped at leading order nonlinear
-        wavelengths, we require $k_{0z} \ll \frac{1}{L_{NL}} \ll \frac{2\pi
-        N_z}{L_z}$, where $L_{NL}$ denotes some characteristic length scale of
-        nonlinear features. Finally, we need $L_z$ to be many $H$ to capture
-        significant $e^{z/2H}$ growth and separate the linear and nonlinear
-        amplitudes of $u_z$.
+    \item $L_x$: We want similar grid spacing $\frac{L_x}{N_x} \sim
+        \frac{L_z}{N_z}$. For computational savings, we fix $N_z = 4N_x$.
+        Expecting wave breaking to be mostly in the $z$ direction, we use $L_x =
+        4H$.
 
-        Fixing $L_z = 10H$ to give $\sim e^4$ amplitude growth between the
-        damping zones, this implies we require separation of scales $1 \ll
-        k_{0z}H \ll \frac{H}{L_{NL}} \ll \frac{2\pi N_z}{10}$.
+    \item $k_{0x}$: Astrophysical IGWs in stars are generally excited by the $l
+        = 2$ component of the tidal potential, for which $k_{\perp} \sim
+        \frac{1}{R}$ where $R$ is the radius of the star. To best emulate this,
+        we use $k_{0x} = \frac{2\pi}{L_x}$ the smallest permitted wavenumber
+        permitted by periodic boundary conditions.
 
-        Since $N_z$ is fixed by computational cost (we tried both $N_z = 512,
-        N_z = 1024$), we choose $k_{0z} \sim \frac{2\pi}{H}$. This is less
-        physically representative but gives more wavenumber space for the
-        nonlinear cascade. We then invert $\omega_0 = \omega(k_{0x}, k_{0z})$.
+    \item $\omega_0$: We choose $\omega_0$ by evaluating dispersion relation
+        $\omega_0\p*{k_{0x}, k_{0z}}$ for some desired $k_{0z}$.
 
-    \item We choose $F$ forcing strength $1/20$ that of the nonlinear
-        simulation, which keeps the flow amplitude sufficiently small to be
-        treated in the linear approximation at all points in the simulation
-        domain.
+        Astrophysical IGWs also generally satisfy $\omega \ll N$, or
+        equivalently $\frac{k_r}{k_{\perp}} \sim k_rR \gg 1$. Since $H \lesssim
+        R$, we aim to study $k_{0z}H \gg 1$. However, to satisfy this well is
+        computationally expensive: $L_z \gg H$ is required to give waves ample
+        room to grow within the simulation domain, but we want $k_{0z}$ to be
+        sufficiently separated from the grid spacing $\sim L_z / N_z$ that
+        nonlinear effects can be seen in later simulations (see
+        \autoref{ss:nl_ns}). Thus, $N_z$ sets how well we can satisfy $k_{0z}H
+        \gg 1$; we choose $k_{0z}H = 1$.
+
+    \item $F$: We first choose $F$ forcing strength such that $\vec{\xi} \cdot
+        \vec{k} \ll 1$ is satisfied everywhere throughout the domain. This
+        becomes a constraint on $F$ by using \autoref{eq:uz_lin} and
+        $\abs*{\vec{u}} \propto e^{z/2H}$.
+
+    \item $\nu$: Nonlinear effects transfer wave energy from $\vec{k}_{0}$ to
+        smaller scales. Since well-resolved simulations using spectral methods
+        have no inherent numerical viscosity, energy will accumulate at grid
+        scales in the absence of artificial dissipation. We introduce
+        Navier-Stokes viscosity $\nu$ while ensuring our equations of motion
+        continue to conserve horizontal momentum (see \autoref{ss:strat_impl}
+        for details). When $\vec{\xi} \cdot \vec{k} \ll 1$, we may set $\nu =
+        0$.
 \end{itemize}
 
 \subsection{Damping Layers}\label{ss:damping}
@@ -465,63 +483,22 @@ This strongly damps perturbations below $z_B$ and above $z_T$ with damping time
 $\tau$, negligibly affects dynamics between $z_B, z_T$ and has transition width
 governed by $\Delta z$; we use $\Delta z = 0.025L_z$. This prescription, used in
 similar studies\cite{lecoanet_damp}, has the advantage of being smooth,
-important for spectral methods. As these damping terms are linear, they are
-retained in the linearized equations of motion as well.
+important for spectral methods. The full implementation of the fluid equations
+in Dedalus is described in \autoref{ss:strat_impl}.
 
-The full implementation of the fluid equations in Dedalus is described in
-\autoref{ss:strat_impl}.
-
-\subsection{Linear Regime}\label{ss:lin}
+\subsection{Linear Regime}\label{ss:lin_ns}
 
 We first test our numerical simulation with a ``linear'' simulation, where
-all flow quantities are small: we assume  $\rho_1 \equiv \rho - \rho_0 \ll
-\rho_0$ and $\vec{u} \cdot \vec{\nabla} \ll \partial_t$. We emphasize that our
-``linear'' simulations solve the full nonlinear equations, just in the weak
-perturbation limit.
-
-$\omega$ is chosen by inverting $\omega(k_{0x}, k_{0z})$ dispersion relation for fixed
-$k_{0x} = 2\pi / L_x$ and some desired $k_{0z} = -2\pi/H$, and $\sigma \lesssim
-\frac{1}{k_{0z}}$ is used to excite a broad band of $k_z$ modes including the
-desired $k_{0z}$ mode.
-
-\subsection{Numerical Simulation}\label{ss:lin_ns}
-
-A representative snapshot of this simulation
-is provided in \autoref{fig:linear_nonu}. Key features to note:
-\begin{itemize}
-    \item $u_z$ grows with \autoref{eq:uz_lin} to reasonable accuracy.
-
-    \item $S_{px}$ is seen to be constant, as would be expected by
-        \autoref{eq:fpx_lin}.
-\end{itemize}
-We also include a qualitatively similar snapshot of the same simulation run
-using the $\nu$ from the later nonlinear simulations in \autoref{fig:linear_nu}.
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/linear_nonu.png}
-    \caption{Snapshot of linear simulation after reaching steady state.
-        Analytical predictions of $\abs*{u_z}, \bar{U}_0, S_{px}$ are shown in
-        orange. Red dotted lines indicate the onset of the damping region and
-        blue dotted lines denote the driving region.}\label{fig:linear_nonu}
-\end{figure}
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/linear_nu.png}
-    \caption{Same as \autoref{fig:linear_nonu} but with $0.3\times $viscosity
-    used for nonlinear simulations (YUBONOTE should be the same but that
-    simulation mysteriously stopped without me noticing; restarting worked, so
-    currently rerunning). Note the slight resulting dissipation in $S_{px}$.
-    }\label{fig:linear_nu}
-\end{figure}
+$F$ is chosen such that $\vec{\xi} \cdot \vec{k} \ll 1$ everywhere. We emphasize
+that our ``linear'' simulations solve the full nonlinear equations, just in the
+weak perturbation limit.
 
 \subsection{Mean Flow Critical Layer Absorption}
 
-A
-Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
-regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.2
-\frac{\omega}{\abs*{k_{0z}}}\frac{L_z}{2\pi N_z}$ was found to be suitable for
-$N_z = 1024$, where $k_{0z}$ is the wavenumber of the excited linear mode.
-%%%
+A Navier-Stokes numerical viscosity $\nu$ is used to damp high wavenumbers and
+regularize the nonlinear cascade at near grid resolution: $\nu \sim 0.1
+\frac{\omega_0}{\abs*{k_{0z}}}\frac{L_z}{2\pi N_z}$ was found to be suitable for
+$N_z = 2048$.
 
 In past studies of IGWs in WDs (cite Fuller \& Lai), $\xi_z \equiv
 \frac{u_z}{\omega_0}$ the Lagrangian fluid displacement was often used towards
@@ -574,7 +551,7 @@ solution
     z(t) = -H\ln t - H\ln \frac{H\rho_0(z = 0)c_{ph, x}}{S_{px}}.
 \end{equation}
 
-\subsection{Numerical Simulation}
+\subsection{Numerical Simulation}\label{ss:nl_ns}
 
 We use the same $k_{0x}, \omega_0$ as \autoref{ss:lin_ns}. Our other parameters
 are:
@@ -588,66 +565,30 @@ are:
 \end{itemize}
 
 Two representative snapshots from our simulation are provided in
-\autoref{fig:nl} after the critical layer has had time to form. We may note that
+TODO after the critical layer has had time to form. We may note that
 the critical layer, where $S_{px}$ is absorbed and $\bar{U}_0 = \bar{U}_c$,
 travels downwards as predicted.
-\begin{figure}[t]
-    \centering
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/nl35_1.png}
-        \caption{Earlier time snapshot. Legend is the same as
-        \autoref{fig:linear_nonu} except $\bar{U}_c$ is marked in red on the
-        third panel.}
-    \end{subfigure}
-
-    \begin{subfigure}{0.5\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{plots/nl35_2.png}
-        \caption{Later snapshot illustrating propagation of $z_c$.}
-    \end{subfigure}
-    \caption{Nonlinear numerical simulation.}\label{fig:nl}
-\end{figure}
 
 \subsection{Propagating Critical Layer}
 
-For the simulation in \autoref{fig:nl}, we may define $z_c = \argmax_z
+For the simulation in TODO, we may define $z_c = \argmax_z
 \pd{\bar{U}_0}{z}$. Computing $\pd{z_c}{t}$ using the analytical flux
 \autoref{eq:fpx_lin} allows comparison to \autoref{eq:zc_anal}, which we exhibit
-in \autoref{fig:zc_anal}. We see overall good agreement, though some small
+in TODO\@. We see overall good agreement, though some small
 deviation is expected since $S_{px}$ is not perfectly conserved owing to
 numerical viscosity (and YUBONOTE $S_{px}$ is misestimated?).
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/nl35_front_v.png}
-    \caption{Comparison of simulated $\pd{z_c}{t}$ to analytical
-    \autoref{eq:zc_anal}. Plot begins after formation of critical layer in
-    simulation.}\label{fig:zc_anal}
-\end{figure}
 
 However, recalling \autoref{eq:crit_coeffs}, we only expect complete critical
 layer absorption when $\mathrm{Ri} \gg \frac{1}{4}$. We may plot $\mathrm{Ri}$
-over the same time interval in \autoref{fig:nl35_f_ri}. We may observe that the
+over the same time interval in TODO\@. We may observe that the
 Richardson number is initially decreasing but eventually levels out and
 begins to increase again. This corresponds to an increasingly sharp critical
 layer transition then subsequently a decreasingly sharp critical layer
 transition.
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/nl35_f_ri.png}
-    \caption{Plot of $\mathrm{Ri}_{\max}(t) = \max_z
-    \frac{N^2}{\bar{U}_0'}(t)$ over the simulation time.}\label{fig:nl35_f_ri}
-\end{figure}
 
 We argue that the Richardson number is bounded from below by viscosity. A
-repeated simulation with a larger viscosity is shown in \autoref{fig:nl1_f_ri},
+repeated simulation with a larger viscosity is shown in TODO,
 where the Richardson number does not go nearly as low.
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{plots/nl1_f_ri.png}
-    \caption{Same as \autoref{fig:nl35_f_ri} but with $\sim 1.3\times$
-    viscosity.}\label{fig:nl1_f_ri}
-\end{figure}
 
 \section{Discussion}\label{s:discussion}
 
