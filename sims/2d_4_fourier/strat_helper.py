@@ -1069,11 +1069,11 @@ def plot_front(name, params):
                      linewidth=0.5,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
             # S_px sliced at time, just one for comparison
-            if time == times[len(times) // 2]:
-                ax2.plot(z0_cut,
-                         S_px[time, z_b_idx: ] / flux_th,
-                         '%s:' % color,
-                         linewidth=0.4)
+            # if time == times[len(times) // 2]:
+            #     ax2.plot(z0_cut,
+            #              S_px[time, z_b_idx: ] / flux_th,
+            #              '%s:' % color,
+            #              linewidth=0.4)
             # S_px time-averaged
             ax2.plot(z0_cut,
                      S_px_avg / flux_th,
@@ -1102,7 +1102,7 @@ def plot_front(name, params):
         #
         # plot front position and absorbed flux over time
         #####################################################################
-        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f, (ax2) = plt.subplots(1, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
         zf = np.max(front_pos[-5: -1])
@@ -1115,48 +1115,44 @@ def plot_front(name, params):
 
         # estimate incident Delta S_px if all from S_px0 that's viscously
         # damped, compare to other Delta S_px criteria/from data
-        color_idx = 0
-        dSpx0 = S_px0[start_idx: ] / flux_th * \
-            np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
-        ax1.plot(t,
-                 smooth(S_px0[start_idx: ] / flux_th),
-                 '%s-' % PLT_COLORS[color_idx],
-                 label=r'$S(z=z_0)$',
-                 linewidth=0.7)
-        color_idx += 1
+        # color_idx = 0
+        # dSpx0 = S_px0[start_idx: ] / flux_th * \
+        #     np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
+        # ax1.plot(t,
+        #          smooth(S_px0[start_idx: ] / flux_th),
+        #          '%s-' % PLT_COLORS[color_idx],
+        #          label=r'$S(z=z_0)$',
+        #          linewidth=0.7)
+        # color_idx += 1
         # ax1.plot(t,
         #          smooth(dSpx0),
         #          '%s-' % PLT_COLORS[color_idx],
         #          label=r'$\Delta S_{0}|_{z=z_{c}}$',
         #          linewidth=0.7)
-        color_idx += 1
-        ax1.plot(t,
-                 smooth(-dSpx[start_idx: ] / flux_th),
-                 '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S(z_{c})$',
-                 linewidth=0.7)
-        color_idx += 1
-        ax1.set_ylabel(r'$S / S_0$')
-        ax1.legend(fontsize=6, loc='lower right')
+        # color_idx += 1
+        # ax1.plot(t,
+        #          smooth(-dSpx[start_idx: ] / flux_th),
+        #          '%s-' % PLT_COLORS[color_idx],
+        #          label=r'$\Delta S(z_{c})$',
+        #          linewidth=0.7)
+        # color_idx += 1
+        # ax1.set_ylabel(r'$S / S_0$')
+        # ax1.legend(fontsize=6, loc='lower right')
 
         # compare forecasts of front position using two predictors integrated
         # from incident flux in data
-        color_idx = 0
-        ax2.plot(t,
-                 front_pos_intg_S,
-                 '%s-' % PLT_COLORS[color_idx],
-                 label='Model (data $\Delta S(z_{c})$)',
-                 linewidth=0.7)
-        color_idx += 1
         ax2.plot(t,
                  front_pos[start_idx: ],
-                 '%s-' % PLT_COLORS[color_idx],
-                 label='Data (S)',
+                 'k-',
+                 label='Data',
                  linewidth=0.7)
-        color_idx += 1
+        ax2.plot(t,
+                 front_pos_intg_S,
+                 'g-',
+                 label='Model',
+                 linewidth=0.7)
 
-        # three multipliers are (i) average incident flux, (ii) estimated
-        # incident flux extrapolated from nu and (iii) full flux
+        # estimate front position using just average absorbed flux
         mean_incident = -np.mean(dSpx)
         est_incident_flux = np.mean(S_px0 *
                                     np.exp(-k_damp * 2 * (front_pos - Z0)))
@@ -1166,13 +1162,12 @@ def plot_front(name, params):
             / tau)
         ax2.plot(t,
                  pos_anal,
-                 '%s:' % PLT_COLORS[color_idx],
+                 'b:',
                  label='Avg Absorbed $%.2fS_{0}$' %
                     (mean_incident / flux_th),
                  linewidth=0.7)
-        color_idx += 1
         ax2.set_ylabel(r'$z_c$')
-        ax2.set_xlabel(r't')
+        ax2.set_xlabel(r'$t (N^{-1})$')
         ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
         ax2.legend(fontsize=6, loc='upper right')
         plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
@@ -1195,7 +1190,7 @@ def plot_front(name, params):
                  'r',
                  label=r'$A_d$',
                  linewidth=0.7)
-        ax1.set_ylabel(r'$A$')
+        ax1.set_ylabel(r'$A/A_0$')
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=6)
 
@@ -1228,6 +1223,7 @@ def plot_front(name, params):
                  'r:',
                  label='Transmitted',
                  linewidth=1.0)
+        ax2.set_xlabel(r'$t (N^{-1})$')
         ax2.set_ylabel(r'$S / S_0$')
         ax2.legend(fontsize=6, loc='lower left')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
@@ -1276,7 +1272,6 @@ def plot_front(name, params):
 
         ax1.legend(fontsize=6, loc='upper right')
         ax1.set_ylabel(r'Reflectivity')
-        ax1.set_xlabel(r'$t$')
         ax1.set_ylim([0, 0.5])
 
         # ax2.plot(t, abs(KZ) * width_med[start_idx: ], 'g', linewidth=0.7)
@@ -1298,6 +1293,7 @@ def plot_front(name, params):
         ax3.plot(t, ri_width[start_idx: ], 'g', linewidth=0.7, label='Width')
         ax3.set_ylim([0, 0.6])
         ax3.set_ylabel(r"Ri $(N / U_0')^2$")
+        ax3.set_xlabel(r'$t (N^{-1})$')
         # ax3.legend(fontsize=6)
         avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
 

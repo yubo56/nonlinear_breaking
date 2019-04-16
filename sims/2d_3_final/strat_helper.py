@@ -976,10 +976,10 @@ def plot_front(name, params):
                      S_px[time, z_b_idx: ] / flux_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-        plt.plot(z0_cut,
-                 np.exp(-k_damp * 2 * (z0_cut - Z0)),
-                 linewidth=1.5,
-                 label=r'Model')
+        # plt.plot(z0_cut,
+        #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
+        #          linewidth=1.5,
+        #          label=r'Model')
         plt.xlim(z_b, ZMAX)
         plt.ylim(-0.1, 1.1)
         plt.legend(fontsize=6)
@@ -1007,7 +1007,7 @@ def plot_front(name, params):
         #          linewidth=0.7)
         # ax1.legend(fontsize=6)
         ax1.set_xlabel(r'$t (N^{-1})$')
-        ax1.set_ylabel(r'$A$')
+        ax1.set_ylabel(r'$A/A_0$')
         # ax2.plot(t,
         #          np.unwrap(phis_down[start_idx: ]),
         #          'r',
@@ -1169,7 +1169,7 @@ def plot_front(name, params):
                  'r',
                  label=r'$A_d$',
                  linewidth=0.7)
-        ax1.set_ylabel(r'$A$')
+        ax1.set_ylabel(r'$A/A_0$')
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=6)
 
