@@ -1121,14 +1121,14 @@ def plot_front(name, params):
         ax1.plot(t,
                  smooth(S_px0[start_idx: ] / flux_th),
                  '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px,0}|_{z=z_0}$',
+                 label=r'$S(z=z_0)$',
                  linewidth=0.7)
         color_idx += 1
-        ax1.plot(t,
-                 smooth(dSpx0),
-                 '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px,0}|_{z=z_{c}}$',
-                 linewidth=0.7)
+        # ax1.plot(t,
+        #          smooth(dSpx0),
+        #          '%s-' % PLT_COLORS[color_idx],
+        #          label=r'$\Delta S_{0}|_{z=z_{c}}$',
+        #          linewidth=0.7)
         color_idx += 1
         ax1.plot(t,
                  smooth(-dSpx[start_idx: ] / flux_th),
@@ -1136,7 +1136,7 @@ def plot_front(name, params):
                  label=r'$\Delta S(z_{c})$',
                  linewidth=0.7)
         color_idx += 1
-        ax1.set_ylabel(r'$S / S_{px, 0}$')
+        ax1.set_ylabel(r'$S / S_0$')
         ax1.legend(fontsize=6, loc='lower right')
 
         # compare forecasts of front position using two predictors integrated
@@ -1167,7 +1167,7 @@ def plot_front(name, params):
         ax2.plot(t,
                  pos_anal,
                  '%s:' % PLT_COLORS[color_idx],
-                 label='Avg Absorbed $%.2fS_{px,0}$' %
+                 label='Avg Absorbed $%.2fS_{0}$' %
                     (mean_incident / flux_th),
                  linewidth=0.7)
         color_idx += 1

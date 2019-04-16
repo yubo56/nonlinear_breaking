@@ -36,7 +36,7 @@ PARAMS_DEFAULT = {'XMAX': XMAX,
 
                   'NUM_SNAPSHOTS': NUM_SNAPSHOTS,
                   'NL': True,
-                  'mask': False}
+                  'mask': True}
 
 def get_params(overrides=None):
     params = {**PARAMS_DEFAULT, **(overrides or {})}
@@ -67,9 +67,15 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
+       ('lin_0_masked',
+        get_params(overrides={'F_MULT': 0.0005,
+                              'T_F': 4000,
+                              'DT': 0.1,
+                              'N_X': 64,
+                              'N_Z': 256,
+                              'Re_inv': 1e-4})),
        ('lin_1_masked',
         get_params(overrides={'F_MULT': 0.01,
-                              'mask': True,
                               'N_X': 64,
                               'N_Z': 256,
                               'Re_inv': 0.075})),
@@ -83,20 +89,16 @@ if __name__ == '__main__':
                               'Re_inv': 0})),
        ('nl_1_masked',
         get_params(overrides={'F_MULT': 1,
-                              'mask': True,
                               'Re_inv': 0.7})),
        ('nl_3_masked',
         get_params(overrides={'F_MULT': 1,
-                              'mask': True,
                               'Re_inv': 0.5})),
        ('nl_4_masked',
         get_params(overrides={'F_MULT': 1,
-                              'mask': True,
                               'NL': True,
                               'Re_inv': 0.3})),
        ('nl_6_masked',
         get_params(overrides={'F_MULT': 1,
-                              'mask': True,
                               'Re_inv': 0.2})),
     ]
     if '-plot' in sys.argv:
