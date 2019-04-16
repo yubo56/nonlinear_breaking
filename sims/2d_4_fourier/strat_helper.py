@@ -1266,9 +1266,9 @@ def plot_front(name, params):
                              for t in t_refl]) * \
             np.exp(+k_damp * (front_pos[start_idx: ] - (z_b + l_z / 2)))
 
-        avg_refl = get_stats(refl[int(len(refl) * 2 / 3): ])
-        avg_reflA = get_stats(refl_amp[int(len(refl_amp) * 2/3): ])
-        avg_trans = get_stats(trans[int(len(trans) * 2/3): ])
+        avg_refl = get_stats(refl[int(len(refl) * 3 / 4): ])
+        avg_reflA = get_stats(refl_amp[int(len(refl_amp) * 3 / 4): ])
+        avg_trans = get_stats(trans[int(len(trans) * 3 / 4): ])
 
         ax1.plot(t_refl, refl, 'r:', linewidth=0.7, label='Flux')
         ax1.plot(t_refl, refl_amp**2, 'g:', linewidth=0.7, label='Amp')
