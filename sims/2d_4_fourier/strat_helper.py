@@ -80,6 +80,15 @@ def smooth(f):
                                [f[-1]] * (len(kernel) // 2)))
     return np.convolve(f_padded, kernel, mode='valid')
 
+def smooth3d(field):
+    ''' ax0 is time, smooth along time axis and iterate over others '''
+    # dumbest implementation, w/e, postprocessing is cheap
+    smoothed = np.zeros_like(field)
+    for i in range(np.shape(field)[1]):
+        for j in range(np.shape(field)[2]):
+            smoothed[:, i, j] = smooth(field[:, i, j])
+    return smoothed
+
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
@@ -490,7 +499,7 @@ def load(name, params, dyn_vars, stride, start=0):
 
     state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=2)
 
-    state_vars['S_{px}'] = RHO0 * np.exp(-z/ H) * (
+    state_vars['S'] = RHO0 * np.exp(-z/ H) * (
         (state_vars['ux'] * state_vars['uz']) +
         (NU * np.exp(state_vars['U']) * state_vars['ux_z']))
     return np.array(total_sim_times), domain, state_vars
@@ -542,11 +551,11 @@ def plot(name, params, stride=STRIDE):
         {
             'save_fmt_str': 's_%03i.png',
             'slice_vars': ['uz', 'ux_z'],
-            'mean_vars': ['S_{px}', 'ux'],
+            'mean_vars': ['S', 'ux'],
         },
         {
             'save_fmt_str': 'm_%03i.png',
-            'plot_vars': ['uz', 'ux', 'W', 'S_{px}'],
+            'plot_vars': ['uz', 'ux', 'W', 'S'],
         },
     ]
 
@@ -561,7 +570,7 @@ def plot(name, params, stride=STRIDE):
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z0)
 
     # preprocess
-    for var in dyn_vars + ['S_{px}']:
+    for var in dyn_vars + ['S']:
         state_vars[var + mean_suffix] = horiz_mean(state_vars[var], N_X)
 
     for var in dyn_vars:
@@ -594,7 +603,7 @@ def plot(name, params, stride=STRIDE):
                                state_vars['uz%s' % mean_suffix][t_idx])
             ux_mean = np.outer(np.ones(N_X),
                                state_vars['ux%s' % mean_suffix][t_idx])
-            S_px_mean = state_vars['S_{px}%s' % mean_suffix]
+            S_px_mean = state_vars['S%s' % mean_suffix]
             z_top = get_front_idx(S_px_mean,
                                   t_idx,
                                   z0,
@@ -696,7 +705,7 @@ def plot(name, params, stride=STRIDE):
                         ux_est * np.exp((z0 - Z0) / (2 * H)), z[0], 'g',
                         linewidth=0.5)
 
-                if var == 'S_{px}%s' % mean_suffix:
+                if var == 'S%s' % mean_suffix:
                     k_damp = get_k_damp(params)
                     p = axes.plot(
                         uz_est**2 / 2
@@ -825,7 +834,7 @@ def write_front(name, params, stride=1):
     S_bot_ffts = []
     Spx11 = []
 
-    S_px = horiz_mean(state_vars['S_{px}'], N_X)
+    S_px = horiz_mean(state_vars['S'], N_X)
     u0 = horiz_mean(state_vars['ux'], N_X)
 
     uz_est = F * get_uz_f_ratio(params)
@@ -870,10 +879,12 @@ def write_front(name, params, stride=1):
 
         window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
 
+        smoothed_S = smooth3d(state_vars['S'])
+
         z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
         z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
         area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
-        S_bot = state_vars['S_{px}'][t_idx, :, z_bot_l: z_bot_r]
+        S_bot = smoothed_S[t_idx, :, z_bot_l: z_bot_r]
         S_bot_fft = np.abs(np.fft.rfft(S_bot / flux_th, axis=0) / N_X)
         # by using only half of the fft, all non-DC bins are half as high as
         # they should be
@@ -886,7 +897,7 @@ def write_front(name, params, stride=1):
         z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
         z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
         area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
-        S_top = state_vars['S_{px}'][t_idx, :, z_top_l: z_top_r]
+        S_top = smoothed_S[t_idx, :, z_top_l: z_top_r]
         S_top_fft = np.abs(np.fft.rfft(S_top / flux_th, axis=0) / N_X)
         S_top_fft[1: ] *= 2
         S_top_ffts.append(np.sum(S_top_fft * area_top, axis=1) /
@@ -1000,7 +1011,7 @@ def plot_front(name, params):
         plt.legend(fontsize=6)
 
         plt.xlabel(r'$z(H)$')
-        plt.ylabel(r'$S_{px} / S_0$')
+        plt.ylabel(r'$S / S_0$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
         plt.close()
 
@@ -1055,32 +1066,33 @@ def plot_front(name, params):
             ax1.plot(z0_cut,
                      u0_avg / u_c,
                      '%s-' % color,
-                     linewidth=0.7,
+                     linewidth=0.5,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-            # S_px sliced at time
-            # ax2.plot(z0_cut,
-            #          S_px[time, z_b_idx: ] / flux_th,
-            #          '%s:' % color,
-            #          linewidth=0.5)
+            # S_px sliced at time, just one for comparison
+            if time == times[len(times) // 2]:
+                ax2.plot(z0_cut,
+                         S_px[time, z_b_idx: ] / flux_th,
+                         '%s:' % color,
+                         linewidth=0.4)
             # S_px time-averaged
             ax2.plot(z0_cut,
                      S_px_avg / flux_th,
                      '%s-' % color,
-                     linewidth=0.7,
+                     linewidth=0.5,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
         # overlay analytical flux including viscous dissipation
-        ax2.plot(z0_cut,
-                 np.exp(-k_damp * 2 * (z0_cut - Z0)),
-                 linewidth=1.5,
-                 label=r'$\nu$-only')
+        # ax2.plot(z0_cut,
+        #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
+        #          linewidth=1.5,
+        #          label=r'$\nu$-only')
         ax1.set_xlim(z_b, ZMAX)
         ax2.set_xlim(z_b, ZMAX)
-        ax1.set_ylim(-0.1, 1.25)
-        ax2.set_ylim(-0.1, 1.1)
+        ax1.set_ylim(-0.2, 1.25)
+        ax2.set_ylim(-0.2, 1.2)
         ax2.legend(fontsize=6)
 
         ax1.set_ylabel(r'$U_0 / c_{ph, x}$')
-        ax2.set_ylabel(r'$S_{px} / S_0$')
+        ax2.set_ylabel(r'$S / S_0$')
         ax2.set_xlabel(r'$z(H)$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
         plt.close()
@@ -1121,10 +1133,10 @@ def plot_front(name, params):
         ax1.plot(t,
                  smooth(-dSpx[start_idx: ] / flux_th),
                  '%s-' % PLT_COLORS[color_idx],
-                 label=r'$\Delta S_{px}(z_{c})$',
+                 label=r'$\Delta S(z_{c})$',
                  linewidth=0.7)
         color_idx += 1
-        ax1.set_ylabel(r'$S_{px} / S_{px, 0}$')
+        ax1.set_ylabel(r'$S / S_{px, 0}$')
         ax1.legend(fontsize=6, loc='lower right')
 
         # compare forecasts of front position using two predictors integrated
@@ -1133,7 +1145,7 @@ def plot_front(name, params):
         ax2.plot(t,
                  front_pos_intg_S,
                  '%s-' % PLT_COLORS[color_idx],
-                 label='Model (data $\Delta S_{px}(z_{c})$)',
+                 label='Model (data $\Delta S(z_{c})$)',
                  linewidth=0.7)
         color_idx += 1
         ax2.plot(t,
@@ -1216,7 +1228,7 @@ def plot_front(name, params):
                  'r:',
                  label='Transmitted',
                  linewidth=1.0)
-        ax2.set_ylabel(r'$S_{px} / S_0$')
+        ax2.set_ylabel(r'$S / S_0$')
         ax2.legend(fontsize=6, loc='lower left')
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
@@ -1238,7 +1250,7 @@ def plot_front(name, params):
                      / abs(V_PZ)
 
         t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
-        f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+        f, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
         f.subplots_adjust(hspace=0)
 
         absorbed_dS = my_interp(t, -(dSpx - S_aboves)[start_idx: ] / flux_th)
@@ -1260,17 +1272,17 @@ def plot_front(name, params):
 
         ax1.plot(t_refl, refl, 'r:', linewidth=0.7, label='Flux')
         ax1.plot(t_refl, refl_amp**2, 'g:', linewidth=0.7, label='Amp')
-        ax1.plot(t_refl, trans, 'k:', linewidth=0.7, label='Trans')
+        ax1.plot(t_refl, trans, 'k:', linewidth=0.7, label='-Trans')
 
         ax1.legend(fontsize=6, loc='upper right')
         ax1.set_ylabel(r'Reflectivity')
         ax1.set_xlabel(r'$t$')
         ax1.set_ylim([0, 0.5])
 
-        ax2.plot(t, abs(KZ) * width_med[start_idx: ], 'g', linewidth=0.7)
-        ax2.plot(t, abs(KZ) * width_min[start_idx: ], 'r:', linewidth=0.5)
-        ax2.set_ylim([0, 0.5])
-        ax2.set_ylabel(r"$|k_z \Delta z|$")
+        # ax2.plot(t, abs(KZ) * width_med[start_idx: ], 'g', linewidth=0.7)
+        # ax2.plot(t, abs(KZ) * width_min[start_idx: ], 'r:', linewidth=0.5)
+        # ax2.set_ylim([0, 0.5])
+        # ax2.set_ylabel(r"$|k_z \Delta z|$")
 
         ri_width = N**2 * width_med**2 / (0.7 * u_c)**2
         # ax3.plot(t,

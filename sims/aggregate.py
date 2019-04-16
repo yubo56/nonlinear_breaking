@@ -8,6 +8,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
+import matplotlib.lines as mlines
 
 DATA = [
     (0.70, ((0.1129, 0.0950, 0.1267), (0.1416, 0.1220, 0.1560), (0.0001, 0.0000, 0.0006), (0.4834, 0.4486, 0.5716))),
@@ -26,41 +27,51 @@ DATA = [
 ]
 
 if __name__ == '__main__':
-    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+    f, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
     f.subplots_adjust(hspace=0)
     offsets = defaultdict(float)
 
     msize=3
     lwidth=0.7
 
-    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k'] * 5
-    for color, (re_inv, ((r_med, r_min, r_max),
-                         (rA_med, rA_min, rA_max),
-                         (T_med, T_min, T_max),
-                         (w_med, w_min, w_max))) in zip(colors, DATA):
+    # colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k'] * 5
+    for re_inv, ((r_med, r_min, r_max),
+                 (rA_med, rA_min, rA_max),
+                 (T_med, T_min, T_max),
+                 (w_med, w_min, w_max)) in DATA:
         # Reynolds number for linear mode
         x = (1024 / 10) / re_inv + offsets[re_inv]
-        ax1.plot(x, r_med, '%so' % color, markersize=msize)
-        ax1.errorbar(x, r_med, np.array([[r_min, r_max]]),
-                     ecolor=color, linewidth=lwidth)
-        ax1.plot(x, T_med, '%s*' % color, markersize=msize)
-        ax2.plot(x, rA_med**2, '%so' % color, markersize=msize)
-        ax2.errorbar(x, rA_med**2, np.array([[rA_min**2, rA_max**2]]),
-                     ecolor=color, linewidth=lwidth)
-        ax3.plot(x, w_med, '%so' % color, markersize=msize)
-        ax3.errorbar(x, w_med, np.array([[w_min, w_max]]),
-                     ecolor=color, linewidth=lwidth)
+        ax1.plot(x, r_med, 'ko', markersize=msize)
+        ax1.errorbar(x, r_med, np.array([[r_med - r_min, r_max - r_med]]),
+                     ecolor='k', linewidth=lwidth)
+        ax1.plot(x + 14, T_med, 'r*', markersize=msize)
+        ax1.errorbar(x + 14, T_med, np.array([[T_med - T_min, T_max - T_med]]),
+                     ecolor='r', linewidth=lwidth)
+        ax1.plot(x + 7, rA_med**2, 'bo', markersize=msize)
+        ax1.errorbar(x + 7, rA_med**2, np.array([[rA_med**2 - rA_min**2,
+                                              rA_max**2 - rA_med**2]]),
+                     ecolor='b', linewidth=lwidth)
+        ax3.plot(x, w_med, 'ko', markersize=msize)
+        ax3.errorbar(x, w_med, np.array([[w_med - w_min, w_max - w_med]]),
+                     ecolor='k', linewidth=lwidth)
 
-        ax1.set_ylim([0, 0.9])
+        ax1.set_ylim([0, 1])
         ax1.set_yticks([0, 0.3, 0.6])
-        ax2.set_ylim([0, 0.7])
-        ax2.set_yticks([0, 0.3, 0.6])
-        ax3.set_ylim([0, 1.0])
+        ax3.set_ylim([0, 0.7])
         ax3.set_yticks([0, 0.5])
-        offsets[re_inv] += 10
+        offsets[re_inv] += 20
 
-    ax1.set_ylabel(r'$\mathcal{R}_S$')
-    ax2.set_ylabel(r'$\mathcal{R}_A^2$')
+    ln1 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
+                        label=r'$\left<\mathcal{R}_S(t)\right>$')
+    ln2 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
+                        label=r'$\left<\mathcal{R}_A(t)^2\right>$')
+    ln3 = mlines.Line2D([], [], color='r', marker='*', markersize=msize,
+                        label=r'$\left<\mathcal{T}_S(t)\right>$')
+    ax1.legend(handles=[ln1, ln2, ln3], fontsize=6)
+
+
+    ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
+    # ax2.set_ylabel(r'$\left<\mathcal{R}_A^2(t)\right>$')
     ax3.set_ylabel('Ri')
     ax3.set_xlabel('Re')
     ax = plt.gca()
