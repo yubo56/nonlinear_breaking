@@ -95,7 +95,6 @@ if __name__ == '__main__':
                               'Re_inv': 0.5})),
        ('nl_4_masked',
         get_params(overrides={'F_MULT': 1,
-                              'NL': True,
                               'Re_inv': 0.3})),
        ('nl_6_masked',
         get_params(overrides={'F_MULT': 1,

@@ -879,12 +879,10 @@ def write_front(name, params, stride=1):
 
         window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
 
-        smoothed_S = smooth3d(state_vars['S'])
-
         z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
         z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
         area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
-        S_bot = smoothed_S[t_idx, :, z_bot_l: z_bot_r]
+        S_bot = state_vars['S'][t_idx, :, z_bot_l: z_bot_r]
         S_bot_fft = np.abs(np.fft.rfft(S_bot / flux_th, axis=0) / N_X)
         # by using only half of the fft, all non-DC bins are half as high as
         # they should be
@@ -897,7 +895,7 @@ def write_front(name, params, stride=1):
         z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
         z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
         area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
-        S_top = smoothed_S[t_idx, :, z_top_l: z_top_r]
+        S_top = state_vars['S'][t_idx, :, z_top_l: z_top_r]
         S_top_fft = np.abs(np.fft.rfft(S_top / flux_th, axis=0) / N_X)
         S_top_fft[1: ] *= 2
         S_top_ffts.append(np.sum(S_top_fft * area_top, axis=1) /
@@ -1002,10 +1000,10 @@ def plot_front(name, params):
                      S_px[time, z_b_idx: ] / flux_th,
                      linewidth=0.7,
                      label=r't=%.1f$N^{-1}$' % sim_times[time])
-        plt.plot(z0_cut,
-                 np.exp(-k_damp * 2 * (z0_cut - Z0)),
-                 linewidth=1.5,
-                 label=r'Model')
+        # plt.plot(z0_cut,
+        #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
+        #          linewidth=1.5,
+        #          label=r'Model')
         plt.xlim(z_b, ZMAX)
         plt.ylim(-0.1, 1.1)
         plt.legend(fontsize=6)
@@ -1026,13 +1024,14 @@ def plot_front(name, params):
                  'g',
                  label=r'$A_i$',
                  linewidth=1.0)
-        ax1.plot(t,
-                 smooth(amps_down[start_idx: ]),
-                 'r',
-                 label=r'$A_d$',
-                 linewidth=0.7)
-        ax1.legend(fontsize=6)
+        # ax1.plot(t,
+        #          smooth(amps_down[start_idx: ]),
+        #          'r',
+        #          label=r'$A_d$',
+        #          linewidth=0.7)
+        # ax1.legend(fontsize=6)
         ax1.set_xlabel(r'$t (N^{-1})$')
+        ax1.set_ylabel(r'$A/A_0$')
         # ax2.plot(t,
         #          np.unwrap(phis_down[start_idx: ]),
         #          'r',
@@ -1045,7 +1044,7 @@ def plot_front(name, params):
         #          linewidth=0.7)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
         plt.close()
-        avg_refl, avg_reflA, avg_ri = tuple([[0, 0, 0]] * 3)
+        avg_refl, avg_reflA, avg_ri, avg_trans = tuple([tuple([0, 0, 0])] * 4)
 
     else:
         #####################################################################
@@ -1305,25 +1304,27 @@ def plot_front(name, params):
     #
     # plot FFTs of residuals
     #########################################################################
-    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    f, ax1 = plt.subplots(1, 1, sharex=True)
     f.subplots_adjust(hspace=0)
-    num_modes = N_X // 2
+    num_modes = 20
     uz_est = F * get_uz_f_ratio(params)
     ux_est = uz_est * KZ / KX
 
-    times = get_times([1/8, 3/8, 5/8, 7/8, 1], sim_times, start_idx)
+    times = get_times([1/2, 4/5], sim_times, start_idx)
+    smoothed_bot = np.array([smooth(bot)
+                             for bot in S_bot_ffts[:, : num_modes]]).T
+    smoothed_top = np.array([smooth(top)
+                             for top in S_top_ffts[:, : num_modes]]).T
     for t_idx, color in zip(times, PLT_COLORS):
-        ax1.loglog(S_top_ffts[t_idx, : num_modes],
+        ax1.plot(S_bot_ffts[t_idx, : num_modes],
                    color,
                    label='t=%.1f' % sim_times[t_idx],
                    linewidth=0.7)
-        ax2.loglog(S_bot_ffts[t_idx, : num_modes],
-                   color,
-                   label='t=%.1f' % sim_times[t_idx],
-                   linewidth=0.7)
-    ax1.set_ylabel(r'$\tilde{S}(z_c + \Delta z)$')
-    ax2.set_ylabel(r'$\tilde{S}(z_c - \Delta z)$')
-    ax2.set_xlabel(r'$k_x/k_{x0}$')
+        ax1.plot(S_top_ffts[t_idx, : num_modes],
+                 '%s:' % color,
+                   linewidth=0.5)
+    ax1.set_ylabel(r'$\tilde{S}$')
+    ax1.set_xlabel(r'$k_x/k_{x0}$')
     ax1.legend(fontsize=6)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()
