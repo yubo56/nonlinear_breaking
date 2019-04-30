@@ -1129,7 +1129,7 @@ def plot_front(name, params):
         # ax1.plot(t,
         #          smooth(dSpx0),
         #          '%s-' % PLT_COLORS[color_idx],
-        #          label=r'$\Delta S_{0}|_{z=z_{c}}$',
+        #          label=r'$\Delta S_{1}|_{z=z_{c}}$',
         #          linewidth=0.7)
         # color_idx += 1
         # ax1.plot(t,
@@ -1165,7 +1165,7 @@ def plot_front(name, params):
         ax2.plot(t,
                  pos_anal,
                  'b:',
-                 label='Avg Absorbed $%.2fS_{0}$' %
+                 label='Avg Absorbed $%.2fS_{1}$' %
                     (mean_incident / flux_th),
                  linewidth=0.7)
         ax2.set_ylabel(r'$z_c$')
@@ -1327,7 +1327,7 @@ def plot_front(name, params):
                  '%s:' % color,
                    linewidth=0.5)
     ax1.set_ylabel(r'$\tilde{S}$')
-    ax1.set_xlabel(r'$k_x/k_{x0}$')
+    ax1.set_xlabel(r'$k_x/k_{x1}$')
     ax1.legend(fontsize=FONTSIZE)
     plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
     plt.close()

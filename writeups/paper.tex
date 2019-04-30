@@ -405,7 +405,7 @@ downwards to accommodate the incident momentum. The total horizontal momentum of
 the shear flow then obeys conservation equation
 \begin{equation}
     \pd{}{t}\int\limits_0^{L_z} \rho(z) \bar{U}(z, t)\;\mathrm{d}z
-        \Delta S = 0.
+        + \Delta S = 0.
 \end{equation}
 We define $\Delta S$ to be the change in flux across the critical layer, or
 equivalently the negative of the absorbed flux. Treating $\bar{U}(z > z_c) =
@@ -875,6 +875,40 @@ order modes as well.
     value may have been reached.}\label{fig:nl_f_refl}
 \end{figure}
 
+Finally, we may be interested in the power spectrum of the transmitted
+horizontal momentum flux. Define:
+\begin{align}
+    \tilde{S}_>(k_x, t) = \abs{
+        \int\limits_0^{L_x} e^{ik_xx}\hat{S}_>(x, z_c - \Delta z, t)\;\mathrm{d}x}
+            \label{eq:sfft_above},\\
+    \tilde{S}_<(k_x, t) = \abs{
+        \int\limits_0^{L_x} e^{ik_xx}\hat{S}_<(x, z_c + \Delta z, t)\;\mathrm{d}x}.
+            \label{eq:sfft_below}
+\end{align}
+These values are plotted in \autoref{fig:nl_fft}. Note that we expect
+$\tilde{S}_<(0, t) = S_<(t) = S_i(t) + S_d(t)$ and the same for $\tilde{S}_>$.
+This is rather accurate for $\tilde{S}_<$ but less so for $\tilde{S}_>$; this is
+since $S_>(t)$ decays very rapidly above $z_c$. Note furthermore that at later
+times, the transmitted flux increases, per expectation, and shifts towards
+higher $k_x$. Repeating this plot at higher viscosities shows significantly
+lower $\tilde{S}_>$, showing that the $k_x$ of the transmitted waves still
+changes greatly at the highest $\mathrm{Re}$ we are able to probe. Finally, note
+that the area under $\tilde{S}$ changes with time; this is okay since we are
+measuring $S$ at constant position, and different $k_x$ components of $S$ will
+translate at their separate group velocities.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{plots/nl_fft.png}
+    \caption{The power spectrum of the horizontal momentum flux at fixed
+    distances below and above critical layer $z_c$ at certain times $t$ for
+    simulation \texttt{0p5\_shres}. \autoref{eq:sfft_above} and
+    \autoref{eq:sfft_below} are depicted here, with $\tilde{S}_<$ in solid lines
+    and $\tilde{S}_>$ in dashed lines. Note that there is more incident flux
+    than transmitted, and that transmitted flux roughly increases over
+    time.}\label{fig:nl_fft}
+\end{figure}
+
 \subsection{Appearance of Discrete Modes}\label{ss:modes}
 
 We briefly attribute the fluctuations in $\hat{A}_i(t)$ as observed in
@@ -959,14 +993,77 @@ convective damping. They find this damping rate to never exceed that of
 radiative damping, and so it is also too weak to suppress critical layer
 formation in our problem.
 
-Finally,
+Finally, we consider the impact of magnetic winding. In \citep{bukart}, magnetic
+winding is used to enforce solid body rotation on the grounds that $t_A \gg
+t_{gw}$, where
+\begin{equation}
+    t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
+        \sim 10^2\;\mathrm{yr}\p*{\frac{10^3\;\mathrm{G}}{B}}.
+\end{equation}
+the Alfv\'en wave crossing time (evaluated for a CO WD in \citep{fullerIV})
+measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
+inspiral timescale. Before solid body rotation is attained, another relevant
+timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and
+tidal forcing frequency $\sigma = m\p*{\Omega - \Omega_{spin}}$, we note that
+angular momentum transfer is $\pd{M_{sync}}{t} \sigma R^2 = \tau$, where
+$M_{sync}$ denotes the mass of the WD that has synchronized. Thus, the
+synchronization timescale is
+\begin{align}
+    t_{sync} &\sim \frac{M_{sync}\sigma R^2}{\tau},\nonumber\\
+        &\sim 2 \times 10^5\;\mathrm{yr}
+            \p{\frac{M}{M_{\odot}}}
+            \p{\frac{\sigma}{2\pi / (1\;\mathrm{hr})}}
+            \p{\frac{R}{R_{\oplus}}}^2
+            \p{\frac{10^{-14} GM_{\odot}^2/R_{\oplus}}{\tau}}.
+\end{align}
+A representative $\tau$ has been taken from \citep{bukart}. However, since only
+the outer $\sim 10^{-4}M_{\odot}$ need be heated for the thermodynamically
+interesting effects studied in \citep{fullerIV} and \citep{tidal_novae}, it
+seems that magnetic winding cannot absolutely rule out energetic outbursts such
+as tidal novae resulting from strong shear flows.
 
-\subsection{Applicability to Astrophysical Systems}
+\subsection{Applicability to Other Astrophysical Systems}
 
-% magnetic winding, radiative diffusivity + effective Re. Might be applicable to
-% inwards focusing too
+[TODO flesh out]
 
-\subsection{Energy Transfer}
+\begin{itemize}
+    \item $k_x, k_z$: In astrophysical systems, $k_{\perp} \ll k_r$. While we do
+        not explore different $k_{1x}, k_{1z}, \omega_1$ in this study, with
+        outgoing boundary conditions, there appears at first to be no $z$ length
+        scale other than $k_{1z}$, so our results would seem to be invariant
+        under rescaling of the $z$ length scale. However, true turbulence is
+        expected to be isotropic at small scales, which may couple $k_{1x},
+        k_{1z}$ in a way that $k_{1x} \ll k_{1z}$ produces different dynamics
+        than $k_{1x} \lesssim k_{1z}$ as we've studied. This is a numerically
+        difficult regime though, so we defer consideration to future work.
+
+    \item Validity of plane-parallel approximation? We're all at $\gtrsim
+        0.9R_{WD}$.
+
+    \item Solar-type stars (inner convective, outer radiative): different
+        equation of state/stratification but could be qualitatively similar.
+
+    \item Solar-type stars: In~\cite{barker_ogilvie}, inwards-propagating IGW
+        are excited that break via geometric focusing and effect
+        synchronization. They find no reflected wave despite their nonlinear
+        timescales being $10\times$ shorter than their viscous timescale.
+
+        It is not immediately clear whether our results here apply when the flux
+        is geometrically focused, but as a hypothesis we assume the convergence
+        in \autoref{fig:agg} applies under geometric focusing as a zeroth
+        approximation, perhaps as a property of the fluid motion within the
+        geometrically thin critical layer.
+
+        Associating $t_{} \sim \nu k^2 \approx \nu k_z^2$ with the visocus
+        timescale and $t_{NL} \sim \vec{u} \cdot \vec{\nabla} \sim \omega$ for
+        the nonlinear timescale, we find their $\lambda = \frac{t_{NL}}{t_L}
+        \sim \mathrm{Re}$ our Reynolds number. Our simulations indicate
+        $\mathrm{Re} \gtrsim 500$ are required to observe the correct asymptotic
+        behavior in terms of horizontal momentum flux reflection/transmission,
+        so it is possible their lack of reflection is viscosity limited.
+\end{itemize}
+
+\subsection{Heating}
 
 [TODO elaborate? Need to make plots to check?]
 
