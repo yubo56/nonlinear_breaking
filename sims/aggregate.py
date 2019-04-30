@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
+plt.rc('font', family='serif', size=12)
 import matplotlib.lines as mlines
 
 DATA = [
@@ -37,6 +37,7 @@ if __name__ == '__main__':
                  (T_med, T_min, T_max),
                  (w_med, w_min, w_max)) in DATA:
         # Reynolds number for linear mode
+        print(1024 / 10 / re_inv)
         x = (1024 / 10) / re_inv + offsets[re_inv]
         ax1.plot(x, r_med, 'ko', markersize=msize)
         ax1.errorbar(x, r_med,
@@ -66,7 +67,7 @@ if __name__ == '__main__':
                         label=r'$\left<\mathcal{R}_A(t)^2\right>$')
     ln3 = mlines.Line2D([], [], color='r', marker='*', markersize=msize,
                         label=r'$\left<\mathcal{T}_S(t)\right>$')
-    ax1.legend(handles=[ln1, ln2, ln3], fontsize=6, loc='upper left')
+    ax1.legend(handles=[ln1, ln2, ln3], fontsize=12, loc='upper left')
 
 
     ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
