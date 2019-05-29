@@ -938,14 +938,6 @@ domain. This is a consistent interpretation for three reasons:
         propagate at the \emph{group velocity} instead.
 \end{itemize}
 
-\section{Discussion}\label{s:discussion}
-
-In the previous section, we have argued for a continous train of breaking IGWs
-spontaneously forming a critical layer and strong shear flow. We have
-parameterized the width of the critical layer as well as horizontal momentum
-transport near the critical layer. In the subsequent sections, we will discuss
-the validity of these results and their application to astrophysical systems.
-
 \subsection{Convergence}\label{ss:convergence}
 
 As the primary test of convergence in our previous sections, we consider the
@@ -972,6 +964,14 @@ in \autoref{fig:agg}.
     are more physically realistic, and our values seem to converge towards large
     $\mathrm{Re}$.}\label{fig:agg}
 \end{figure}
+
+\section{Discussion}\label{s:discussion}
+
+In the previous section, we have argued for a continous train of breaking IGWs
+spontaneously forming a critical layer and strong shear flow. We have
+parameterized the width of the critical layer as well as horizontal momentum
+transport near the critical layer. In the subsequent sections, we will discuss
+the validity of these results and their application to astrophysical systems.
 
 \subsection{Physical Sources of Dissipation in WDs}\label{ss:disp}
 
@@ -1153,7 +1153,7 @@ modified. Some algebraic manipulation to re-cast it in the form of
 Hydrostatic equilibrium is still $\vec{\nabla} \varpi_0 + g\hat{z} = 0$ where
 $\rho = \rho_0, \vec{u} = 0$. Including the damping layers and forcing terms as
 described in \autoref{ss:numerics}, we finally obtain the full system of
-equations as simulated in Dedalus:
+equations as simulated in Dedalus: [TODO update w/ mask]
 \begin{subequations}
     \begin{align}
         \vec{\nabla} \cdot \vec{u} ={}& 0,\\

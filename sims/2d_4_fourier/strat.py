@@ -11,7 +11,7 @@ H = 1
 XMAX = 4 * H
 ZMAX = 10 * H
 
-NUM_SNAPSHOTS = 300
+NUM_SNAPSHOTS = 500
 TARGET_DISP_RAT = 0.1 # k_z * u_z / omega at base
 
 PARAMS_DEFAULT = {'XMAX': XMAX,
@@ -32,7 +32,6 @@ PARAMS_DEFAULT = {'XMAX': XMAX,
                   'SPONGE_WIDTH': 0.05 * ZMAX,
                   'SPONGE_HIGH': 0.95 * ZMAX,
                   'SPONGE_LOW': 0.03 * ZMAX,
-                  'STRIDE': 1,
 
                   'NUM_SNAPSHOTS': NUM_SNAPSHOTS,
                   'NL': True,
@@ -46,7 +45,7 @@ def get_params(overrides=None):
     OMEGA = get_omega(g, H, KX, KZ)
     VG_Z = get_vgz(g, H, KX, KZ)
 
-    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * 2
+    PARAMS_DEFAULT['T_F'] = abs(ZMAX / VG_Z) * 3
     PARAMS_DEFAULT['OMEGA'] = OMEGA
     PARAMS_DEFAULT['S'] = PARAMS_DEFAULT['ZMAX'] / 512 * 4
     PARAMS_DEFAULT['DT'] = min(0.1 / OMEGA, 0.1)
@@ -67,30 +66,37 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
-        # ('yubo_nu0p5_hres',
-        #  get_params(overrides={'Re_inv': 0.05})),
+        ('yubo_nu0p5_hres',
+         get_params(overrides={'Re_inv': 0.05})),
         ('yubo_nu0p5_shres',
          get_params(overrides={'Re_inv': 0.05,
                                'N_X': 1024,
                                'N_Z': 4096})),
-        # ('yubo_nu1_hres',
-        #  get_params(overrides={'Re_inv': 0.1})),
-        # ('yubo_nu1_vhres',
-        #  get_params(overrides={'Re_inv': 0.1,
-        #                        'N_X': 768,
-        #                        'N_Z': 3072})),
-        # ('yubo_nu2_hres',
-        #  get_params(overrides={'Re_inv': 0.2})),
+        ('yubo_nu1_hres',
+         get_params(overrides={'Re_inv': 0.1})),
+        ('yubo_nu1_vhres',
+         get_params(overrides={'Re_inv': 0.1,
+                               'N_X': 768,
+                               'N_Z': 3072})),
+        ('yubo_nu2_hres',
+         get_params(overrides={'Re_inv': 0.2})),
         # ('yubo_nu2_width',
         #  get_params(overrides={'Re_inv': 0.2,
         #                        'N_X': 256,
         #                        'NUM_SNAPSHOTS': 1500,
-        #                        'STRIDE': 2,
         #                        'N_Z': 1024})),
-        # ('yubo_nu3_width',
-        #  get_params(overrides={'Re_inv': 0.3,
-        #                        'N_X': 256,
-        #                        'N_Z': 1024})),
+        ('yubo_nu3_width',
+         get_params(overrides={'Re_inv': 0.3,
+                               'N_X': 256,
+                               'N_Z': 1024})),
+        ('yubo_nu5',
+         get_params(overrides={'Re_inv': 0.5,
+                               'N_X': 256,
+                               'N_Z': 1024})),
+        ('yubo_nu7',
+         get_params(overrides={'Re_inv': 0.7,
+                               'N_X': 256,
+                               'N_Z': 1024})),
     ]
     if '-plot' in sys.argv:
         for name, params_dict in tasks:
@@ -105,18 +111,8 @@ if __name__ == '__main__':
             write_front(name, params_dict)
 
     elif '-front' in sys.argv:
-        rets = []
         for name, params_dict in tasks:
-            ret = plot_front(name, params_dict)
-            rets.append((params_dict['Re_inv'], ret))
-        for nu, (avg1, avg2, avg3, avg4) in rets:
-            fmt = '(%.4f, %.4f, %.4f)'
-            print('(%.2f, (%s, %s, %s, %s)),' %
-                  (nu,
-                   fmt % avg1,
-                   fmt % avg2,
-                   fmt % avg3,
-                   fmt % avg4))
+            plot_front(name, params_dict)
 
     else:
         for task in tasks:
