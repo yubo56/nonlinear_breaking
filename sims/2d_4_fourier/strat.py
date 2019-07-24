@@ -66,14 +66,14 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
-        ('yubo_nu0p5_hres',
-         get_params(overrides={'Re_inv': 0.05})),
+        # ('yubo_nu0p5_hres',
+        #  get_params(overrides={'Re_inv': 0.05})),
         ('yubo_nu0p5_shres',
          get_params(overrides={'Re_inv': 0.05,
                                'N_X': 1024,
                                'N_Z': 4096})),
-        ('yubo_nu1_hres',
-         get_params(overrides={'Re_inv': 0.1})),
+        # ('yubo_nu1_hres',
+        #  get_params(overrides={'Re_inv': 0.1})),
         ('yubo_nu1_vhres',
          get_params(overrides={'Re_inv': 0.1,
                                'N_X': 768,
@@ -111,8 +111,15 @@ if __name__ == '__main__':
             write_front(name, params_dict)
 
     elif '-front' in sys.argv:
+        out = []
         for name, params_dict in tasks:
-            plot_front(name, params_dict)
+            ret = plot_front(name, params_dict)
+            out.append('(%.2f, (%s))' %
+                       (params_dict['Re_inv'],
+                        ', '.join(['(%s)' % ', '.join(['%.4f' % i for i in j])
+                                   for j in ret])))
+        for out_line in out:
+            print(out_line)
 
     else:
         for task in tasks:

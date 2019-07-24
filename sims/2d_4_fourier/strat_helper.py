@@ -31,6 +31,7 @@ Z_TOP_MULT = 1
 STRIDE = 15
 AVG_IDX = 4
 FONTSIZE = 12
+DPI=600
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=FONTSIZE)
@@ -598,7 +599,7 @@ def plot(name, params, stride=STRIDE):
         ux_est = uz_est * KZ / KX
 
         for t_idx, time in list(enumerate(sim_times)):
-            fig = plt.figure(dpi=400)
+            fig = plt.figure(dpi=DPI)
 
             uz_anal = get_anal_uz(params, time, x, z)
             ux_anal = get_anal_ux(params, time, x, z)
@@ -1013,7 +1014,7 @@ def plot_front(name, params):
 
         plt.xlabel(r'$z(H)$')
         plt.ylabel(r'$\hat{S}$')
-        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         #####################################################################
@@ -1045,7 +1046,7 @@ def plot_front(name, params):
         #          'k',
         #          label=r'$\phi_I$',
         #          linewidth=0.7)
-        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.close()
         avg_refl, avg_reflA, avg_ri, avg_trans = tuple([tuple([0, 0, 0])] * 4)
 
@@ -1096,7 +1097,7 @@ def plot_front(name, params):
         ax1.set_ylabel(r'$\bar{U} / c_{ph, x}$')
         ax2.set_ylabel(r'$\hat{S}$')
         ax2.set_xlabel(r'$z(H)$')
-        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         #####################################################################
@@ -1172,7 +1173,7 @@ def plot_front(name, params):
         ax2.set_xlabel(r'$t (N^{-1})$')
         ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
         ax2.legend(fontsize=FONTSIZE, loc='upper right')
-        plt.savefig('%s/front.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/front.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         #####################################################################
@@ -1228,7 +1229,7 @@ def plot_front(name, params):
         ax2.set_xlabel(r'$t (N^{-1})$')
         ax2.set_ylabel(r'$S / S_1$')
         ax2.legend(fontsize=FONTSIZE, loc='lower left')
-        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         #####################################################################
@@ -1278,7 +1279,7 @@ def plot_front(name, params):
         ax1.set_xlabel(r'$t (N^{-1})$')
         ax1.set_ylim([0, 0.5])
 
-        plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         #####################################################################
@@ -1299,7 +1300,7 @@ def plot_front(name, params):
         ax1.set_xlabel(r'$t (N^{-1})$')
         avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
         plt.legend(loc='lower left', fontsize=FONTSIZE)
-        plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=400)
+        plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
     #########################################################################
@@ -1329,7 +1330,7 @@ def plot_front(name, params):
     ax1.set_ylabel(r'$\tilde{S}$')
     ax1.set_xlabel(r'$k_x/k_{x1}$')
     ax1.legend(fontsize=FONTSIZE)
-    plt.savefig('%s/fft.png' % snapshots_dir, dpi=400)
+    plt.savefig('%s/fft.png' % snapshots_dir, dpi=DPI)
     plt.close()
 
     # return aggregated values

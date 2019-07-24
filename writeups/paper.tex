@@ -52,6 +52,14 @@ NJ 08544, USA
 \renewcommand*{\sectionautorefname}{Section}
 \maketitle
 
+% cp ../sims/agg.png plots
+% cp ../sims/2d_3_final/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png
+% cp ../sims/2d_3_final/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png
 
 \begin{abstract}
     In sufficiently compact white dwarf binaries, dynamical tides raise a train
@@ -875,39 +883,27 @@ order modes as well.
     value may have been reached.}\label{fig:nl_f_refl}
 \end{figure}
 
-Finally, we may be interested in the power spectrum of the transmitted
-horizontal momentum flux. Define:
-\begin{align}
-    \tilde{S}_>(k_x, t) = \abs{
-        \int\limits_0^{L_x} e^{ik_xx}\hat{S}_>(x, z_c - \Delta z, t)\;\mathrm{d}x}
-            \label{eq:sfft_above},\\
-    \tilde{S}_<(k_x, t) = \abs{
-        \int\limits_0^{L_x} e^{ik_xx}\hat{S}_<(x, z_c + \Delta z, t)\;\mathrm{d}x}.
-            \label{eq:sfft_below}
-\end{align}
-These values are plotted in \autoref{fig:nl_fft}. Note that we expect
-$\tilde{S}_<(0, t) = S_<(t) = S_i(t) + S_d(t)$ and the same for $\tilde{S}_>$.
-This is rather accurate for $\tilde{S}_<$ but less so for $\tilde{S}_>$; this is
-since $S_>(t)$ decays very rapidly above $z_c$. Note furthermore that at later
-times, the transmitted flux increases, per expectation, and shifts towards
-higher $k_x$. Repeating this plot at higher viscosities shows significantly
-lower $\tilde{S}_>$, showing that the $k_x$ of the transmitted waves still
-changes greatly at the highest $\mathrm{Re}$ we are able to probe. Finally, note
-that the area under $\tilde{S}$ changes with time; this is okay since we are
-measuring $S$ at constant position, and different $k_x$ components of $S$ will
-translate at their separate group velocities.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{plots/nl_fft.png}
-    \caption{The power spectrum of the horizontal momentum flux at fixed
-    distances below and above critical layer $z_c$ at certain times $t$ for
-    simulation \texttt{0p5\_shres}. \autoref{eq:sfft_above} and
-    \autoref{eq:sfft_below} are depicted here, with $\tilde{S}_<$ in solid lines
-    and $\tilde{S}_>$ in dashed lines. Note that there is more incident flux
-    than transmitted, and that transmitted flux roughly increases over
-    time.}\label{fig:nl_fft}
-\end{figure}
+% Finally, we may be interested in the power spectrum of the transmitted
+% horizontal momentum flux. Define:
+% \begin{align}
+%     \tilde{S}_>(k_x, t) = \abs{
+%         \int\limits_0^{L_x} e^{ik_xx}\hat{S}_>(x, z_c - \Delta z, t)\;\mathrm{d}x}
+%             \label{eq:sfft_above},\\
+%     \tilde{S}_<(k_x, t) = \abs{
+%         \int\limits_0^{L_x} e^{ik_xx}\hat{S}_<(x, z_c + \Delta z, t)\;\mathrm{d}x}.
+%             \label{eq:sfft_below}
+% \end{align}
+% These values are plotted in \autoref{fig:nl_fft}. Note that we expect
+% $\tilde{S}_<(0, t) = S_<(t) = S_i(t) + S_d(t)$ and the same for $\tilde{S}_>$.
+% This is rather accurate for $\tilde{S}_<$ but less so for $\tilde{S}_>$; this is
+% since $S_>(t)$ decays very rapidly above $z_c$. Note furthermore that at later
+% times, the transmitted flux increases, per expectation, and shifts towards
+% higher $k_x$. Repeating this plot at higher viscosities shows significantly
+% lower $\tilde{S}_>$, showing that the $k_x$ of the transmitted waves still
+% changes greatly at the highest $\mathrm{Re}$ we are able to probe. Finally, note
+% that the area under $\tilde{S}$ changes with time; this is okay since we are
+% measuring $S$ at constant position, and different $k_x$ components of $S$ will
+% translate at their separate group velocities.
 
 \subsection{Appearance of Discrete Modes}\label{ss:modes}
 
