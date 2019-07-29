@@ -77,7 +77,10 @@ def horiz_mean(field, n_x, axis=1):
     return np.sum(field, axis=axis) / n_x
 
 def smooth(f):
-    _kernel = np.array([1, 2, 3, 3, 3, 2, 1])
+    # use much stronger smoothing since no longer using time propagation
+
+    # _kernel = np.array([1, 2, 3, 3, 3, 2, 1])
+    _kernel = np.array([1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1])
     kernel = _kernel / sum(_kernel)
     f_padded = np.concatenate(([f[0]] * (len(kernel) // 2),
                                f,
@@ -1244,9 +1247,10 @@ def plot_front(name, params):
             f_smooth = smooth(np.concatenate((f[idxs], [f[-1]])))
             return interp1d(np.concatenate((t[idxs], [t[-1]])), f_smooth)
 
-        prop_time = (smooth(front_pos[start_idx: ]) -
-                     (Z0 + 3 * S + Z_TOP_MULT * np.pi / abs(KZ)))\
-                     / abs(V_PZ)
+        # prop_time = (smooth(front_pos[start_idx: ]) -
+        #              (Z0 + 3 * S + Z_TOP_MULT * np.pi / abs(KZ)))\
+        #              / abs(V_PZ)
+        prop_time = 0 * t
 
         t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
         f, ax1 = plt.subplots(1, 1, sharex=True)

@@ -26,6 +26,7 @@
     \newcommand*{\p}[1]{\left(#1\right)}
     \newcommand*{\s}[1]{\left[#1\right]}
     \newcommand*{\z}[1]{\left\{#1\right\}}
+    \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
     \DeclareMathOperator*{\argmin}{argmin}
     \DeclareMathOperator*{\argmax}{argmax}
     \DeclareMathOperator*{\med}{med}
@@ -52,14 +53,14 @@ NJ 08544, USA
 \renewcommand*{\sectionautorefname}{Section}
 \maketitle
 
-% cp ../sims/agg.png plots
-% cp ../sims/2d_3_final/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png
-% cp ../sims/2d_3_final/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png
+% cp ../sims/agg.png plots;
+% cp ../sims/2d_3_final/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png;
+% cp ../sims/2d_3_final/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png;
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png;
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png;
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png;
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png;
+% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png;
 
 \begin{abstract}
     In sufficiently compact white dwarf binaries, dynamical tides raise a train
@@ -163,83 +164,86 @@ of degenerate matter in WDs. We furthermore neglect temperature variations and
 assume a barotropic equation of state $P(\rho, T) = P(\rho)$ as a first
 approximation. As we are interested in dynamics far from the center of the WD,
 we approximate the gravitational field as uniform. We model the background
-density stratification as $\rho_0(x, z) = \rho_0(z) = \rho_0(z=0) e^{-z/H}$ for
-some reference density $\rho_0(z=0) = \at{\rho_0(z)}_{z = 0}$.
+density stratification as $\overline{\rho}(x, z) = \overline{\rho}_0 e^{-z/H}$
+for some reference density $\overline{\rho}_0$ (we generally notate background
+quantities with overbars and perturbation quantities with primes).
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
 \begin{subequations}\label{se:nl_orig}
     \begin{align}
-        \vec{\nabla} \cdot \vec{u}_1 &= 0,\label{eq:nl_incomp}\\
+        \bm{\nabla} \cdot \bm{u} &= 0,\label{eq:nl_incomp}\\
         \md{\rho}{t} &= 0 ,\label{eq:nl_density}\\
-        \md{\vec{u}_1}{t} + \frac{\vec{\nabla}p}{\rho} + g\hat{z} &=
-            0.\label{eq:nl_mom}.
+        \md{\bm{u}}{t} + \frac{\bm{\nabla}P}{\rho} + g\bm{z} &=
+            0\label{eq:nl_mom}.
     \end{align}
 \end{subequations}
-$\md{}{t} = \pd{}{t} + \p{\vec{u}_1 \cdot \vec{\nabla}}$ is the Lagrangian or
-material derivative, and $\vec{u}_1, \rho, p$ denote the velocity field, density
-and pressure respectively. We denote $-g\hat{z}$ constant gravitational
+$\md{}{t} = \pd{}{t} + \p{\bm{u} \cdot \bm{\nabla}}$ is the Lagrangian or
+material derivative, and $\bm{u}, \rho, P$ denote the velocity field, density
+and pressure respectively. We denote $-g\bm{z}$ constant gravitational
 acceleration. Note that at hydrostatic equilibrium $\pd{}{t} = 0$ we have
-$\vec{\nabla}P_0 = -\rho_0 g\hat{z}$ and so $P_0 = \rho_0 gH$. A shear flow of
-form $\vec{u}_1 = u_{1x}(x, z, t)\hat{x} = u_{1x}(z)\hat{x}$ is permitted in hydrostatic
-equilibrium, but we will assume no background shear flow. Physically, this
-assumption corresponds to a non-rotating star, or going to the corotating frame
-of a rigidly rotating star.
+$\bm{\nabla}\overline{P} = -\overline{\rho} g\bm{z}$ and so $\overline{P} =
+\overline{\rho} gH$. A vertically-stratified shear flow
+$\overline{u}_x(z)\bm{x}$ is permitted in hydrostatic equilibrium, but we will
+assume no background flow. Physically, this assumption corresponds to a
+non-rotating star, or going to the corotating frame of a rigidly rotating star.
 
 In practice, it is convenient to introduce coordinate $\Upsilon = \ln
-\frac{\rho}{\rho_0}$. This both identically enforces $\rho > 0$ and avoids
-numerical issues in the $\frac{\vec{\nabla}p}{\rho}$ term if $\rho$ is small. We
-also define reduced pressure $P = \frac{p}{\rho}$. Then, we may rewrite the
-second two equations of \autoref{se:nl_orig} as
+\frac{\rho}{\overline{\rho}}$. This both identically enforces $\rho > 0$ and
+avoids numerical issues in the $\frac{\bm{\nabla}P}{\rho}$ term if $\rho$ is
+small. We also define reduced pressure $\varpi = \frac{P}{\rho}$. Then, we may
+rewrite the second two equations of \autoref{se:nl_orig} as
 \begin{subequations}\label{se:nl_upsilon}
     \begin{align}
-        \md{\Upsilon}{t} + u_{1z} \pd{\ln \rho_0}{z} &= 0
+        \md{\Upsilon}{t} + u'_z \pd{\ln \overline{\rho}}{z} &= 0
             ,\label{eq:nl_up_density} \\
-        \md{\vec{u}_1}{t} + \vec{\nabla}P + P\vec{\nabla}\Upsilon + g\hat{z} &= 0.
+        \md{\bm{u}}{t} + \bm{\nabla}\varpi
+            + \varpi\bm{\nabla}\Upsilon + g\bm{z} &= 0.
     \end{align}
 \end{subequations}
 Note that in the new coordinates, hydrostatic equilibrium corresponds to
-$\Upsilon_0 = 1, P_0 = gH$.
+$\overline{\Upsilon} = 1, \overline{\varpi} = gH$.
 
 \section{Internal Gravity Waves: Theory}\label{s:theory}
 
 \subsection{Analytical Properties: Linear}
 
 In the small perturbation limit, where flow velocities are small compared to the
-characteristic space and time scales $\pd{}{t} \gg \vec{u}_1 \cdot \vec{\nabla}$,
-we may linearize \autoref{se:nl_upsilon}. We ignore the advective components of the
-material derivative and consider small deviations $\Upsilon_1 = \Upsilon -
-\Upsilon_0, P_1 = P - P_0$ about hydrostatic equilibrium:
-\begin{subequations}\label{se:lin_homo}
-    \begin{align}
-        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
-        \pd{\Upsilon_1}{t} - \frac{u_{z}}{H} &= 0,\\
-        \pd{\vec{u}_1}{t} + \vec{\nabla}P_1
-            + \p{1 + \Upsilon_1} g\hat{z}
-            &= 0.
-    \end{align}
-\end{subequations}
-
-This can be solved to obtain solutions up to undetermined amplitude $A$ the
-well-known result \citep{drazin,sutherland0}:
+characteristic space and time scales $\pd{}{t} \gg \bm{u} \cdot
+\bm{\nabla}$, we may linearize \autoref{se:nl_upsilon}.
+%,We ignore the advective components of the material derivative and consider small
+% deviations $\Upsilon' = \Upsilon - \overline{\Upsilon}, \varpi' = \varpi -
+% \overline{\varpi}$ about hydrostatic equilibrium:
+% \begin{subequations}\label{se:lin_homo}
+%     \begin{align}
+%         \bm{\nabla} \cdot \bm{u}_1 &= 0,\\
+%         \pd{\Upsilon_1}{t} - \frac{u_{z}}{H} &= 0,\\
+%         \pd{\bm{u}_1}{t} + \bm{\nabla}P_1
+%             + \p{1 + \Upsilon_1} g\bm{z}
+%             &= 0.
+%     \end{align}
+% \end{subequations}
+The solution in this linear regime up to undetermined amplitude $A$ is
+given by \citep{drazin,sutherland0}:
 \begin{equation}
-    u_{1z}\p{x, z, t} = Ae^{z/2H}e^{i\p{k_{1x}x - k_{1z}z - \omega_1 t}},
+    u'_z\p{x, z, t} = Ae^{z/2H}e^{i\p{k_{x}x + k_{z}z - \omega t}},
         \label{eq:k0z_sign}
 \end{equation}
-where $\omega_1$ satisfies dispersion relation
+where $\omega$ satisfies dispersion relation
 \begin{equation}
-    \omega_1^2 = \frac{N^2k_{1x}^2}{k_{1x}^2 + k_{1z}^2 + \frac{1}{4H^2}},
+    \omega^2 = \frac{N^2k_{x}^2}{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}.
         \label{eq:disp_rel}
 \end{equation}
-where
+We take
 \begin{equation}
-    N^2 \equiv g^2\p{\rd{\rho}{P} - \at{\pd{\rho}{P}}_{ad}} = \frac{g}{H},
+    N^2 \equiv g^2\p{\rd{\rho}{P} - \frac{1}{c_s^2}} = \frac{g}{H},
 \end{equation}
-the Brunt-V\"ais\"al\"a frequency is constant. Our sign convention is such that
-a wave with $k_{1x}, k_{1z} > 0$ has positive vertical group velocity (see
-\autoref{eq:vg}).
+the \emph{Brunt-V\"ais\"al\"a frequency} to be constant and take the
+incompressible limit $c_s \to \infty$ where $c_s$ is the sound speed. Other
+dynamical quantities are simply related to $u'_z$ (see
+e.g.\ \cite{sutherland0}).
 
-In the weak stratification limit $k_{1z}H \gg 1$, the solution exhibits the
+In the weak stratification limit $k_{z}H \gg 1$, the solution exhibits the
 following characteristics:
 \begin{itemize}
     \item The amplitude of the wave grows with $z$ as $e^{z/2H}$. Thus, the
@@ -247,28 +251,27 @@ following characteristics:
 
     \item The phase and group velocities can be computed respectively:
         \begin{align}
-            \vec{c}_{ph} &=
-                \p{k_{1x}\hat{x} - k_{1z}\hat{z}}\frac{\omega_1}
-                {k_{1x}^2 + k_{1z}^2 + \frac{1}{4H^2}},\\
-            \vec{c}_{g} &= N\frac{\p{k_{1z}^2 + \frac{1}{4H^2}}\hat{x}
-                + \p{k_{1x}k_{1z}\hat{z}}}
-                {\p{k_{1x}^2 + k_{1z}^2 + \frac{1}{4H^2}}^{3/2}}.\label{eq:vg}
+            \bm{c}_{ph} &=
+                \p{k_{x}\bm{x} + k_{z}\bm{z}}\frac{\omega}
+                {k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}},\\
+            \bm{c}_{g} &= N\frac{\p{k_{z}^2 + \frac{1}{4H^2}}\bm{x}
+                - \p{k_{x}k_{z}\bm{z}}}
+                {\p{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}^{3/2}}.\label{eq:vg}
         \end{align}
-        We note $\vec{c}_{ph} \cdot \vec{c}_g = +
-        \mathcal{O}\p{\frac{1}{\p{k_{1z}H}^{2}}} \approx 0$, the usual result
-        (e.g.\  \citep{drazin,sutherland1}). Note again that $c_{gz} > 0$ for
-        $k_{1x}, k_{1z} > 0$, a consequence of our sign choice in
-        \autoref{eq:k0z_sign}.
+        We note $\bm{c}_{ph} \cdot \bm{c}_g =
+        \mathcal{O}\p{\frac{1}{\p{k_{z}H}^{2}}} \approx 0$, the usual result
+        (e.g.~\cite{drazin,sutherland1}). Note again that $c_{gz} < 0$ for
+        $k_{x}, k_{z} > 0$, so upwards-propagating IGW have $k_z < 0$.
 
-    \item The time-averaged total $x$-momentum flux carried in the $\hat{z}$
+    \item The time-averaged total $x$-momentum flux $F$ carried in the $\bm{z}$
         direction can be computed. Since the linear solution is separable as
         $f(x, z, t) = f(z)e^{i(k_{1x}x - \omega_1 t)}$, $x$ averaging and time
         averaging are equivalent, so we may write
         \begin{align}
-            S &\equiv \ev{\rho u_{1x} u_{1z}}_x \equiv
-                \frac{1}{L_x}\int_0^{L_x}\limits \rho u_{1x} u_{1z}\;\mathrm{d}x,
-                    \label{eq:S_def},\\
-                &\approx -\frac{A^2}{2}\rho_0(z=0)\frac{k_{1z}}{k_{1x}},
+            F &\equiv \ev{\rho u_{x}' u_{z}'}_x \equiv
+                \frac{1}{L_x}\int_0^{L_x}\limits \rho u_{x}'u_{z}'\;\mathrm{d}x,
+                    \label{eq:F_def},\\
+                &\approx -\frac{A^2}{2}\overline{\rho}_0\frac{k_{z}}{k_{x}},
                     \label{eq:S_lin}
         \end{align}
         where $\ev{\dots}_x$ denotes $x$-averaging.
@@ -295,69 +298,68 @@ As not to interfere with the incompressibility constraint, we force the system
 on the density equation. This constitutes replacing \autoref{eq:nl_up_density}
 with
 \begin{equation}
-    \md{\Upsilon}{t} + u_{1z}\pd{\ln \rho_0}{z}
-        = Fe^{-\frac{(z - z_0)^2}{2\sigma^2}}
-            \cos \p{k_{1x}x - \omega_1 t}.\label{eq:vol_drive}
+    \md{\Upsilon}{t} + u_{z}'\pd{\ln \bar{\rho}}{z}
+        = Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}
+            \cos \p{k_{x}x - \omega t}.\label{eq:vol_drive}
 \end{equation}
-Using a narrow Gaussian profile excites a broad $k_z$ wavenumber spectrum, and
-only the $k_{1z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the
-given $k_{1x}, \omega_1(k_{1x}, k_{1z})$ will propagate.
+Using a narrow Gaussian profile excites a broad $z$ power spectrum, but only the
+$k_{z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the given
+$k_{x}, \omega_(k_{x}, k_{z})$ will propagate.
 
 In the linearized system, the effect of this forcing can be solved analytically
 up to good accuracy: we first approximate the driving term using
 $e^{\frac{-(z - z_0)^2}{2\sigma^2}} \approx \sqrt{2\pi \sigma^2}\delta(z -
 z_0)$, the $\sigma \to 0$ limit\footnote{In practice, $\sigma$ must be large
 enough to be numerically resolved by the spectral code.}. This system is solved
-exactly by matching the two homogeneous solutions above and below $z_0$. We may
+exactly by matching the two plane wave solutions,above and below $z_0$. We may
 then approximately relax the solution to nonzero $\sigma$: an extra factor of
-$e^{-\frac{(k_{1z}\sigma)^2}{2}}$ arises compared to the $\delta$-function
+$e^{-\frac{(k_{z}\sigma)^2}{2}}$ arises compared to the $\delta$-function
 solution (evaluating the Fourier Transform of $e^{-\frac{(z -
-z_0)^2}{2\sigma^2}}$ at $k_z = k_{1z}$), and we obtain
+z_0)^2}{2\sigma^2}}$ at $k_z$), and we obtain
 \begin{align}
-    u_{z}&(x, z, t) ={} \frac{Fgk_{1x}^2}{\omega_1^2}
-        \frac{1}{2ik_{1z}}\frac{e^{\frac{-(k_{1z}\sigma)^2}{2}}}
+    u_{z}'&(x, z, t) ={} \frac{Cgk_{x}^2}{\omega^2}
+        \frac{1}{2ik_{z}}\frac{e^{\frac{-(k_{z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
-        e^{\frac{z - z_0}{2H}}e^{i\p{k_{1x}x + k_{1z}(z - z_0) - \omega_1 t
-            + \frac{1}{2k_{1z}H}}}
+        e^{\frac{z - z_0}{2H}}e^{i\p{k_{x}x + k_{z}(z - z_0) - \omega t
+            + \frac{1}{2k_{z}H}}}
             & z > z_0\\
-        e^{\frac{z - z_0}{2H}}e^{i\p{k_{1x}x - k_{1z}(z - z_0) - \omega_1 t
-            + \frac{1}{2k_{1z}H}}}
+        e^{\frac{z - z_0}{2H}}e^{i\p{k_{x}x - k_{z}(z - z_0) - \omega t
+            + \frac{1}{2k_{z}H}}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
-The $z > z_0$ solution models an upwards-propagating IGW wavetrain inbound on
-the simulation domain from below. The solution for $u_{1x}(x, z, t)$ can be
-obtained analytically from incompressibility \autoref{eq:nl_incomp}.
+The $z > z_0$ region models an upwards-propagating IGW wavetrain excited deep
+in the atmosphere.
 
 \subsection{Wave Breaking Location}\label{ss:wave_breaking}
 
 In developing the results above, we have neglected advective terms $\pd{}{t} \gg
-\vec{u}_1 \cdot \vec{\nabla}$. However, since $\abs{\vec{u}_1} \propto
+\bm{u}' \cdot \bm{\nabla}$. However, since $\abs{\bm{u}'} \propto
 e^{z/2H}$, any nonzero amplitude IGW will eventually violate the linearity
 criterion. This regime is relevant in practice since the IGW may grow to
 nonlinear amplitudes before it reaches the surface of the WD
 \citep{fullerI,fullerII}. We can coarsely estimate the height at which this
-happens by when the Lagrangian displacement $\vec{\xi} =
-\frac{\vec{u}_1}{-i\omega}$ of a fluid parcel satisfies
+happens by when the Lagrangian displacement of the perturbation $\bm{\xi}' =
+\frac{\bm{u}'}{-i\omega}$ of a fluid parcel satisfies
 \begin{equation}
-    \vec{\xi} \cdot \vec{k}_1 \gtrsim 1.\label{eq:nl}
+    \abs{\bm{\xi}'} \abs{\bm{k}} \gtrsim 1.\label{eq:nl}
 \end{equation}
 
-Another useful result quantifies the wave-induced mean flow
-\citep{eliassen_palm_cite,sutherland0}:
+This is in agreement with the breaking location predicted by the wave-induced
+mean flow, given by \citep{eliassen_palm_cite,sutherland0}:
 \begin{equation}
-     \ev{u_{1x}} \equiv \bar{U} = \frac{1}{L_x}
-        \int\limits u_{1x}\;\mathrm{d}x = \frac{\ev{u_{1x}u_{1z}}_x}{c_{g,z}},
+     \ev{u_{x}} \equiv \overline{U} = \frac{1}{L_x}
+        \int\limits u_{x}\;\mathrm{d}x = \frac{\ev{u_{x}u_{z}}_x}{c_{g,z}},
         \label{eq:mean_flow}
 \end{equation}
 This formula is analogous to Stokes' drift for surface waves and can be derived
-by considering the propagation of $S$ (\autoref{eq:S_def}) into a medium at
-rest. Solving for $\bar{U} = c_{ph, x}$ the critical layer condition (see
-\autoref{ss:crit_layer} immediately below), we recover
-$\frac{u_{1x}k_{1x}}{\omega} = \xi_x k_{1x} \sim 1$, roughly equivalent to the
-nonlinearity criterion \autoref{eq:nl}. This condition predicts where the wave's
-self-acceleration alone is sufficient to induce critical layer absorption.
+by considering the propagation of $F$ (\autoref{eq:F_def}) into a medium at
+rest. Solving for $\overline{U} = \omega / k_x$ the critical layer condition
+(see \autoref{ss:crit_layer} immediately below), we obtain
+$\abs{\frac{u_{x}'k_{x}}{\omega}} = \abs{\xi_x k_{x}} = \abs{\xi_z k_z} \sim 1$,
+equal to the nonlinearity criterion \autoref{eq:nl}. This condition predicts
+where the wave's self-acceleration alone produces a critical layer.
 
 \subsection{Formation and Dynamics of Critical Layer}\label{ss:crit_layer}
 
@@ -385,46 +387,46 @@ complete absorption. This result was reproduced with nonzero viscosity
 nonlinear simulations \citep{winters1994} suggest that nonlinear effects can
 induce reflection.
 
-A purely horizontal shear flow $\bar{U}(z) \hat{x}$ can be seen in
+A purely horizontal shear flow $\overline{U}(z) \bm{x}$ can be seen in
 \autoref{se:nl_orig} to have the effect of modifying time derivatives
 $\partial_t$ to their frequency in the comoving frame of the fluid $\partial_t -
-\bar{U}(z)\partial_x$. For a critical value $\omega_1 - \bar{U}_c k_{1x} = 0$,
-the frequency of the linear wave in the fluid's frame of reference vanishes and
-critical behavior is observed. In a linear \citep{booker_bretherton} or viscous
-\citep{hazel} theory, the incident wave has amplitude reflection and
-transmission coefficients
+\overline{U}(z)\partial_x$. For a critical value $\omega - \overline{U}_c k_{x}
+= 0$, the frequency of the linear wave in the fluid's frame of reference
+vanishes and critical behavior is observed. In a linear
+\citep{booker_bretherton} or viscous \citep{hazel} theory, the incident wave has
+amplitude reflection and transmission coefficients
 \begin{align}
-    \mathrm{Ri} &\equiv \at{\frac{N^2}{\p{\pd{\bar{U}}{z}}^2}}_{z_c},
+    \mathrm{Ri} &\equiv \at{\frac{N^2}{\p{\pd{\overline{U}}{z}}^2}}_{z_c},
         \label{eq:ri_def}\\
     \mathcal{R} &= e^{-2\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}}, &
     \mathcal{T} &= e^{-\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}},
         \label{eq:crit_coeffs}
 \end{align}
 where we have defined local Richardson number Ri at the critical layer $z_c:
-\bar{U}(z_c) = \frac{\omega_1}{k_{1x}}$. In the $\mathrm{Ri} \gg 1$ limit,
+\overline{U}(z_c) = \frac{\omega}{k_{x}}$. In the $\mathrm{Ri} \gg 1$ limit,
 $\mathcal{R}, \mathcal{T} \ll 1$ and the incident wave is completely absorbed to
 good approximation.
 
 When the fluid absorbs the incident wave, it absorbs the incident horizontal
 momentum flux as well, which is converted into additional horizontal momentum of
-the shear flow. Since the shear flow cannot exceed $\bar{U}_c$ the horizontal
+the shear flow. Since the shear flow cannot exceed $\overline{U}_c$ the horizontal
 phase velocity of the incident wave, the critical layer must instead propagate
 downwards to accommodate the incident momentum. The total horizontal momentum of
 the shear flow then obeys conservation equation
 \begin{equation}
-    \pd{}{t}\int\limits_0^{L_z} \rho(z) \bar{U}(z, t)\;\mathrm{d}z
+    \pd{}{t}\int\limits_0^{L_z} \rho(z) \overline{U}(z, t)\;\mathrm{d}z
         + \Delta S = 0.
 \end{equation}
 We define $\Delta S$ to be the change in flux across the critical layer, or
-equivalently the negative of the absorbed flux. Treating $\bar{U}(z > z_c) =
-\bar{U}_c, \bar{U}(z < z_c) = 0$ gives us exactly
+equivalently the negative of the absorbed flux. Treating $\overline{U}(z > z_c) =
+\overline{U}_c, \overline{U}(z < z_c) = 0$ gives us exactly
 \begin{equation}
-    \rho(z_c) \bar{U}_c\pd{z_c}{t} = \Delta S(z_c(t)).\label{eq:zc_anal}
+    \rho(z_c) \overline{U}_c\pd{z_c}{t} = \Delta S(z_c(t)).\label{eq:zc_anal}
 \end{equation}
 $\Delta S(z_c)$ denotes the change in $S$ across $z_c$. For constant $\Delta S$
-in time and $\rho \approx \rho_0$, this has analytical solution
+in time and $\rho \approx \bar{\rho}$, this has analytical solution
 \begin{equation}
-    z_c(t) = -H\ln t - H\ln \frac{H\rho_0(z = 0)c_{ph, x}}{-\Delta S}
+    z_c(t) = -H\ln t - H\ln \frac{H\bar{\rho}_0c_{ph, x}}{-\Delta S}
         .\label{eq:zc_sol}
 \end{equation}
 Note that constant $-\Delta S$ corresponds physically to the picture where
@@ -443,18 +445,18 @@ where we solve the full nonlinear fluid equations for weak forcing.
 
 \subsection{Numerical Setup}\label{ss:numerics}
 
-We nondimensionalize by taking $H = N = \rho_0(z=0) = 1$ in
+We nondimensionalize by taking $H = N = \bar{\rho}_0 = 1$ in
 \autoref{se:nl_orig}.
 
+% TODO physical vs simulation domain
 Denote $L_x, L_z$ to be the physical dimensions of the simulation domain. Our
 simulation domain is smaller than our full physical domain, so we adopt
 reflection-suppressing boundary conditions. We use periodic boundary conditions
 in the $x$ direction and damping layers (described in \autoref{ss:damping}) in
 the $z$ direction to damp perturbations exiting the top and bottom of the
-domain. We use a Fourier basis in the $x$ direction and either a Chebyshev or
-Fourier basis in the $z$ direction; our results were robust to either set of
-basis functions. We varied the number of $x, z$ modes (denoted $N_x, N_z$
-respectively), and used $3/2$ dealiasing \citep{boyd}.
+domain. We use a Fourier basis in both the $x$ and $z$ direction. We varied the
+number of $x, z$ modes (denoted $N_x, N_z$ respectively), and used $3/2$
+dealiasing \citep{boyd}.
 
 The geometry of our simulation domain is fixed by three parameters: $L_x, L_z$,
 and $z_0$ the forcing location. We use $z_0 = 0.2L_z$ to force sufficiently far
@@ -468,48 +470,48 @@ The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
 explicitly. A third-order, four-stage DIRK-ERK scheme \citep{ascher} is used
 with adaptive timesteps computed from advective Courant-Friedrichs-Lewy (CFL)
-time. Specifically, we use $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z / u_{1z})$,
+time. Specifically, we use $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z / u_{z})$,
 where the minimum is taken over every grid point in the domain and $\Delta
 x,\Delta z$ are the grid spacings in the $x$ and $z$ directions respectively.
 
-The physics of our simulation is fixed by four parameters: $k_{1x}, \omega_1, F,
+The physics of our simulation is fixed by four parameters: $k_{x}, \omega, C,
 \nu$. We describe our choices for these parameters below:
 \begin{itemize}
-    \item $k_{1x}$: Astrophysical IGWs in stars are generally excited by the $l
+    \item $k_{x}$: Astrophysical IGWs in stars are generally excited by the $l
         = 2$ component of the tidal potential, for which $k_{\perp} \sim
         \frac{1}{R}$ where $R$ is the radius of the star. To best emulate this,
-        we use $k_{1x} = \frac{2\pi}{L_x}$ the smallest permitted wavenumber
+        we use $k_{x} = \frac{2\pi}{L_x}$ the smallest permitted wavenumber
         permitted by periodic boundary conditions.
 
-    \item $\omega_1$: We choose $\omega_1$ by evaluating dispersion relation
-        $\omega_1\p{k_{1x}, k_{1z}}$ for some desired $k_{1z}$.
+    \item $\omega$: We choose $\omega$ by evaluating dispersion relation
+        $\omega\p{k_{x}, k_{z}}$ for some desired $k_{z}$.
 
         Astrophysical IGWs also generally satisfy $\omega \ll N$, or
         equivalently $\frac{k_r}{k_{\perp}} \sim k_rR \gg 1$. Since $H \lesssim
-        R$, we aim to study $k_{1z}H \gg 1$. However, to satisfy this well is
+        R$, we aim to study $k_{z}H \gg 1$. However, to satisfy this well is
         computationally expensive: $L_z \gg H$ is required to give waves ample
-        room to grow within the simulation domain, but we want $k_{1z}$ to be
+        room to grow within the simulation domain, but we want $k_{z}$ to be
         sufficiently separated from the grid spacing $\sim L_z / N_z$ that
         nonlinear effects can be seen in later simulations (see
-        \autoref{ss:nl_ns}). Thus, $N_z$ sets how well we can satisfy $k_{1z}H
-        \gg 1$; we choose $k_{1z}H = 1$.
+        \autoref{ss:nl_ns}). Thus, $N_z$ sets how well we can satisfy $k_{z}H
+        \gg 1$; we choose $k_{z}H = 1$.
 
-    \item $F$: We first choose $F$ forcing strength such that $\vec{\xi} \cdot
-        \vec{k}_1 \ll 1$ is satisfied everywhere throughout the domain. This
-        constraints $F$ by \autoref{eq:uz_lin}.
+    \item $C$: We first choose $C$ forcing strength such that $\xi_z k_z \ll 1$
+        is satisfied everywhere throughout the domain. This constrains $C$ by
+        \autoref{eq:uz_lin}.
 
-    \item $\nu$: Nonlinear effects transfer wave energy from $\vec{k}_{1}$ to
-        smaller scales. Since well-resolved simulations using spectral methods
-        have no inherent numerical viscosity, energy will accumulate at grid
-        scales in the absence of artificial dissipation. We introduce
-        dissipation parameter $\nu$ used for both artificial viscosity and artificial
-        diffusivity. We ensure our equations of motion continue to conserve
-        horizontal momentum (see \autoref{ss:strat_impl} for details). Under
-        weak forcing, we may set $\nu = 0$, since energy transfer out of the
-        parent $\vec{k}_1$ mode is negligible.
+    \item $\nu$: Nonlinear effects transfer wave energy from $\bm{k}$ to
+        larger wavenumbers. Since well-resolved simulations using spectral
+        methods have no inherent numerical viscosity, energy will accumulate at
+        grid scales in the absence of artificial dissipation. We introduce
+        dissipation parameter $\nu$ used for both artificial viscosity and
+        artificial diffusivity. We ensure our equations of motion continue to
+        conserve horizontal momentum (see \autoref{ss:strat_impl} for details).
+        Under weak forcing, we may set $\nu = 0$, since energy transfer out of
+        the parent $\bm{k}$ mode is negligible.
 \end{itemize}
 
-Finally, we use initial conditions $\vec{u}(0) = \Upsilon(0) = 0, \varpi(0) =
+Finally, we use initial conditions $\bm{u}(0) = \Upsilon(0) = 0, \varpi(0) =
 1$ corresponding to hydrostatic equilibrium and no initial fluid motion.
 
 \subsection{Damping Layers}\label{ss:damping}
@@ -517,15 +519,12 @@ Finally, we use initial conditions $\vec{u}(0) = \Upsilon(0) = 0, \varpi(0) =
 To imitate an infinite fluid using a finite simulation domain, we use periodic
 boundary conditions in the $x$ direction and damping layers at the top and
 bottom of the $z$ direction. This damps waves that reach the edge of the
-simulation domain without inducing nonphysical reflection. Specifically, these
-are implemented by introducing linear damping terms to \autoref{se:nl_upsilon}:
+simulation domain without inducing nonphysical reflection. Specifically, we
+replace material derivatives in \autoref{se:nl_upsilon} with:
 \begin{align}
-    \md{\Upsilon}{t} + u_{1z} \pd{\ln \rho_0}{z} &=
-        -\Gamma(z)\Upsilon,\nonumber\\
-    \md{\vec{u}_1}{t} + \vec{\nabla}P + P\vec{\nabla}\Upsilon + g\hat{z} &=
-        - \Gamma(z)\vec{u}_1,\nonumber\\
-    \frac{1}{2\tau}\s{2 + \tanh \frac{z - z_T}{\Delta z}
-        + \tanh \frac{z_B - z}{\Delta z}} &= \Gamma(z),\label{eq:Gamma}
+    \md{}{t} &\to \md{}{t} + \Gamma(z)\Upsilon,\nonumber\\
+    \Gamma(z) &= \frac{1}{2\tau}\s{2,+ \tanh \frac{z - z_T}{\Delta z}
+        + \tanh \frac{z_B - z}{\Delta z}},\label{eq:Gamma}
 \end{align}
 where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zone.
 This strongly damps perturbations below $z_B$ and above $z_T$ with damping time
@@ -538,195 +537,195 @@ fluid equations in Dedalus are described in \autoref{ss:strat_impl}.
 \subsection{Simulation Results}\label{ss:lin_ns}
 
 We describe the results of a simulation satisfying the parameter choices in
-\autoref{ss:numerics} such that $\vec{\xi} \cdot \vec{k}_1 \ll 1$ everywhere.
+\autoref{ss:numerics} such that $\xi_z k_z \ll 1$ everywhere.
 
 During the simulation, we expect IGW of form \autoref{eq:uz_lin} to be
-excited. Incompressibility allows us to compute a $\vec{u}_1(x, z, t)$ profile
-analytically. The amplitude of the observed IGW in $\vec{u}$ relative to
-analytical solution $\vec{u}_1$  can be estimated with estimator $\hat{A}(t)$
+excited. The incompressibility constraint allows us to compute a $\bm{u}(x, z,
+t)$ profile analytically. The amplitude of the observed IGW in $\bm{u}$ relative
+to analytical solution $\bm{u}_{al}$  can be estimated with estimator
+$\hat{A}_i(t)$ (subscript $i$ denotes incident wave)
 \begin{equation}
-    \hat{A}(t) = \frac{\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \rho_0\p{k_{1x}u_xu_{1x} - k_{1z}u_{1z}u_{1z}}\;\mathrm{d}x\mathrm{d}z}
+    \hat{A}_i(t) = \frac{\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
+        \bar{\rho}\p{\bm{u} \cdot \bm{u}_{al}}\;\mathrm{d}x\mathrm{d}z}
         {\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \rho_0\p{k_{1x}u_{1x}^2 - k_{1z}u_{1z}^2}\;\mathrm{d}x\mathrm{d}z}
+        \bar{\rho}u_{al}^2\;\mathrm{d}x\mathrm{d}z}
         \label{eq:ahat_def}
 \end{equation}
-If $\vec{u} = \vec{u}_1$ over $z \in [z_b, z_t], \forall t$, then it's clear
-that $\hat{A}(t) = 1$. The choice of multiplication by $\rho_0$ is such that the
-integrand is of roughly equal magnitude throughout the domain of integration (as
-$\vec{u} \propto e^{z/2H}$), while including a weighting by $k_{1x}, k_{1z}$
-ensures that reflected components with wavevector $\vec{k} = k_{1x}\hat{x} -
-k_{1z}\hat{z}$ identically vanish in the $\hat{A}$ estimator. Both of these
-features become important in later sections (see \autoref{ss:reflectivity}).
+If $\bm{u} = \bm{u}_{al}$ over $z \in [z_b, z_t], \forall t$, then $\hat{A}_i(t) =
+1$. The energy norm is a traditional normalization choice such that the $\bm{u}
+\propto e^{z/2H}$ is evenly weighted throughout the integration region.
 
-For a simulation satisfying $\vec{\xi} \cdot \vec{k}_1 \ll 1$ everywhere, we
-expect $\hat{A}(t) = 1$ so long as we consider only the domain between the
-forcing and damping zones, i.e.\  $z_b \gtrsim z_0, z_t \lesssim z_T$ ($z_0,
-z_T$ are defined in \autoref{eq:vol_drive} and \autoref{eq:Gamma} respectively).
-For consistency with the nonlinear case later, we choose $z_b = z_0 + 3\sigma,
-z_t = z_b + H$, though instead using $z_t = z_T - \Delta z$ does not change the
-results appreciably. The resulting measurement of $\hat{A}(t)$ is shown in
-\autoref{fig:lin_amps}.
-\begin{figure}[t]
+For a simulation satisfying $\xi_z k_z \ll 1$ everywhere, we
+expect $\hat{A}_i(t) = 1$ when integrated between the forcing and damping zones,
+i.e.\  $z_b \gtrsim z_0, z_t \lesssim z_T$ ($z_0, z_T$ are defined in
+\autoref{eq:vol_drive} and \autoref{eq:Gamma} respectively). For consistency
+with the nonlinear case later, we choose $z_b = z_0 + 3\sigma, z_t = z_b + H$
+(using $z_t = z_T - \Delta z$ instead does not change the results). The
+resulting measurement of $\hat{A}_i(t)$ is shown in \autoref{fig:lin_amps}.
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/lin_amps.png}
     \caption{Amplitude of excited wave over time in weak forcing simulation,
-    computed using \autoref{eq:ahat_def}. $\hat{A}(t) = 1$ corresponds to
+    computed using \autoref{eq:ahat_def}. $\hat{A}_i(t) = 1$ corresponds to
     perfect agreement with the analytical estimate. After an initial transient
     phase, we observe great agreement with \autoref{eq:uz_lin}, and in
-    particular $\hat{A}(t)$ asymptotes to a constant value, implying continuous
+    particular $\hat{A}_i(t)$ asymptotes to a constant value, implying continuous
     excitation of identical IGW.}\label{fig:lin_amps}
 \end{figure}
 
-A second prediction of the analytical theory is that $S(z, t)$ should be
-spatially flat between the forcing and damping zone(\autoref{eq:S_def}). We make
-may a slightly more accurate estimate of $S_1$ the flux carried in the IGW by
-directly substituting $\vec{u}_1$ into \autoref{eq:S_def}. Calling this estimate
-$S_1$, we may then measure the agreement of our simulation with analytical
-expectation by computing
+A second prediction of the analytical theory is that the horizontal momentmum
+flux $F(z, t)$ should be spatially flat between the forcing zone where it is
+generated and the damping zone where it is dissipated (\autoref{eq:F_def}). We
+make may a slightly more accurate estimate of $F$ the flux carried in the IGW by
+directly substituting $\bm{u}_{al}$ into \autoref{eq:F_def}. Calling this
+estimate $F_{al}$, we may then measure the agreement of our simulation with
+analytical expectation by computing
 \begin{equation}
-    \hat{S}(z, t) \equiv \frac{\int\limits_0^{L_x}\rho u_xu_z\;\mathrm{d}x}{
-        \int\limits_{0}^{L_x} \rho_0 u_{1x}u_{1z}\;\mathrm{d}x}.
-        \label{eq:shat_def}
+    \hat{F}(z, t) \equiv \frac{\int\limits_0^{L_x}\rho u_xu_z\;\mathrm{d}x}{
+        \int\limits_{0}^{L_x} \bar{\rho} u_{x}u_{z}\;\mathrm{d}x}.
+        \label{eq:sbm_def}
 \end{equation}
-For our weak forcing simulation, $\hat{S} = 1$ is expected between $z_0, z_T$,
+For our weak forcing simulation, $\hat{F} = 1$ is expected between $z_0, z_T$,
 and indeed we observe agreement with this in \autoref{fig:lin_fluxes}.
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/lin_fluxes.png}
-    \caption{\autoref{eq:shat_def} as a function of $z$ at select times $t$. As
-    initial transients die out, $\hat{S}(z, t) = 1$ to very good agreement below
-    $z \lesssim z_T = 9.5H$. The flux excited in the forcing zone is transported
-    without loss to the top of the domain, where it is dissipated by the damping
-    layer (see \autoref{ss:damping}) without reflection.}\label{fig:lin_fluxes}
+    \caption{\autoref{eq:sbm_def} as a function of $z$ at select times $t$. As
+    initial transients die out, $\hat{F}(z, t) = 1$ to very good agreement above
+    the forcing zone $z > z_0 = 2H$ and below the damping zone $z \lesssim z_T =
+    9.5H$. The flux excited in the forcing zone is transported without loss to
+    the top of the domain, where it is dissipated by the damping layer (see
+    \autoref{ss:damping}) without reflection.}\label{fig:lin_fluxes}
 \end{figure}
 
 \section{Internal Gravity Waves: Nonlinear Simulation}\label{s:sim}
 
 To perform simulations of wave breaking phenomena, we use the same values as
-\autoref{ss:numerics} except for $F, \nu$. In particular, we choose $F$ such
-that $\vec{k}_1 \cdot \vec{\xi} = 0.1$ in the forcing zone, which implies
-$\vec{k}_1 \cdot \vec{\xi}$ is exceeded before $z_T$ the upper damping zone.
-The dissipation parameter $\nu$ was varied across the various simulations. To
-quantify $\nu$, we define Reynolds number
+\autoref{ss:numerics} except for $C, \nu$. In particular, we choose $C$ such
+that $\xi_z (z_0) k_z = 0.1$ in the forcing zone, which implies $\xi_z(z) k_z
+\gtrsim 1$ before $z_T$ the upper damping zone. The dissipation parameter $\nu$
+was varied across the various simulations. To quantify $\nu$, we define Reynolds
+number
 \begin{equation}
-    \mathrm{Re} = \frac{LU}{\nu} \equiv \frac{\omega_1}{\nu k_{1z}^2}.
+    \mathrm{Re} = \frac{LU}{\nu} \equiv \frac{\omega}{\nu k_{z}^2}.
         \label{eq:re_def}
 \end{equation}
 A table of our simulation viscosities can be found in \autoref{tab:params}.
-\begin{table*}
+\begin{table}
     \centering
     \begin{tabular}{l c c c}
-        Name & Resolution & $\mathrm{Re}$ & $z$ spectral basis\\\bottomrule
-        \texttt{0p5\_hres} & $512 \times 2048$ & $2048$ & Fourier\\
-        \texttt{0p5\_shres} & $1024 \times 4096$ & $2048$ & Fourier\\
-        \texttt{1\_hres} & $512 \times 2048$ & $1024$ & Fourier\\
-        \texttt{1\_vhres} & $768 \times 3072$ & $1024$ & Fourier\\
-        \texttt{2\_hres} & $512 \times 2048$ & $512$ & Fourier\\
-        \texttt{3\_width} & $256 \times 1024$ & $341$ & Fourier\\
-        \texttt{6\_masked} & $256 \times 1024$ & $512$ & Chebyshev\\
-        \texttt{4\_masked} & $256 \times 1024$ & $341$ & Chebyshev\\
-        \texttt{3\_masked} & $256 \times 1024$ & $205$ & Chebyshev\\
-        \texttt{1\_masked} & $256 \times 1024$ & $146$ & Chebyshev\\
+        Resolution & $\mathrm{Re}$\\\bottomrule
+        $1024 \times 4096$ & $2048$\\
+        $768 \times 3072$ & $1024$\\
+        $512 \times 2048$ & $512$\\
+        $256 \times 1024$ & $341$\\
+        $256 \times 1024$ & $205$\\
+        $256 \times 1024$ & $146$\\
     \end{tabular}
-    \caption{Table of simulation parameters. Note that $\mathrm{Re}$ is defined
+    \caption{Table of simulation resolutions. Note that $\mathrm{Re}$ is defined
     as in \autoref{eq:re_def}.}\label{tab:params}
-\end{table*}
+\end{table}
 
 \subsection{Numerical Simulation Results}\label{ss:nl_ns}
 
-A full video of our higher-resolution run at $N_x = 1024, N_z = 4096$ can be
-found at\footnote{ http://www.princeton.edu/~lecoanet/data/breaking\_wave.mov}.
-Slices of $\bar{U}, \hat{S}$ across $z$ at various times $t$ are shown in
-\autoref{fig:nl_fluxes}. While the behavior of $\bar{U}$ seems to conform
+% TODO generate a video for the 0.1 case
+A full video of our higher-resolution run at $N_x = 1024, N_z = 4096,
+\mathrm{Re} = 2048$ is available
+online\footnote{http://www.princeton.edu/~lecoanet/data/breaking\_wave.mov}.
+We take this to be our fiducial simulation for the remainder of this paper,
+though other simulations show qualitatively identical behavior. Slices of
+$\overline{U}, \hat{F}$ across $z$ at various times $t$ are shown in
+\autoref{fig:nl_fluxes}. While the behavior of $\overline{U}$ seems to conform
 qualitatively with the predictions of \autoref{ss:crit_layer}, the behavior of
-$\hat{S}$ exhibits two salient features: (i) the incident flux seems to fluctuate
-greatly with time, and (ii) there seems to be a small transmitted feature at many
-of the later times. We will discuss further these features in
+$\hat{F}$ exhibits two salient features: (i) the incident flux seems to
+fluctuate greatly with time, and (ii) there seems to be a small transmitted
+feature at many of the later times. We will discuss further these features in
 \autoref{ss:reflectivity}, after first analyzing the propagation of the critical
 layer.
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_fluxes.png}
-    \caption{Plot of $\bar{U}(z, t)$ and $\hat{S}(z, t)$ respectively at various
-    times over $z$. $\bar{U}, \hat{S}$ follow their definitions in
-    \autoref{eq:mean_flow} and \autoref{eq:shat_def}. The values are extracted
-    from run \texttt{0p5\_shres}. $\bar{U}$ is given
-    in units of $c_{ph, x} = \frac{\omega_1}{k_{1x}}$ the critical layer flow
-    velocity (see \autoref{ss:crit_layer}). The propagation of the critical
-    layer towards lower $z$ and sharp deposition of $S$ at the critical layer
-    are evident.}\label{fig:nl_fluxes}
+    \caption{Plot of $\overline{U}(z, t)$ and $\hat{F}(z, t)$ respectively at
+    various times over $z$ in our $\mathrm{Re} = 1024$ simulation.
+    $\overline{U}, \hat{F}$ follow their definitions in \autoref{eq:mean_flow}
+    and \autoref{eq:sbm_def}. $\overline{U}$ is given in units of $c_{ph, x} =
+    \frac{\omega}{k_{x}}$ the critical layer flow velocity (see
+    \autoref{ss:crit_layer}). The propagation of the critical layer towards
+    lower $z$ and sharp deposition of $F$ at the critical layer are
+    evident.}\label{fig:nl_fluxes}
 \end{figure}
 
 \subsection{Propagating Critical Layer}
 
 For the simulation shown in \autoref{fig:nl_fluxes}, we may analyze the location
-of the critical layer. As the simulations are very noisy, we define the location
-of the critical layer to be
+of the critical layer. As the simulations are very noisy, we measure the location
+of the critical layer using an average of where flux deposition occurs
 \begin{align}
-    z_{c, \min} &= \argmin_z \z{z: S(z) < 0.3S_0},\nonumber\\
-    z_{c, \max} &= \argmax_z \z{z: S(z) > 0.3S_0},\nonumber\\
+    z_{c, \min} &= \argmin_z \z{z: F(z) < 0.3F_{al}},\nonumber\\
+    z_{c, \max} &= \argmax_z \z{z: F(z) > 0.3F_{al}},\nonumber\\
     z_c &\equiv \frac{z_{c, \min} + z_{c, \max}}{2}.\label{eq:zc_def}
 \end{align}
 This was found to a relatively stable estimator of the critical layer location.
 Other estimators were used and do not significantly change the results of the
 analysis.
 
-The evolution of $z_c$ is described by ODE \autoref{eq:zc_anal}, and in the
-limit $\Delta S(t) = \Delta S$ we obtained closed-form solution
-\autoref{eq:zc_sol}. To estimate $\Delta S(t)$ from the data, we defined:
+The evolution of $z_c$ depends on the deposited flux $\Delta F(t)$ per
+\autoref{eq:zc_anal}. To estimate $\Delta F(t)$ across the critical layer $z_c$
+from the data, we defined:
 \begin{align}
-    S_{<}(t) &= \ev{S(z)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
+    F_{<}(t) &= \ev{F(z)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
         ,\label{eq:sbelow_def}\\
-    S_>(t) &= \ev{\z{S(z): S(z) < 0}}_{z \in [z_c, z_c + \Delta z]},
+    F_>(t) &= \ev{\z{F(z): F(z) < 0}}_{z \in [z_c, z_c + \Delta z]},
         \label{eq:sabove_def},\\
-    \Delta S(t) &\equiv S_>(t) - S_{<}(t).\label{eq:ds_def}
+    \Delta F(t) &\equiv F_>(t) - F_{<}(t).\label{eq:ds_def}
 \end{align}
 $\ev{\dots}_{z \in [z_a, z_b]}$ denotes averaging over interval $[z_a, z_b]$.
-We average over an interval of length $H = \frac{2\pi}{k_{1z}}$ a full vertical
-wavelength. The offset $\Delta z$ is set by the observation that the critical
-layer's width is limited by $\mathrm{Ri} \lesssim 1$, translating to a critical
-layer width of $\sim \frac{1}{k_{1z}}$. Here, we found $\Delta z =
-\frac{3}{k_z}$ was necessary to be sufficiently offset from strong fluctuations
-near the critical layer.
+Below the critical layer, we average over an interval of length $H =
+\frac{2\pi}{k_{z}}$ a full vertical wavelength. The offset $\Delta z$ is
+necessary to make a measurement of the incident flux unaffected by the
+turbulence within the critical layer. The height of the critical layer is
+limited by $\mathrm{Ri} \lesssim 1$, which bounds its vertical extent $\sim
+\frac{1}{k_{z}}$. Here, we found $\Delta z = \frac{3}{k_z}$ was necessary to be
+sufficiently offset from strong fluctuations near the critical layer.
 
-Since the transmission feature can be seen in \autoref{fig:nl_fluxes} to
-attenuate rather quickly and is indeed rather weak, it is difficult to establish
-the correct interval to average over; we use the observation that $S(z) < 0$
-only for a small interval for $z$ to select the interval length implicitly.
+Above the critical layer, waves decay over a much smaller vertical extent as
+they have larger $z$ wavenumbers thanks to the shear flow, so we average over a
+$\Delta z$. Accurate measurement of these fluctuations above the critical layer
+is important to measuring the transmission feature accurately, seen in
+\autoref{fig:nl_fluxes} to be weak and attenuate quickly.
 
 Finally, we may plot the observed $z_c$ from data against two simple predictors:
-(i) integration of \autoref{eq:zc_anal} using the measured $\Delta S(t)$, and
-(ii) substituting the time-averaged $\ev{\Delta S}_t$ into \autoref{eq:zc_sol}.
+(i) integration of \autoref{eq:zc_anal} using the measured $\Delta F(t)$, and
+(ii) substituting the time-averaged $\ev{\Delta F}_t$ into \autoref{eq:zc_sol}.
 Since $z_c(t)$ is both stable and less well-defined at early times (when the
 critical layer is thick and transient behavior is still strong), we instead
 integrate backwards from the end of the simulation, using $z_c(t_f)$ as initial
 condition. The resulting predictors are depicted in \autoref{fig:nl_front}. The
 good agreement between the evolution of $z_c(t)$ and its estimate via $\Delta
-S(t)$ and \autoref{eq:zc_anal} are noteworthy. Further of interest is the
+F(t)$ and \autoref{eq:zc_anal} are noteworthy. Further of interest is the
 discrepancy between the time-averaged predictor and the data. The general
-agreement clearly demonstrates $\Delta S < S_1$ and that incomplete absorption
-is observed. Moreover, its significant underprediction of critical layer motion
-at early times contrasts with its comparatively satisfactory prediction at later
-times to indicate that $\Delta S(t)$ must vary significantly over time. Both of
-these observations indicate a careful characterization of reflectivity is
-necessary.
+agreement clearly demonstrates $\Delta F < F_{al}$ and that incomplete
+absorption is observed. Moreover, its significant underprediction of critical
+layer motion at early times contrasts with its comparatively satisfactory
+prediction at later times to indicate that $\Delta F(t)$ must vary significantly
+over time. Both of these observations indicate a careful characterization of
+reflectivity is necessary.
 
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_front.png}
     \caption{Propagation of the critical layer over time. Shown are (black)
     $z_c(t)$ from simulation data, (green) predictor of $z_c(t)$ using direct
-    integration of \autoref{eq:zc_anal} for $\Delta S(t)$ measured from
+    integration of \autoref{eq:zc_anal} for $\Delta F(t)$ measured from
     simulation data (described in \autoref{eq:ds_def}) and (blue) direct
-    substitution of time-averaged $\ev{\Delta S(t)}_t$ into
+    substitution of time-averaged $\ev{\Delta F(t)}_t$ into
     \autoref{eq:zc_sol}. Predictors use the end of the simulation as initial
     conditions and integrate backwards, as $z_c$ is less well-defined at early
     times. The agreement of the directly-integrated predictor with the data
     shows \autoref{eq:zc_anal} is a good description of the evolution of $z_c$.
     The the poorer but qualitatively correct agreement of the time-averaged
-    predictor with the data shows both that $\Delta S(t) \neq S_1$ and that
-    $\Delta S(t)$ likely has some very real variation with
+    predictor with the data shows both that $\Delta F(t) \neq F_{al}$ and that
+    $\Delta F(t)$ likely has some very real variation with
     time.}\label{fig:nl_front}
 \end{figure}
 
@@ -745,15 +744,16 @@ immediate vicinity of a fluid parcel. Thus, we first assign an $\mathrm{Ri}$ for
 every $x$ in the critical layer, then take the median as $\mathrm{Ri}$ for the
 entire layer. To avoid noisiness, the local $\mathrm{Ri}$ is computed using the
 vertical distance over which the local $u_x$ increases from $0.3 \times$ its
-critical value to its critical value. This can be written
+critical value to its critical value. The value $0.3$ effectively excludes the
+self-acceleration induced by the IGW\@. This can be written
 \begin{align}
-    z_{u, \min}(x, t) &= \argmin_\zeta
-        \z{z: u_x(x, \zeta, t) > 0.3\bar{U}_c},\nonumber\\
-    z_{u, \max}(x, t) &= \argmax
-        \zeta \z{z: u_x(x, \zeta, t) < \bar{U}_c},\nonumber\\
+    z_{CL, \min}(x, t) &= \argmin_\zeta
+        \z{z: u_x(x, \zeta, t) > 0.3\overline{U}_c},\nonumber\\
+    z_{CL, \max}(x, t) &= \argmax
+        \zeta \z{z: u_x(x, \zeta, t) < \overline{U}_c},\nonumber\\
     \mathrm{Ri}(t) &\equiv
-        \med_x\p{\frac{N^2 \p{z_{u, \max} - z_{u, \min}}^2}{(0.7
-            \bar{U}_c)^2}}.\label{ss:ri_med_def}
+        \med_x\p{\frac{N^2 \p{z_{CL, \max} - z_{CL, \min}}^2}{(0.7
+            \overline{U}_c)^2}}.\label{ss:ri_med_def}
 \end{align}
 To understand the variation in $\mathrm{Ri}$ over $x$, we can also plot using
 the minimum over $x$; the maximum is significantly noisier. Both of these are
@@ -762,9 +762,8 @@ saturated value is reflective of the fact that IGW are \emph{anti-diffusive}.
 This property is a simple consequence of the IGW dispersion relation
 \autoref{eq:disp_rel}, which is approximately $\omega k_z \approx Nk_x$ such
 that as an IGW propagates into a shear flow, $\omega$ decreases and $k_z$
-increases, enhancing dissipation. Dissipation in a momentum-conserving fluid
-then corresponds to further mean flow acceleration.
-\begin{figure}[t]
+increases, enhancing dissipation and further driving mean flow acceleration.
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_f_ri.png}
     \caption{Local Richardson number of the flow at the critical layer over time
@@ -780,75 +779,58 @@ then corresponds to further mean flow acceleration.
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
 
 We identify two instances of non-absorptive behavior: (i), the presence of a
-reflected wave with wave vector $\vec{k} = k_{1x}\hat{x} + k_{1z}\hat{z}$, and
+reflected wave with wave vector $\bm{k} = k_{x}\bm{x} + k_{z}\bm{z}$, and
 (ii) the amount of horizontal momentum flux $S$ reflected off the critical
 layer.
 
 To measure the reflected wave amplitude, we use almost the same definition
-\autoref{eq:ahat_def} except using $-k_{1z} \to +k_{1z}$; call this estimated
-$\hat{A}_r(t)$ the amplitude of the downwards-propagating reflected wave, and
-call $\hat{A}_i(t)$ the upwards-propagating incident wave. To compute
-$\hat{A}_r(t)$, we furthermore permit an arbitrary phase offset $\phi_r(t)$ at
-each time $t$, since the phase of the reflected wave is unknown, unlike that of
-the incident wave. We observe that the evolution of $\phi_r(t)$ is consistent
-with the interpretation of a reflected wave, as it is well approximated by
-$\pd{\phi_r}{t} \approx 2\pd{(k_{1z}z_c)}{t}$, consistent with a wave reflecting
-off a moving boundary at $z_c$.
+\autoref{eq:ahat_def} except using $k_{z} \to -k_{z}$; call this estimated
+$\hat{A}_r(t)$ the amplitude of the downwards-propagating reflected wave. To
+compute $\hat{A}_r(t)$, we furthermore permit an arbitrary phase offset
+$\phi_r(t)$ at each time $t$, since the phase of the reflected wave is unknown,
+unlike that of the incident wave. $\phi_r(t)$ in our simulations
+behaves in agreement with reflection off a moving boundary at $z_c$,
+well approximated by $\abs{\pd{\phi_r}{t}} \approx 2\abs{\pd{(k_{z}z_c)}{t}}$.
 
 Since reflectivity depends sensitively on accurate measurements of $\hat{A}_i,
-\hat{A}_r$, it is important \autoref{eq:ahat_def} identically not pick up
-contributions between the two $k_{1x}\hat{x} \pm k_{1z}\hat{z}$ modes, as we
-argued earlier. The integral for $\hat{A}_r$ is also performed over $z \in [z_0
-+ 3\sigma, z_0 + 3\sigma + H]$. Since in general $\hat{A}_i(t), \hat{A}_r(t)$
-are functions of time, we must measure reflectivity accounting for propagation
-time between the measurement zone and the critical layer where the wave
-reflects. For some
+\hat{A}_r$, we remark \autoref{eq:ahat_def} ensures orthogonality between
+$k_{x}\bm{x} \pm k_{z}\bm{z}$ modes. The integral for $\hat{A}_r$ is also
+performed over $z \in [z_0 + 3\sigma, z_0 + 3\sigma + H]$. Since
+$\hat{A}_i(t), \hat{A}_r(t)$ vary somewhat over time, we perform time averaging
+over multiple periods of the base IGW (specifically, averaged over approximately
+$8\pi/\omega$). We can then define the amplitude reflectivity
 \begin{equation}
-    \delta t(t) \approx \frac{z_c(t) - z_0 + 3\sigma + H/2}{c_{ph, z}},
-        \label{eq:dt_def}
+    \mathcal{R}_A(t) \equiv \frac{\ev{\hat{A}_r}(t)}{\ev{\hat{A}_i}(t)}
+        .\label{eq:Ra_def}
 \end{equation}
-an incident wave measured at $t - \delta t$ reflects at $t$ and is re-measured
-as a reflected wave at $t + \delta t$. The choice of vertical phase velocity
-instead of group velocity is necessary to good results, and a possible
-explanation is provided in \autoref{ss:modes}. We can then define the amplitude
-reflectivity
-\begin{equation}
-    \mathcal{R}_A(t) \equiv \frac{\hat{A}_r(t - \delta t)}{\hat{A}_i(t +
-        \delta t)}.\label{eq:Ra_def}
-\end{equation}
-Since in general $\delta t$ can take on arbitrary values while $\hat{A}_i,
-\hat{A}_r$ are sampled at discrete timesteps set by our simulation output, we
-evaluate $\hat{A}_i, \hat{A}_r$ using a simple linear interpolation to
-intermediate times.
+% 7/N per timestep, 13 timestep smoothing kernel, 24/N period
+Angle brackets denote time averaging here.
 
 To measure the reflected horizontal momentum flux, we recall from our linear
 simulations described in \autoref{ss:lin_ns} that we are able to accurately
 predict the incident flux from the incident wave amplitude. Thus, we write for
 incident flux
 \begin{equation}
-    S_i(t) \equiv \ev{\rho u_{1x} u_{1z}}_x\hat{A}_i^2(t).
+    F_i(t) \equiv \ev{\rho u_{x} u_{z}}_x\hat{A}_i^2(t).
 \end{equation}
-But then, since we already have $\Delta S(t), S_>(t)$ jump and transmitted flux
+But then, since we already have $\Delta F(t), F_>(t)$ jump and transmitted flux
 across the critical layer at time $t$ respectively, we can immediately write
 down the reflected flux
 \begin{equation}
-    S_d(t) = S_i(t - \delta t) + \Delta S(t) - S_>(t).
+    F_d(t) = F_i(t) + \Delta F(t) - F_>(t).
 \end{equation}
-$\delta t$ is still \autoref{eq:dt_def}; propagation time between $z_c$ and $z_c
-- 3/k_z - H/2$ the center averaging zone was ignored at the level of accuracy of
-the study. Then we can define flux reflectivity and transmissivity coefficients
+Then we can define flux reflectivity and transmissivity coefficients
 \begin{align}
-    \mathcal{R}_S(t) &\equiv -\frac{S_d(t)}{S_i(t - \delta t)},&
-    \mathcal{T}_S(t) &\equiv -\frac{S_>(t)}{S_i(t - \delta t)}.
+    \mathcal{R}_F(t) &\equiv -\frac{\ev{F_d}(t)}{\ev{F_i}(t)},&
+    \mathcal{T}_F(t) &\equiv -\frac{\ev{F_>}(t)}{\ev{F_i}(t)}.
         \label{eq:srefl_def}
 \end{align}
 
-The measurements of $\hat{A}_i, \hat{A}_r, S_i, \Delta S, S_d, S_>$ are given in
-\autoref{fig:nl_f_amps}. The oscillations in $\hat{A}_i, S_i$ are evident and
-neatly correspond to oscillations in $A_d, S_d$ respectively. We further analyze
-these oscillations in \autoref{ss:modes}.
+The measurements of $\hat{A}_i, \hat{A}_r, F_i, \Delta F, F_d, F_>$ are given in
+\autoref{fig:nl_f_amps}. The oscillations in $\hat{A}_i, F_i, A_d, F_d$ are
+apparent but the mean values seem to have temporally converged.
 
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_f_amps.png}
     \caption{The top panel measures the incident wave amplitude $\hat{A}_i(t)$
@@ -858,22 +840,20 @@ these oscillations in \autoref{ss:modes}.
     The bottom panel shows the behavior of three horizontal momentum fluxes over
     time, in units of the analytical estimate \autoref{eq:S_lin}: (blue) flux
     incident on the critical layer, (red) flux absorbed by the critical layer,
-    and (black) flux transmitted through the critical layer. Note that no
-    propagation time effects have been included in these plots.
-    }\label{fig:nl_f_amps}
+    and (black) flux transmitted through the critical
+    layer.}\label{fig:nl_f_amps}
 \end{figure}
 
 Using these measured quantities, we may make plots of $\mathcal{R}_A^2,
-\mathcal{R}_S, \mathcal{T}_S$, which are provided in \autoref{fig:nl_f_refl}. A
-comparison between $\mathcal{R}_A^2$ and $\mathcal{R}_S$ is appropriate as $S
-\propto A^2$. While less evident in the presented plot, a longer-duration
-simulation at lower resolution confirms that the three quantities have reached
+\mathcal{R}_F, \mathcal{T}_F$, which are provided in \autoref{fig:nl_f_refl}. A
+comparison between $\mathcal{R}_A^2$ and $\mathcal{R}_F$ is appropriate as $F
+\propto A^2$. Visual inspection suggests the three quantities have reached
 their asymptotic values after $t \gtrsim 1750/N$. An observation may be made
-that in general $\mathcal{R}_S \geq \mathcal{R}_A^2$; this conforms to the
-intuition that reflected flux consists of the simple reflected mode and higher
+that in general $\mathcal{R}_F \geq \mathcal{R}_A^2$; this conforms to the
+expectation that reflected flux consists of the simple reflected mode and higher
 order modes as well.
 
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_f_refl.png}
     \caption{Reflectivity and transmittivity coefficients for flux and
@@ -882,57 +862,6 @@ order modes as well.
     comparatively stable past about $t = 1750/N$, indicating that an asymptotic
     value may have been reached.}\label{fig:nl_f_refl}
 \end{figure}
-
-% Finally, we may be interested in the power spectrum of the transmitted
-% horizontal momentum flux. Define:
-% \begin{align}
-%     \tilde{S}_>(k_x, t) = \abs{
-%         \int\limits_0^{L_x} e^{ik_xx}\hat{S}_>(x, z_c - \Delta z, t)\;\mathrm{d}x}
-%             \label{eq:sfft_above},\\
-%     \tilde{S}_<(k_x, t) = \abs{
-%         \int\limits_0^{L_x} e^{ik_xx}\hat{S}_<(x, z_c + \Delta z, t)\;\mathrm{d}x}.
-%             \label{eq:sfft_below}
-% \end{align}
-% These values are plotted in \autoref{fig:nl_fft}. Note that we expect
-% $\tilde{S}_<(0, t) = S_<(t) = S_i(t) + S_d(t)$ and the same for $\tilde{S}_>$.
-% This is rather accurate for $\tilde{S}_<$ but less so for $\tilde{S}_>$; this is
-% since $S_>(t)$ decays very rapidly above $z_c$. Note furthermore that at later
-% times, the transmitted flux increases, per expectation, and shifts towards
-% higher $k_x$. Repeating this plot at higher viscosities shows significantly
-% lower $\tilde{S}_>$, showing that the $k_x$ of the transmitted waves still
-% changes greatly at the highest $\mathrm{Re}$ we are able to probe. Finally, note
-% that the area under $\tilde{S}$ changes with time; this is okay since we are
-% measuring $S$ at constant position, and different $k_x$ components of $S$ will
-% translate at their separate group velocities.
-
-\subsection{Appearance of Discrete Modes}\label{ss:modes}
-
-We briefly attribute the fluctuations in $\hat{A}_i(t)$ as observed in
-\autoref{fig:nl_f_amps} to the introduction of discrete modes by partial
-reflection off a moving critical layer. The partially reflecting boundary causes
-a muted effect of the usual normal modes calculation, so a slightly stronger
-response $\hat{A}_i > 1$ corresponds to being weakly on resonance. The
-instantaneous enhancement/attenuation of $\hat{A}_i$ when $z_c$ moves slowly can
-be computed by an overlap integral of the forcing with the modes of the finite
-domain. This is a consistent interpretation for three reasons:
-\begin{itemize}
-    \item The period of the fluctuations in $\hat{A}_i(t)$ grows longer at later
-        times. This is consistent with $\pd{z_c}{t}$ growing smaller at later
-        times, as the critical layer propagates deeper (see
-        \autoref{eq:zc_anal}).
-
-    \item The amplitude of the fluctuations in $\hat{A}_i(t)$ grows larger at
-        later times. This corresponds to the effective domain (below the
-        critical layer) growing smaller, which leads to stronger boundary
-        effects.
-
-    \item The propagation time $\delta t$, defined in \autoref{eq:dt_def}, used
-        the vertical phase velocity instead of the vertical group velocity to
-        obtain a non-oscillating reflectivity. This is consistent with the
-        fluctuations in $\hat{A}_i(t)$ being induced by internal modes of the
-        domain rather than a varying forcing strength, as the latter should
-        propagate at the \emph{group velocity} instead.
-\end{itemize}
 
 \subsection{Convergence}\label{ss:convergence}
 
@@ -943,18 +872,18 @@ and of the reflection/transmission coefficient asymptotic values, shown in
 \autoref{fig:nl_f_refl}, are of greatest significance.
 
 To estimate convergence, we compute the median value of each of $\mathrm{Ri},
-\mathcal{R}_A^2, \mathcal{R}_S, \mathcal{T}_S$ over the last $1/4$ of simulation
+\mathcal{R}_A^2, \mathcal{R}_F, \mathcal{T}_F$ over the last $1/4$ of simulation
 times from each simulation, where all simulations had converged to what appeared
 to be asymptotic values. Error bars are estimated with the $16$ and $84$
 percentiles. We illustrate the convergence of these averages across simulations
 in \autoref{fig:agg}.
-\begin{figure}[t]
+\begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/agg.png}
     \caption{Convergence of median reflection/transmission coefficients and
     $\mathrm{Ri}$ (critical layer width) across runs with varying viscosity,
     parameterized with $\mathrm{Re}$ (\autoref{eq:re_def}). Error bars depict
-    $16$ and $84$ percentile values. Small horizontal displacements are made for
+    $16$ and $84$ percentile values. Fmall horizontal displacements are made for
     data points at identical $\mathrm{Re}$ for readability. Note that
     simulations with larger $\mathrm{Re}$ correspond to smaller viscosity and
     are more physically realistic, and our values seem to converge towards large
@@ -985,7 +914,7 @@ k_z^2$, we find that $\mathrm{Re} \sim \frac{1}{\gamma}$. Even at $\gamma =
 reflection/transmission at the critical layer (e.g.\ \autoref{fig:agg}).
 
 Another source of dissipation considered in \citep{bukart} is turbulent
-convective damping. They find this damping rate to never exceed that of
+conbmtive damping. They find this damping rate to never exceed that of
 radiative damping, and so it is also too weak to suppress critical layer
 formation in our problem.
 
@@ -1036,7 +965,7 @@ as tidal novae resulting from strong shear flows.
     \item Validity of plane-parallel approximation? We're all at $\gtrsim
         0.9R_{WD}$.
 
-    \item Solar-type stars (inner convective, outer radiative): different
+    \item Solar-type stars (inner conbmtive, outer radiative): different
         equation of state/stratification but could be qualitatively similar.
 
     \item Solar-type stars: In~\cite{barker_ogilvie}, inwards-propagating IGW
@@ -1051,7 +980,7 @@ as tidal novae resulting from strong shear flows.
         geometrically thin critical layer.
 
         Associating $t_{} \sim \nu k^2 \approx \nu k_z^2$ with the visocus
-        timescale and $t_{NL} \sim \vec{u} \cdot \vec{\nabla} \sim \omega$ for
+        timescale and $t_{NL} \sim \bm{u} \cdot \bm{\nabla} \sim \omega$ for
         the nonlinear timescale, we find their $\lambda = \frac{t_{NL}}{t_L}
         \sim \mathrm{Re}$ our Reynolds number. Our simulations indicate
         $\mathrm{Re} \gtrsim 500$ are required to observe the correct asymptotic
@@ -1082,23 +1011,23 @@ significant energy cascade must happen in the critical layer.
 We denote $x \in [0, L_x], z \in [0, L_z]$ the simulation domain and $N_x, N_z$
 the number of spectral modes in the respective dimensions.
 
-Numerically, the nonlinear $\frac{\vec{\nabla}P}{\rho}$ term is problematic: we
+Numerically, the nonlinear $\frac{\bm{\nabla}P}{\rho}$ term is problematic: we
 desire a system where the fluid fields are not divided by one another. We
-introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\rho_0, \varpi_0$
-background fields satisfy hydrostatic equilibrium $\vec{\nabla}\varpi_0 +
-\varpi_0 \vec{\nabla}\rho_0 + g\hat{z} = 0$. Taking isothermal stratification,
+introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\bar{\rho}, \varpi_0$
+background fields satisfy hydrostatic equilibrium $\bm{\nabla}\varpi_0 +
+\varpi_0 \bm{\nabla}\bar{\rho} + g\bm{z} = 0$. Taking isothermal stratification,
 we find $\varpi_0 = gH$. We further change variables to $\Upsilon = \ln \rho -
-\ln \rho_0$ and $\varpi_1 = \varpi - \varpi_0$ deviations from the background
+\ln \bar{\rho}$ and $\varpi_1 = \varpi - \varpi_0$ deviations from the background
 state to obtain a system of equations at most quadratic in fluid fields:
 \begin{subequations}\label{se:nl_var}
     \begin{align}
-        \vec{\nabla} \cdot \vec{u}_1 &= 0,\\
-        \pd{\Upsilon}{t} + \p{\vec{u}_1 \cdot \vec{\nabla}} \Upsilon
+        \bm{\nabla} \cdot \bm{u}_1 &= 0,\\
+        \pd{\Upsilon}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}} \Upsilon
             - \frac{u_z}{H} &= 0,\\
-        \pd{u_{1x}}{t} + \p{\vec{u}_1 \cdot \vec{\nabla}}u_{1x}
+        \pd{u_{1x}}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_{1x}
             + \pd{\varpi_1}{x} + gH\pd{\Upsilon}{x}
             + \varpi_1 \pd{\Upsilon}{x} &= 0,\\
-        \pd{u_z}{t} + \p{\vec{u}_1 \cdot \vec{\nabla}}u_z
+        \pd{u_z}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_z
             + \pd{\varpi_1}{z} + gH\pd{\Upsilon}{z}
             + \varpi_1 \pd{\Upsilon}{z} - \frac{\varpi_1}{H} &= 0.
     \end{align}
@@ -1116,13 +1045,13 @@ the flux-conservative form of the Euler fluid equations \autoref{se:nl_orig} (we
 use stress tensor $\tau_{ij} = P\delta_{ij}$):
 \begin{subequations}
     \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \partial_t \rho + \vec{\nabla} \cdot (\rho \vec{u} - \nu
-            \vec{\nabla}(\rho - \rho_0)) &= 0,\label{eq:visc_cons_mom}\\
-        \partial_t (\rho \vec{u}) + \vec{\nabla} \cdot (\rho \vec{u}
-        \vec{u} +
-            \mathrm{diag}(\rho \varpi) - \nu \rho \vec{\nabla}\vec{u}) + \rho g
-            \hat{z} &= 0.
+        \bm{\nabla} \cdot \bm{u} &= 0,\\
+        \partial_t \rho + \bm{\nabla} \cdot (\rho \bm{u} - \nu
+            \bm{\nabla}(\rho - \bar{\rho})) &= 0,\label{eq:visc_cons_mom}\\
+        \partial_t (\rho \bm{u}) + \bm{\nabla} \cdot (\rho \bm{u}
+        \bm{u} +
+            \mathrm{diag}(\rho \varpi) - \nu \rho \bm{\nabla}\bm{u}) + \rho g
+            \bm{z} &= 0.
     \end{align}
 \end{subequations}
 The same $\nu$ is used for both the diffusive and viscous term, though this is
@@ -1132,53 +1061,53 @@ modified. Some algebraic manipulation to re-cast it in the form of
 \autoref{se:nl_var} gives
 \begin{subequations}
     \begin{align}
-        \vec{\nabla} \cdot \vec{u} &= 0,\\
-        \partial_t \Upsilon + \p{\vec{u} \cdot \vec{\nabla}} \Upsilon -
-            \frac{u_z}{H} - \nu\p{\nabla^2 \Upsilon + \p{\vec{\nabla}
-            \Upsilon} \cdot \p{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+        \bm{\nabla} \cdot \bm{u} &= 0,\\
+        \partial_t \Upsilon + \p{\bm{u} \cdot \bm{\nabla}} \Upsilon -
+            \frac{u_z}{H} - \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
+            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
-        \partial_t \vec{u} + \p{\vec{u} \cdot \vec{\nabla}}\vec{u} +
-            \vec{\nabla} \varpi + \varpi \vec{\nabla} \Upsilon - \nu \nabla^2
-            \vec{u} + \vec{u} \nu\p{\nabla^2 \Upsilon + \p{\vec{\nabla}
-            \Upsilon} \cdot \p{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+        \partial_t \bm{u} + \p{\bm{u} \cdot \bm{\nabla}}\bm{u} +
+            \bm{\nabla} \varpi + \varpi \bm{\nabla} \Upsilon - \nu \nabla^2
+            \bm{u} + \bm{u} \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
+            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
-        - 2\nu \p{\p{\p{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}\vec{u} -
-            \frac{1}{H}\partial_z \vec{u}} - \frac{\varpi_1}{H} &= 0.
+        - 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}\bm{u} -
+            \frac{1}{H}\partial_z \bm{u}} - \frac{\varpi_1}{H} &= 0.
     \end{align}
 \end{subequations}
-Hydrostatic equilibrium is still $\vec{\nabla} \varpi_0 + g\hat{z} = 0$ where
-$\rho = \rho_0, \vec{u} = 0$. Including the damping layers and forcing terms as
+Hydrostatic equilibrium is still $\bm{\nabla} \varpi_0 + g\bm{z} = 0$ where
+$\rho = \bar{\rho}, \bm{u} = 0$. Including the damping layers and forcing terms as
 described in \autoref{ss:numerics}, we finally obtain the full system of
 equations as simulated in Dedalus: [TODO update w/ mask]
 \begin{subequations}
     \begin{align}
-        \vec{\nabla} \cdot \vec{u} ={}& 0,\\
+        \bm{\nabla} \cdot \bm{u} ={}& 0,\\
         \partial_t \Upsilon - \frac{u_z}{H}
-            ={}& \nu\p{\nabla^2 \Upsilon + \p{\vec{\nabla}
-            \Upsilon} \cdot \p{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+            ={}& \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
+            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}},\nonumber\\
-            & - \p{\vec{u} \cdot \vec{\nabla}}\Upsilon
+            & - \p{\bm{u} \cdot \bm{\nabla}}\Upsilon
                 -\Gamma(z) \Upsilon
-                + \frac{F}{\rho_0(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
+                + \frac{F}{\bar{\rho}(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
                     \cos \p{k_xx - \omega t},\\
         \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x} ={}&
             \nu \nabla^2 u_x
-            - u_x \nu\p{\nabla^2 \Upsilon + \p{\vec{\nabla} \Upsilon} \cdot
-                \p{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+            - u_x \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla} \Upsilon} \cdot
+                \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
                 + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
-            &+ 2\nu \p{\p{\p{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_x
+            &+ 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}u_x
                 - \frac{1}{H}\partial_z u_x}
             -\Gamma(z) u_x
-                - \p{\vec{u} \cdot \vec{\nabla}}u_x
+                - \p{\bm{u} \cdot \bm{\nabla}}u_x
                 - T_1 \pd{\Upsilon}{x},\\
         \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H} ={}&
             \nu \nabla^2 u_z
-            - u_z \nu\p{\nabla^2 \Upsilon + \p{\vec{\nabla} \Upsilon} \cdot
-                \p{\vec{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
+            - u_z \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla} \Upsilon} \cdot
+                \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
                 + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
-            &+ 2\nu \p{\p{\p{\vec{\nabla}\Upsilon} \cdot \vec{\nabla}}u_z -
+            &+ 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}u_z -
                 \frac{1}{H}\partial_z u_{z}}
-            -\Gamma(z) u_z - \p{\vec{u} \cdot \vec{\nabla}}u_z
+            -\Gamma(z) u_z - \p{\bm{u} \cdot \bm{\nabla}}u_z
             - T_1 \pd{\Upsilon}{z}.
     \end{align}
 \end{subequations}
