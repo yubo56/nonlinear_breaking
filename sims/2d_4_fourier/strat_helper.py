@@ -983,7 +983,7 @@ def plot_front(name, params):
     dSpx, front_pos, front_idxs, S_aboves =\
         get_dS_front(params, S_px, sim_times, z0)
 
-    times = get_times([1/9, 1/6, 1/3, 1], sim_times, start_idx)
+    times = get_times([1/15, 1/7, 3/10, 1], sim_times, start_idx)
     fig = plt.figure()
     if 'lin' in name:
         #####################################################################
