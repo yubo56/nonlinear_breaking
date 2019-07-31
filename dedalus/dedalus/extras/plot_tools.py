@@ -139,16 +139,16 @@ def plot_bot(dset, image_axes, data_slices, image_scales=(0,0), clim=None, even_
             title = dset.attrs['name']
         except KeyError:
             title = dset.name
-    caxes.set_xlabel(title)
+    caxes.set_xlabel(title, fontsize=14)
     caxes.xaxis.set_label_position('top')
     if isinstance(xscale, str):
         paxes.set_xlabel(xscale)
     else:
-        paxes.set_xlabel(dset.dims[xaxis].label)
+        paxes.set_xlabel('$%s$' % dset.dims[xaxis].label)
     if isinstance(yscale, str):
         paxes.set_ylabel(yscale)
     else:
-        paxes.set_ylabel(dset.dims[yaxis].label)
+        paxes.set_ylabel('$%s$' % dset.dims[yaxis].label)
 
     return paxes, caxes
 
