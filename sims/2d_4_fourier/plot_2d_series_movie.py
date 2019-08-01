@@ -19,6 +19,9 @@ plt.ioff()
 from dedalus.extras import plot_tools
 import re
 
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif', size=12)
+
 def main(filename, start, count, output, write_start):
     """Save plot of specified tasks for given range of analysis writes."""
 
