@@ -47,13 +47,14 @@ if __name__ == '__main__':
                      [[rA_med**2 - rA_min**2], [rA_max**2 - rA_med**2]],
                      ecolor='b', linewidth=lwidth)
         ax3.plot(x, w_med, 'ko', markersize=msize)
-        ax3.errorbar(x, w_med, np.array([[w_med - w_min, w_max - w_med]]),
+        ax3.errorbar(x, w_med,
+                     [[w_med - w_min], [w_max - w_med]],
                      ecolor='k', linewidth=lwidth)
 
         ax1.set_ylim([0, 0.8])
         ax1.set_yticks([0, 0.35, 0.7])
-        ax3.set_ylim([0, 0.7])
-        ax3.set_yticks([0, 0.5])
+        ax3.set_ylim([0, 1.5])
+        ax3.set_yticks([0, 0.5, 1])
         offsets[re_inv] += 20
 
     ln1 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
@@ -65,7 +66,7 @@ if __name__ == '__main__':
     ax1.legend(handles=[ln1, ln2, ln3], fontsize=12, loc='upper left')
 
 
-    ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
+    # ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
     ax3.set_ylabel('Ri')
     ax3.set_xlabel('Re')
     ax = plt.gca()

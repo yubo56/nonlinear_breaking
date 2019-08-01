@@ -1087,7 +1087,7 @@ def plot_front(name, params):
         ax2.set_ylim(-0.2, 1.2)
         ax2.legend(fontsize=FONTSIZE)
 
-        ax1.set_ylabel(r'$\bar{U} k_x/\omega$')
+        ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$')
         ax2.set_ylabel(r'$\hat{F}$')
         ax2.set_xlabel(r'$z(H)$')
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
@@ -1269,7 +1269,7 @@ def plot_front(name, params):
         ax1.plot(t_refl, trans, 'k:', linewidth=0.7, label='$\mathcal{T}_F$')
 
         ax1.legend(fontsize=FONTSIZE, loc='upper left')
-        ax1.set_ylabel(r'Reflectivity')
+        # ax1.set_ylabel(r'Reflectivity')
         ax1.set_xlabel(r'$t$')
         ax1.set_ylim([0, 0.5])
 

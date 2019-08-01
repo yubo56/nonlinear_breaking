@@ -185,8 +185,8 @@ and pressure respectively. We denote $-g\bm{z}$ constant gravitational
 acceleration. Note that at hydrostatic equilibrium $\pd{}{t} = 0$ we have
 $\bm{\nabla}\overline{P} = -\overline{\rho} g\bm{z}$ and so $\overline{P} =
 \overline{\rho} gH$. A vertically-stratified shear flow
-$\overline{u}_x(z)\bm{x}$ is permitted in hydrostatic equilibrium, but we will
-assume no background flow, and $\bm{u} = \bm{u}'$. Physically, this assumption
+$\overline{u}_x(z)\bm{x}$ is permitted at hydrostatic equilibrium, but we will
+assume no background flow, so $\bm{u} = \bm{u}'$. Physically, this assumption
 corresponds to a non-rotating star, or going to the corotating frame of a
 rigidly rotating star.
 
@@ -205,7 +205,7 @@ equations of \autoref{se:nl_orig} as
     \end{align}
 \end{subequations}
 Note that in the new coordinates, hydrostatic equilibrium corresponds to
-$\Upsilon = 1, \overline{\varpi} = gH$.
+$\Upsilon = 0, \overline{\varpi} = gH$.
 
 \section{Internal Gravity Waves: Theory}\label{s:theory}
 
@@ -233,7 +233,7 @@ the \emph{Brunt-V\"ais\"al\"a frequency} to be constant in the incompressible
 limit $c_s \to \infty$ where $c_s$ is the sound speed. Other dynamical
 quantities are simply related to $u'_z$ (see e.g.\ \cite{sutherland0}).
 
-In the weak stratification limit $k_{z}H \gg 1$, the solution exhibits the
+In the weak stratification limit $\abs{k_{z}H} \gg 1$, the solution exhibits the
 following characteristics:
 \begin{itemize}
     \item The amplitude of the wave grows with $z$ as $e^{z/2H}$. Thus, the
@@ -250,12 +250,12 @@ following characteristics:
         \end{align}
         We note $\bm{c}_{ph} \cdot \bm{c}_g =
         \mathcal{O}\p{\frac{1}{\p{k_{z}H}^{2}}} \approx 0$, the usual result
-        (e.g.~\cite{drazin,sutherland1}). Note again that $c_{gz} < 0$ for
-        $k_{x}, k_{z} > 0$, so upwards-propagating IGW have $k_z < 0$.
+        (e.g.~\cite{drazin,sutherland1}). Note that for an upwards propagating
+        IGW $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
 
     \item The time-averaged total $x$-momentum flux $F$ carried in the $\bm{z}$
         direction can be computed. Since the linear solution consists of terms
-        separable as $f(x, z, t) = f(z)e^{i(k_{1x}x - \omega_1 t)}$, $x$
+        separable as $f(x, z, t) = f(z)e^{i(k_{x}x - \omega t)}$, $x$
         averaging and time averaging are equivalent. We may then write
         \begin{align}
             F &\equiv \ev{\rho u_{x}' u_{z}'}_x \equiv
@@ -286,8 +286,8 @@ downwards, which are damped away by the damping layers described in
 \autoref{ss:damping}.
 
 As not to interfere with the incompressibility constraint, we force the system
-on the density equation. We implement forcing with strength $C$ by replacing
-\autoref{eq:nl_up_density} with
+on the density equation. We implement forcing with strength $C$ localized around
+$z_0$ with width $\sigma$ by replacing \autoref{eq:nl_up_density} with
 \begin{equation}
     \md{\Upsilon}{t} + u_{z}'\pd{\ln \overline{\rho}}{z}
         = Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}
@@ -346,11 +346,11 @@ mean flow, given by \citep{eliassen_palm_cite,sutherland0}:
 \end{equation}
 This formula is analogous to Stokes' drift for surface waves and can be derived
 by considering the propagation of $F$ (\autoref{eq:F_def}) into a medium at
-rest. Solving for $\overline{U} = \overline{U}_c \equiv \omega / k_x$ the
-critical layer condition (see \autoref{ss:crit_layer} immediately below), we
-obtain $\abs{\frac{u_{x}'k_{x}}{\omega}} = \abs{\xi_x k_{x}} = \abs{\xi_z k_z}
-\sim 1$, equal to the nonlinearity criterion \autoref{eq:nl}. This condition
-predicts where the wave's self-acceleration alone produces a critical layer.
+rest. Solving for $\overline{U} = \omega / k_x$ the critical layer condition
+(\autoref{eq:u_c} and discussion in \autoref{ss:crit_layer}), we obtain
+$\abs{\frac{u_{x}'k_{x}}{\omega}} = \abs{\xi_x k_{x}} = \abs{\xi_z k_z} \sim 1$,
+equal to the nonlinearity criterion \autoref{eq:nl}. This condition predicts
+where the wave's self-acceleration alone produces a critical layer.
 
 \subsection{Formation and Dynamics of Critical Layer}\label{ss:crit_layer}
 
@@ -381,16 +381,19 @@ induce reflection.
 A purely horizontal shear flow $\overline{U}(z) \bm{x}$ can be seen in
 \autoref{se:nl_orig} to have the effect of modifying time derivatives
 $\partial_t$ to their frequency in the comoving frame of the fluid $\partial_t -
-\overline{U}(z)\partial_x$. For a critical value $\omega - \overline{U}_c k_{x}
-= 0$, the horizontal wavenumber of the linear wave in the fluid's frame of
-reference vanishes and critical behavior is observed. In a linear
-\citep{booker_bretherton} or viscous \citep{hazel} theory, the incident wave has
+\overline{U}(z)\partial_x$. If anywhere $\overline{U}(z) = \overline{U}_c$ where
+\begin{equation}
+    \overline{U}_c \equiv \omega / k_x,\label{eq:u_c}
+\end{equation}
+then the horizontal wavenumber of the linear wave in the fluid frame vanishes
+and critical behavior is observed. In a linear theory, both inviscid
+\citep{booker_bretherton} and viscous \citep{hazel}, the incident wave has
 amplitude reflection and transmission coefficients
 \begin{align}
     \mathrm{Ri} &\equiv \at{\frac{N^2}{\p{\pd{\overline{U}}{z}}^2}}_{z_c},
         \label{eq:ri_def}\\
-    \mathcal{R} &= e^{-2\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}}, &
-    \mathcal{T} &= e^{-\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}},
+    \mathcal{R}_A &= e^{-2\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}}, &
+    \mathcal{T}_A &= e^{-\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}},
         \label{eq:crit_coeffs}
 \end{align}
 where we have defined local Richardson number Ri at the critical layer $z_c:
@@ -406,25 +409,24 @@ propagate downwards to accommodate the incident momentum. The total horizontal
 momentum of the shear flow then obeys conservation equation
 \begin{equation}
     \pd{}{t}\int\limits \rho(z) \overline{U}(z, t)\;\mathrm{d}z
-        + \Delta S = 0.
+        + \Delta F = 0.
 \end{equation}
-$\Delta S$ is the total injected horizontal momentum to the flow. We next make a
+$\Delta F$ is the total injected horizontal momentum to the flow. We next make a
 simple two-zone approximation $\overline{U}(z > z_c) = \overline{U}_c,
 \overline{U}(z < z_c) = 0$, assuming all horizontal momentum flux goes into
 critical layer propagation. Then, the conservation equation becomes simple
 differential equation
 \begin{equation}
-    \rho(z_c) \overline{U}_c\pd{z_c}{t} = \Delta S.\label{eq:zc_anal}
+    \rho(z_c) \overline{U}_c\pd{z_c}{t} = \Delta F.\label{eq:zc_anal}
 \end{equation}
-For constant $\Delta S$ in time and $\rho \approx \overline{\rho}$, this has
+If the entirety of the horizontal momentum flux carried by the IGW wavetrain is
+absorbed by the critical layer, then $\Delta F = -F'$ is constant in time.
+For constant $\Delta F$ in time and $\rho \approx \overline{\rho}$, $z_c(t)$ has
 analytical solution
 \begin{equation}
-    z_c(t) = -H\ln t - H\ln \frac{H\overline{\rho}_0\overline{U}_c}{-\Delta S}
+    z_c(t) = -H\ln t - H\ln \frac{H\overline{\rho}_0\overline{U}_c}{-\Delta F}
         .\label{eq:zc_sol}
 \end{equation}
-Note that constant $-\Delta S$ corresponds physically to the picture where
-constant $S$ carried by the IGWs, given by \autoref{eq:S_lin}, is fully absorbed
-at the critical layer, in which case $\Delta S = -S$.
 
 \section{Internal Gravity Waves: Linear Numerical Simulation}\label{s:sim}
 
@@ -438,8 +440,7 @@ where we solve the full nonlinear fluid equations for weak forcing.
 
 \subsection{Numerical Setup}\label{ss:numerics}
 
-We nondimensionalize by taking $H = N = \overline{\rho}_0 = 1$ in
-\autoref{se:nl_orig}.
+We nondimensionalize by taking $H = N = \overline{\rho}_0 = 1$.
 
 % TODO physical vs simulation domain
 Denote $L_x, L_z$ to be the physical dimensions of the simulation domain. Our
@@ -663,7 +664,7 @@ velocity field $\bm{u}$ at select times can be found in \autoref{fig:snapshots}.
     \includegraphics[width=0.45\textwidth]{plots/yubo_000451.png}}
 
     \caption{Snapshots of $u_x, u_z$ in the fiducial simulation illustrating
-    distinct phases of the evolution of the flow. Note that $\bar{U}_c \approx
+    distinct phases of the evolution of the flow. Note that $\overline{U}_c \approx
     0.16$ for the parameters used.}\label{fig:snapshots}
 \end{figure*}
 
@@ -682,11 +683,11 @@ layer.
     \caption{Plot of $\overline{U}(z, t)$ and $\hat{F}(z, t)$ respectively at
     various times over $z$ in our $\mathrm{Re} = 1024$ simulation.
     $\overline{U}, \hat{F}$ follow their definitions in \autoref{eq:mean_flow}
-    and \autoref{eq:sbm_def}. $\overline{U}$ is given in units of $c_{ph, x} =
-    \frac{\omega}{k_{x}}$ the critical layer flow velocity (see
-    \autoref{ss:crit_layer}). The propagation of the critical layer towards
-    lower $z$ and sharp deposition of $F$ at the critical layer are
-    evident.}\label{fig:nl_fluxes}
+    and \autoref{eq:sbm_def}. $\overline{U}$ is given in units of
+    $\overline{U}_c = \frac{\omega}{k_{x}}$ the critical horizontal flow
+    velocity (see \autoref{ss:crit_layer}). The propagation of the critical
+    layer towards lower $z$ and sharp deposition of $F$ at the critical layer
+    are evident.}\label{fig:nl_fluxes}
 \end{figure}
 
 \subsection{Propagating Critical Layer}
@@ -766,12 +767,14 @@ reflectivity is necessary.
 \subsection{Kelvin-Helmholtz Instability and Critical Layer Width}\label{ss:khi}
 
 The observation of reflected/transmitted waves is in accordange with previous
-studies as discussed in \autoref{ss:wave_breaking}. Many studies have shown that
-a local Richardson number $\mathrm{Ri} \sim 1/4$ corresponds to the onset of
-reflectivity. This agrees with the observed Kelvin-Helmholtz instability in our
-simulations [TODO image]. To verify that the critical layer's width is bound
-from below by Kelvin-Helmholtz instabilities, we decided to compute a
-$\mathrm{Ri}$ within the critical layer.
+studies as discussed in \autoref{ss:wave_breaking}. Studies have shown that a
+local Richardson number $\mathrm{Ri} \sim 1/4$ corresponds to the onset of
+reflectivity. This $\mathrm{Ri}$ also corresponds to the onset of the
+Kelvin-Helmholtz instability (KHI). Indeed, in our simulations, visual
+inspection suggests the KHI is present in the critical layer (see
+\autoref{fig:snapshots}). It is natural to suspect then that the shear flow
+cannot steepen any further than KHI onset. To verify this, we decided to compute
+a local $\mathrm{Ri}$ for the shear flow around the critical layer.
 
 Since fluid instabilities are local, $\mathrm{Ri}$ must be measured in the
 immediate vicinity of a fluid parcel. Thus, we first assign an $\mathrm{Ri}$ for
@@ -790,7 +793,7 @@ self-acceleration induced by the IGW\@. This can be written
             \overline{U}_c)^2}}.\label{ss:ri_med_def}
 \end{align}
 To understand the variation in $\mathrm{Ri}$ over $x$, we can also plot using
-the minimum over $x$; the maximum is significantly noisier. Both of these are
+the minimum over $x$ (the maximum is significantly noisier). Both of these are
 shown in \autoref{fig:nl_f_ri}. The quick evolution of $\mathrm{Ri}$ to its
 saturated value is reflective of the fact that IGW are \emph{anti-diffusive}.
 This property is a simple consequence of the IGW dispersion relation
@@ -802,19 +805,18 @@ increases, enhancing dissipation and further driving mean flow acceleration.
     \includegraphics[width=\columnwidth]{plots/nl_f_ri.png}
     \caption{Local Richardson number of the flow at the critical layer over time
     as defined in \autoref{ss:ri_med_def}. Dotted red lines demarcate the
-    minimum and maximum of $\mathrm{Ri}$ over $x$ instead of the median. These
-    numbers effectively measure the mean and spread in width of the critical
-    layer over $x$. Note that $\mathrm{Ri} \lesssim \frac{1}{4}$ corresponds
-    to Kelvin-Helmholtz instability, so this plot suggests the critical layer
-    width roughly saturates the lower bound from the Kelvin-Helmholtz
-    instability after an initial transient phase.}\label{fig:nl_f_ri}
+    minimum and median of $\mathrm{Ri}$ over $x$. These numbers effectively
+    measure the mean and spread in width of the critical layer over $x$. Note
+    that $\mathrm{Ri} \sim \frac{1}{4}$ corresponds to the KHI, so this plot
+    suggests the shear at the critical layer does not steepen past the KHI
+    onset.}\label{fig:nl_f_ri}
 \end{figure}
 
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
 
 We identify two instances of non-absorptive behavior: (i), the presence of a
 reflected wave with wave vector $\bm{k} = k_{x}\bm{x} + k_{z}\bm{z}$, and
-(ii) the amount of horizontal momentum flux $S$ reflected off the critical
+(ii) the amount of horizontal momentum flux $F$ reflected off the critical
 layer.
 
 To measure the reflected wave amplitude, we use almost the same definition
@@ -917,12 +919,20 @@ in \autoref{fig:agg}.
     \caption{Convergence of median reflection/transmission coefficients and
     $\mathrm{Ri}$ (critical layer width) across runs with varying viscosity,
     parameterized with $\mathrm{Re}$ (\autoref{eq:re_def}). Error bars depict
-    $16$ and $84$ percentile values. Fmall horizontal displacements are made for
+    $16$ and $84$ percentile values. Small horizontal displacements are made for
     data points at identical $\mathrm{Re}$ for readability. Note that
     simulations with larger $\mathrm{Re}$ correspond to smaller viscosity and
     are more physically realistic, and our values seem to converge towards large
-    $\mathrm{Re}$.}\label{fig:agg}
+    $\mathrm{Re}$. At the smallest $\mathrm{Re}$ value, $\mathrm{Ri} \approx 50$
+    is too large to fit on the plot.}\label{fig:agg}
 \end{figure}
+
+It is apparent that the Richardson number rapidly converges to $\mathrm{Ri}
+\approx 0.4$ but the reflection/transmission coefficients converge more slowly.
+This is in disagreement with \autoref{eq:crit_coeffs} calculated via the linear
+analytical theory. This tension is natural: fluid motion within the critical
+layer is turbulent, so transmission/reflection at the critical layer cannot be
+captured by any linear theory.
 
 \section{Discussion}\label{s:discussion}
 
@@ -987,13 +997,13 @@ as tidal novae resulting from strong shear flows.
 
 \begin{itemize}
     \item $k_x, k_z$: In astrophysical systems, $k_{\perp} \ll k_r$. While we do
-        not explore different $k_{1x}, k_{1z}, \omega_1$ in this study, with
+        not explore different $k_{x}, k_{z}, \omega_1$ in this study, with
         outgoing boundary conditions, there appears at first to be no $z$ length
-        scale other than $k_{1z}$, so our results would seem to be invariant
+        scale other than $k_{z}$, so our results would seem to be invariant
         under rescaling of the $z$ length scale. However, true turbulence is
-        expected to be isotropic at small scales, which may couple $k_{1x},
-        k_{1z}$ in a way that $k_{1x} \ll k_{1z}$ produces different dynamics
-        than $k_{1x} \lesssim k_{1z}$ as we've studied. This is a numerically
+        expected to be isotropic at small scales, which may couple $k_{x},
+        k_{z}$ in a way that $k_{x} \ll k_{z}$ produces different dynamics
+        than $k_{x} \lesssim k_{z}$ as we've studied. This is a numerically
         difficult regime though, so we defer consideration to future work.
 
     \item Validity of plane-parallel approximation? We're all at $\gtrsim
@@ -1058,7 +1068,7 @@ state to obtain a system of equations at most quadratic in fluid fields:
         \bm{\nabla} \cdot \bm{u}_1 &= 0,\\
         \pd{\Upsilon}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}} \Upsilon
             - \frac{u_z}{H} &= 0,\\
-        \pd{u_{1x}}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_{1x}
+        \pd{u_{x}}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_{x}
             + \pd{\varpi_1}{x} + gH\pd{\Upsilon}{x}
             + \varpi_1 \pd{\Upsilon}{x} &= 0,\\
         \pd{u_z}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_z
