@@ -16,6 +16,7 @@
         labelfont=bf, % caption names are labeled in bold
         font=scriptsize % smaller font for captions
     ]{caption}
+    \usepackage[caption=false]{subfig} % subfigures
 
     \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
     \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
@@ -633,7 +634,40 @@ A full video of our higher-resolution run at $N_x = 768, N_z = 3072,
 \mathrm{Re} = 1024$ is available
 online\footnote{http://www.princeton.edu/~lecoanet/data/breaking\_wave.mov}. We
 take this to be our fiducial simulation for the remainder of this paper, though
-other simulations show qualitatively identical behavior. Slices of
+other simulations show qualitatively identical behavior. Snapshots of the
+velocity field $\bm{u}$ at select times can be found in \autoref{fig:snapshots}.
+% convert yubo_000054.png -crop 2000x2000+150+250 out.png
+\begin{figure*}
+    \subfloat[$t=413.4$ At early times, the flow resembles a linear IGW lower in
+    the simulation domain but breaks down into smaller-scale features at higher
+    $z$. Some characteristic swirling motion can be seen in both $u_x, u_z$,
+    highly suggestive of Kelvin-Helmholtz instabilities.]{
+    \includegraphics[width=0.45\textwidth]{plots/yubo_000054.png}}\hfil
+    %
+    \subfloat[$t=658.5$ At a slightly later time, the mean flow in $u_x$ has
+    become much more prominent and the critical layer $z_c$ has become much more
+    definite. Small-scale fluctuations are still present in $u_z$ albeit at
+    smaller amplitudes due to being in a denser region of the fluid.]{
+    \includegraphics[width=0.45\textwidth]{plots/yubo_000086.png}}
+
+    \subfloat[$t=1171.4$ The critical layer transition is now extremely sharp,
+    and small swirls of limited vertical extent at the location of the critical
+    layer in $u_z$ suggest that the Kelvin-Helmholtz instability is responsible
+    for regulating the minimum width of this transition, a hypothesis explored
+    in \autoref{ss:khi}.]{
+    \includegraphics[width=0.45\textwidth]{plots/yubo_000153.png}}\hfil
+    %
+    \subfloat[$t=3437.8$ The end of the simulation shows very few significant
+    qualitative differences from the previous snapshot, suggesting that the
+    latter half of our simulation is temporally converged.]{
+    \includegraphics[width=0.45\textwidth]{plots/yubo_000451.png}}
+
+    \caption{Snapshots of $u_x, u_z$ in the fiducial simulation illustrating
+    distinct phases of the evolution of the flow. Note that $\bar{U}_c \approx
+    0.16$ for the parameters used.}\label{fig:snapshots}
+\end{figure*}
+
+Slices of
 $\overline{U}, \hat{F}$ across $z$ at various times $t$ are shown in
 \autoref{fig:nl_fluxes}. While the behavior of $\overline{U}$ seems to conform
 qualitatively with the predictions of \autoref{ss:crit_layer}, the behavior of
@@ -729,7 +763,7 @@ reflectivity is necessary.
     time.}\label{fig:nl_front}
 \end{figure}
 
-\subsection{Kelvin-Helmholtz Instability and Critical Layer Width}
+\subsection{Kelvin-Helmholtz Instability and Critical Layer Width}\label{ss:khi}
 
 The observation of reflected/transmitted waves is in accordange with previous
 studies as discussed in \autoref{ss:wave_breaking}. Many studies have shown that
