@@ -814,10 +814,14 @@ increases, enhancing dissipation and further driving mean flow acceleration.
 
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
 
-We identify two instances of non-absorptive behavior: (i), the presence of a
-reflected wave with wave vector $\bm{k} = k_{x}\bm{x} + k_{z}\bm{z}$, and
-(ii) the amount of horizontal momentum flux $F$ reflected off the critical
-layer.
+We identify two manifestations of non-absorptive behavior: (i), the presence of
+a reflected wave with wave vector $\bm{k} = k_{x}\bm{x} - k_{z}\bm{z}$, and (ii)
+the amount of horizontal momentum flux $F$ reflected off the critical layer.
+These two quantities need not agree exactly if some reflected flux is in
+higher-order modes, which is observed. Both are of physical interest, however:
+he reflected wave amplitude may be of physical interest in setting up standing
+modes in a realistic star, while the reflected flux is important for accurately
+tracking angular momentum transfer during synchronization.
 
 To measure the reflected wave amplitude, we use almost the same definition
 \autoref{eq:ahat_def} except using $k_{z} \to -k_{z}$; call this estimated
@@ -864,7 +868,7 @@ Then we can define flux reflectivity and transmissivity coefficients
 
 The measurements of $\hat{A}_i, \hat{A}_r, F_i, \Delta F, F_d, F_>$ are given in
 \autoref{fig:nl_f_amps}. The oscillations in $\hat{A}_i, F_i, A_d, F_d$ are
-apparent but the mean values seem to have temporally converged.
+significant but the mean values seem to have temporally converged.
 
 \begin{figure}
     \centering
@@ -967,13 +971,13 @@ winding is used to enforce solid body rotation on the grounds that $t_A \gg
 t_{gw}$, where
 \begin{equation}
     t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
-        \sim 10^2\;\mathrm{yr}\p*{\frac{10^3\;\mathrm{G}}{B}}.
+        \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}}.
 \end{equation}
 the Alfv\'en wave crossing time (evaluated for a CO WD in \citep{fullerIV})
 measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
 inspiral timescale. Before solid body rotation is attained, another relevant
 timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and
-tidal forcing frequency $\sigma = m\p*{\Omega - \Omega_{spin}}$, we note that
+tidal forcing frequency $\sigma = m\p{\Omega - \Omega_{spin}}$, we note that
 angular momentum transfer is $\pd{M_{sync}}{t} \sigma R^2 = \tau$, where
 $M_{sync}$ denotes the mass of the WD that has synchronized. Thus, the
 synchronization timescale is
@@ -1044,7 +1048,7 @@ significant energy cascade must happen in the critical layer.
 \section{Acknowledgements}\label{s:ack}
 
 \bibliographystyle{mnras}
-\bibliography{paper}
+\bibliography{Su_IGW_break}
 
 \clearpage
 \onecolumn
@@ -1057,23 +1061,24 @@ the number of spectral modes in the respective dimensions.
 
 Numerically, the nonlinear $\frac{\bm{\nabla}P}{\rho}$ term is problematic: we
 desire a system where the fluid fields are not divided by one another. We
-introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\overline{\rho}, \varpi_0$
-background fields satisfy hydrostatic equilibrium $\bm{\nabla}\varpi_0 +
-\varpi_0 \bm{\nabla}\overline{\rho} + g\bm{z} = 0$. Taking isothermal stratification,
-we find $\varpi_0 = gH$. We further change variables to $\Upsilon = \ln \rho -
-\ln \overline{\rho}$ and $\varpi_1 = \varpi - \varpi_0$ deviations from the background
-state to obtain a system of equations at most quadratic in fluid fields:
+introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\overline{\rho},
+\overline{\varpi}$ background fields satisfy hydrostatic equilibrium
+$\bm{\nabla}\overline{\varpi} + \overline{\varpi} \bm{\nabla}\overline{\rho} +
+g\bm{z} = 0$. Taking isothermal stratification, we find $\overline{\varpi} = gH$. We
+further change variables to $\Upsilon = \ln \rho - \ln \overline{\rho}$ and
+$\varpi' = \varpi - \overline{\varpi}$ deviations from the background state to obtain a
+system of equations at most quadratic in fluid fields:
 \begin{subequations}\label{se:nl_var}
     \begin{align}
-        \bm{\nabla} \cdot \bm{u}_1 &= 0,\\
-        \pd{\Upsilon}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}} \Upsilon
+        \bm{\nabla} \cdot \bm{u}' &= 0,\\
+        \pd{\Upsilon}{t} + \p{\bm{u}' \cdot \bm{\nabla}} \Upsilon
             - \frac{u_z}{H} &= 0,\\
-        \pd{u_{x}}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_{x}
-            + \pd{\varpi_1}{x} + gH\pd{\Upsilon}{x}
-            + \varpi_1 \pd{\Upsilon}{x} &= 0,\\
-        \pd{u_z}{t} + \p{\bm{u}_1 \cdot \bm{\nabla}}u_z
-            + \pd{\varpi_1}{z} + gH\pd{\Upsilon}{z}
-            + \varpi_1 \pd{\Upsilon}{z} - \frac{\varpi_1}{H} &= 0.
+        \pd{u_{x}}{t} + \p{\bm{u}' \cdot \bm{\nabla}}u_{x}
+            + \pd{\varpi'}{x} + gH\pd{\Upsilon}{x}
+            + \varpi' \pd{\Upsilon}{x} &= 0,\\
+        \pd{u_z}{t} + \p{\bm{u}' \cdot \bm{\nabla}}u_z
+            + \pd{\varpi'}{z} + gH\pd{\Upsilon}{z}
+            + \varpi' \pd{\Upsilon}{z} - \frac{\varpi'}{H} &= 0.
     \end{align}
 \end{subequations}
 It bears noting that these equations are exactly equivalent to the original
@@ -1084,75 +1089,87 @@ Euler equations and hence conserve horizontal momentum.
 The nonlinear terms in the above equations will transfer energy from lower
 wavenumbers to higher wavenumbers. Since spectral codes have no numerical
 dissipation, artificial dissipation must be added. To ensure the dissipitive
-system conserves horizontal momentum, we begin by adding dissipitive terms to
-the flux-conservative form of the Euler fluid equations \autoref{se:nl_orig} (we
-use stress tensor $\tau_{ij} = P\delta_{ij}$):
+system conserves horizontal momentum exactly, we begin by adding dissipitive
+terms to the flux-conservative form of the Euler fluid equations
+\autoref{se:nl_orig} (we use stress tensor $\tau_{ij} = P\delta_{ij}$):
 \begin{subequations}
     \begin{align}
-        \bm{\nabla} \cdot \bm{u} &= 0,\\
-        \partial_t \rho + \bm{\nabla} \cdot (\rho \bm{u} - \nu
+        \bm{\nabla} \cdot \bm{u}' &= 0,\\
+        \partial_t \rho + \bm{\nabla} \cdot (\rho \bm{u}' - \nu
             \bm{\nabla}(\rho - \overline{\rho})) &= 0,\label{eq:visc_cons_mom}\\
-        \partial_t (\rho \bm{u}) + \bm{\nabla} \cdot (\rho \bm{u}
-        \bm{u} +
-            \mathrm{diag}(\rho \varpi) - \nu \rho \bm{\nabla}\bm{u}) + \rho g
-            \bm{z} &= 0.
+        \partial_t (\rho \bm{u}') + \bm{\nabla} \cdot (\rho \bm{u}' \bm{u}'
+            + \mathrm{diag}(\rho \varpi)
+            - \nu \rho \bm{\nabla}\bm{u})
+            + \rho g \bm{z} &= 0.
     \end{align}
 \end{subequations}
 The same $\nu$ is used for both the diffusive and viscous term, though this is
 not required. Since the dissipation is not physical and is purely used for
 numerical stability, we choose it such that hydrostatic equilibrium is not
-modified. Some algebraic manipulation to re-cast it in the form of
-\autoref{se:nl_var} gives
+modified (hence $\nu$ acts only on $\rho - \overline{\rho}$).
+% Some algebraic manipulation to re-cast it in the form of \autoref{se:nl_var}
+% gives
+% \begin{subequations}
+%     \begin{align}
+%         \bm{\nabla} \cdot \bm{u} &= 0,\\
+%         \partial_t \Upsilon + \p{\bm{u} \cdot \bm{\nabla}} \Upsilon -
+%             \frac{u_z}{H} - \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
+%             \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+%             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
+%         \partial_t \bm{u} + \p{\bm{u} \cdot \bm{\nabla}}\bm{u} +
+%             \bm{\nabla} \varpi + \varpi \bm{\nabla} \Upsilon - \nu \nabla^2
+%             \bm{u} + \bm{u} \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
+%             \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
+%             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
+%         - 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}\bm{u} -
+%             \frac{1}{H}\partial_z \bm{u}} - \frac{\varpi'}{H} &= 0.
+%     \end{align}
+% \end{subequations}
+One last consideration we found necessary was masking out nonlinear terms in the
+forcing zone with a similar form to \autoref{eq:Gamma}. In the absence of this
+mask, a strong mean flow localized to the forcing zone developed. The mask used
+was
+\begin{equation}
+    \Gamma_{NL}(z) = \frac{1}{2}\s{2
+        + \tanh \frac{z - (z_0 + 8\sigma)}{\sigma}
+        - \tanh \frac{z - z_B}{\sigma}}.
+\end{equation}
+
+Including the damping layers and forcing terms as described in
+\autoref{ss:numerics}, we finally obtain the full system of equations as
+simulated in Dedalus:
 \begin{subequations}
     \begin{align}
-        \bm{\nabla} \cdot \bm{u} &= 0,\\
-        \partial_t \Upsilon + \p{\bm{u} \cdot \bm{\nabla}} \Upsilon -
-            \frac{u_z}{H} - \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
-            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
-            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
-        \partial_t \bm{u} + \p{\bm{u} \cdot \bm{\nabla}}\bm{u} +
-            \bm{\nabla} \varpi + \varpi \bm{\nabla} \Upsilon - \nu \nabla^2
-            \bm{u} + \bm{u} \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
-            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
-            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
-        - 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}\bm{u} -
-            \frac{1}{H}\partial_z \bm{u}} - \frac{\varpi_1}{H} &= 0.
-    \end{align}
-\end{subequations}
-Hydrostatic equilibrium is still $\bm{\nabla} \varpi_0 + g\bm{z} = 0$ where
-$\rho = \overline{\rho}, \bm{u} = 0$. Including the damping layers and forcing terms as
-described in \autoref{ss:numerics}, we finally obtain the full system of
-equations as simulated in Dedalus: [TODO update w/ mask]
-\begin{subequations}
-    \begin{align}
-        \bm{\nabla} \cdot \bm{u} ={}& 0,\\
+        \bm{\nabla} \cdot \bm{u}' ={}& 0,\\
         \partial_t \Upsilon - \frac{u_z}{H}
-            ={}& \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
-            \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
-            \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}},\nonumber\\
-            & - \p{\bm{u} \cdot \bm{\nabla}}\Upsilon
-                -\Gamma(z) \Upsilon
+            ={}& -\Gamma(z) \Upsilon
                 + \frac{F}{\overline{\rho}(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                    \cos \p{k_xx - \omega t},\\
-        \pd{u_x}{t} + \pd{T}{x} + gH\pd{\Upsilon}{x} ={}&
-            \nu \nabla^2 u_x
+                    \cos \p{k_xx - \omega t},\nonumber\\
+            & + \Gamma_{NL} \bigg[-\p{\bm{u}' \cdot \bm{\nabla}}\Upsilon
+                + \nu\p{\nabla^2 \Upsilon + \p{
+                    \bm{\nabla} \Upsilon} \cdot \p{\bm{\nabla}\Upsilon}
+                    - \frac{2}{H}\partial_z \Upsilon
+                    + \frac{1 - e^{-\Upsilon}}{H^2}}\bigg],\\
+        \pd{u_x}{t} + \pd{\varpi'}{x} + gH\pd{\Upsilon}{x} ={}&
+            -\Gamma(z) u_x
+            + \Gamma_{NL}\bigg[\nu \nabla^2 u_x
             - u_x \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla} \Upsilon} \cdot
                 \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
                 + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
             &+ 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}u_x
                 - \frac{1}{H}\partial_z u_x}
-            -\Gamma(z) u_x
-                - \p{\bm{u} \cdot \bm{\nabla}}u_x
-                - T_1 \pd{\Upsilon}{x},\\
-        \pd{u_z}{t} + \pd{T}{z} + gH\pd{\Upsilon}{z} - \frac{T_1}{H} ={}&
-            \nu \nabla^2 u_z
+                - \p{\bm{u}' \cdot \bm{\nabla}}u_x
+                - \varpi' \pd{\Upsilon}{x}\bigg],\\
+        \pd{u_z}{t} + \pd{\varpi}{z} + gH\pd{\Upsilon}{z} - \frac{\varpi'}{H}
+            ={}& -\Gamma(z) u_z
+            +\Gamma_{NL}\bigg[\nu \nabla^2 u_z
             - u_z \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla} \Upsilon} \cdot
                 \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z \Upsilon
                 + \frac{1 - e^{-\Upsilon}}{H^2}}\nonumber\\
             &+ 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}u_z -
                 \frac{1}{H}\partial_z u_{z}}
-            -\Gamma(z) u_z - \p{\bm{u} \cdot \bm{\nabla}}u_z
-            - T_1 \pd{\Upsilon}{z}.
+            - \p{\bm{u}' \cdot \bm{\nabla}}u_z
+            - \varpi' \pd{\Upsilon}{z}\bigg].
     \end{align}
 \end{subequations}
 \label{lastpage} % chktex 24
