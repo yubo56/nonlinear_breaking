@@ -23,7 +23,7 @@
     \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
     \newcommand*{\at}[1]{\left.#1\right|}
     \newcommand*{\abs}[1]{\left|#1\right|}
-    \newcommand*{\ev}[1]{\langle#1\rangle}
+    \newcommand*{\ev}[1]{\left\langle#1\right\rangle}
     \newcommand*{\p}[1]{\left(#1\right)}
     \newcommand*{\s}[1]{\left[#1\right]}
     \newcommand*{\z}[1]{\left\{#1\right\}}
@@ -217,7 +217,7 @@ characteristic space and time scales $\pd{}{t} \gg \bm{u}' \cdot
 linear regime up to undetermined amplitude $A$ is given by
 \citep{drazin,sutherland0}:
 \begin{equation}
-    u'_z\p{x, z, t} = Ae^{z/2H}e^{i\p{k_{x}x + k_{z}z - \omega t}},
+    u'_z\p{x, z, t} = Ae^{z/2H}\cos\p{\p{k_{x}x + k_{z}z - \omega t}},
         \label{eq:k0z_sign}
 \end{equation}
 where $\omega$ satisfies dispersion relation
@@ -255,8 +255,11 @@ following characteristics:
 
     \item The time-averaged total $x$-momentum flux $F$ carried in the $\bm{z}$
         direction can be computed. Since the linear solution consists of terms
-        separable as $f(x, z, t) = f(z)e^{i(k_{x}x - \omega t)}$, $x$
-        averaging and time averaging are equivalent. We may then write
+        separable as $f(x, z, t) = f(z)\cos\p{k_{x}x - \omega t}$, $x$
+        averaging and time averaging are equivalent. $x$ averaging is preferred
+        both since periodic boundary conditions pick a natural averaging length
+        and since it does not introduce extra temporal smoothing. We may then
+        write
         \begin{align}
             F &\equiv \ev{\rho u_{x}' u_{z}'}_x \equiv
                 \frac{1}{L_x}\int_0^{L_x}\limits \rho u_{x}'u_{z}'\;\mathrm{d}x,
@@ -271,10 +274,10 @@ following characteristics:
 \subsection{Wave Generation: Analytical Analysis}
 
 Since we are only concerned with the behavior of the wave at high $z$ where wave
-breaking occurs, we generate waves in the most numerically convenient way. As
-long as physically represesentative IGW are generated and wave dynamics are only
-examined far from the forcing region, the exact excitation mechanism is not
-important for our conclusions.
+breaking occurs, we generate waves at low $z$ in the most numerically convenient
+way. As long as physically represesentative, upwards-propgaating IGW are
+generated and wave dynamics are only examined far from the forcing region, the
+exact excitation mechanism is not important for our conclusions.
 
 To model continuous excitation of IGWs deep in the WD interior propagating
 towards the surface, we use a volumetric forcing term to excite IGW near the
@@ -287,7 +290,7 @@ downwards, which are damped away by the damping layers described in
 
 As not to interfere with the incompressibility constraint, we force the system
 on the density equation. We implement forcing with strength $C$ localized around
-$z_0$ with width $\sigma$ by replacing \autoref{eq:nl_up_density} with
+$z_0$ with small width $\sigma$ by replacing \autoref{eq:nl_up_density} with
 \begin{equation}
     \md{\Upsilon}{t} + u_{z}'\pd{\ln \overline{\rho}}{z}
         = Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}
@@ -295,7 +298,7 @@ $z_0$ with width $\sigma$ by replacing \autoref{eq:nl_up_density} with
 \end{equation}
 Using a narrow Gaussian profile excites a broad $z$ power spectrum, but only the
 $k_{z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the given
-$k_{x}, \omega(k_{x}, k_{z})$ will propagate.
+$k_{x}$, $\omega(k_{x}, k_{z})$ will propagate.
 
 In the linearized system, the effect of this forcing can be solved analytically
 up to good accuracy: we first approximate the driving term using
@@ -312,18 +315,18 @@ z_0)^2}{2\sigma^2}}$ at $k_z$), and we obtain
         \frac{1}{2ik_{z}}\frac{e^{\frac{-(k_{z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
-        e^{\frac{z - z_0}{2H}}e^{i\p{k_{x}x + k_{z}(z - z_0) - \omega t
-            + \frac{1}{2k_{z}H}}}
+        e^{\frac{z - z_0}{2H}}\cos\p{k_{x}x + k_{z}(z - z_0) - \omega t
+            + \frac{1}{2k_{z}H}}
             & z > z_0\\
-        e^{\frac{z - z_0}{2H}}e^{i\p{k_{x}x - k_{z}(z - z_0) - \omega t
-            + \frac{1}{2k_{z}H}}}
+        e^{\frac{z - z_0}{2H}}\cos\p{k_{x}x - k_{z}(z - z_0) - \omega t
+            + \frac{1}{2k_{z}H}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
 The $z > z_0$ region models an upwards-propagating IGW wavetrain excited deep
 in the atmosphere.
 
-\subsection{Wave Breaking Location}\label{ss:wave_breaking}
+\subsection{Wave Breaking Height}\label{ss:wave_breaking}
 
 In developing the results above, we have neglected advective terms $\pd{}{t} \gg
 \bm{u}' \cdot \bm{\nabla}$. However, since $\abs{\bm{u}'} \propto
@@ -346,11 +349,12 @@ mean flow, given by \citep{eliassen_palm_cite,sutherland0}:
 \end{equation}
 This formula is analogous to Stokes' drift for surface waves and can be derived
 by considering the propagation of $F$ (\autoref{eq:F_def}) into a medium at
-rest. Solving for $\overline{U} = \omega / k_x$ the critical layer condition
-(\autoref{eq:u_c} and discussion in \autoref{ss:crit_layer}), we obtain
-$\abs{\frac{u_{x}'k_{x}}{\omega}} = \abs{\xi_x k_{x}} = \abs{\xi_z k_z} \sim 1$,
-equal to the nonlinearity criterion \autoref{eq:nl}. This condition predicts
-where the wave's self-acceleration alone produces a critical layer.
+rest. Solving for where $\overline{U} = \omega / k_x$ the critical layer
+condition is fulfilled (\autoref{eq:u_c} and discussion in
+\autoref{ss:crit_layer}), we obtain $\abs{\frac{u_{x}'k_{x}}{\omega}} =
+\abs{\xi_x k_{x}} = \abs{\xi_z k_z} \sim 1$, equal to the nonlinearity criterion
+\autoref{eq:nl}. This condition predicts where the wave's self-acceleration
+alone produces a critical layer.
 
 \subsection{Formation and Dynamics of Critical Layer}\label{ss:crit_layer}
 
@@ -442,23 +446,35 @@ where we solve the full nonlinear fluid equations for weak forcing.
 
 We nondimensionalize by taking $H = N = \overline{\rho}_0 = 1$.
 
-% TODO physical vs simulation domain
-Denote $L_x, L_z$ to be the physical dimensions of the simulation domain. Our
-simulation domain is smaller than our full physical domain, so we adopt
-reflection-suppressing boundary conditions. We use periodic boundary conditions
-in the $x$ direction and damping layers (described in \autoref{ss:damping}) in
-the $z$ direction to damp perturbations exiting the top and bottom of the
-domain. We use a Fourier basis in both the $x$ and $z$ direction. We varied the
-number of $x, z$ modes (denoted $N_x, N_z$ respectively), and used $3/2$
-dealiasing \citep{boyd}.
+In a realistic WD, IGW are excited very deep in the WD and propagate a
+substantial number of density scale heights before reaching the breaking zone.
+This propagation is very nearly exactly linear until just a few scale heights
+below the breaking region. In the interest of computational feasibility, we
+restrct the simulation domain to the upper WD fluid, of much smaller vertical
+extent than the full physical domain. To further decrease computational cost, we
+restrict ourselves to 2D, plane-parallel IGW rather than full 3D stellar
+g-modes. While it is well-known wave breaking is a 3D process
+(\cite{klostermeyer,winters1994}), the dynamical effect of the breaking process
+is likely to be similar in 2D.
 
-The geometry of our simulation domain is fixed by three parameters: $L_x, L_z$,
-and $z_0$ the forcing location. We use $z_0 = 0.2L_z$ to force sufficiently far
-from the lower damping zone and permit sufficient room for the upwards-moving
-wave to grow at $\propto e^{z/2H}$. We choose $L_z = 10H$ to give $\sim e^3$
-apmlitude growth between the damping zones. Finally, we want similar grid
-spacing $\frac{L_x}{N_x} \sim \frac{L_z}{N_z}$. For computational savings, we
-fix $N_z = 4N_x$. We use $L_x = 4H = \frac{2}{5}L_z$.
+Denote $L_x, L_z$ to be the dimensions of the simulation domain. As the physical
+domain extends beyond $L_x, L_z$, we must take care to suppress reflections. We
+use periodic boundary conditions in the $x$ direction and damping layers
+(described in \autoref{ss:damping}) in the $z$ direction to damp perturbations
+incident on the top and bottom of the simulation. We use a Fourier basis in both
+the $x$ and $z$ direction. We varied the number of $x, z$ modes (denoted $N_x,
+N_z$ respectively), and used $3/2$ dealiasing \citep{boyd}.
+
+The geometry of our simulation domain is fixed by one further parameter: $z_0$
+the forcing location. We use $z_0 = 0.2L_z$ to force sufficiently far from the
+lower damping zone and permit sufficient room for the upwards-moving wave to
+grow at $\propto e^{z/2H}$. We choose $L_z = 10H$ to give $\sim e^3$ apmlitude
+growth between the damping zones. Finally, we want similar grid spacing
+$\frac{L_x}{N_x} \sim \frac{L_z}{N_z}$, guided by the intuition that turbulence
+is approximately isotropic. For computational savings, we fix $L_x = 4H < L_z$,
+a compromise between using fewer $N_x$ modes and using as large of an $L_x$ as
+possible (in stars, $L_x \sim 2\pi R$ the circumference). We then fix ratio $N_z
+/ N_x = 4$.
 
 The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
@@ -478,21 +494,21 @@ The physics of our simulation is fixed by four parameters: $k_{x}, \omega, C,
         permitted by periodic boundary conditions.
 
     \item $\omega$: We choose $\omega$ by evaluating dispersion relation
-        $\omega\p{k_{x}, k_{z}}$ for some desired $k_{z}$.
+        $\omega\p{k_{x}, k_{z}}$ for a desired $k_{z}$.
 
         To choose $k_z$, we note astrophysical IGWs generally satisfy $\omega
         \ll N$, or equivalently $\frac{k_r}{k_{\perp}} \sim k_rR \gg 1$. Since
         $H \lesssim R$, we aim to study $k_{z}H \gg 1$. However, to satisfy this
-        well is computationally expensive: $L_z \gg H$ is required to give waves
-        ample room to grow within the simulation domain, but we want $k_{z}$ to
-        be sufficiently separated from the grid spacing $\sim L_z / N_z$ that
-        nonlinear effects can be seen in later simulations (see
+        well requires high resolution simulations: $L_z \gg H$ is required to
+        give waves ample room to grow within the simulation domain, but we want
+        $k_{z}$ to be sufficiently separated from the grid spacing $\sim L_z /
+        N_z$ that nonlinear effects can be seen in later simulations (see
         \autoref{ss:nl_ns}). Thus, $N_z$ sets how well we can satisfy $k_{z}H
-        \gg 1$; we choose $k_{z}H = 1$.
+        \gg 1$; we choose $k_{z}H = 1$ as a compromise.
 
-    \item $C$: We first choose $C$ forcing strength such that $\xi_z k_z \ll 1$
-        is satisfied everywhere throughout the domain. This constrains $C$ by
-        \autoref{eq:uz_lin}.
+    \item $C$: In our linear simulations, we first choose $C$ forcing strength
+        such that $\xi_z k_z \ll 1$ is satisfied everywhere in the simulation
+        domain. This constrains $C$ by \autoref{eq:uz_lin}.
 
     \item $\nu$: Nonlinear effects transfer wave energy from $\bm{k}$ to
         larger wavenumbers. Since well-resolved simulations using spectral
@@ -511,11 +527,9 @@ fluid motion.
 
 \subsection{Damping Layers}\label{ss:damping}
 
-To imitate an infinite fluid using a finite simulation domain, we use periodic
-boundary conditions in the $x$ direction and damping layers at the top and
-bottom of the $z$ direction. This damps waves that reach the edge of the
-simulation domain without inducing nonphysical reflection. Specifically, we
-replace material derivatives in \autoref{se:nl_upsilon} with:
+We aim to damp waves that reach the edge of the simulation domain without
+inducing nonphysical reflection. To do so, we replace material derivatives
+in \autoref{se:nl_upsilon} with:
 \begin{align}
     \md{}{t} &\to \md{}{t} + \Gamma(z)\Upsilon,\nonumber\\
     \Gamma(z) &= \frac{1}{2\tau}\s{2,+ \tanh \frac{z - z_T}{\Delta z}
@@ -532,19 +546,20 @@ fluid equations in Dedalus are described in Appendix~\ref{se:strat_impl}.
 \subsection{Simulation Results}\label{ss:lin_ns}
 
 We describe the results of a simulation satisfying the parameter choices in
-\autoref{ss:numerics} such that $\xi_z k_z \ll 1$ everywhere.
+\autoref{ss:numerics} such that $\xi_z k_z \ll 1$ everywhere in the simulation
+domain.
 
 During the simulation, we expect IGW of form \autoref{eq:uz_lin} to be excited.
-The incompressibility constraint further yields a complete analytical solution
-for flow velocities $\bm{u}_{al}'(x, z, t)$. The amplitude of the observed IGW
-in the simulation field $\bm{u}$ relative to analytical solution $\bm{u}_{al}'$
-over some region $z \in [z_b, z_t]$ can be estimated with estimator
-$\hat{A}_i(t)$ (subscript $i$ denotes incident wave)
+Invoking incompressibility, we obtain a complete analytical solution for flow
+velocities $\bm{u}_{al}'(x, z, t)$. The amplitude of the observed IGW in the
+simulation field $\bm{u}$ relative to analytical solution $\bm{u}_{al}'$ over
+some region $z \in [z_b, z_t]$ can be estimated with estimator $\hat{A}_i(t)$
+(subscript $i$ denotes incident wave)
 \begin{equation}
     \hat{A}_i(t) = \frac{\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
         \overline{\rho}\p{\bm{u} \cdot \bm{u}_{al}'}\;\mathrm{d}x\mathrm{d}z}
         {\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \overline{\rho}(u_{al}')^2\;\mathrm{d}x\mathrm{d}z}
+        \overline{\rho}\p{u_{al}'}^2\;\mathrm{d}x\mathrm{d}z}
         \label{eq:ahat_def}
 \end{equation}
 If $\bm{u} = \bm{u}_{al}'$, then $\hat{A}_i(t) = 1$. The energy norm is a
@@ -574,21 +589,20 @@ not change the results). The resulting measurement of $\hat{A}_i(t)$ is shown in
 The analytical theory also predicts that the horizontal momentmum flux $F(z, t)$
 should be spatially flat between the forcing zone where it is generated and the
 damping zone where it is dissipated (\autoref{eq:F_def}). We make may a slightly
-more accurate estimate of $F$ the flux carried in the IGW by directly
-substituting $\bm{u}_{al}'$ into \autoref{eq:F_def}. Calling this estimate
+more accurate estimate of the flux carried in the IGW by directly substituting
+$\bm{u}_{al}'$ into \autoref{eq:F_def}. Calling this estimate
 \begin{equation}
-    F_{al}' \equiv \frac{1}{L_x}
-        \int\limits_{0}^{L_x} \overline{\rho} u_{al,x}'u_{al,z}'\;\mathrm{d}x,
+    F_{al}'(z) \equiv \ev{\overline{\rho} u_{al,x}'u_{al,z}'}_x
 \end{equation}
 we may then measure the agreement of our simulation with analytical expectation
 by computing
 \begin{equation}
-    \hat{F}(z, t) \equiv \frac{
-        \frac{1}{L_x}\int\limits_0^{L_x}\rho u_xu_z\;\mathrm{d}x}
+    \hat{F}(z, t) \equiv \frac{\ev{\rho u_xu_z}_x}
         {F_{al}'}.\label{eq:sbm_def}
 \end{equation}
-For our weak forcing simulation, $\hat{F} = 1$ is expected between $z_0, z_T$,
-and indeed we observe agreement with this in \autoref{fig:lin_fluxes}.
+For our weak forcing simulation, $\hat{F}(z) = 1$ is expected between $z_0, z_T$
+after initial transients dissipate, and indeed we observe agreement with this in
+\autoref{fig:lin_fluxes}.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/lin_fluxes.png}
@@ -664,8 +678,8 @@ velocity field $\bm{u}$ at select times can be found in \autoref{fig:snapshots}.
     \includegraphics[width=0.45\textwidth]{plots/yubo_000451.png}}
 
     \caption{Snapshots of $u_x, u_z$ in the fiducial simulation illustrating
-    distinct phases of the evolution of the flow. Note that $\overline{U}_c \approx
-    0.16$ for the parameters used.}\label{fig:snapshots}
+    distinct phases of the evolution of the flow. Note that $\overline{U}_c
+    \approx 0.16$ for the parameters used.}\label{fig:snapshots}
 \end{figure*}
 
 Slices of
@@ -715,36 +729,39 @@ from the data, we defined:
     \Delta F(t) &\equiv F_>(t) - F_{<}(t).\label{eq:ds_def}
 \end{align}
 $\ev{\dots}_{z \in [z_a, z_b]}$ denotes averaging over interval $[z_a, z_b]$.
-Below the critical layer, we average over an interval of length $H =
-\frac{2\pi}{k_{z}}$ a full vertical wavelength. The offset $\Delta z$ is
+Below the critical layer, we average over an interval of length
+$\frac{2\pi}{k_{z}}$ a full vertical wavelength. The offset $\Delta z$ is
 necessary to make a measurement of the incident flux unaffected by the
-turbulence within the critical layer. The height of the critical layer is
+turbulence within the critical layer itself. The height of the critical layer is
 limited by $\mathrm{Ri} \lesssim 1$, which bounds its vertical extent $\sim
-\frac{1}{k_{z}}$. Here, we found $\Delta z = \frac{3}{k_z}$ was necessary to be
-sufficiently offset from strong fluctuations near the critical layer.
+\frac{1}{k_{z}}$. We empirically found an offset of $\Delta z = \frac{3}{k_z}$
+was necessary to be sufficiently far from strong fluctuations near the critical
+layer.
 
 Above the critical layer, waves decay over a much smaller vertical extent as
-they have larger $z$ wavenumbers thanks to the shear flow, so we average over a
-$\Delta z$. Accurate measurement of these fluctuations above the critical layer
-is important to measuring the transmission feature accurately, seen in
+they have larger $z$ wavenumbers thanks to the shear flow Doppler shift.
+Accurate measurement of these fluctuations above the critical layer is important
+to measuring the transmission feature accurately, seen in
 \autoref{fig:nl_fluxes} to be weak and attenuate quickly.
 
-Finally, we may plot the observed $z_c$ from data against two simple predictors:
+Finally, we may plot the measured $z_c$ against two semi-analytic predictors:
 (i) integration of \autoref{eq:zc_anal} using the measured $\Delta F(t)$, and
-(ii) substituting the time-averaged $\ev{\Delta F}_t$ into \autoref{eq:zc_sol}.
-Since $z_c(t)$ is both stable and less well-defined at early times (when the
-critical layer is thick and transient behavior is still strong), we instead
-integrate backwards from the end of the simulation, using $z_c(t_f)$ as initial
-condition. The resulting predictors are depicted in \autoref{fig:nl_front}. The
-good agreement between the evolution of $z_c(t)$ and its estimate via $\Delta
-F(t)$ and \autoref{eq:zc_anal} are noteworthy. Further of interest is the
-discrepancy between the time-averaged predictor and the data. The general
-agreement clearly demonstrates $\Delta F < F_{al}'$ and that incomplete
-absorption is observed. Moreover, its significant underprediction of critical
-layer motion at early times contrasts with its comparatively satisfactory
-prediction at later times to indicate that $\Delta F(t)$ must vary significantly
-over time. Both of these observations indicate a careful characterization of
-reflectivity is necessary.
+(ii) substituting the time-averaged $\ev{\Delta F}_t$ (over the entire length of
+the simulation) into \autoref{eq:zc_sol}. Since $z_c(t)$ is both stable and less
+well-defined at early times (when the critical layer is thick and transient
+behavior is still strong), we instead integrate backwards from the end of the
+simulation, using $z_c(t_f)$ as initial condition. The resulting predictors are
+depicted in \autoref{fig:nl_front}. The good agreement between the evolution of
+$z_c(t)$ and its estimate via $\Delta F(t)$ and \autoref{eq:zc_anal} are
+noteworthy.
+
+Also of interest is the behavior of the time-averaged $\ev{\Delta F}_t =
+0.71F_{al}'$ predictor, which serves mostly as a fiducial in the plot. The
+general agreement clearly demonstrates $\Delta F < F_{al}'$ and that momentum
+flux absorption is incomplete. However, its underprediction of critical layer
+velocity at early times contrasts with its overprediction at later times. This
+suggests that momentum flux absorption changes significantly over time, which is
+in line with the observations in the subsequent \autoref{ss:reflectivity}.
 
 \begin{figure}
     \centering
@@ -816,11 +833,12 @@ increases, enhancing dissipation and further driving mean flow acceleration.
 
 We identify two manifestations of non-absorptive behavior: (i), the presence of
 a reflected wave with wave vector $\bm{k} = k_{x}\bm{x} - k_{z}\bm{z}$, and (ii)
-the amount of horizontal momentum flux $F$ reflected off the critical layer.
-These two quantities need not agree exactly if some reflected flux is in
-higher-order modes, which is observed. Both are of physical interest, however:
-he reflected wave amplitude may be of physical interest in setting up standing
-modes in a realistic star, while the reflected flux is important for accurately
+the amount of horizontal momentum flux $F$ reflected/transmitted by the critical
+layer. The reflected wave amplitude and reflected flux need not agree exactly if
+some reflected flux is in higher-order modes, which is indeed the case in our
+simulations. Both are of physical interest, however: the reflected wave
+amplitude may be of physical interest in setting up standing modes in a
+realistic star, while the flux transfer properties is important for accurately
 tracking angular momentum transfer during synchronization.
 
 To measure the reflected wave amplitude, we use almost the same definition
@@ -836,10 +854,9 @@ Since reflectivity depends sensitively on accurate measurements of $\hat{A}_i,
 \hat{A}_r$, we remark \autoref{eq:ahat_def} ensures orthogonality between
 $k_{x}\bm{x} \pm k_{z}\bm{z}$ modes. The integral for $\hat{A}_r$ is also
 performed over $z \in [z_0 + 3\sigma, z_0 + 3\sigma + H]$. Since
-$\hat{A}_i(t), \hat{A}_r(t)$ vary somewhat over time, we perform time averaging
-over interval approximately $8\pi/\omega$, denoted by angle brackets. We can
-then define the amplitude
-reflectivity
+$\hat{A}_i(t), \hat{A}_r(t)$ vary somewhat strongly over time, we perform time
+averaging over interval approximately $8\pi/\omega$, denoted by angle brackets.
+We can then define the amplitude reflectivity
 \begin{equation}
     \mathcal{R}_A(t) \equiv \frac{\ev{\hat{A}_r}(t)}{\ev{\hat{A}_i}(t)}
         .\label{eq:Ra_def}
@@ -857,17 +874,19 @@ But then, since we already have $\Delta F(t), F_>(t)$ jump and transmitted flux
 across the critical layer at time $t$ respectively, we can immediately write
 down the reflected flux
 \begin{equation}
-    F_d(t) = F_i(t) + \Delta F(t) - F_>(t).
+    F_r(t) = F_i(t) + \Delta F(t) - F_>(t).
 \end{equation}
-Then we can define flux reflectivity and transmissivity coefficients
+Note that $F_>(t)$ is just the transmitted flux across the critical layer, since
+there is no other flux above the critical layer. We then define flux
+reflectivity and transmissivity coefficients
 \begin{align}
-    \mathcal{R}_F(t) &\equiv -\frac{\ev{F_d}(t)}{\ev{F_i}(t)},&
+    \mathcal{R}_F(t) &\equiv -\frac{\ev{F_r}(t)}{\ev{F_i}(t)},&
     \mathcal{T}_F(t) &\equiv -\frac{\ev{F_>}(t)}{\ev{F_i}(t)}.
         \label{eq:srefl_def}
 \end{align}
 
-The measurements of $\hat{A}_i, \hat{A}_r, F_i, \Delta F, F_d, F_>$ are given in
-\autoref{fig:nl_f_amps}. The oscillations in $\hat{A}_i, F_i, A_d, F_d$ are
+The measurements of $\hat{A}_i, \hat{A}_r, F_i, \Delta F, F_r, F_>$ are given in
+\autoref{fig:nl_f_amps}. The oscillations in $\hat{A}_i, F_i, A_d, F_r$ are
 significant but the mean values seem to have temporally converged.
 
 \begin{figure}
