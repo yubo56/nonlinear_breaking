@@ -28,6 +28,7 @@
     \newcommand*{\s}[1]{\left[#1\right]}
     \newcommand*{\z}[1]{\left\{#1\right\}}
     \newcommand*{\bm}[1]{\boldsymbol{\mathbf{#1}}}
+    \newcommand*{\uv}[1]{\hat{\boldsymbol{\mathbf{#1}}}}
     \DeclareMathOperator*{\argmin}{argmin}
     \DeclareMathOperator*{\argmax}{argmax}
     \DeclareMathOperator*{\med}{med}
@@ -91,19 +92,18 @@ Compact white dwarf (WD) binary systems, with orbital periods in the range of
 minutes to hours, are important for a range of astrophysical problems. They are
 the most important sources of gravitational waves (GWs) for the Laser
 Interferometric Space Antenna (LISA) \citep{lisa}. They are also thought to
-produce interesting optical transients such as underluminous
-supernovae \citep{underlum}, Ca-rich fast transients \citep{carich}, and tidal
-novae \citep{tidal_novae}. Most importantly, they have been proposed as the likely
-progenitors of type Ia supernovae (e.g. \citep{Ia0,webbink} or more
-recently \citep{Ia1,Ia2}). While presently only a few tens of compact WD binaries
-are known \citep{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
-expand the catalog to a few hundreds \citep{lsst_wd} (results based on
+produce interesting optical transients such as underluminous supernovae
+\citep{underlum}, Ca-rich fast transients \citep{carich}, and tidal novae
+\citep{tidal_novae}. Most importantly, they have been proposed as the likely
+progenitors of type Ia supernovae (e.g. \citealt{Ia0,webbink} or more recently
+\citealt{Ia1,Ia2}). While presently only a few tens of compact WD binaries are
+known \citep{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
+expand the catalog to a few hundreds \citep{lsst_wd} \citep[results based on
 \emph{Gaia}'s second data release have already begun to
-appear \citep{gaiaDD,gaiaDD2}), and the Large Synoptic Survey Telescope (LSST,
-first light scheduled for 2020) will likely detect a few thousand
-more \citep{lsst_wd}. These observations will significantly advance the
-understanding of WD binaries and their evolution. My proposed theoretical and
-computational research is well-timed to take advantage of these new advances.
+appear][]{gaiaDD,gaiaDD2}, and the Large Synoptic Survey Telescope (LSST, first
+light scheduled for 2020) will likely detect a few thousand more
+\citep{lsst_wd}. These observations will significantly advance the understanding
+of WD binaries and their evolution.
 
 In spite of the broad importance of WD binaries, the evolution of these systems
 prior to their final mergers is not well understood. Much of this uncertainty
@@ -175,37 +175,37 @@ gravitational field are
     \begin{align}
         \bm{\nabla} \cdot \bm{u} &= 0,\label{eq:nl_incomp}\\
         \md{\rho}{t} &= 0 ,\label{eq:nl_density}\\
-        \md{\bm{u}}{t} + \frac{\bm{\nabla}P}{\rho} + g\bm{z} &=
+        \md{\bm{u}}{t} + \frac{\bm{\nabla}P}{\rho} + g\uv{z} &=
             0\label{eq:nl_mom}.
     \end{align}
 \end{subequations}
 $\md{}{t} = \pd{}{t} + \p{\bm{u} \cdot \bm{\nabla}}$ is the Lagrangian or
 material derivative, and $\bm{u}, \rho, P$ denote the velocity field, density
-and pressure respectively. We denote $-g\bm{z}$ constant gravitational
+and pressure respectively. We denote $-g\uv{z}$ constant gravitational
 acceleration. Note that at hydrostatic equilibrium $\pd{}{t} = 0$ we have
-$\bm{\nabla}\overline{P} = -\overline{\rho} g\bm{z}$ and so $\overline{P} =
+$\bm{\nabla}\overline{P} = -\overline{\rho} g\uv{z}$ and so $\overline{P} =
 \overline{\rho} gH$. A vertically-stratified shear flow
-$\overline{u}_x(z)\bm{x}$ is permitted at hydrostatic equilibrium, but we will
+$\overline{u}_x(z)\uv{x}$ is permitted at hydrostatic equilibrium, but we will
 assume no background flow, so $\bm{u} = \bm{u}'$. Physically, this assumption
 corresponds to a non-rotating star, or going to the corotating frame of a
 rigidly rotating star.
 
-In practice, it is convenient to introduce coordinate $\Upsilon = \ln
-\frac{\rho}{\overline{\rho}}$ (e.g.\ see \citep{lecoanet_anel}). This both
-identically enforces $\rho > 0$ and avoids numerical issues in the
-$\frac{\bm{\nabla}P}{\rho}$ term if $\rho$ is small. We also define reduced
-pressure $\varpi = \frac{P}{\rho}$. Then, we may rewrite the second two
-equations of \autoref{se:nl_orig} as
+In practice, it is convenient to introduce the coordinate $\Upsilon = \ln
+\frac{\rho}{\overline{\rho}}$ \citep[e.g.][]{lecoanet_anel}. This both
+identically enforces $\rho > 0$ and eliminates the stiff term
+$\frac{\bm{\nabla}P}{\rho}$. We also define reduced pressure $\varpi =
+\frac{P}{\rho}$. Then, we may rewrite the second two equations of
+\autoref{se:nl_orig} as
 \begin{subequations}\label{se:nl_upsilon}
     \begin{align}
         \md{\Upsilon}{t} + u'_z \pd{\ln \overline{\rho}}{z} &= 0
             ,\label{eq:nl_up_density} \\
         \md{\bm{u}'}{t} + \bm{\nabla}\varpi
-            + \varpi\bm{\nabla}\Upsilon + g\bm{z} &= 0.
+            + \varpi\bm{\nabla}\Upsilon + g\uv{z} &= 0.
     \end{align}
 \end{subequations}
-Note that in the new coordinates, hydrostatic equilibrium corresponds to
-$\Upsilon = 0, \overline{\varpi} = gH$.
+In the new coordinates, hydrostatic equilibrium corresponds to $\Upsilon = 0,
+\overline{\varpi} = gH$.
 
 \section{Internal Gravity Waves: Theory}\label{s:theory}
 
@@ -214,46 +214,45 @@ $\Upsilon = 0, \overline{\varpi} = gH$.
 In the small perturbation limit, where flow velocities are small compared to the
 characteristic space and time scales $\pd{}{t} \gg \bm{u}' \cdot
 \bm{\nabla}$, we may linearize \autoref{se:nl_upsilon}. The solution in this
-linear regime up to undetermined amplitude $A$ is given by
-\citep{drazin,sutherland0}:
+linear regime is given by \citep{drazin,sutherland0}:
 \begin{equation}
     u'_z\p{x, z, t} = Ae^{z/2H}\cos\p{\p{k_{x}x + k_{z}z - \omega t}},
         \label{eq:k0z_sign}
 \end{equation}
-where $\omega$ satisfies dispersion relation
+where $A$ is the amplitude and $\omega$ satisfies dispersion relation
 \begin{equation}
     \omega^2 = \frac{N^2k_{x}^2}{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}.
         \label{eq:disp_rel}
 \end{equation}
-We take
+Our equations are valid in the limit of large sound speed $c_s \to \infty$, in
+which the \emph{Brunt-V\"ais\"al\"a frequency}
 \begin{equation}
     N^2 \equiv g^2\p{\rd{\rho}{P} - \frac{1}{c_s^2}} = \frac{g}{H},
 \end{equation}
-the \emph{Brunt-V\"ais\"al\"a frequency} to be constant in the incompressible
-limit $c_s \to \infty$ where $c_s$ is the sound speed. Other dynamical
-quantities are simply related to $u'_z$ (see e.g.\ \cite{sutherland0}).
+is constant. Other dynamical quantities are simply related to $u'_z$ \citep[see
+e.g.][]{sutherland0}.
 
-In the weak stratification limit $\abs{k_{z}H} \gg 1$, the solution exhibits the
-following characteristics:
+In the short-wavelength/WKB limit $\abs{k_{z}H} \gg 1$, the solution exhibits
+the following characteristics:
 \begin{itemize}
     \item The amplitude of the wave grows with $z$ as $e^{z/2H}$. Thus, the
         linear approximation is always violated for sufficiently large $z$.
 
     \item The phase and group velocities are respectively:
         \begin{align}
-            \bm{c}_{ph} &=
-                \p{k_{x}\bm{x} + k_{z}\bm{z}}\frac{\omega}
+            \bm{c}_{p} &=
+                \p{k_{x}\uv{x} + k_{z}\uv{z}}\frac{\omega}
                 {k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}},\\
-            \bm{c}_{g} &= N\frac{\p{k_{z}^2 + \frac{1}{4H^2}}\bm{x}
-                - \p{k_{x}k_{z}\bm{z}}}
+            \bm{c}_{g} &= N\frac{\p{k_{z}^2 + \frac{1}{4H^2}}\uv{x}
+                - \p{k_{x}k_{z}\uv{z}}}
                 {\p{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}^{3/2}}.\label{eq:vg}
         \end{align}
-        We note $\bm{c}_{ph} \cdot \bm{c}_g =
+        We note $\bm{c}_{p} \cdot \bm{c}_g =
         \mathcal{O}\p{\frac{1}{\p{k_{z}H}^{2}}} \approx 0$, the usual result
-        (e.g.~\cite{drazin,sutherland1}). Note that for an upwards propagating
-        IGW $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
+        \citep[e.g.][]{drazin,sutherland1}. Note that for an upwards
+        propagating IGW $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
 
-    \item The time-averaged total $x$-momentum flux $F$ carried in the $\bm{z}$
+    \item The time-averaged total $x$-momentum flux $F$ carried in the $\uv{z}$
         direction can be computed. Since the linear solution consists of terms
         separable as $f(x, z, t) = f(z)\cos\p{k_{x}x - \omega t}$, $x$
         averaging and time averaging are equivalent. $x$ averaging is preferred
@@ -382,7 +381,7 @@ complete absorption. This result was reproduced with nonzero viscosity
 nonlinear simulations \citep{winters1994} suggest that nonlinear effects can
 induce reflection.
 
-A purely horizontal shear flow $\overline{U}(z) \bm{x}$ can be seen in
+A purely horizontal shear flow $\overline{U}(z) \uv{x}$ can be seen in
 \autoref{se:nl_orig} to have the effect of modifying time derivatives
 $\partial_t$ to their frequency in the comoving frame of the fluid $\partial_t -
 \overline{U}(z)\partial_x$. If anywhere $\overline{U}(z) = \overline{U}_c$ where
@@ -454,7 +453,7 @@ restrct the simulation domain to the upper WD fluid, of much smaller vertical
 extent than the full physical domain. To further decrease computational cost, we
 restrict ourselves to 2D, plane-parallel IGW rather than full 3D stellar
 g-modes. While it is well-known wave breaking is a 3D process
-(\cite{klostermeyer,winters1994}), the dynamical effect of the breaking process
+\citep{klostermeyer,winters1994}, the dynamical effect of the breaking process
 is likely to be similar in 2D.
 
 Denote $L_x, L_z$ to be the dimensions of the simulation domain. As the physical
@@ -480,9 +479,10 @@ The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
 explicitly. A third-order, four-stage DIRK-ERK scheme \citep{ascher} is used
 with adaptive timesteps computed from advective Courant-Friedrichs-Lewy (CFL)
-time. Specifically, we use $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z / u_{z})$,
-where the minimum is taken over every grid point in the domain and $\Delta
-x,\Delta z$ are the grid spacings in the $x$ and $z$ directions respectively.
+time. Specifically, we use $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z /
+u_{z})$, where the minimum is taken over every grid point in the domain and
+$\Delta x,\Delta z$ are the grid spacings in the $x$ and $z$ directions
+respectively.
 
 The physics of our simulation is fixed by four parameters: $k_{x}, \omega, C,
 \nu$. We describe our choices for these parameters below:
@@ -832,7 +832,7 @@ increases, enhancing dissipation and further driving mean flow acceleration.
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
 
 We identify two manifestations of non-absorptive behavior: (i), the presence of
-a reflected wave with wave vector $\bm{k} = k_{x}\bm{x} - k_{z}\bm{z}$, and (ii)
+a reflected wave with wave vector $\bm{k} = k_{x}\uv{x} - k_{z}\uv{z}$, and (ii)
 the amount of horizontal momentum flux $F$ reflected/transmitted by the critical
 layer. The reflected wave amplitude and reflected flux need not agree exactly if
 some reflected flux is in higher-order modes, which is indeed the case in our
@@ -852,7 +852,7 @@ well approximated by $\abs{\pd{\phi_r}{t}} \approx 2\abs{\pd{(k_{z}z_c)}{t}}$.
 
 Since reflectivity depends sensitively on accurate measurements of $\hat{A}_i,
 \hat{A}_r$, we remark \autoref{eq:ahat_def} ensures orthogonality between
-$k_{x}\bm{x} \pm k_{z}\bm{z}$ modes. The integral for $\hat{A}_r$ is also
+$k_{x}\uv{x} \pm k_{z}\uv{z}$ modes. The integral for $\hat{A}_r$ is also
 performed over $z \in [z_0 + 3\sigma, z_0 + 3\sigma + H]$. Since
 $\hat{A}_i(t), \hat{A}_r(t)$ vary somewhat strongly over time, we perform time
 averaging over interval approximately $8\pi/\omega$, denoted by angle brackets.
@@ -992,7 +992,7 @@ t_{gw}$, where
     t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
         \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}}.
 \end{equation}
-the Alfv\'en wave crossing time (evaluated for a CO WD in \citep{fullerIV})
+the Alfv\'en wave crossing time (evaluated for a CO WD in \citealt{fullerIV})
 measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
 inspiral timescale. Before solid body rotation is attained, another relevant
 timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and
@@ -1083,7 +1083,7 @@ desire a system where the fluid fields are not divided by one another. We
 introduce $\varpi = \frac{P}{\rho}$ instead, then mandate $\overline{\rho},
 \overline{\varpi}$ background fields satisfy hydrostatic equilibrium
 $\bm{\nabla}\overline{\varpi} + \overline{\varpi} \bm{\nabla}\overline{\rho} +
-g\bm{z} = 0$. Taking isothermal stratification, we find $\overline{\varpi} = gH$. We
+g\uv{z} = 0$. Taking isothermal stratification, we find $\overline{\varpi} = gH$. We
 further change variables to $\Upsilon = \ln \rho - \ln \overline{\rho}$ and
 $\varpi' = \varpi - \overline{\varpi}$ deviations from the background state to obtain a
 system of equations at most quadratic in fluid fields:
@@ -1119,7 +1119,7 @@ terms to the flux-conservative form of the Euler fluid equations
         \partial_t (\rho \bm{u}') + \bm{\nabla} \cdot (\rho \bm{u}' \bm{u}'
             + \mathrm{diag}(\rho \varpi)
             - \nu \rho \bm{\nabla}\bm{u})
-            + \rho g \bm{z} &= 0.
+            + \rho g \uv{z} &= 0.
     \end{align}
 \end{subequations}
 The same $\nu$ is used for both the diffusive and viscous term, though this is
@@ -1179,7 +1179,7 @@ simulated in Dedalus:
                 - \frac{1}{H}\partial_z u_x}
                 - \p{\bm{u}' \cdot \bm{\nabla}}u_x
                 - \varpi' \pd{\Upsilon}{x}\bigg],\\
-        \pd{u_z}{t} + \pd{\varpi}{z} + gH\pd{\Upsilon}{z} - \frac{\varpi'}{H}
+        \pd{u_z}{t} + \pd{\varpi'}{z} + gH\pd{\Upsilon}{z} - \frac{\varpi'}{H}
             ={}& -\Gamma(z) u_z
             +\Gamma_{NL}\bigg[\nu \nabla^2 u_z
             - u_z \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla} \Upsilon} \cdot
