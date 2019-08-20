@@ -160,14 +160,16 @@ preceeding section.
 
 \section{Problem Description}\label{s:equations}
 
-We consider a two-dimensional incompressible, isothermal fluid, representative
-of degenerate matter in WDs. We furthermore neglect temperature variations and
-assume a barotropic equation of state $P(\rho, T) = P(\rho)$ as a first
-approximation. As we are interested in dynamics far from the center of the WD,
-we approximate the gravitational field as uniform. We model the background
-density stratification as $\overline{\rho}(x, z) = \overline{\rho}_0 e^{-z/H}$
-for some reference density $\overline{\rho}_0$ (we generally notate background
-quantities with overbars and perturbation quantities with primes).
+We consider a incompressible, isothermal fluid, representative of degenerate
+matter in WDs. We use barotropic equation of state $P(\rho, T) = P(\rho)$ as a
+first approximation. As we are interested in dynamics far from the center of the
+WD, we approximate the gravitational field as uniform. We model the background
+density stratification as $\overline{\rho} = \overline{\rho}_0 e^{-z/H}$ for
+some reference density $\overline{\rho}_0$ (we generally notate background
+quantities with overbars and perturbation quantities with primes). Finally, we
+consider a 2D fluid for computational feasibility: while it is well-known wave
+breaking is a 3D process \citep{klostermeyer,winters1994}, the dynamical effect
+of the breaking process is likely to be similar in 2D \citep{barker_ogilvie}.
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
@@ -198,10 +200,10 @@ $\frac{\bm{\nabla}P}{\rho}$. We also define reduced pressure $\varpi =
 \autoref{se:nl_orig} as
 \begin{subequations}\label{se:nl_upsilon}
     \begin{align}
-        \md{\Upsilon}{t} + u'_z \pd{\ln \overline{\rho}}{z} &= 0
+        \md{\Upsilon}{t} + u_z \pd{\ln \overline{\rho}}{z} &= 0
             ,\label{eq:nl_up_density} \\
-        \md{\bm{u}'}{t} + \bm{\nabla}\varpi
-            + \varpi\bm{\nabla}\Upsilon + g\uv{z} &= 0.
+        \md{\bm{u}}{t} + \bm{\nabla}\varpi + \varpi\bm{\nabla}\Upsilon
+            - \frac{\varpi}{H}\uv{z} + g\uv{z} &= 0.
     \end{align}
 \end{subequations}
 In the new coordinates, hydrostatic equilibrium corresponds to $\Upsilon = 0,
@@ -209,14 +211,14 @@ In the new coordinates, hydrostatic equilibrium corresponds to $\Upsilon = 0,
 
 \section{Internal Gravity Waves: Theory}\label{s:theory}
 
-\subsection{Analytical Properties: Linear}
+\subsection{Linear Analysis}
 
 In the small perturbation limit, where flow velocities are small compared to the
 characteristic space and time scales $\pd{}{t} \gg \bm{u}' \cdot
 \bm{\nabla}$, we may linearize \autoref{se:nl_upsilon}. The solution in this
 linear regime is given by \citep{drazin,sutherland0}:
 \begin{equation}
-    u'_z\p{x, z, t} = Ae^{z/2H}\cos\p{\p{k_{x}x + k_{z}z - \omega t}},
+    u'_z\p{x, z, t} = Ae^{z/2H}\cos\p{k_{x}x + k_{z}z - \omega t},
         \label{eq:k0z_sign}
 \end{equation}
 where $A$ is the amplitude and $\omega$ satisfies dispersion relation
@@ -247,18 +249,13 @@ the following characteristics:
                 - \p{k_{x}k_{z}\uv{z}}}
                 {\p{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}^{3/2}}.\label{eq:vg}
         \end{align}
-        We note $\bm{c}_{p} \cdot \bm{c}_g =
-        \mathcal{O}\p{\frac{1}{\p{k_{z}H}^{2}}} \approx 0$, the usual result
-        \citep[e.g.][]{drazin,sutherland1}. Note that for an upwards
-        propagating IGW $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
+        We note $\bm{c}_{p} \cdot \bm{c}_g = \mathcal{O}\p{ \p{k_{z}H}^{-2} }
+        \approx 0$. In the Boussinesq approximation where density stratification
+        outside of $N^2$ is completely neglected, the phase and group velocity
+        are exactly orthogonal \citep{drazin,sutherland1}. We use the convention
+        where upward propagating IGW have $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
 
-    \item The time-averaged total $x$-momentum flux $F$ carried in the $\uv{z}$
-        direction can be computed. Since the linear solution consists of terms
-        separable as $f(x, z, t) = f(z)\cos\p{k_{x}x - \omega t}$, $x$
-        averaging and time averaging are equivalent. $x$ averaging is preferred
-        both since periodic boundary conditions pick a natural averaging length
-        and since it does not introduce extra temporal smoothing. We may then
-        write
+    \item The averaged horizontal momentum flux $F$ is
         \begin{align}
             F &\equiv \ev{\rho u_{x}' u_{z}'}_x \equiv
                 \frac{1}{L_x}\int_0^{L_x}\limits \rho u_{x}'u_{z}'\;\mathrm{d}x,
@@ -266,23 +263,14 @@ the following characteristics:
                 &\approx -\frac{A^2}{2}\overline{\rho}_0\frac{k_{z}}{k_{x}},
                     \label{eq:S_lin}
         \end{align}
-        where $\ev{\dots}_x$ denotes $x$-averaging. Note that indeed for an
-        upwards propagating IGW $k_z < 0, k_x > 0$, we have $F > 0$.
+        Thus, indeed $F > 0$ for an upward propagating IGW $c_{g, z} > 0$.
 \end{itemize}
 
-\subsection{Wave Generation: Analytical Analysis}
-
-Since we are only concerned with the behavior of the wave at high $z$ where wave
-breaking occurs, we generate waves at low $z$ in the most numerically convenient
-way. As long as physically represesentative, upwards-propgaating IGW are
-generated and wave dynamics are only examined far from the forcing region, the
-exact excitation mechanism is not important for our conclusions.
+\subsection{Wave Generation}
 
 To model continuous excitation of IGWs deep in the WD interior propagating
 towards the surface, we use a volumetric forcing term to excite IGW near the
-bottom of the simulation domain\footnote{Interfacial forcing is numerically
-unstable when using a Chebyshev polynomial basis in the $z$ direction and
-impossible when using a Fourier basis.}. Our forcing excites both IGWs
+bottom of the simulation domain. Our forcing excites both IGWs
 propagating upwards, imitating a wave tidally excited deeper in the WD, and
 downwards, which are damped away by the damping layers described in
 \autoref{ss:damping}.
@@ -300,15 +288,7 @@ $k_{z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the given
 $k_{x}$, $\omega(k_{x}, k_{z})$ will propagate.
 
 In the linearized system, the effect of this forcing can be solved analytically
-up to good accuracy: we first approximate the driving term using
-$e^{\frac{-(z - z_0)^2}{2\sigma^2}} \approx \sqrt{2\pi \sigma^2}\delta(z -
-z_0)$, the $\sigma \to 0$ limit\footnote{In practice, $\sigma$ must be large
-enough to be numerically resolved by the spectral code.}. This system is solved
-exactly by matching the two plane wave solutions, above and below $z_0$. We may
-then approximately relax the solution to nonzero $\sigma$: an extra factor of
-$e^{-\frac{(k_{z}\sigma)^2}{2}}$ arises compared to the $\delta$-function
-solution (evaluating the Fourier Transform of $e^{-\frac{(z -
-z_0)^2}{2\sigma^2}}$ at $k_z$), and we obtain
+to be
 \begin{align}
     u_{z}'&(x, z, t) ={} \frac{Cgk_{x}^2}{\omega^2}
         \frac{1}{2ik_{z}}\frac{e^{\frac{-(k_{z}\sigma)^2}{2}}}
@@ -322,76 +302,57 @@ z_0)^2}{2\sigma^2}}$ at $k_z$), and we obtain
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
-The $z > z_0$ region models an upwards-propagating IGW wavetrain excited deep
+The $z > z_0$ region models an upward propagating IGW wavetrain excited deep
 in the atmosphere.
 
 \subsection{Wave Breaking Height}\label{ss:wave_breaking}
 
-In developing the results above, we have neglected advective terms $\pd{}{t} \gg
-\bm{u}' \cdot \bm{\nabla}$. However, since $\abs{\bm{u}'} \propto
-e^{z/2H}$, any nonzero amplitude IGW will eventually violate the linearity
-criterion. This regime is relevant in practice since the IGW may grow to
-nonlinear amplitudes before it reaches the surface of the WD
-\citep{fullerI,fullerII}. We can coarsely estimate the height at which this
-happens by when the Lagrangian displacement of the perturbation $\bm{\xi}' =
-\frac{\bm{u}'}{-i\omega}$ of a fluid parcel satisfies
+Above, we neglected advective terms $\pd{}{t} \gg \bm{u}' \cdot \bm{\nabla}$.
+However, since $\abs{\bm{u}'} \propto e^{z/2H}$ in an infinite domain all IGWs
+eventually grow to nonlinear amplitudes and break. Nonlinear wave breaking is
+expected to be important in WDs \citep{fullerI,fullerII}. We can
+estimate the height of wave breaking using $\frac{\abs{\bm{u}'}
+\abs{\bm{k}}}{\omega} \sim 1$. This can be rewritten using the Lagrangian
+displacement $-i\omega \bm{\xi}' = \bm{u}'$:
 \begin{equation}
-    \abs{\bm{\xi}'} \abs{\bm{k}} \sim \xi_z k_z \gtrsim 1.\label{eq:nl}
+    \xi_z k_z \gtrsim 1.\label{eq:nl}
 \end{equation}
 
-This is in agreement with the breaking location predicted by the wave-induced
-mean flow, given by \citep{eliassen_palm_cite,sutherland0}:
+An equivalent estimate given by \citep{eliassen_palm_cite,sutherland0} is that
+IGWs break when the wave-induced mean flow is equal to the horizontal phase
+velocity
 \begin{equation}
-     \ev{u_{x}} \equiv \overline{U} = \frac{1}{L_x}
-        \int\limits u_{x}\;\mathrm{d}x = \frac{\ev{u_{x}u_{z}}_x}{c_{g,z}},
-        \label{eq:mean_flow}
+    \overline{U}(z) = \frac{\ev{u_{x}u_{z}}_x}{c_{g,z}} \sim
+        \frac{\omega}{k_x},\label{eq:mean_flow}
 \end{equation}
-This formula is analogous to Stokes' drift for surface waves and can be derived
-by considering the propagation of $F$ (\autoref{eq:F_def}) into a medium at
-rest. Solving for where $\overline{U} = \omega / k_x$ the critical layer
-condition is fulfilled (\autoref{eq:u_c} and discussion in
-\autoref{ss:crit_layer}), we obtain $\abs{\frac{u_{x}'k_{x}}{\omega}} =
-\abs{\xi_x k_{x}} = \abs{\xi_z k_z} \sim 1$, equal to the nonlinearity criterion
-\autoref{eq:nl}. This condition predicts where the wave's self-acceleration
-alone produces a critical layer.
+where $\bar{U}(z) \equiv \ev{u_x}_x$ is the mean flow of the fluid.
+\autoref{eq:mean_flow} provides a leading-order estimate for $\bar{U}(z)$ which
+may further evolve over time (see \autoref{ss:crit_layer}); for a general mean
+flow, \autoref{eq:mean_flow} also defines the criterion for a \emph{critical
+layer}. This wave-induced mean flow is analogous to Stokes' drift for surface
+waves and can be derived by considering the propagation of $F$
+(\autoref{eq:F_def}) into a medium at rest. Evaluating \autoref{eq:mean_flow} yields
+agreement with \autoref{eq:nl}.
 
-\subsection{Formation and Dynamics of Critical Layer}\label{ss:crit_layer}
+\subsection{Critical Layer Dynamics}\label{ss:crit_layer}
 
-[TODO rewrite more clearly, it's just copy pasted together right now]
+% critical layer does form
+% previous studies of fluid interaction @ critical layer
 
-The general understanding of nonlinear IGW breaking is that the waves'
-interactions with the mean flow of the fluid transfer horizontal momentum from
-the waves into the fluid; such a process has been conjectured to be responsible
-for tidal synchronization in stellar binaries \citep{zahn75,gn89} as well as the
-quasi-biennial oscillation \citep{lindzen_qbo}. The details of this process have
-been laid out in a few key papers: IGWs are globally unstable to resonant
-three-wave interactions \citep{drazin}, causing energy transfer out of the IGW
-to daughter modes. These steeper daughter modes facilitate wave breaking,
-depositing horizontal momentum in the fluid's mean flow \citep{klostermeyer}.
+The detailed onset of wave breaking has been laid out in a few key papers
+\citep{drazin, klostermeyer, winters1994}, where instabilities transfer momentum
+out of the IGW through daughter modes into the mean flow of the fluid. When
+viscosity is sufficiently weak (see \autoref{ss:disp} for a discussion of this
+assumption in WDs), a non-uniform shear flow and eventually a critical layer
+develop. The further evolution of the critical layer with the incident IGW is
+thought to be responsible for tidal synchronization in stellar binaries
+\citep{zahn75,gn89} as well as the quasi-biennial oscillation
+\citep{lindzen_qbo}.
 
-In accordance with literature and the simulation setup, we will assume momentum
-redistribution is inefficient (see \autoref{ss:disp} for analysis of this
-assumption). The mean flow will then grow in place until it reaches the
-horizontal phase velocity of the parent IGW\@. Then, a critical layer forms at
-which the frequency of the incident IGW is Doppler-shifted to zero. The
-interaction of the parent IGW with the mean flow was first studied in the
+The behavior of an incident IGW upon a critical layer was first studied in the
 inviscid, linear regime in \citep{booker_bretherton}, which found nearly
-complete absorption. This result was reproduced with nonzero viscosity
-\citep{hazel}, but weakly nonlinear theory \citep{brown_stewartson} and fully
-nonlinear simulations \citep{winters1994} suggest that nonlinear effects can
-induce reflection.
-
-A purely horizontal shear flow $\overline{U}(z) \uv{x}$ can be seen in
-\autoref{se:nl_orig} to have the effect of modifying time derivatives
-$\partial_t$ to their frequency in the comoving frame of the fluid $\partial_t -
-\overline{U}(z)\partial_x$. If anywhere $\overline{U}(z) = \overline{U}_c$ where
-\begin{equation}
-    \overline{U}_c \equiv \omega / k_x,\label{eq:u_c}
-\end{equation}
-then the horizontal wavenumber of the linear wave in the fluid frame vanishes
-and critical behavior is observed. In a linear theory, both inviscid
-\citep{booker_bretherton} and viscous \citep{hazel}, the incident wave has
-amplitude reflection and transmission coefficients
+complete absorption of the IGW\@. In particular, the incident wave has amplitude
+reflection and transmission coefficients
 \begin{align}
     \mathrm{Ri} &\equiv \at{\frac{N^2}{\p{\pd{\overline{U}}{z}}^2}}_{z_c},
         \label{eq:ri_def}\\
@@ -399,33 +360,37 @@ amplitude reflection and transmission coefficients
     \mathcal{T}_A &= e^{-\pi \sqrt{\mathrm{Ri} - \frac{1}{4}}},
         \label{eq:crit_coeffs}
 \end{align}
-where we have defined local Richardson number Ri at the critical layer $z_c:
-\overline{U}(z_c) = \frac{\omega}{k_{x}}$. In the $\mathrm{Ri} \gg 1$ limit,
-$\mathcal{R}, \mathcal{T} \ll 1$ and the incident wave is completely absorbed to
-good approximation.
+where we have defined local Richardson number Ri at the height of the critical
+layer $z_c$. In the $\mathrm{Ri} \gg 1$ limit, $\mathcal{R}, \mathcal{T} \ll 1$
+and the incident wave is completely absorbed to good approximation.
 
-When the fluid absorbs the incident wave, it absorbs the incident horizontal
-momentum flux as well, which is converted into additional horizontal momentum of
-the shear flow. Since the mean flow cannot exceed $\overline{U}_c$ the
-horizontal phase velocity of the incident wave, the critical layer must instead
-propagate downwards to accommodate the incident momentum. The total horizontal
-momentum of the shear flow then obeys conservation equation
+This result extends to viscous fluids \citep{hazel}, but weakly nonlinear theory
+\citep{brown_stewartson} and numerical simulations \citep{winters1994} suggest
+that nonlinear effects significantly enhance reflection and transmission. These
+studies are not directly applicable to our problem where a continuous train of
+IGW are excited.
+
+Instead, we mayanalyze horizontal momentum transfer at the critical layer. Any
+incident horizontal momentum flux absorbed by the fluid must manifest as
+additional horizontal momentum of the shear flow. Since the mean flow cannot
+exceed $\overline{U}_c \equiv \omega/k_x$ the horizontal phase velocity of the
+incident wave, the critical layer must instead propagate downwards to
+accommodate the incident momentum flux. The total horizontal momentum of the
+shear flow obeys conservation equation
 \begin{equation}
     \pd{}{t}\int\limits \rho(z) \overline{U}(z, t)\;\mathrm{d}z
-        + \Delta F = 0.
+        + \Delta F = 0,
 \end{equation}
-$\Delta F$ is the total injected horizontal momentum to the flow. We next make a
-simple two-zone approximation $\overline{U}(z > z_c) = \overline{U}_c,
-\overline{U}(z < z_c) = 0$, assuming all horizontal momentum flux goes into
-critical layer propagation. Then, the conservation equation becomes simple
-differential equation
+where $\Delta F$ is the absorbed horizontal momentum. Assuming $\overline{U}(z >
+z_c) = \overline{U}_c, \overline{U}(z < z_c) = 0$, the conservation equation
+becomes differential equation for $z_c(t)$
 \begin{equation}
     \rho(z_c) \overline{U}_c\pd{z_c}{t} = \Delta F.\label{eq:zc_anal}
 \end{equation}
 If the entirety of the horizontal momentum flux carried by the IGW wavetrain is
 absorbed by the critical layer, then $\Delta F = -F'$ is constant in time.
-For constant $\Delta F$ in time and $\rho \approx \overline{\rho}$, $z_c(t)$ has
-analytical solution
+Finally, for constant $\Delta F$ in time and $\rho \approx \overline{\rho}$,
+$z_c(t)$ has analytical solution
 \begin{equation}
     z_c(t) = -H\ln t - H\ln \frac{H\overline{\rho}_0\overline{U}_c}{-\Delta F}
         .\label{eq:zc_sol}
@@ -452,9 +417,7 @@ below the breaking region. In the interest of computational feasibility, we
 restrct the simulation domain to the upper WD fluid, of much smaller vertical
 extent than the full physical domain. To further decrease computational cost, we
 restrict ourselves to 2D, plane-parallel IGW rather than full 3D stellar
-g-modes. While it is well-known wave breaking is a 3D process
-\citep{klostermeyer,winters1994}, the dynamical effect of the breaking process
-is likely to be similar in 2D.
+g-modes.
 
 Denote $L_x, L_z$ to be the dimensions of the simulation domain. As the physical
 domain extends beyond $L_x, L_z$, we must take care to suppress reflections. We
@@ -466,7 +429,7 @@ N_z$ respectively), and used $3/2$ dealiasing \citep{boyd}.
 
 The geometry of our simulation domain is fixed by one further parameter: $z_0$
 the forcing location. We use $z_0 = 0.2L_z$ to force sufficiently far from the
-lower damping zone and permit sufficient room for the upwards-moving wave to
+lower damping zone and permit sufficient room for the upward moving wave to
 grow at $\propto e^{z/2H}$. We choose $L_z = 10H$ to give $\sim e^3$ apmlitude
 growth between the damping zones. Finally, we want similar grid spacing
 $\frac{L_x}{N_x} \sim \frac{L_z}{N_z}$, guided by the intuition that turbulence
@@ -1126,24 +1089,7 @@ The same $\nu$ is used for both the diffusive and viscous term, though this is
 not required. Since the dissipation is not physical and is purely used for
 numerical stability, we choose it such that hydrostatic equilibrium is not
 modified (hence $\nu$ acts only on $\rho - \overline{\rho}$).
-% Some algebraic manipulation to re-cast it in the form of \autoref{se:nl_var}
-% gives
-% \begin{subequations}
-%     \begin{align}
-%         \bm{\nabla} \cdot \bm{u} &= 0,\\
-%         \partial_t \Upsilon + \p{\bm{u} \cdot \bm{\nabla}} \Upsilon -
-%             \frac{u_z}{H} - \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
-%             \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
-%             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}} &= 0,\\
-%         \partial_t \bm{u} + \p{\bm{u} \cdot \bm{\nabla}}\bm{u} +
-%             \bm{\nabla} \varpi + \varpi \bm{\nabla} \Upsilon - \nu \nabla^2
-%             \bm{u} + \bm{u} \nu\p{\nabla^2 \Upsilon + \p{\bm{\nabla}
-%             \Upsilon} \cdot \p{\bm{\nabla}\Upsilon} - \frac{2}{H}\partial_z
-%             \Upsilon + \frac{1 - e^{-\Upsilon}}{H^2}}&{}\nonumber\\
-%         - 2\nu \p{\p{\p{\bm{\nabla}\Upsilon} \cdot \bm{\nabla}}\bm{u} -
-%             \frac{1}{H}\partial_z \bm{u}} - \frac{\varpi'}{H} &= 0.
-%     \end{align}
-% \end{subequations}
+
 One last consideration we found necessary was masking out nonlinear terms in the
 forcing zone with a similar form to \autoref{eq:Gamma}. In the absence of this
 mask, a strong mean flow localized to the forcing zone developed. The mask used
