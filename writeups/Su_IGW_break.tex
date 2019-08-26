@@ -645,24 +645,23 @@ velocity field $\bm{u}$ at select times can be found in \autoref{fig:snapshots}.
     \approx 0.16$ for the parameters used.}\label{fig:snapshots}
 \end{figure*}
 
-Slices of
-$\overline{U}, \hat{F}$ across $z$ at various times $t$ are shown in
-\autoref{fig:nl_fluxes}. While the behavior of $\overline{U}$ seems to conform
-qualitatively with the predictions of \autoref{ss:crit_layer}, the behavior of
-$\hat{F}$ exhibits two salient features: (i) the incident flux seems to
-fluctuate greatly with time, and (ii) there seems to be a small transmitted
-feature at many of the later times. We will discuss further these features in
-\autoref{ss:reflectivity}, after first analyzing the propagation of the critical
-layer.
+Slices of $\overline{U}, \hat{F}$ across $z$ at the times depicted in
+\autoref{fig:snapshots} are shown in \autoref{fig:nl_fluxes}. While the behavior
+of $\overline{U}$ seems to conform qualitatively with the predictions of
+\autoref{ss:crit_layer}, the behavior of $\hat{F}$ exhibits two notable
+features: (i) the incident flux seems to fluctuate greatly with time, and (ii)
+there seems to be a small transmitted feature at many of the later times. We
+will discuss further these features in \autoref{ss:reflectivity}, after first
+analyzing the propagation of the critical layer.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_fluxes.png}
     \caption{Plot of $\overline{U}(z, t)$ and $\hat{F}(z, t)$ respectively at
-    various times over $z$ in our $\mathrm{Re} = 1024$ simulation.
-    $\overline{U}, \hat{F}$ follow their definitions in \autoref{eq:mean_flow}
-    and \autoref{eq:sbm_def}. $\overline{U}$ is given in units of
-    $\overline{U}_c = \frac{\omega}{k_{x}}$ the critical horizontal flow
-    velocity (see \autoref{ss:crit_layer}). The propagation of the critical
+    the same times in \autoref{fig:snapshots} over $z$ in our $\mathrm{Re} =
+    1024$ simulation. $\overline{U}, \hat{F}$ follow their definitions in
+    \autoref{eq:mean_flow} and \autoref{eq:sbm_def}. $\overline{U}$ is given in
+    units of $\overline{U}_c = \frac{\omega}{k_{x}}$ the critical horizontal
+    flow velocity (see \autoref{ss:crit_layer}). The propagation of the critical
     layer towards lower $z$ and sharp deposition of $F$ at the critical layer
     are evident.}\label{fig:nl_fluxes}
 \end{figure}
@@ -784,12 +783,13 @@ increases, enhancing dissipation and further driving mean flow acceleration.
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_f_ri.png}
     \caption{Local Richardson number of the flow at the critical layer over time
-    as defined in \autoref{ss:ri_med_def}. Dotted red lines demarcate the
-    minimum and median of $\mathrm{Ri}$ over $x$. These numbers effectively
-    measure the mean and spread in width of the critical layer over $x$. Note
-    that $\mathrm{Ri} \sim \frac{1}{4}$ corresponds to the KHI, so this plot
-    suggests the shear at the critical layer does not steepen past the KHI
-    onset.}\label{fig:nl_f_ri}
+    as defined in \autoref{ss:ri_med_def}. The dotted red and solid green lines
+    denote respectively the minimum and median of $\mathrm{Ri}$ over $x$ (the
+    maximum greatly exceeds the vertical scale of this plot). These numbers
+    effectively measure the mean and spread in width of the critical layer over
+    $x$. Note that $\mathrm{Ri} \sim \frac{1}{4}$ corresponds to the KHI, so
+    this plot suggests the shear at the critical layer does not steepen past the
+    KHI onset.}\label{fig:nl_f_ri}
 \end{figure}
 
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
