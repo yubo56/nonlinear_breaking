@@ -19,7 +19,9 @@
     \usepackage[caption=false]{subfig} % subfigures
 
     \newcommand*{\rd}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+    \newcommand*{\rtd}[2]{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}
     \newcommand*{\pd}[2]{\frac{\partial#1}{\partial#2}}
+    \newcommand*{\ptd}[2]{\frac{\partial^2#1}{\partial#2^2}}
     \newcommand*{\md}[2]{\frac{\mathrm{D}#1}{\mathrm{D}#2}}
     \newcommand*{\at}[1]{\left.#1\right|}
     \newcommand*{\abs}[1]{\left|#1\right|}
@@ -287,10 +289,10 @@ Using a narrow Gaussian profile excites a broad $z$ power spectrum, but only the
 $k_{z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the given
 $k_{x}$, $\omega(k_{x}, k_{z})$ will propagate.
 
-In the linearized system, the effect of this forcing can be solved analytically
-to be
+In the linearized system, the effect of this forcing can be approximated
+most clearly as two plane waves propagating away from the forcing zone
 \begin{align}
-    u_{z}'&(x, z, t) ={} \frac{Cgk_{x}^2}{\omega^2}
+    u_{z}'&(x, z, t) \approx{} \frac{Cgk_{x}^2}{\omega^2}
         \frac{1}{2ik_{z}}\frac{e^{\frac{-(k_{z}\sigma)^2}{2}}}
         {\sqrt{2\pi\sigma^2}} \times\nonumber\\
         &{}\begin{cases}
@@ -303,7 +305,8 @@ to be
     \end{cases}.\label{eq:uz_lin}
 \end{align}
 The $z > z_0$ region models an upward propagating IGW wavetrain excited deep
-in the atmosphere.
+in the atmosphere. A derivation of this result is provided in
+\autoref{s:force_solved}.
 
 \subsection{Wave Breaking Height}\label{ss:wave_breaking}
 
@@ -1036,6 +1039,34 @@ significant energy cascade must happen in the critical layer.
 \onecolumn
 \appendix
 
+\section{Forcing Solution}\label{s:force_solved}
+
+To solve for the excited wave amplitude in the linear problem, consider the
+complexified linearized system of equations, then $\pd{}{t} \to -i\omega,
+\pd{}{x} \to ik_x$. This gives (extracting the $e^{ik_xx - i\omega t}$ mode)
+\begin{align*}
+    \pd{u_{z}'}{z} + ik_xu_x' &= 0,\\
+    -i\omega u_x' + ik_x \varpi' + gHik_x \Upsilon &= 0,\\
+    -i\omega u_{z}' + \pd{\varpi'}{z} + gH\pd{\Upsilon}{z}
+        - \frac{\varpi'}{H} &= 0,\\
+    -i\omega \Upsilon - \frac{u_{z}'}{H} &=
+        Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}.
+\end{align*}
+Compare to the left hand side of \autoref{se:dedalus_eqs} below. This can be
+recast solely in terms of
+$u_{1z}$ as
+\begin{align*}
+    \omega^2\p{
+        k_x^2u_{z}' + \frac{1}{H}\pd{u_{z}'}{z} - \ptd{u_{z}'}{z}
+    } - u_{z}'N^2k_x^2 =
+    gk_x^2Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}.
+\end{align*}
+% In the limit $\sigma \to 0$, the right hand side can be approximated
+% $e^{-\frac{(z - z_0)^2}{2\sigma^2}} \approx \sigma\sqrt{2\pi}\delta\p{z - z_0}$.
+% Matching this against a singularity in $\ptd{u_z'}{z}$, or a kick in
+% $\pd{u_z'}{z}$, gives \autoref{eq:uz_lin}.
+The homogeneous solutions are
+
 \section{Equation Implementations}\label{se:strat_impl}
 
 We denote $x \in [0, L_x], z \in [0, L_z]$ the simulation domain and $N_x, N_z$
@@ -1103,7 +1134,7 @@ was
 Including the damping layers and forcing terms as described in
 \autoref{ss:numerics}, we finally obtain the full system of equations as
 simulated in Dedalus:
-\begin{subequations}
+\begin{subequations}\label{se:dedalus_eqs}
     \begin{align}
         \bm{\nabla} \cdot \bm{u}' ={}& 0,\\
         \partial_t \Upsilon - \frac{u_z}{H}
