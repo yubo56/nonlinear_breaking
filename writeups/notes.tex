@@ -48,6 +48,7 @@
     \let\Re\undefined
     \let\Im\undefined
     \DeclareMathOperator{\Res}{Res}
+    \DeclareMathOperator{\erf}{erf}
     \DeclareMathOperator{\Re}{Re}
     \DeclareMathOperator{\Im}{Im}
     \DeclareMathOperator{\Log}{Log}
@@ -865,6 +866,86 @@ to the delta function case. Thus, we finally obtain
 \begin{equation}
     \abs*{u_{1z}(z = z_0)} = \frac{F_0\sqrt{2\pi}\sigma gk_x^2}{
         2\rho_0\p*{z = z_0}\omega^2 k_z}e^{-k_z^2\sigma^2/2}.
+\end{equation}
+
+\subsection{Narrow-Band Forcing: Exact}
+
+We use variation of parameters. We start with PDE in $\varpi, \Upsilon$
+coordinates and transform to ODE
+\begin{align}
+    \rd{u_{z}'}{z} + ik_xu_x' &= 0,\nonumber\\
+    -i\omega u_x' + ik_x \varpi' + gHik_x \Upsilon &= 0,\nonumber\\
+    -i\omega u_{z}' + \rd{\varpi'}{z} + gH\rd{\Upsilon}{z}
+        - \frac{\varpi'}{H} &= 0,\nonumber\\
+    -i\omega \Upsilon - \frac{u_{z}'}{H} &=
+        Ce^{-\frac{(z - z_0)^2}{2\sigma^2}},\nonumber\\
+     \rtd{u_{z}'}{z} - k_x^2u_{z}' - \frac{1}{H}\rd{u_{z}'}{z}
+        + u_{z}'\frac{N^2k_x^2}{\omega^2} &=
+    -\frac{gk_x^2}{\omega^2}Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}
+        .\label{eq:narrow_inhomo}
+\end{align}
+We have divided through by $e^{i(k_xx - \omega t)}$ and taken $u_z'(x, z, t)
+\Rightarrow u_z'(z)$. The inhomogeneous solutions are most easily written
+\begin{equation}
+    u_{z,\pm}'(z) = e^{\p*{\frac{1}{2H} \pm ik_z}\p*{z - z_0}},
+\end{equation}
+in which case the Wronskian is
+\begin{equation}
+    W \equiv \det \begin{vmatrix}
+        u_{z,+}' & u_{z,-}' \\[4pt]
+        \rd{u_{z,+}'}{z} & \rd{u_{z,-}'}{z}
+    \end{vmatrix} = -2ik_ze^{z/H}.
+\end{equation}
+
+The general solution to \autoref{eq:narrow_inhomo} is then given $u(z) = A_+u_+
++ A_-u_-$ where
+\begin{align}
+    A_{\pm} &= \mp \int \frac{1}{W} u_{\mp} \p*{-\frac{gk_x^2}{\omega^2}
+            Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}}\;\mathrm{d}z,\nonumber\\
+        &= \mp \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}\int \exp\s*{
+            \p*{-\frac{1}{2H} \mp ik_z}z' - \frac{z'^2}{2\sigma^2}}
+            \;\mathrm{d}z',\nonumber\\
+        &= \mp \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}\int \exp\s*{
+            -\frac{z'^2 + \p*{\frac{\sigma^2}{H} \pm 2ik_z\sigma^2}z'
+            }{2\sigma^2}}\;\mathrm{d}z',\nonumber\\
+        &= \mp \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}\int \exp\s*{
+            -\frac{\p*{z' + \frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2
+                - \p*{\frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2
+            }{2\sigma^2}}\;\mathrm{d}z',\nonumber\\
+        &= \mp \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}
+            e^{\frac{\p*{\frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2}{2\sigma^2}}
+                \sqrt{2\sigma^2} \int e^{-\xi^2}\;\mathrm{d}\xi,\nonumber\\
+        &= \mp \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}
+            e^{\frac{\p*{\frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2}{2\sigma^2}}
+                \sqrt{2\sigma^2} \frac{\sqrt{\pi}}{2}\p*{1 + C +
+                    \erf\p*{\frac{z - z_0}{\sqrt{2\sigma^2}}
+                        + \frac{\sigma}{2H\sqrt{2}}
+                        \pm \frac{ik_z\sigma}{\sqrt{2}}}}
+\end{align}
+We have made $z' \equiv z - z_0, \xi = \s*{ \frac{z - z_0}{\sqrt{2\sigma^2}} +
+\frac{\sigma}{2H\sqrt{2}} \pm \frac{ik_z\sigma}{\sqrt{2}}}$, and $\erf(z) =
+\frac{2}{\sqrt{\pi}}\int\limits_0^z e^{-t^2}\;\mathrm{d}t$. $C$ is a constant of
+integration. Since we want $u(z\to \infty) = u_+, u(z \to -\infty) = u_-$, we
+can quickly see that $C_+ = 0, C_- = -2$. Thus, the specific solution can be
+written down
+\begin{equation}
+    u(z) = \frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}
+            e^{\frac{\p*{\frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2}{2\sigma^2}}
+                \sqrt{2\sigma^2} \frac{\sqrt{\pi}}{2}\s*{
+                    -u_+\p*{1 + \erf\p*{\xi}}
+                    + u_- \p*{\erf\p*{\xi} - 1}}
+\end{equation}
+In the limit where $H \to \infty$ and $\erf(\xi) \approx \Theta(\xi)$, we
+recover
+\begin{equation}
+    u(z) = -\frac{1}{2ik_z}\frac{gk_x^2}{\omega^2}e^{-\frac{k_z^2\sigma^2}{2}}
+        \sqrt{2\pi \sigma^2} \times
+    \begin{cases}
+        e^{\p*{\frac{1}{2H} + ik_z}\p*{z - z_0} + \frac{k_z\sigma^2}{2H}}
+            & z > z_0,\\
+        e^{\p*{\frac{1}{2H} - ik_z}\p*{z - z_0} - \frac{k_z\sigma^2}{2H}}
+            & z > z_0.
+    \end{cases}
 \end{equation}
 
 \section{Timestepping}

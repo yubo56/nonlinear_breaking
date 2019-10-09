@@ -114,7 +114,7 @@ def get_anal_uz(params, t, x, z, phi=0):
         * np.sin(params['KX'] * x
                  + params['KZ'] * (z - params['Z0'])
                  - params['OMEGA'] * t
-                 + 1 / (2 * params['KZ'] * params['H'])
+                 + (params['KZ'] * params['S'])**2 / (2 * params['H'])
                  - phi))
 
 def get_anal_ux(params, t, x, z, phi=0):
@@ -128,12 +128,12 @@ def get_anal_ux(params, t, x, z, phi=0):
             * np.sin(params['KX'] * x
                      + params['KZ'] * (z - params['Z0'])
                      - params['OMEGA'] * t
-                     + 1 / (2 * params['KZ'] * params['H'])
+                     + (params['KZ'] * params['S'])**2 / (2 * params['H'])
                      - phi)
             - np.cos(params['KX'] * x
                      + params['KZ'] * (z - params['Z0'])
                      - params['OMEGA'] * t
-                     + 1 / (2 * params['KZ'] * params['H'])
+                     + (params['KZ'] * params['S'])**2 / (2 * params['H'])
                      - phi)
                 / (2 * params['H'] * params['KX'])))
 

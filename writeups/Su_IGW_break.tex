@@ -34,6 +34,7 @@
     \DeclareMathOperator*{\argmin}{argmin}
     \DeclareMathOperator*{\argmax}{argmax}
     \DeclareMathOperator*{\med}{med}
+    \DeclareMathOperator*{\erf}{erf}
 
 \title[Internal Gravity Wave Breaking in White Dwarf Binaries]{Internal Gravity Wave Breaking in White Dwarf Binaries}
 \author[Y. Su et\ al.]{
@@ -289,18 +290,19 @@ Using a narrow Gaussian profile excites a broad $z$ power spectrum, but only the
 $k_{z}$ satisfying dispersion relation \autoref{eq:disp_rel} for the given
 $k_{x}$, $\omega(k_{x}, k_{z})$ will propagate.
 
-In the linearized system, the effect of this forcing can be approximated
-most clearly as two plane waves propagating away from the forcing zone
+In the linearized system, the effect of this forcing can be solved exactly. If
+we approximate $k_zH \gg 1, \sigma \ll H$, the solution can be approximated as
+two plane waves propagating away from the forcing zone
 \begin{align}
-    u_{z}'&(x, z, t) \approx{} \frac{Cgk_{x}^2}{\omega^2}
-        \frac{1}{2ik_{z}}\frac{e^{\frac{-(k_{z}\sigma)^2}{2}}}
-        {\sqrt{2\pi\sigma^2}} \times\nonumber\\
+    u_{z}'&(x, z, t) \approx{} \frac{C}{2k_z}\frac{gk_x^2}{\omega^2}
+        e^{-\frac{k_z^2\sigma^2}{2}}
+        \sqrt{2\pi \sigma^2} \times\nonumber\\
         &{}\begin{cases}
-        e^{\frac{z - z_0}{2H}}\cos\p{k_{x}x + k_{z}(z - z_0) - \omega t
-            + \frac{1}{2k_{z}H}}
+        e^{\frac{z - z_0}{2H}}\sin\p{k_{x}x + k_{z}(z - z_0) - \omega t
+            + \frac{k_z\sigma^2}{2H}}
             & z > z_0\\
-        e^{\frac{z - z_0}{2H}}\cos\p{k_{x}x - k_{z}(z - z_0) - \omega t
-            + \frac{1}{2k_{z}H}}
+        e^{\frac{z - z_0}{2H}}\sin\p{k_{x}x - k_{z}(z - z_0) - \omega t
+            + \frac{k_z\sigma^2}{2H}}
             & z < z_0\\
     \end{cases}.\label{eq:uz_lin}
 \end{align}
@@ -1053,29 +1055,58 @@ e^{ik_xx - i\omega t}$, this gives:
     -i\omega \Upsilon - \frac{u_{z}'}{H} &=
         Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}.
 \end{align*}
-We have replaced all partial derivatives with regular derivatives. Compare to
-the left hand side of \autoref{se:dedalus_eqs} below. This can be recast solely
-in terms of $u_{1z}$ as
+We have replaced all partial derivatives with regular derivatives. This can be
+recast solely in terms of $u_{z}'$ as
 \begin{align*}
-    \omega^2\p{
-        k_x^2u_{z}' + \frac{1}{H}\rd{u_{z}'}{z} - \rtd{u_{z}'}{z}
-    } - u_{z}'N^2k_x^2 =
-    gk_x^2Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}.
+     \rtd{u_{z}'}{z} - k_x^2u_{z}' - \frac{1}{H}\rd{u_{z}'}{z}
+        + u_{z}'\frac{N^2k_x^2}{\omega^2} &=
+    -\frac{gk_x^2}{\omega^2}Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}
+        .\label{eq:narrow_inhomo}
 \end{align*}
-% In the limit $\sigma \to 0$, the right hand side can be approximated
-% $e^{-\frac{(z - z_0)^2}{2\sigma^2}} \approx \sigma\sqrt{2\pi}\delta\p{z - z_0}$.
-% Matching this against a singularity in $\ptd{u_z'}{z}$, or a kick in
-% $\pd{u_z'}{z}$, gives \autoref{eq:uz_lin}.
-We compute the solution to the inhomogeneous ODE by the method of variation of
-parameters. The homogeneous solutions are of form $u_{z,\pm}'(z) =
-e^{\frac{z}{2H} \pm ik_zz}$ where $k_z$ satisfies the dispersion relation
-\autoref{eq:disp_rel}. The Wronskian can be computed
+The homogeneous solutions are of form $u_{z,\pm}'(z) = e^{\p{\frac{1}{2H} \pm
+ik_z}\p{z - z_0}}$ where $k_z$ satisfies the dispersion relation
+\autoref{eq:disp_rel}. We compute the solution to the inhomogeneous ODE by the
+method of variation of parameters. The Wronskian can be computed
 \begin{equation}
     W \equiv \det \begin{vmatrix}
         u_{z,+}' & u_{z,-}' \\[4pt]
         \rd{u_{z,+}'}{z} & \rd{u_{z,-}'}{z}
     \end{vmatrix} = -2ik_ze^{z/H}.
 \end{equation}
+The general solution is then
+\begin{equation}
+    u_z' = -u_{z,+}\int \frac{1}{W} u_{z,-}' \p{-\frac{gk_x^2}{\omega^2}
+            Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}}\;\mathrm{d}z
+        + u_{z,-}\int \frac{1}{W} u_{z,+}' \p{-\frac{gk_x^2}{\omega^2}
+            Ce^{-\frac{(z - z_0)^2}{2\sigma^2}}}\;\mathrm{d}z.
+\end{equation}
+Taking these integrals and applying boundary conditions $u_z'\p{z \to \infty} =
+u_{z,+}', u_z'\p{z \to -\infty} = u_{z,-}'$ gives exact solution
+\begin{equation}
+    u(z) = \frac{C}{2ik_z}\frac{gk_x^2}{\omega^2}
+            e^{\frac{\p{\frac{\sigma^2}{2H} \pm ik_z\sigma^2}^2}{2\sigma^2}}
+                \sqrt{2\sigma^2} \frac{\sqrt{\pi}}{2}\s{
+                    -u_+\p{1 + \erf\p{\xi}}
+                    + u_- \p{\erf\p{\xi} - 1}}
+\end{equation}
+If we are concerned with only $z$ scales significantly larger than $\sigma$,
+then we may take $\erf(\xi) \approx \Theta(\xi)$. If we further assume $k_zH \gg
+1$ and restore the $e^{ik_xx - i\omega t}$ factor, we recover the cited form
+\autoref{eq:uz_lin}
+\begin{equation}
+    u_{z}'(x, z, t) = -\frac{C}{2ik_z}\frac{gk_x^2}{\omega^2}
+        e^{-\frac{k_z^2\sigma^2}{2}}
+        \sqrt{2\pi \sigma^2} e^{ik_xx - i\omega t} \times
+    \begin{cases}
+        e^{\p{\frac{1}{2H} + ik_z}\p{z - z_0} + \frac{k_z\sigma^2}{2H}}
+            & z > z_0,\\
+        e^{\p{\frac{1}{2H} - ik_z}\p{z - z_0} - \frac{k_z\sigma^2}{2H}}
+            & z > z_0.
+    \end{cases}
+\end{equation}
+We use the plane wave approximation in our fitting routines since we generally
+fit many $\sigma$ away from $z_0$, and orthogonality with other modes is
+essential for a reliable fit.
 
 \section{Equation Implementations}\label{se:strat_impl}
 
