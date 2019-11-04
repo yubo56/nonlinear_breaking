@@ -89,7 +89,10 @@ def smooth(f):
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
-            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
+            params['KX']**2) * np.exp(-(
+                    params['S']**2 * params['KZ']**2
+                        - params['S']**2 / (4 * params['H']**2)
+                ) / 2) / (
                 2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
                 * params['OMEGA']**2 * params['KZ'])
 
@@ -114,7 +117,7 @@ def get_anal_uz(params, t, x, z, phi=0):
         * np.sin(params['KX'] * x
                  + params['KZ'] * (z - params['Z0'])
                  - params['OMEGA'] * t
-                 + 1 / (2 * params['KZ'] * params['H'])
+                 + params['KZ'] * params['S']**2 / (2 *  params['H'])
                  - phi))
 
 def get_anal_ux(params, t, x, z, phi=0):
