@@ -30,10 +30,11 @@ FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
 Z_TOP_MULT = 1
 STRIDE = 15
 AVG_IDX = 4
-FONTSIZE = 12
+FONTSIZE = 14
 DPI=600
 
 plt.rc('text', usetex=True)
+LW = 4
 plt.rc('font', family='serif', size=FONTSIZE)
 
 def populate_globals(var_dict):
@@ -89,7 +90,10 @@ def smooth(f):
 def get_uz_f_ratio(params):
     ''' get uz(z = z0) / F '''
     return (np.sqrt(2 * np.pi) * params['S'] * params['g'] *
-            params['KX']**2) * np.exp(-params['S']**2 * params['KZ']**2/2) / (
+            params['KX']**2) * np.exp(-(
+                    params['S']**2 * params['KZ']**2
+                        - params['S']**2 / (4 * params['H']**2)
+                ) / 2) / (
                 2 * params['RHO0'] * np.exp(-params['Z0'] / params['H'])
                 * params['OMEGA']**2 * params['KZ'])
 
@@ -114,7 +118,7 @@ def get_anal_uz(params, t, x, z, phi=0):
         * np.sin(params['KX'] * x
                  + params['KZ'] * (z - params['Z0'])
                  - params['OMEGA'] * t
-                 + (params['KZ'] * params['S'])**2 / (2 * params['H'])
+                 + params['KZ'] * params['S']**2 / (2 * params['H'])
                  - phi))
 
 def get_anal_ux(params, t, x, z, phi=0):
@@ -128,12 +132,12 @@ def get_anal_ux(params, t, x, z, phi=0):
             * np.sin(params['KX'] * x
                      + params['KZ'] * (z - params['Z0'])
                      - params['OMEGA'] * t
-                     + (params['KZ'] * params['S'])**2 / (2 * params['H'])
+                     + params['KZ'] * params['S']**2 / (2 * params['H'])
                      - phi)
             - np.cos(params['KX'] * x
                      + params['KZ'] * (z - params['Z0'])
                      - params['OMEGA'] * t
-                     + (params['KZ'] * params['S'])**2 / (2 * params['H'])
+                     + params['KZ'] * params['S']**2 / (2 * params['H'])
                      - phi)
                 / (2 * params['H'] * params['KX'])))
 

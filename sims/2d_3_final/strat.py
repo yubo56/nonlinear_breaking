@@ -66,6 +66,7 @@ def get_params(overrides=None):
     return params
 
 if __name__ == '__main__':
+    # all of these get coerced to 256x1024 for plotting
     tasks = [
        ('lin_0_masked',
         get_params(overrides={'F_MULT': 0.0005,
