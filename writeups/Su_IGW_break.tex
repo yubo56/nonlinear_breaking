@@ -60,14 +60,7 @@ NJ 08544, USA
 \renewcommand*{\sectionautorefname}{Section}
 \maketitle
 
-% cp ../sims/agg.png plots;
-% cp ../sims/2d_3_final/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png;
-% cp ../sims/2d_3_final/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png;
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png;
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png;
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png;
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png;
-% cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png;
+% cp ../sims/agg.png plots; cp ../sims/2d_4_fourier/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png; cp ../sims/2d_4_fourier/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png;
 
 \begin{abstract}
     In sufficiently compact white dwarf binaries, dynamical tides raise a train
@@ -325,33 +318,41 @@ displacement $-i\omega \bm{\xi}' = \bm{u}'$:
     \xi_z k_z \gtrsim 1.\label{eq:nl}
 \end{equation}
 
-An equivalent estimate given by \citep{eliassen_palm_cite,sutherland0} is that
-IGWs break when the wave-induced mean flow is equal to the horizontal phase
-velocity
+% An equivalent estimate given by \citep{eliassen_palm_cite,sutherland0} is that
+% IGWs break when the wave-induced mean flow is equal to the horizontal phase
+% velocity
+% \begin{equation}
+%     \overline{U}(z) = \frac{\ev{u_{x}u_{z}}_x}{c_{g,z}} \sim
+%         \frac{\omega}{k_x},\label{eq:rip}
+% \end{equation}
+% where \overline{U}(z) \equiv \ev{u_x}_x$ is the mean flow of the fluid.
+% \autoref{eq:rip} provides a leading-order estimate for \overline{U}(z)$ which
+% may further evolve over time (see \autoref{ss:crit_layer}); for a general mean
+% flow, \autoref{eq:rip} also defines the criterion for a \emph{critical
+% layer}. This wave-induced mean flow is analogous to Stokes' drift for surface
+% waves and can be derived by considering the propagation of $F$
+% (\autoref{eq:F_def}) into a medium at rest. Evaluating \autoref{eq:rip}
+% yields agreement with \autoref{eq:nl}.
+
+
+\citealt{drazin, klostermeyer, winters1994} describe the onset of wave breaking.
+At intermediate amplitudes, wave breaking occurs via triadic resonances which
+transfer energy from the ``parent’’ internal gravity wave (in our problem, the
+tidally forced wave) to ``daughter’’ internal gravity waves on smaller length
+scales that efficiently damp. The horizontal momentum flux decreases from $F$ to
+$0$ over this breaking region. The lost flux is deposited into mean flow
 \begin{equation}
-    \overline{U}(z) = \frac{\ev{u_{x}u_{z}}_x}{c_{g,z}} \sim
-        \frac{\omega}{k_x},\label{eq:mean_flow}
+    \overline{U}(z, t) \equiv \ev*{u_x}_x.\label{eq:mean_flow}
 \end{equation}
-where $\bar{U}(z) \equiv \ev{u_x}_x$ is the mean flow of the fluid.
-\autoref{eq:mean_flow} provides a leading-order estimate for $\bar{U}(z)$ which
-may further evolve over time (see \autoref{ss:crit_layer}); for a general mean
-flow, \autoref{eq:mean_flow} also defines the criterion for a \emph{critical
-layer}. This wave-induced mean flow is analogous to Stokes' drift for surface
-waves and can be derived by considering the propagation of $F$
-(\autoref{eq:F_def}) into a medium at rest. Evaluating \autoref{eq:mean_flow} yields
-agreement with \autoref{eq:nl}.
+As the mean flow grows, a \emph{critical layer} may form, discussed below.
 
-\subsection{Critical Layer Dynamics}\label{ss:crit_layer}
+\subsection{Critical Layers}\label{ss:crit_layer}
 
-% critical layer does form
-% previous studies of fluid interaction @ critical layer
-
-The detailed onset of wave breaking has been laid out in a few key papers
-\citep{drazin, klostermeyer, winters1994}, where instabilities transfer momentum
-out of the IGW through daughter modes into the mean flow of the fluid. When
-viscosity is sufficiently weak (see \autoref{ss:disp} for a discussion of this
-assumption in WDs), a non-uniform shear flow and eventually a critical layer
-develop. The further evolution of the critical layer with the incident IGW is
+% TODO stash here
+\begin{equation}
+    \overline{U}_c \equiv \omega/k_x,
+\end{equation}
+The further evolution of the critical layer with the incident IGW is
 thought to be responsible for tidal synchronization in stellar binaries
 \citep{zahn75,gn89} as well as terrestrial phenomena such as the quasi-biennial
 oscillation \citep{lindzen_qbo}.
@@ -377,10 +378,10 @@ that nonlinear effects may significantly enhance reflection and transmission.
 
 Consider the horizontal momentum transfer at the critical layer. Any incident
 horizontal momentum flux absorbed by the fluid must manifest as additional
-horizontal momentum of the shear flow. Since the mean flow cannot exceed
-$\overline{U}_c \equiv \omega/k_x$, the horizontal phase velocity of the
-incident wave, the critical layer will instead propagate downward in response to
-the incident momentum flux. The horizontal momentum of the shear flow satisfies
+horizontal momentum of the shear flow. Since $\overline{U}$ cannot exceed
+$\overline{U}_c$, the critical layer will instead propagate downward in response
+to the incident momentum flux. The horizontal momentum of the shear flow
+satisfies
 \begin{equation}
     \pd{}{t}\int\limits \overline{\rho}(z) \overline{U}(z, t)\;\mathrm{d}z
         - \Delta F = 0,
@@ -393,17 +394,12 @@ condition becomes
 \end{equation}
 If $\Delta F$ is constant in time, $z_c(t)$ has analytical solution
 \begin{equation}
-    z_c(t) = -H\ln \frac{\overline{\rho}(t = 0)
-        + t\frac{\Delta F}{\overline{U}_c H}}{\overline{\rho}_0}
-        ,\label{eq:zc_sol}
+    z_c(t) = -H\ln \s{e^{-\frac{z_c(t = 0)}{H}} +
+        \frac{t\Delta F}{\overline{U}_c H\overline{\rho}_0}},\label{eq:zc_sol}
 \end{equation}
-where $\overline{\rho}(t_0)$ is the density at the critical layer height at $t =
-0$.
+where $z_c(t = 0)$ is the initial critical layer height.
 
-\section{Internal Gravity Waves: Weakly Forced Numerical
-Simulations}\label{s:sim}
-
-\subsection{Numerical Setup}\label{ss:numerics}
+\section{Numerical Simulation Setup}\label{ss:numerics}
 
 We verify the analytic theory of \autoref{s:theory} by running weakly forced
 direct numerical simulations using the pseudo-spectral code Dedalus
@@ -414,6 +410,8 @@ simulate only the upper part of the WD\@. Although turbulence driven by wave
 breaking is fundamentally 3D \citep{klostermeyer}, we simplify the problem by
 restricting our simulations to two dimensions. Future work will study the
 problem in 3D spherical geometry.
+
+\subsection{Parameter Choices}
 
 For numerical convenience, we simulate equations \autoref{eq:nl_incomp},
 \autoref{eq:nl_upsilon_u}, and \autoref{eq:vol_drive} in a Cartesian box with
@@ -460,9 +458,9 @@ the simulation is then fixed by the four remaining parameters $k_{x}, \omega, C,
         equivalently $k_r/k_\perp \sim k_r R \gg 1$. This requires $k_z H
         \gtrsim 1$, which is only marginally satisfied in our simulations.
 
-    \item $C$: In our linear simulations, we first choose $C$ forcing strength
-        such that $\xi_z k_z \ll 1$ is satisfied everywhere in the simulation
-        domain. This constrains $C$ by \autoref{eq:uz_lin}.
+    \item $C$: In our weak forcing simulations, we first choose $C$ forcing
+        strength such that $\xi_z k_z \ll 1$ is satisfied everywhere in the
+        simulation domain. This constrains $C$ by \autoref{eq:uz_lin}.
 
     \item $\nu$: Nonlinear effects transfer wave energy from the injection
         wavenumber $\bm{k}$ to larger wavenumbers. Our spectral method does not
@@ -488,15 +486,15 @@ in \autoref{se:nl_upsilon} with:
     \Gamma(z) &= \frac{1}{2\tau}\s{2 + \tanh \frac{z - z_T}{\Delta z}
         + \tanh \frac{z_B - z}{\Delta z}},\label{eq:Gamma}
 \end{align}
-where $z_B = 0.05L_z, z_T = 0.95L_z$ are the boundaries of the damping zone.
+where $z_B = 1.5H, z_T = 10.5H$ are the boundaries of the damping zone.
 This strongly damps perturbations below $z_B$ and above $z_T$ with damping time
 $\tau$, negligibly affects dynamics between $z_B, z_T$ and has transition width
-governed by $\Delta z$. We use $\Delta z = 0.025L_z$ and $\tau = 1/15N$. This
+governed by $\Delta z$. We use $\Delta z = 0.25H$ and $\tau = 1/15N$. This
 prescription is similar to \citep{lecoanet_damp} and has the advantage of being
 smooth, important for spectral methods. Further details of our implementation of
 the fluid equations in Dedalus are described in Appendix~\ref{se:strat_impl}.
 
-\subsection{Simulation Results}\label{ss:lin_ns}
+\section{Weakly Forced Numerical Simulation}\label{s:weak_sim}
 
 We describe the results of a simulation with $C = \scinot{1.64}{-7}$ such that
 $\xi_z k_z \ll 1$ everywhere. In particular, $\xi_z k_z \approx \scinot{5}{-5}$
@@ -549,13 +547,10 @@ substituting $\bm{u}_{al}$ into \autoref{eq:F_def}. Calling this estimate
     F_{al}(z) \equiv \ev{\overline{\rho} u_{al,x}u_{al,z}}_x
 \end{equation}
 we may then measure the agreement of our simulation with analytical expectation
-by computing
-\begin{equation}
-    F(z, t) = \frac{\ev{\rho u_xu_z}_x}.\label{eq:sbm_def}
-\end{equation}
-Where nonlinear effects are unimportant, we expect $F(z, t) = F_{al}(z)$.
-\autoref{fig:lin_fluxes} shows that $F \approx F_{al}$ between $z_0$ and
-$z_T$, as expected.
+by computing $F$ from the simulation via \autoref{eq:F_def}. Where nonlinear
+effects are unimportant, we expect $F(z, t) = F_{al}(z)$.
+\autoref{fig:lin_fluxes} shows that $F \approx F_{al}$ between $z_0$ and $z_T$,
+as expected.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/lin_fluxes.png}
@@ -567,7 +562,7 @@ $z_T$, as expected.
     \autoref{ss:damping}) without reflection.}\label{fig:lin_fluxes}
 \end{figure}
 
-\section{Internal Gravity Waves: Nonlinear Simulation}\label{s:sim}
+\section{Wave Breaking Simulations}\label{s:sim}
 
 % times on fluxes.png are 054, 086, 153
 
@@ -662,7 +657,7 @@ analyzing the propagation of the critical layer.
     \caption{Plot of $\overline{U}(z, t)$ and $F(z, t) / F_{al}(z)$ respectively
     at the same times in \autoref{fig:snapshots} over $z$ in our $\mathrm{Re} =
     1024$ simulation. $\overline{U}, F$ follow their definitions in
-    \autoref{eq:mean_flow} and \autoref{eq:sbm_def}. $\overline{U}$ is given in
+    \autoref{eq:mean_flow} and \autoref{eq:F_def}. $\overline{U}$ is given in
     units of $\overline{U}_c = \frac{\omega}{k_{x}}$ the critical horizontal
     flow velocity (see \autoref{ss:crit_layer}). The propagation of the critical
     layer towards lower $z$ and sharp deposition of $F$ at the critical layer
@@ -672,26 +667,27 @@ analyzing the propagation of the critical layer.
 \subsection{Propagating Critical Layer}
 
 For the simulation shown in \autoref{fig:nl_fluxes}, we may analyze the location
-of the critical layer. As the simulations are very noisy, we measure the location
-of the critical layer using an average of where flux deposition occurs
+of the critical layer. As $F$ fluctuates significantly in the simulation, we
+measure the location of the critical layer using an average of where flux
+deposition occurs
 \begin{align}
-    z_{c, \min} &= \argmin_z \z{z: F(z) < 0.3F_{al}},\nonumber\\
-    z_{c, \max} &= \argmax_z \z{z: F(z) > 0.3F_{al}},\nonumber\\
+    z_{c, \min} &= \argmin_z \z{z: F(z) > 0.3F_{al}},\nonumber\\
+    z_{c, \max} &= \argmax_z \z{z: F(z) < 0.3F_{al}},\nonumber\\
     z_c &\equiv \frac{z_{c, \min} + z_{c, \max}}{2}.\label{eq:zc_def}
 \end{align}
 This was found to a relatively stable estimator of the critical layer location.
-Other estimators were used and do not significantly change the results of the
+Using other estimators does not significantly change the results of the
 analysis.
 
 The evolution of $z_c$ depends on the deposited flux $\Delta F(t)$ per
-\autoref{eq:zc_anal}. To estimate $\Delta F(t)$ across the critical layer $z_c$
+\autoref{eq:zc_anal}. To measure $\Delta F(t)$ across the critical layer $z_c$
 from the data, we defined:
 \begin{align}
     F_{<}(t) &= \ev{F(z)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
         ,\label{eq:sbelow_def}\\
     F_>(t) &= \ev{\z{F(z): F(z) < 0}}_{z \in [z_c, z_c + \Delta z]},
-        \label{eq:sabove_def},\\
-    \Delta F(t) &\equiv F_>(t) - F_{<}(t).\label{eq:ds_def}
+        \label{eq:sabove_def}\\
+    \Delta F(t) &\equiv F_<(t) - F_{>}(t).\label{eq:ds_def}
 \end{align}
 $\ev{\dots}_{z \in [z_a, z_b]}$ denotes averaging over interval $[z_a, z_b]$.
 Below the critical layer, we average over an interval of length
@@ -707,7 +703,10 @@ Above the critical layer, waves decay over a much smaller vertical extent as
 they have larger $z$ wavenumbers thanks to the shear flow Doppler shift.
 Accurate measurement of these fluctuations above the critical layer is important
 to measuring the transmission feature accurately, seen in
-\autoref{fig:nl_fluxes} to be weak and attenuate quickly.
+\autoref{fig:nl_fluxes} to be weak and attenuate quickly. We average only where
+$F < 0$ since the decay scale of the trasmitted flux varies in time (see
+\autoref{fig:nl_fluxes} again), so this was found to be an adequate way of
+measuring only the transmitted flux.
 
 Finally, we may plot the measured $z_c$ against two semi-analytic predictors:
 (i) integration of \autoref{eq:zc_anal} using the measured $\Delta F(t)$, and
@@ -830,7 +829,7 @@ We can then define the amplitude reflectivity
 % 7/N per timestep, 13 timestep smoothing kernel, 24/N period
 
 To measure the reflected horizontal momentum flux, we recall from our linear
-simulations described in \autoref{ss:lin_ns} that we are able to accurately
+simulations described in \autoref{s:weak_sim} that we are able to accurately
 predict the incident flux from the incident wave amplitude. Thus, we write for
 incident flux
 \begin{equation}
@@ -840,7 +839,7 @@ But then, since we already have $\Delta F(t), F_>(t)$ jump and transmitted flux
 across the critical layer at time $t$ respectively, we can immediately write
 down the reflected flux
 \begin{equation}
-    F_r(t) = F_i(t) + \Delta F(t) - F_>(t).
+    F_r(t) = F_i(t) - \Delta F(t) - F_>(t).
 \end{equation}
 Note that $F_>(t)$ is just the transmitted flux across the critical layer, since
 there is no other flux above the critical layer. We then define flux
@@ -958,7 +957,7 @@ t_{gw}$, where
     t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
         \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}}.
 \end{equation}
-the Alfv\'en wave crossing time (evaluated for a CO WD in \citealt{fullerIV})
+the Alfv\'en wave crossing time (evaluated for a CO WD in \citealp{fullerIV})
 measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
 inspiral timescale. Before solid body rotation is attained, another relevant
 timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and

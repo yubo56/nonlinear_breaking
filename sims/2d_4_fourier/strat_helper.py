@@ -158,11 +158,13 @@ def subtract_lins(params, state_vars, sim_times, domain):
     global N_X, N_Z
     xstride = N_X // 256
     zstride = N_Z // 1024
+    xscale = 1 if xstride == 0 else int(1 / xstride)
+    zscale = 1 if zstride == 0 else int(1 / zstride)
     N_X = 256
     N_Z = 1024
 
-    x = domain.grid(0, scales=1 / xstride)
-    z = domain.grid(1, scales=1 / zstride)
+    x = domain.grid(0, scales=xscale)
+    z = domain.grid(1, scales=zscale)
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
@@ -173,8 +175,8 @@ def subtract_lins(params, state_vars, sim_times, domain):
     pos_slice = np.s_[:, z_bot:z_top]
     time_slice = np.s_[:, :, z_bot:z_top]
 
-    dx = domain.grid_spacing(0, scales=1 / xstride)
-    dz = domain.grid_spacing(1, scales=1 / zstride)
+    dx = domain.grid_spacing(0, scales=xscale)
+    dz = domain.grid_spacing(1, scales=zscale)
     dxdz = np.outer(dx, dz)[pos_slice]
     norm = np.exp(-z/H)[pos_slice]
 
@@ -340,12 +342,14 @@ def add_nl_problem(problem):
 def get_solver(params):
     ''' sets up solver '''
     populate_globals(params)
+    N_X_FORCED = N_X if N_X > 256 else 256
+    N_Z_FORCED = N_Z if N_Z > 1024 else 1024
     x_basis = de.Fourier('x',
-                         N_X,
+                         N_X_FORCED,
                          interval=(0, XMAX),
                          dealias=3/2)
     z_basis = de.Fourier('z',
-                         N_Z,
+                         N_Z_FORCED,
                          interval=(-1, ZMAX + 1.5),
                          dealias=3/2)
     domain = de.Domain([x_basis, z_basis], np.float64)
@@ -453,13 +457,15 @@ def load(name, params, dyn_vars, stride, start=0):
     global N_X, N_Z
     xstride = N_X // 256
     zstride = N_Z // 1024
+    xscale = 1 if xstride == 0 else int(1 / xstride)
+    zscale = 1 if zstride == 0 else int(1 / zstride)
     N_X = 256
     N_Z = 1024
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
 
     solver, domain = get_solver(params)
-    z = domain.grid(1, scales=1/zstride)
+    z = domain.grid(1, scales=zscale)
 
     i = 1
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -470,17 +476,26 @@ def load(name, params, dyn_vars, stride, start=0):
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
             sim_times = np.array(dat['scales']['sim_time'])
-            for varname in dyn_vars:
-                assert params['N_X'] == np.shape(dat['tasks'][varname])[1],\
-                    'Z: %d, %d' % (params['N_X'],
-                                   np.shape(dat['tasks'][varname]))
-                assert params['N_Z'] == np.shape(dat['tasks'][varname])[2],\
-                    'Z: %d, %d' % (params['N_Z'],
-                                   np.shape(dat['tasks'][varname]))
-                state_vars[varname].extend(dat['tasks'][varname]
-                                           [start::stride,
-                                            ::xstride,
-                                            ::zstride])
+            if zstride > 0:
+                for varname in dyn_vars:
+                    assert params['N_X'] == np.shape(dat['tasks'][varname])[1],\
+                        'Z: %d, %d' % (params['N_X'],
+                                       np.shape(dat['tasks'][varname]))
+                    assert params['N_Z'] == np.shape(dat['tasks'][varname])[2],\
+                        'Z: %d, %d' % (params['N_Z'],
+                                       np.shape(dat['tasks'][varname]))
+                    state_vars[varname].extend(dat['tasks'][varname]
+                                               [start::stride])
+
+        if zstride == 0:
+            # use interpolation if stride = 0
+            for idx in range(len(sim_times))[start::stride]:
+                solver.load_state(filename, idx)
+                for varname in dyn_vars:
+                    values = solver.state[varname]
+                    # already created solver w/ `_FORCED`s
+                    values.set_scales((1, 1), keep_data=True)
+                    state_vars[varname].append(np.copy(values['g']))
 
         simlen = len(sim_times)
         total_sim_times.extend(sim_times[start::stride])
@@ -721,10 +736,10 @@ def plot(name, params, stride=STRIDE):
                     # compute all of the S_px cross terms (00 is model)
                     Spx01 = horiz_mean(rho0 * state_vars['ux'][t_idx] *
                                        (state_vars['uz'][t_idx] - uz_anal),
-                                       N_X_FORCED, axis=0)
+                                       N_X, axis=0)
                     Spx10 = horiz_mean(rho0 * state_vars['uz'][t_idx] *
                                        (state_vars['ux'][t_idx] - ux_anal),
-                                       N_X_FORCED, axis=0)
+                                       N_X, axis=0)
                     Spx11 = horiz_mean(rho0 *
                                        (state_vars['ux'][t_idx] - ux_anal) *
                                        (state_vars['uz'][t_idx] - uz_anal),
@@ -810,6 +825,8 @@ def write_front(name, params, stride=1):
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
     N_X = 256
     N_Z = 1024
+    xscale = 1 if params['N_X'] < N_X else int(N_X / params['N_X'])
+    zscale = 1 if params['N_Z'] < N_Z else int(N_Z / params['N_Z'])
     u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U']
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -820,9 +837,9 @@ def write_front(name, params, stride=1):
 
     sim_times, domain, state_vars = load(
         name, params, dyn_vars, stride=stride, start=10)
-    x = domain.grid(0, scales=N_X / params['N_X'])
-    z = domain.grid(1, scales=N_Z / params['N_Z'])
-    dz = domain.grid_spacing(1, scales=N_Z / params['N_Z'])[0]
+    x = domain.grid(0, scales=xscale)
+    z = domain.grid(1, scales=zscale)
+    dz = domain.grid_spacing(1, scales=zscale)[0]
     z0 = z[0]
     rho0 = RHO0 * np.exp(-z0 / H)
 
@@ -996,24 +1013,23 @@ def plot_front(name, params):
         #
         # horizontal plot showing Fpx at certain times
         #####################################################################
-        z0_cut = z0[z_b_idx: ]
+        z_0_idx = get_idx(Z0, z0)
+        z0_cut = z0[z_0_idx: ]
         for time in times:
-            # plt.plot(z0_cut,
-            #          S_px[time, z_b_idx: ] / flux_th,
-            plt.plot(z0,
-                     S_px[time, : ] / flux_th,
+            plt.plot(z0_cut,
+                     S_px[time, z_0_idx: ] / flux_th,
                      linewidth=LW * 0.7,
                      label=r'$t=%.1f$' % sim_times[time])
         # plt.plot(z0_cut,
         #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
         #          linewidth=LW * 1.5,
         #          label=r'Model')
-        plt.xlim(0, ZMAX)
+        plt.xlim(Z0, ZMAX)
         plt.ylim(-0.2, 1.1)
         plt.legend(fontsize=FONTSIZE)
 
         plt.xlabel(r'$z / H$')
-        plt.ylabel(r'$\hat{F}$')
+        plt.ylabel(r'$F / F_{al}$')
         plt.tight_layout()
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1103,7 +1119,7 @@ def plot_front(name, params):
         ax2.legend(fontsize=FONTSIZE)
 
         ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$')
-        ax2.set_ylabel(r'$\hat{F}$')
+        ax2.set_ylabel(r'$F / F_{al}$')
         ax2.set_xlabel(r'$z / H$')
         plt.tight_layout()
         f.subplots_adjust(hspace=0)
