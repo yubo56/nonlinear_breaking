@@ -427,13 +427,13 @@ and $N_z$ modes, and use the $3/2$ dealiasing rule to avoid aliasing errors in
 the nonlinear terms \citep{boyd}.
 
 The geometry of our simulation domain is fixed by one further parameter: $z_0$
-the forcing location. We choose $L_z = 10H$ to give $\sim e^3$ amplitude growth
-between the damping zones. We force at $z_0 = 2H = 0.2L_z$ within width
-$\sigma = 0.078H$, sufficiently far from the lower damping zone and permit
-sufficient room for the upward moving wave to grow as $\propto e^{z/2H}$.
-Finally, we want similar grid spacing $\frac{L_x}{N_x} \sim \frac{L_z}{N_z}$,
-guided by the intuition that turbulence is approximately isotropic, so we use
-$L_x = 4H$ and $N_z / N_x = 4$.
+the forcing location. We choose $L_z = 12.5H$ to give $\sim e^3$ amplitude growth
+between the damping zones. We force at $z_0 = 3H$ within width $\sigma =
+0.078H$, sufficiently far from the lower damping zone and permit sufficient room
+for the upward moving wave to grow as $\propto e^{z/2H}$. Finally, we want
+similar grid spacing $\frac{L_x}{N_x} \sim \frac{L_z}{N_z}$, guided by the
+intuition that turbulence is approximately isotropic, so we use $L_x = 4H$ and
+$N_z / N_x = 4$.
 
 The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
@@ -546,21 +546,21 @@ the damping zone where it is dissipated (\autoref{eq:F_def}). We make may a
 slightly more accurate estimate of the flux carried in the IGW by directly
 substituting $\bm{u}_{al}$ into \autoref{eq:F_def}. Calling this estimate
 \begin{equation}
-    F_{al}'(z) \equiv \ev{\overline{\rho} u_{al,x}u_{al,z}}_x
+    F_{al}(z) \equiv \ev{\overline{\rho} u_{al,x}u_{al,z}}_x
 \end{equation}
 we may then measure the agreement of our simulation with analytical expectation
 by computing
 \begin{equation}
-    \hat{F}(z, t) \equiv \frac{\ev{\rho u_xu_z}_x}
-        {F_{al}'}.\label{eq:sbm_def}
+    F(z, t) = \frac{\ev{\rho u_xu_z}_x}.\label{eq:sbm_def}
 \end{equation}
-\autoref{fig:lin_fluxes} shows that $\hat{F}(z)\approx 1$ between $z_0$ and
+Where nonlinear effects are unimportant, we expect $F(z, t) = F_{al}(z)$.
+\autoref{fig:lin_fluxes} shows that $F \approx F_{al}$ between $z_0$ and
 $z_T$, as expected.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/lin_fluxes.png}
-    \caption{\autoref{eq:sbm_def} as a function of $z$ at select times $t$. As
-    initial transients die out, $\hat{F}(z, t) = 1$ to very good agreement above
+    \caption{$F/F_{al}$ as a function of $z$ at select times $t$. As
+    initial transients die out, $F / F_{al} = 1$ to very good agreement above
     the forcing zone $z > z_0 = 2H$ and below the damping zone $z \lesssim z_T =
     9.5H$. The flux excited in the forcing zone is transported without loss to
     the top of the domain, where it is dissipated by the damping layer (see
@@ -648,10 +648,10 @@ at various interesting phases of the simulation.
     respectively.}\label{fig:snapshots}
 \end{figure*}
 
-In \autoref{fig:nl_fluxes}, we plot $\overline{U}$ and $\hat{F}$ as a function
+In \autoref{fig:nl_fluxes}, we plot $\overline{U}$ and $F / F_{al}$ as a function
 of $z$ at the times depicted in \autoref{fig:snapshots}. While the behavior of
 $\overline{U}$ seems to conform qualitatively with the predictions of
-\autoref{ss:crit_layer}, the behavior of $\hat{F}$ exhibits two notable
+\autoref{ss:crit_layer}, the behavior of $F / F_{al}$ exhibits two notable
 features: (i) the incident flux seems to fluctuate greatly with time, and (ii)
 there seems to be a small transmitted feature at many of the later times. We
 will discuss further these features in \autoref{ss:reflectivity}, after first
@@ -659,9 +659,9 @@ analyzing the propagation of the critical layer.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_fluxes.png}
-    \caption{Plot of $\overline{U}(z, t)$ and $\hat{F}(z, t)$ respectively at
-    the same times in \autoref{fig:snapshots} over $z$ in our $\mathrm{Re} =
-    1024$ simulation. $\overline{U}, \hat{F}$ follow their definitions in
+    \caption{Plot of $\overline{U}(z, t)$ and $F(z, t) / F_{al}(z)$ respectively
+    at the same times in \autoref{fig:snapshots} over $z$ in our $\mathrm{Re} =
+    1024$ simulation. $\overline{U}, F$ follow their definitions in
     \autoref{eq:mean_flow} and \autoref{eq:sbm_def}. $\overline{U}$ is given in
     units of $\overline{U}_c = \frac{\omega}{k_{x}}$ the critical horizontal
     flow velocity (see \autoref{ss:crit_layer}). The propagation of the critical
@@ -675,8 +675,8 @@ For the simulation shown in \autoref{fig:nl_fluxes}, we may analyze the location
 of the critical layer. As the simulations are very noisy, we measure the location
 of the critical layer using an average of where flux deposition occurs
 \begin{align}
-    z_{c, \min} &= \argmin_z \z{z: F(z) < 0.3F_{al}'},\nonumber\\
-    z_{c, \max} &= \argmax_z \z{z: F(z) > 0.3F_{al}'},\nonumber\\
+    z_{c, \min} &= \argmin_z \z{z: F(z) < 0.3F_{al}},\nonumber\\
+    z_{c, \max} &= \argmax_z \z{z: F(z) > 0.3F_{al}},\nonumber\\
     z_c &\equiv \frac{z_{c, \min} + z_{c, \max}}{2}.\label{eq:zc_def}
 \end{align}
 This was found to a relatively stable estimator of the critical layer location.
@@ -721,8 +721,8 @@ $z_c(t)$ and its estimate via $\Delta F(t)$ and \autoref{eq:zc_anal} are
 noteworthy.
 
 Also of interest is the behavior of the time-averaged $\ev{\Delta F}_t =
-0.71F_{al}'$ predictor, which serves mostly as a fiducial in the plot. The
-general agreement clearly demonstrates $\Delta F < F_{al}'$ and that momentum
+0.71F_{al}$ predictor, which serves mostly as a fiducial in the plot. The
+general agreement clearly demonstrates $\Delta F < F_{al}$ and that momentum
 flux absorption is incomplete. However, its underprediction of critical layer
 velocity at early times contrasts with its overprediction at later times. This
 suggests that momentum flux absorption changes significantly over time, which is
@@ -741,7 +741,7 @@ in line with the observations in the subsequent \autoref{ss:reflectivity}.
     times. The agreement of the directly-integrated predictor with the data
     shows \autoref{eq:zc_anal} is a good description of the evolution of $z_c$.
     The the poorer but qualitatively correct agreement of the time-averaged
-    predictor with the data shows both that $\Delta F(t) \neq F_{al}'$ and that
+    predictor with the data shows both that $\Delta F(t) \neq F_{al}$ and that
     $\Delta F(t)$ likely has some very real variation with
     time.}\label{fig:nl_front}
 \end{figure}

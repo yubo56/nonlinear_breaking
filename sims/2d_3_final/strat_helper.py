@@ -27,15 +27,14 @@ PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
-Z_TOP_MULT = 1
 STRIDE = 15
 AVG_IDX = 4
 DPI=600
-N_X_FORCED = 64
+N_X_FORCED = 128
 N_Z_FORCED = 1024
 
 plt.rc('text', usetex=True)
-FONTSIZE = 14
+FONTSIZE = 16
 LW = 4
 plt.rc('font', family='serif', size=FONTSIZE)
 
@@ -165,6 +164,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
     grid_ones = np.ones_like(x + z)
     t_t = np.array([[[t]] for t in sim_times])
 
+    Z_TOP_MULT = 1
     z_bot = get_idx(Z0 + 3 * S, z[0])
     z_top = get_idx(Z0 + 3 * S + 2 * Z_TOP_MULT * np.pi / abs(KZ), z[0])
     pos_slice = np.s_[:, z_bot:z_top]
@@ -994,24 +994,23 @@ def plot_front(name, params):
         #
         # horizontal plot showing Fpx at certain times
         #####################################################################
-        z0_cut = z0[z_b_idx: ]
+        z0_idx = get_idx(Z0, z0)
+        z0_cut = z0[z0_idx: ]
         for time in times:
-            # plt.plot(z0_cut,
-            #          S_px[time, z_b_idx: ] / flux_th,
-            plt.plot(z0,
-                     S_px[time, : ] / flux_th,
+            plt.plot(z0_cut,
+                     S_px[time, z0_idx: ] / flux_th,
                      linewidth=LW * 0.7,
                      label=r'$t=%.1f$' % sim_times[time])
         # plt.plot(z0_cut,
         #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
         #          linewidth=LW * 1.5,
         #          label=r'Model')
-        plt.xlim(0, ZMAX)
+        plt.xlim(Z0, ZMAX)
         plt.ylim(-0.2, 1.1)
         plt.legend(fontsize=FONTSIZE)
 
-        plt.xlabel(r'$z(H)$')
-        plt.ylabel(r'$\hat{F}$')
+        plt.xlabel(r'$z / H$')
+        plt.ylabel(r'$F / F_{al}$')
         plt.tight_layout()
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1033,7 +1032,7 @@ def plot_front(name, params):
         #          label=r'$A_d$',
         #          linewidth=LW * 0.7)
         # ax1.legend(fontsize=FONTSIZE)
-        ax1.set_xlabel(r'$t$')
+        ax1.set_xlabel(r'$Nt$')
         ax1.set_ylabel(r'$\hat{A}$')
         # ax2.plot(t,
         #          np.unwrap(phis_down[start_idx: ]),
@@ -1095,8 +1094,8 @@ def plot_front(name, params):
         ax2.legend(fontsize=FONTSIZE)
 
         ax1.set_ylabel(r'$\bar{U} k_x/\omega$')
-        ax2.set_ylabel(r'$\hat{F}$')
-        ax2.set_xlabel(r'$z(H)$')
+        ax2.set_ylabel(r'$F / F_{al}$')
+        ax2.set_xlabel(r'$z / H$')
         plt.tight_layout()
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1171,7 +1170,7 @@ def plot_front(name, params):
                     (mean_incident / flux_th),
                  linewidth=LW * 0.7)
         ax2.set_ylabel(r'$z_c$')
-        ax2.set_xlabel(r'$t$')
+        ax2.set_xlabel(r'$Nt$')
         ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
         ax2.legend(fontsize=FONTSIZE, loc='upper right')
         plt.tight_layout()
@@ -1228,7 +1227,7 @@ def plot_front(name, params):
                  'k:',
                  label=r'$F_>(t)$',
                  linewidth=LW * 1.0)
-        ax2.set_xlabel(r'$t$')
+        ax2.set_xlabel(r'$Nt$')
         ax2.set_ylabel(r"$F / F_{al}'$")
         ax2.legend(fontsize=FONTSIZE, loc='lower left')
         plt.tight_layout()
@@ -1280,7 +1279,7 @@ def plot_front(name, params):
 
         ax1.legend(fontsize=FONTSIZE, loc='upper left')
         ax1.set_ylabel(r'Reflectivity')
-        ax1.set_xlabel(r'$t$')
+        ax1.set_xlabel(r'$Nt$')
         ax1.set_ylim([0, 0.5])
 
         plt.tight_layout()
@@ -1302,7 +1301,7 @@ def plot_front(name, params):
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
         ax1.set_ylim([0, 0.6])
         ax1.set_ylabel(r"Ri $(N / \bar{U}')^2$")
-        ax1.set_xlabel(r'$t$')
+        ax1.set_xlabel(r'$Nt$')
         avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
         plt.legend(loc='lower left', fontsize=FONTSIZE)
         plt.tight_layout()
