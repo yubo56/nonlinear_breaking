@@ -63,12 +63,11 @@ if __name__ == '__main__':
                         label=r'$\left<\mathcal{R}_A(t)^2\right>$')
     ln3 = mlines.Line2D([], [], color='r', marker='*', markersize=msize,
                         label=r'$\left<\mathcal{T}_S(t)\right>$')
-    ax1.legend(handles=[ln1, ln2, ln3], fontsize=12, loc='upper left')
+    ax1.legend(handles=[ln1, ln2, ln3], fontsize=16, loc='upper left')
 
 
     # ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
     ax3.set_ylabel('Ri')
     ax3.set_xlabel('Re')
-    ax = plt.gca()
     plt.savefig('agg.png', dpi=600)
 

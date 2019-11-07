@@ -1090,7 +1090,7 @@ def plot_front(name, params):
                      u0_avg / u_c,
                      '%s-' % color,
                      linewidth=LW * 0.5,
-                     label=r'$t=%.1f$' % sim_times[time])
+                     label=r'$t=%.1f/N$' % sim_times[time])
             # S_px sliced at time, just one for comparison
             # if time == times[len(times) // 2]:
             # #     ax2.plot(z0_cut,
@@ -1104,7 +1104,7 @@ def plot_front(name, params):
                      S_px_avg / flux_th,
                      '%s-' % color,
                      linewidth=LW * 0.5,
-                     label=r'$t=%.1f$' % sim_times[time])
+                     label=r'$t=%.1f/N$' % sim_times[time])
         # overlay analytical flux including viscous dissipation
         # # ax2.plot(z0_cut,
         # ax2.plot(z0,
@@ -1116,7 +1116,7 @@ def plot_front(name, params):
         ax2.set_xlim(z_b, ZMAX)
         ax1.set_ylim(-0.2, 1.25)
         ax2.set_ylim(-0.2, 1.2)
-        ax2.legend(fontsize=FONTSIZE)
+        ax2.legend(fontsize=FONTSIZE - 4)
 
         ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$')
         ax2.set_ylabel(r'$F / F_{al}$')
