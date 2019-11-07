@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=12)
+plt.rc('font', family='serif', size=16)
 import matplotlib.lines as mlines
 
 DATA = [
@@ -24,8 +24,8 @@ if __name__ == '__main__':
     f.subplots_adjust(hspace=0)
     offsets = defaultdict(float)
 
-    msize=3
-    lwidth=0.7
+    msize=5
+    lwidth=1.8
 
     for re_inv, ((r_med, r_min, r_max),
                  (rA_med, rA_min, rA_max),
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         ax1.errorbar(x, r_med,
                      [[r_med - r_min], [r_max - r_med]],
                      ecolor='k', linewidth=lwidth)
-        ax1.plot(x + 14, T_med, 'r*', markersize=msize)
+        ax1.plot(x + 14, T_med, 'ro', markersize=msize)
         ax1.errorbar(x + 14, T_med,
                      [[T_med - T_min], [T_max - T_med]],
                      ecolor='r', linewidth=lwidth)

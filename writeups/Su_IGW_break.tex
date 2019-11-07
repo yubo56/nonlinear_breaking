@@ -93,8 +93,8 @@ Interferometric Space Antenna (LISA) \citep{lisa}. They are also thought to
 produce interesting optical transients such as underluminous supernovae
 \citep{underlum}, Ca-rich fast transients \citep{carich}, and tidal novae
 \citep{tidal_novae}. Most importantly, they have been proposed as the likely
-progenitors of type Ia supernovae (e.g. \citealt{Ia0,webbink} or more recently
-\citealt{Ia1,Ia2}). While presently only a few tens of compact WD binaries are
+progenitors of type Ia supernovae (e.g. \citealp{Ia0,webbink} or more recently
+\citealp{Ia1,Ia2}). While presently only a few tens of compact WD binaries are
 known \citep{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
 expand the catalog to a few hundreds \citep{lsst_wd} \citep[results based on
 \emph{Gaia}'s second data release have already begun to
@@ -335,30 +335,48 @@ displacement $-i\omega \bm{\xi}' = \bm{u}'$:
 % yields agreement with \autoref{eq:nl}.
 
 
-\citealt{drazin, klostermeyer, winters1994} describe the onset of wave breaking.
+\citealp{drazin, klostermeyer, winters1994} describe the onset of wave breaking.
 At intermediate amplitudes, wave breaking occurs via triadic resonances which
 transfer energy from the ``parent’’ internal gravity wave (in our problem, the
 tidally forced wave) to ``daughter’’ internal gravity waves on smaller length
 scales that efficiently damp. The horizontal momentum flux decreases from $F$ to
-$0$ over this breaking region. The lost flux is deposited into mean flow
+$0$ over this breaking region. The lost flux is deposited into a horizontal mean
+flow
 \begin{equation}
-    \overline{U}(z, t) \equiv \ev*{u_x}_x.\label{eq:mean_flow}
+    \overline{U}(z, t) \equiv \ev{u_x}_x.\label{eq:mean_flow}
 \end{equation}
 As the mean flow grows, a \emph{critical layer} may form, discussed below.
 
 \subsection{Critical Layers}\label{ss:crit_layer}
 
-% TODO stash here
+A horizontal shear flow $\overline{U}(z, t)\hat{x}$ enters the fluid equations
+via the Lagrangian derivative, which can be decomposed as
 \begin{equation}
-    \overline{U}_c \equiv \omega/k_x,
+    \md{}{t} = \pd{}{t} + \overline{U} \pd{}{x} + \p{\bm{u}' \cdot \vec{\nabla}},
 \end{equation}
-The further evolution of the critical layer with the incident IGW is
-thought to be responsible for tidal synchronization in stellar binaries
-\citep{zahn75,gn89} as well as terrestrial phenomena such as the quasi-biennial
-oscillation \citep{lindzen_qbo}.
+where $\bm{u}'$ is the velocity field \emph{without} the shear flow, for
+clarity. Thus, $\overline{U}$ has the effect of Doppler shifting the time
+derivative into the frame comoving with the mean flow. If $\overline{U}$ is
+roughly constant, then the behavior of a small plane wave perturbation satisfies
+modified dispersion relation
+\begin{equation}
+    \p{\omega - \overline{U}k_x}^2 =
+        \frac{N^2k_{x}^2}{k_{x}^2 + k_{z}^2 + \frac{1}{4H^2}}.
+        \label{eq:disp_rel_U}
+\end{equation}
+This is just \autoref{eq:disp_rel} with $\omega \to \omega - \overline{U}k_x$.
+
+It is apparent that if $\overline{U} = \overline{U}_c$, where
+\begin{equation}
+    \overline{U}_c \equiv \frac{\omega}{k_x},
+\end{equation}
+then the dispersion relation is singular and the linear solution breaks down.
+Physically, this corresponds to the Doppler-shifted frequency of the IGW being
+zero. Anywhere $\overline{U} = \overline{U}_c$ is called a \emph{critical
+layer}.
 
 The behavior of an IGW incident upon a critical layer was first studied in the
-inviscid, linear regime in \citep{booker_bretherton}, which found nearly
+inviscid, linear regime in \citealp{booker_bretherton}, which found nearly
 complete absorption of the IGW\@. In particular, the incident wave has amplitude
 reflection and transmission coefficients that can be expressed in terms of the
 local Richardson number Ri at the height of the critical layer $z_c$:
@@ -375,6 +393,10 @@ and the incident wave is completely absorbed to a good approximation.
 This result extends to viscous fluids \citep{hazel}, but weakly nonlinear theory
 \citep{brown_stewartson} and numerical simulations \citep{winters1994} suggest
 that nonlinear effects may significantly enhance reflection and transmission.
+Understanding the interaction of IGW and critical layers has important
+applications: it is thought to be responsible for tidal synchronization in
+stellar binaries \citep{zahn75,gn89} as well as terrestrial phenomena such as
+the quasi-biennial oscillation \citep{lindzen_qbo}.
 
 Consider the horizontal momentum transfer at the critical layer. Any incident
 horizontal momentum flux absorbed by the fluid must manifest as additional
@@ -482,7 +504,7 @@ We aim to damp waves that reach the edge of the simulation domain without
 inducing nonphysical reflection. To do so, we replace material derivatives
 in \autoref{se:nl_upsilon} with:
 \begin{align}
-    \md{}{t} &\to \md{}{t} + \Gamma(z)\Upsilon,\nonumber\\
+    \md{}{t} &\to \md{}{t} + \Gamma(z)\Upsilon,\\
     \Gamma(z) &= \frac{1}{2\tau}\s{2 + \tanh \frac{z - z_T}{\Delta z}
         + \tanh \frac{z_B - z}{\Delta z}},\label{eq:Gamma}
 \end{align}
@@ -534,8 +556,10 @@ change the results). The resulting measurement of $\hat{A}_i(t)$ is shown in
     perfect agreement with the analytical estimate. After an initial transient
     phase, we observe great agreement with \autoref{eq:uz_lin}, and in
     particular $\hat{A}_i(t)$ asymptotes to $\approx 1$, implying continuous
-    excitation of identical IGW with the expected
-    amplitude.}\label{fig:lin_amps}
+    excitation of identical IGW with the expected amplitude. The small
+    suppression may be due to timestepping errors, as a relatively large fixed
+    step size $\Delta t = 0.1/N$ was used for this
+    simulation.}\label{fig:lin_amps}
 \end{figure}
 
 The analytical theory also predicts that the horizontal momentmum flux $F(z, t)$
@@ -562,7 +586,7 @@ as expected.
     \autoref{ss:damping}) without reflection.}\label{fig:lin_fluxes}
 \end{figure}
 
-\section{Wave Breaking Simulations}\label{s:sim}
+\section{Numerical Simulations of Wave Breaking}\label{s:sim}
 
 % times on fluxes.png are 054, 086, 153
 
@@ -644,13 +668,19 @@ at various interesting phases of the simulation.
 \end{figure*}
 
 In \autoref{fig:nl_fluxes}, we plot $\overline{U}$ and $F / F_{al}$ as a function
-of $z$ at the times depicted in \autoref{fig:snapshots}. While the behavior of
-$\overline{U}$ seems to conform qualitatively with the predictions of
-\autoref{ss:crit_layer}, the behavior of $F / F_{al}$ exhibits two notable
-features: (i) the incident flux seems to fluctuate greatly with time, and (ii)
-there seems to be a small transmitted feature at many of the later times. We
-will discuss further these features in \autoref{ss:reflectivity}, after first
-analyzing the propagation of the critical layer.
+of $z$ at the times depicted in \autoref{fig:snapshots}.
+At each time, $\overline{U}$ is close to zero below the critical layer, but then
+sharply increases to $\overline{U}_c$ at the critical layer. Above the critical
+layer, $\overline{U}$ varies slightly due to momentum transport within the
+spun-up layer. This is in agreement with the predictions
+of\autoref{ss:crit_layer}.
+
+Similarly, $F \lesssim F_{al}$ below the critical layer, and then decreases to
+about zero above the critical layer. However, two notable deviations can be
+observed: (i) the incident flux on the critical layer seems to fluctuate
+somewhat temporally, and (ii) there seems to be a small transmitted feature at
+many of the later times. We will discuss further these features in
+\autoref{ss:reflectivity}.
 \begin{figure}
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_fluxes.png}
@@ -666,26 +696,25 @@ analyzing the propagation of the critical layer.
 
 \subsection{Propagating Critical Layer}
 
-For the simulation shown in \autoref{fig:nl_fluxes}, we may analyze the location
-of the critical layer. As $F$ fluctuates significantly in the simulation, we
-measure the location of the critical layer using an average of where flux
-deposition occurs
+For our fiducial simulation, we may analyze the location of the critical layer
+and compare to \autoref{eq:zc_anal}. As $F$ fluctuates significantly in the
+simulation, we measure the location of the critical layer using an average of
+where flux deposition occurs
 \begin{align}
-    z_{c, \min} &= \argmin_z \z{z: F(z) > 0.3F_{al}},\nonumber\\
-    z_{c, \max} &= \argmax_z \z{z: F(z) < 0.3F_{al}},\nonumber\\
+    z_{c, \min} &\equiv \argmin_z \z{z: F(z) > 0.3F_{al}},\\
+    z_{c, \max} &\equiv \argmax_z \z{z: F(z) < 0.3F_{al}},\\
     z_c &\equiv \frac{z_{c, \min} + z_{c, \max}}{2}.\label{eq:zc_def}
 \end{align}
 This was found to a relatively stable estimator of the critical layer location.
 Using other estimators does not significantly change the results of the
 analysis.
 
-The evolution of $z_c$ depends on the deposited flux $\Delta F(t)$ per
-\autoref{eq:zc_anal}. To measure $\Delta F(t)$ across the critical layer $z_c$
-from the data, we defined:
+We also need to measure $\Delta F(t)$ across the critical layer $z_c$ from the
+data, so we define
 \begin{align}
-    F_{<}(t) &= \ev{F(z)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
+    F_{<}(t) &\equiv \ev{F(z)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
         ,\label{eq:sbelow_def}\\
-    F_>(t) &= \ev{\z{F(z): F(z) < 0}}_{z \in [z_c, z_c + \Delta z]},
+    F_>(t) &\equiv \ev{\z{F(z): F(z) < 0}}_{z \in [z_c, z_c + \Delta z]},
         \label{eq:sabove_def}\\
     \Delta F(t) &\equiv F_<(t) - F_{>}(t).\label{eq:ds_def}
 \end{align}
@@ -694,10 +723,10 @@ Below the critical layer, we average over an interval of length
 $\frac{2\pi}{k_{z}}$ a full vertical wavelength. The offset $\Delta z$ is
 necessary to make a measurement of the incident flux unaffected by the
 turbulence within the critical layer itself. The height of the critical layer is
-limited by $\mathrm{Ri} \lesssim 1$, which bounds its vertical extent $\sim
-\frac{1}{k_{z}}$. We empirically found an offset of $\Delta z = \frac{3}{k_z}$
-was necessary to be sufficiently far from strong fluctuations near the critical
-layer.
+limited by $\mathrm{Ri} \lesssim 1$ (see \autoref{ss:khi}), which bounds its
+vertical extent $\sim \frac{1}{k_{z}}$. We empirically found an offset of
+$\Delta z = \frac{3}{k_z}$ was necessary to be sufficiently far from strong
+fluctuations near the critical layer.
 
 Above the critical layer, waves decay over a much smaller vertical extent as
 they have larger $z$ wavenumbers thanks to the shear flow Doppler shift.
@@ -706,13 +735,13 @@ to measuring the transmission feature accurately, seen in
 \autoref{fig:nl_fluxes} to be weak and attenuate quickly. We average only where
 $F < 0$ since the decay scale of the trasmitted flux varies in time (see
 \autoref{fig:nl_fluxes} again), so this was found to be an adequate way of
-measuring only the transmitted flux.
+measuring the transmitted flux before it dissipates.
 
 Finally, we may plot the measured $z_c$ against two semi-analytic predictors:
 (i) integration of \autoref{eq:zc_anal} using the measured $\Delta F(t)$, and
 (ii) substituting the time-averaged $\ev{\Delta F}_t$ (over the entire length of
-the simulation) into \autoref{eq:zc_sol}. Since $z_c(t)$ is both stable and less
-well-defined at early times (when the critical layer is thick and transient
+the simulation) into \autoref{eq:zc_sol}. Since $z_c(t)$ is both unstable and
+less well-defined at early times (when the critical layer is thick and transient
 behavior is still strong), we instead integrate backwards from the end of the
 simulation, using $z_c(t_f)$ as initial condition. The resulting predictors are
 depicted in \autoref{fig:nl_front}. The good agreement between the evolution of
@@ -724,8 +753,8 @@ Also of interest is the behavior of the time-averaged $\ev{\Delta F}_t =
 general agreement clearly demonstrates $\Delta F < F_{al}$ and that momentum
 flux absorption is incomplete. However, its underprediction of critical layer
 velocity at early times contrasts with its overprediction at later times. This
-suggests that momentum flux absorption changes significantly over time, which is
-in line with the observations in the subsequent \autoref{ss:reflectivity}.
+suggests that momentum flux absorption changes significantly over time, in
+agreement with \autoref{ss:reflectivity}.
 
 \begin{figure}
     \centering
@@ -762,16 +791,17 @@ immediate vicinity of a fluid parcel. Thus, we first assign an $\mathrm{Ri}$ for
 every $x$ in the critical layer, then take the median as $\mathrm{Ri}$ for the
 entire layer. To avoid noisiness, the local $\mathrm{Ri}$ is computed using the
 vertical distance over which the local $u_x$ increases from $0.3 \times$ its
-critical value to its critical value. The value $0.3$ effectively excludes the
-self-acceleration induced by the IGW\@. This can be written
+critical value to its critical value. The value $0.3$ is necessary to exclude
+the small mean flow generated in the weakly nonlinear regime well below the
+critical layer. This is written
 \begin{align}
-    z_{CL, \min}(x, t) &= \argmin_\zeta
-        \z{z: u_x(x, \zeta, t) > 0.3\overline{U}_c},\nonumber\\
-    z_{CL, \max}(x, t) &= \argmax
-        \zeta \z{z: u_x(x, \zeta, t) < \overline{U}_c},\nonumber\\
+    z_{CL, \min}(x, t) &\equiv \argmin_z
+        \z{z\mid u_x(x, z, t) > 0.3\overline{U}_c},\\
+    z_{CL, \max}(x, t) &\equiv \argmax_z
+        \z{z\mid u_x(x, z, t) < \overline{U}_c},\\
     \mathrm{Ri}(t) &\equiv
         \med_x\p{\frac{N^2 \p{z_{CL, \max} - z_{CL, \min}}^2}{(0.7
-            \overline{U}_c)^2}}.\label{ss:ri_med_def}
+            \overline{U}_c)^2}}.\label{eq:ri_med_def}
 \end{align}
 To understand the variation in $\mathrm{Ri}$ over $x$, we can also plot using
 the minimum over $x$ (the maximum is significantly noisier). Both of these are
@@ -785,7 +815,7 @@ increases, enhancing dissipation and further driving mean flow acceleration.
     \centering
     \includegraphics[width=\columnwidth]{plots/nl_f_ri.png}
     \caption{Local Richardson number of the flow at the critical layer over time
-    as defined in \autoref{ss:ri_med_def}. The dotted red and solid green lines
+    as defined in \autoref{eq:ri_med_def}. The dotted red and solid green lines
     denote respectively the minimum and median of $\mathrm{Ri}$ over $x$ (the
     maximum greatly exceeds the vertical scale of this plot). These numbers
     effectively measure the mean and spread in width of the critical layer over
@@ -955,9 +985,9 @@ winding is used to enforce solid body rotation on the grounds that $t_A \gg
 t_{gw}$, where
 \begin{equation}
     t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
-        \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}}.
+        \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}},
 \end{equation}
-the Alfv\'en wave crossing time (evaluated for a CO WD in \citealp{fullerIV})
+the Alfv\'en wave crossing time (evaluated for a CO WD in \citealp{fullerIV}),
 measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
 inspiral timescale. Before solid body rotation is attained, another relevant
 timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and
@@ -966,7 +996,7 @@ angular momentum transfer is $\pd{M_{sync}}{t} \sigma R^2 = \tau$, where
 $M_{sync}$ denotes the mass of the WD that has synchronized. Thus, the
 synchronization timescale is
 \begin{align}
-    t_{sync} &\sim \frac{M_{sync}\sigma R^2}{\tau},\nonumber\\
+    t_{sync} &\sim \frac{M_{sync}\sigma R^2}{\tau},\\
         &\sim 2 \times 10^5\;\mathrm{yr}
             \p{\frac{M}{M_{\odot}}}
             \p{\frac{\sigma}{2\pi / (1\;\mathrm{hr})}}
@@ -997,7 +1027,7 @@ as tidal novae resulting from strong shear flows.
     \item Validity of plane-parallel approximation? We're all at $\gtrsim
         0.9R_{WD}$.
 
-    \item Solar-type stars (inner conbmtive, outer radiative): different
+    \item Solar-type stars (inner convective, outer radiative): different
         equation of state/stratification but could be qualitatively similar.
 
     \item Solar-type stars: In~\cite{barker_ogilvie}, inwards-propagating IGW
@@ -1178,7 +1208,7 @@ simulated in Dedalus:
         \partial_t \Upsilon - \frac{u_z}{H}
             ={}& -\Gamma(z) \Upsilon
                 + \frac{F}{\overline{\rho}(z)}e^{-\frac{(z - z_0)^2}{2\sigma^2}}
-                    \cos \p{k_xx - \omega t},\nonumber\\
+                    \cos \p{k_xx - \omega t}\nonumber\\
             & + \Gamma_{NL} \bigg[-\p{\bm{u}' \cdot \bm{\nabla}}\Upsilon
                 + \nu\p{\nabla^2 \Upsilon + \p{
                     \bm{\nabla} \Upsilon} \cdot \p{\bm{\nabla}\Upsilon}
