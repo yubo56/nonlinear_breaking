@@ -1,3 +1,23 @@
+# TODO future work
+
+massive stars, main theory zahn etc
+
+for circ orbit, Kushnir/Zaldarriaga has analytical solution (dynamical tides
+simplified) for torque
+
+What about high e? decompose into spherical modes (n * P), can just add up
+torques for a bunch of circular modes. But is tedious. Can get closed form like
+weak tides?
+
+Vick & Lai, eccentric path, (S4) gives energy/torques for each component.
+
+But for massive stars, torques might be analytic (K&Z).
+
+Strongest might be pericenter, would have just one term. How much error? might
+be enough?
+
+Also maybe Storch \& Lai viscoelastic?
+
 # NOTES 04/17/18
 - Creating nonlinear equations: need pressure term on LHS, need a full-rank
   linear operator for basis by which to expand nonlinear terms

@@ -1,13 +1,6 @@
 """
-Plot planes from joint analysis files.
-
-Usage:
-    plot_2d_series_movie.py <files>... [--output=<dir>] [--write=<num>]
-
-Options:
-    --output=<dir>  Output directory [default: ./frames]
-    --write=<num>   Write number offset [default: 0]
-
+rm -f frames/*.png && python plot_2d_series_movie.py testo/*.h5
+ffmpeg -framerate 12 -pattern_type glob -i 'yubo_*.png' test.mp4
 """
 
 import h5py
@@ -64,7 +57,7 @@ def main(filename, start, count, output, write_start):
                   title = r'$u_x$'
                 elif n==1: #uz
                   clim = [-0.1, 0.1]
-                  title = r'$u_z$'
+                  title = r'$\Upsilon$'
                 plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=title, even_scale=True,clim=clim)
             # Add time title
             title = title_func(file['scales/sim_time'][index])

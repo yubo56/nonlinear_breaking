@@ -66,13 +66,13 @@ def get_params(overrides=None):
 
 if __name__ == '__main__':
     tasks = [
-       ('lin_0_masked',
-        get_params(overrides={'F_MULT': 0.0005,
-                              'T_F': 4000,
-                              'DT': 0.1,
-                              'N_X': 64,
-                              'N_Z': 256,
-                              'Re_inv': 1e-4})),
+        ('lin_0_masked',
+         get_params(overrides={'F_MULT': 0.0005,
+                               'T_F': 4000,
+                               'DT': 0.1,
+                               'N_X': 64,
+                               'N_Z': 256,
+                               'Re_inv': 1e-4})),
         # ('yubo_nu0p5_hres',
         #  get_params(overrides={'Re_inv': 0.05})),
         # ('yubo_nu0p5_shres',

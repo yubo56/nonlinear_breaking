@@ -1052,7 +1052,7 @@ def plot_front(name, params):
         #          linewidth=LW * 0.7)
         # ax1.legend(fontsize=FONTSIZE)
         ax1.set_xlabel(r'$Nt$')
-        ax1.set_ylabel(r'$\hat{A}_i$')
+        ax1.set_ylabel(r'$A_i$')
         # ax2.plot(t,
         #          np.unwrap(phis_down[start_idx: ]),
         #          'r',
@@ -1077,7 +1077,7 @@ def plot_front(name, params):
         f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
         # z0_cut = z0[z_b_idx: ]
 
-        for time, color in zip(times, PLT_COLORS):
+        for time, color in zip(times[::-1], PLT_COLORS):
             u0_avg = np.mean(u0[time - AVG_IDX: time + AVG_IDX,
                                 # z_b_idx: ], axis=0)
                                 : ], axis=0)
@@ -1192,7 +1192,7 @@ def plot_front(name, params):
         ax2.plot(t,
                  pos_anal,
                  'b',
-                 label="Avg Absorbed $%.2fF_{al}'$" %
+                 label="$F_a = %.2fF_{al}$" %
                     (mean_incident / flux_th),
                  linewidth=LW * 0.7)
         ax2.set_ylabel(r'$z_c$')
@@ -1208,18 +1208,18 @@ def plot_front(name, params):
         #
         # convolved amplitudes over time
         #####################################################################
-        f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+        f, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 9), sharex=True)
         ax1.plot(t,
                 smooth(amps[start_idx::]),
                 'g',
-                label=r'$\hat{A}_i(t)$',
+                label=r'$A_i(t)$',
                 linewidth=LW * 0.7)
         ax1.plot(t,
                  smooth(amps_down[start_idx::]),
                  'r',
-                 label=r'$\hat{A}_r(t)$',
+                 label=r'$A_r(t)$',
                  linewidth=LW * 0.7)
-        ax1.set_ylabel(r'$\hat{A}$')
+        ax1.set_ylabel(r'$A$')
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=FONTSIZE)
 
@@ -1237,6 +1237,7 @@ def plot_front(name, params):
 
         S_excited = S_px0[start_idx: ] / flux_th * \
             np.exp(-k_damp * 2 * (front_pos[start_idx: ] - (z_b + l_z / 2)))
+        S_refl = S_excited * flux_th + dSpx[start_idx: ] - S_aboves[start_idx: ]
         ax2.plot(t,
                  smooth(S_excited),
                  'g',
@@ -1244,18 +1245,30 @@ def plot_front(name, params):
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  -smooth(dSpx[start_idx: ]) / flux_th,
+                 'b',
+                 label=r'$F_a(t)$',
+                 linewidth=LW * 0.7)
+        ax2.plot(t,
+                 smooth(S_refl) / flux_th,
                  'r',
-                 label=r'$\Delta F(t)$',
+                 label=r'$F_r(t)$',
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  smooth(S_aboves[start_idx: ]) / flux_th,
                  'k',
-                 label=r'$F_>(t)$',
+                 label=r'$F_s(t)$',
                  linewidth=LW * 0.7)
         ax2.set_xlabel(r'$Nt$')
-        ax2.set_ylabel(r"$F / F_{al}'$")
-        ax2.legend(fontsize=FONTSIZE, loc='lower left')
-        plt.tight_layout()
+        ax2.set_ylabel(r"$F / F_{al}$")
+        # best loc in (0.5, F=-0.2), (1, F=0.4) in axis coordinates
+        ylim = ax2.get_ylim()
+        lower_loc = (-0.2 - ylim[0]) / (ylim[1] - ylim[0])
+        upper_loc = (0.4 - ylim[0]) / (ylim[1] - ylim[0])
+        ax2.legend(fontsize=FONTSIZE - 3,
+                   loc='center left',
+                   bbox_to_anchor=(0.48, lower_loc, 1, upper_loc - lower_loc),
+                   ncol=2)
+        # plt.tight_layout()
         f.subplots_adjust(hspace=0)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1278,7 +1291,7 @@ def plot_front(name, params):
         prop_time = 0 * t
 
         t_refl = np.linspace((t + prop_time)[0], (t - prop_time)[-1], len(t))
-        f, ax1 = plt.subplots(1, 1, sharex=True)
+        f, ax1 = plt.subplots(1, 1, figsize=(6, 5), sharex=True)
 
         absorbed_dS = my_interp(t, -(dSpx - S_aboves)[start_idx: ] / flux_th)
         trans_dS = my_interp(t, -S_aboves[start_idx: ] / flux_th)
@@ -1298,15 +1311,15 @@ def plot_front(name, params):
         avg_trans = get_stats(trans[int(len(trans) * 3 / 4): ])
 
         ax1.plot(t_refl, refl, 'r', linewidth=LW * 0.7,
-                 label=r'$\mathcal{R}_F$')
+                 label=r'$\hat{F}_r$')
         ax1.plot(t_refl, refl_amp**2, 'g', linewidth=LW * 0.7,
                  label='$\mathcal{R}_A^2$')
-        ax1.plot(t_refl, trans, 'k', linewidth=LW * 0.7, label='$\mathcal{T}_F$')
+        ax1.plot(t_refl, trans, 'k', linewidth=LW * 0.7, label='$\hat{F}_s$')
 
         ax1.legend(fontsize=FONTSIZE, loc='upper left')
         # ax1.set_ylabel(r'Reflectivity')
         ax1.set_xlabel(r'$Nt$')
-        ax1.set_ylim([0, 0.5])
+        ax1.set_ylim(bottom=0)
 
         plt.tight_layout()
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=DPI)

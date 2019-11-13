@@ -20,12 +20,15 @@ DATA = [
 ]
 
 if __name__ == '__main__':
-    f, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
-    f.subplots_adjust(hspace=0)
+    f, (ax1, ax3) = plt.subplots(2, 1, figsize=(6, 7),
+                                 gridspec_kw={'height_ratios': [2, 1]},
+                                 sharex=True)
+    ax1.set_xscale('log')
     offsets = defaultdict(float)
 
     msize=5
     lwidth=1.8
+    offset_mult = 3
 
     for re_inv, ((r_med, r_min, r_max),
                  (rA_med, rA_min, rA_max),
@@ -38,36 +41,36 @@ if __name__ == '__main__':
         ax1.errorbar(x, r_med,
                      [[r_med - r_min], [r_max - r_med]],
                      ecolor='k', linewidth=lwidth)
-        ax1.plot(x + 14, T_med, 'ro', markersize=msize)
-        ax1.errorbar(x + 14, T_med,
+        ax1.plot(x + 2 * offset_mult, T_med, 'ro', markersize=msize)
+        ax1.errorbar(x + 2 * offset_mult, T_med,
                      [[T_med - T_min], [T_max - T_med]],
                      ecolor='r', linewidth=lwidth)
-        ax1.plot(x + 7, rA_med**2, 'bo', markersize=msize)
-        ax1.errorbar(x + 7, rA_med**2,
+        ax1.plot(x + offset_mult, rA_med**2, 'bo', markersize=msize)
+        ax1.errorbar(x + offset_mult, rA_med**2,
                      [[rA_med**2 - rA_min**2], [rA_max**2 - rA_med**2]],
                      ecolor='b', linewidth=lwidth)
+
+        ax1.set_ylim([0, 0.8])
+        ax1.set_yticks([0, 0.35, 0.7])
         ax3.plot(x, w_med, 'ko', markersize=msize)
         ax3.errorbar(x, w_med,
                      [[w_med - w_min], [w_max - w_med]],
                      ecolor='k', linewidth=lwidth)
-
-        ax1.set_ylim([0, 0.8])
-        ax1.set_yticks([0, 0.35, 0.7])
         ax3.set_ylim([0, 1.5])
         ax3.set_yticks([0, 0.5, 1])
-        offsets[re_inv] += 20
+        ax3.set_xticks([100, 1000])
+        offsets[re_inv] += offset_mult * 3
 
-    ln1 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
-                        label=r'$\left<\mathcal{R}_S(t)\right>$')
-    ln2 = mlines.Line2D([], [], color='b', marker='o', markersize=msize,
+    ln1 = mlines.Line2D([], [], color='b', marker='o', markersize=msize,
                         label=r'$\left<\mathcal{R}_A(t)^2\right>$')
+    ln2 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
+                        label=r'$\left<\hat{F}_r\right>$')
     ln3 = mlines.Line2D([], [], color='r', marker='*', markersize=msize,
-                        label=r'$\left<\mathcal{T}_S(t)\right>$')
-    ax1.legend(handles=[ln1, ln2, ln3], fontsize=16, loc='upper left')
+                        label=r'$\left<\hat{F}_s\right>$')
+    ax1.legend(handles=[ln1, ln2, ln3], fontsize=14, loc='upper left')
 
-
-    # ax1.set_ylabel(r'$\left<\mathcal{R}_S(t)\right>$')
-    ax3.set_ylabel('Ri')
     ax3.set_xlabel('Re')
-    plt.savefig('agg.png', dpi=600)
-
+    ax3.set_ylabel('Ri')
+    f.subplots_adjust(hspace=0)
+    plt.savefig('agg.png', dpi=400)
+    plt.clf()
