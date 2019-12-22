@@ -56,10 +56,11 @@ if __name__ == '__main__':
         ax3.errorbar(x, w_med,
                      [[w_med - w_min], [w_max - w_med]],
                      ecolor='k', linewidth=lwidth)
-        ax3.set_ylim([0, 1.5])
-        ax3.set_yticks([0, 0.5, 1])
-        ax3.set_xticks([100, 1000])
         offsets[re_inv] += offset_mult * 3
+    ax3.set_xlim([100, 2200])
+    ax3.set_ylim([0, 1.5])
+    ax3.set_yticks([0, 0.5, 1])
+    ax3.set_xticks([100, 1000])
 
     ln1 = mlines.Line2D([], [], color='b', marker='o', markersize=msize,
                         label=r'$\left<\mathcal{R}_A(t)^2\right>$')
@@ -71,6 +72,6 @@ if __name__ == '__main__':
 
     ax3.set_xlabel('Re')
     ax3.set_ylabel('Ri')
-    f.subplots_adjust(hspace=0)
+    f.subplots_adjust(hspace=0.1)
     plt.savefig('agg.png', dpi=400)
     plt.clf()

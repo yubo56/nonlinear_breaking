@@ -4,8 +4,8 @@
 import numpy as np
 import sys
 from strat_helper import *
-from mpi4py import MPI
-CW = MPI.COMM_WORLD
+# from mpi4py import MPI
+# CW = MPI.COMM_WORLD
 
 H = 1
 XMAX = 4 * H
@@ -60,19 +60,19 @@ def get_params(overrides=None):
     params['NU'] = params['Re_inv'] * \
         OMEGA * params['ZMAX'] / (2 * np.pi * params['N_Z']) / abs(KZ)
 
-    if CW.rank == 0: # print only on root process
-        print(params)
+    # if CW.rank == 0: # print only on root process
+    #     print(params)
     return params
 
 if __name__ == '__main__':
     tasks = [
-        ('lin_0_masked',
-         get_params(overrides={'F_MULT': 0.0005,
-                               'T_F': 4000,
-                               'DT': 0.1,
-                               'N_X': 64,
-                               'N_Z': 256,
-                               'Re_inv': 1e-4})),
+        # ('lin_0_masked',
+        #  get_params(overrides={'F_MULT': 0.0005,
+        #                        'T_F': 4000,
+        #                        'DT': 0.1,
+        #                        'N_X': 64,
+        #                        'N_Z': 256,
+        #                        'Re_inv': 1e-4})),
         # ('yubo_nu0p5_hres',
         #  get_params(overrides={'Re_inv': 0.05})),
         # ('yubo_nu0p5_shres',
