@@ -42,24 +42,26 @@
     \DeclareMathOperator*{\med}{med}
     \DeclareMathOperator*{\erf}{erf}
 
-\title[Internal Gravity Wave Breaking]{Physics of Tidal Dissipation:
-Hydrodynamical Simulations of Internal Gravity Wave Breaking in Stellar
-Envelopes and Massive Stellar Binaries}
+\title[Physics of Tidal Dissipation]{Physics of Tidal Dissipation in Early-Type
+Stars and White Dwarfs: Hydrodynamical Simulations of Internal Gravity Wave
+Breaking in Isothermal Stellar Envelopes}
 \author[Y. Su et\ al.]{
 Yubo Su,$^1$,
 Daniel Lecoanet,$^2$
-Dong Lai,$^1$
+Dong Lai,$^{1,3}$
 \\
 $^1$ Cornell Center for Astrophysics and Planetary Science, Department of
 Astronomy, Cornell University, Ithaca, NY 14853, USA
 \\
 $^2$ Princeton Center for Theoretical Science, Princeton University, Princeton,
 NJ 08544, USA
+\\
+$^3$ Tsung-Dao Lee Institute, 800 Dongchuan Road, Shanghai, 200240, China
 }
 
 \date{Accepted XXX\@. Received YYY\@; in original form ZZZ}
 
-\pubyear{2019}
+\pubyear{2020}
 
 \begin{document}\label{firstpage}
 \pagerange{\pageref{firstpage}--\pageref{lastpage}}
@@ -68,100 +70,119 @@ NJ 08544, USA
 % cp ../sims/agg.png plots; cp ../sims/2d_4_fourier/snapshots_lin_0_masked/f_amps.png plots/lin_amps.png; cp ../sims/2d_4_fourier/snapshots_lin_0_masked/fluxes.png plots/lin_fluxes.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps2.png plots/nl_f_amps2.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_amps.png plots/nl_f_amps.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/fluxes.png plots/nl_fluxes.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_refl.png plots/nl_f_refl.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/f_ri.png plots/nl_f_ri.png; cp ../sims/2d_4_fourier/snapshots_yubo_nu1_vhres/front.png plots/nl_front.png;
 
 \begin{abstract}
-    In sufficiently compact white dwarf binaries, dynamical tides raise a train
-    of internal gravity waves that propagate towards the surface and dissipate
-    via nonlinear wave breaking. We perform 2D hydrodynamical simulations of
-    this wave breaking in an incompressible, isothermal atmosphere. After an
-    initial transient phase, we find that these waves generate a sharp
-    transition, a critical layer, between the non-rotating core and
-    synchronously rotating envelope. We find evidence that indefinite steepening
-    of this critical layer is suppressed by the Kelvin-Helmholtz instability. We
-    study the absorption and reflection of incident waves off the critical layer
-    and provide analytical formulae describing its evolution. We infer
-    necessary conditions to resolving momentum transfer within the critical
-    layer. Finally, we speculate on the application of our model to tidal
-    synchronization and heating in astrophysical systems.
+    In binaries composed of early-type stars and white dwarfs, the dominant
+    tidal process involve the excitation of internal gravity waves (IGWs) that
+    propagate towards the stellar surface and their dissipation via nonlinear
+    wave breaking. We perform 2D hydrodynamical simulations of this wave
+    breaking process in a stratified isothermal atmosphere. We find that, after
+    an initial transient phase, the dissipation of the IGWs naturally generate a
+    sharp critical layer, separating the lower stationary region (with no mean
+    flow) and the upper ``synchronized'' envelope (with the mean flow speed
+    equal to the horizontal wave phase velocity). We find that the indefinite
+    steepening of this critical layer is suppressed by the Kelvin-Helmholtz
+    instability, and the width of the layer is determined by the Richardson
+    criterion. We study the absorption and reflection of incident waves off the
+    critical layer and provide analytical formulae describing its evolution. The
+    result of this study is important for characterizing the evolution of
+    tidally heated white dwarfs and other binary stars.
 \end{abstract}
 
 \begin{keywords}
 white dwarfs -- hydrodynamics -- binaries:close -- waves % chktex 8
 \end{keywords}
 
+% so that \cite[see][for q]{QQ} gives (see QQ for q) without comma after QQ
+\setcitestyle{notesep={ }}
+
 \section{Introduction}\label{s:intro}
 
-Compact white dwarf (WD) binary systems, with orbital periods in the range of
-minutes to hours, are important for a range of astrophysical problems. They are
-the most important sources of gravitational waves (GWs) for the Laser
-Interferometric Space Antenna (LISA) \citep{lisa}. They are also thought to
-produce interesting optical transients such as underluminous supernovae
-\citep{underlum}, Ca-rich fast transients \citep{carich}, and tidal novae
-\citep{tidal_novae}. Most importantly, they have been proposed as the likely
-progenitors of type Ia supernovae (e.g. \citet{Ia0,webbink} or more recently
-\citet{Ia1,Ia2}). While presently only a few tens of compact WD binaries are
-known \citep{lsst_wd}, \emph{Gaia} (currently gathering data) is expected to
-expand the catalog to a few hundreds \citep{lsst_wd} \citep[results based on
-\emph{Gaia}'s second data release have already begun to
-appear][]{gaiaDD,gaiaDD2}, and the Large Synoptic Survey Telescope (LSST, first
-light scheduled for 2020) will likely detect a few thousand more
-\citep{lsst_wd}. These observations will significantly advance the understanding
-of WD binaries and their evolution.
+The physical processes responsible for tidal evolution in close binaries often
+involve the excitation and dissipation of internal waves, going beyond the
+``weak friction'' of equilibrium tides \citep[see][for a
+review]{ogilvie2014tidal}. In particular, internal gravity waves (IGWs), arising
+from buoyancy of stratified stellar fluid, play an important role in several
+types of binary systems. In solar-type stars with radiative cores and convective
+envelopes, IGWs are excited by tidal forcing at the radiative-convective
+boundary and propagate inward; as the wave amplitude grows due to geometric
+focusing, nonlinear effects can lead to efficient damping of the wave
+\citep{goodman1998dynamical,barker_ogilvie,essick2015orbital}. In massive
+main-sequence stars, with convective cores and radiative envelopes, IGWs are
+similarly excited at the convective-radiative interface but travel toward the
+stellar surface; nonlinearity develops as the wave amplitude grows, leading to
+efficient dissipation \citep{zahn75,zahn77}. As the outgoing wave deposites its
+angular momentum to the stellar surface layer, a critical layer may form and the
+star synchronize from outside-in \citep{gn89}.
 
-In spite of the broad importance of WD binaries, the evolution of these systems
-prior to their final mergers is not well understood. Much of this uncertainty
-comes from our imprecise understanding of tidal interactions, which play an
-important role during a compact WD binary's inspiral \citep{fullerII}. Previous
-studies have shown that these interactions manifest as tidal excitation of
-internal gravity waves (IGW), waves in the WD fluid restored by the buoyancy
-force due to density stratification \citep{fullerI}. As these waves propagate
-outwards towards the WD surface, they grow in amplitude until they break, as do
-ocean waves on a shore, and transfer both energy and angular momentum from the
-binary orbit to the outer envelope of the WD \citep{fullerI,fullerII}.
+Tidal dissipation can also play an important role in compact double white dwarf
+(WD) binary systems (with orbital periods in the range of minutes to hours).
+Such binaries may produce a variety of exotic astrophysical systems and
+phenomena, ranging from isolated sdB/sdO stars,
+%(likely created by the merger of two He WDs),
+R CrB stars,
+%(likely created by the merger of a CO and He WD),
+AM CVn binaries,
+%(possibly created by stable mass transfer from a He WD onto a CO WD),
+high-mass neutron stars and magnetars (created by the accretion-induced
+collapse of merging WDs),
+%CO WDs or accreting O-Ne-Mg WDs),
+and various optical transients (underluminous supernovae, Ca-rich fast
+transients, and type Ia supernovae)
+\citep[e.g.][]{livio2018progenitors,gaiaDD2,toloza2019understanding,
+underlum,carich,Ia1,Ia2}. The outcomes of WD mergers depend on the WD masses
+and composition, but tidal dissipation can strongly affect the pre-merger
+conditions of the WDs. Tidal dessipation may also incluence the evoluton of
+eccentric WD-massive black hole binaries prior to the eventual tidal disruption
+of the WD \citep{vick2017tidal}.
 
-Previous works have found that the dissipation of IGW can generate significantly
-more energy than thermal radiation from the isolated WD surface and is thus a
-major contributor to the WD energy budget \citep{fullerII,fullerIV}. However,
-these works parameterized the wave breaking process in an ad hoc manner. The
-details of dissipation, namely the location and spatial extent of the wave
-breaking, affect the observable outcome: dissipation near the surface of the WD
-can be efficiently radiated away and simply brightens the WD, while dissipation
-deep in the WD envelope causes an energy buildup that results in energetic
-flares \citep{tidal_novae}. Works in other fields based on numerical simulations
-show that strongly nonlinear wave breaking behaves differently than predictions
-based in linear and weakly nonlinear theory \citep{winters1994,barker_ogilvie}.
-Such fully nonlinear numerical simulations have not been performed for WDs.
+Previous studies have identified nonlinear dissipation of IGWs as the key tidal
+process in compact WD binaries \citep{fullerII,fullerIV,tidal_novae,bukart}:
+IGWs are tidally excited mainly at the compositon transitions of the WD
+envelope; as these waves propagate outwards towards the WD surface, they grow
+in amplitude until they break, and transfer both energy and angular momentum
+from the binary orbit to the outer envelope of the WD\@.
+%Fuller \& Lai (20xx,20xx) found that the dissipation of IGW can generate
+%significantly more energy than thermal radiation from the isolated WD surface
+%and is thus a major contributor to the WD energy budget.
+However, these previous works parameterized the wave breaking process in an ad
+hoc manner. The details of dissipation, namely the location and spatial extent
+of the wave breaking, affect the observable outcome: Dissipation near the
+surface of the WD can be efficiently radiated away and simply brightens the WD,
+while dissipation deep in the WD envelope causes an energy buildup that results
+in energetic flares \citep{tidal_novae}. An important goal of this paper is to
+elucidate the details of the nonlinear IGW breaking process; the result of this
+``microphysics'' study will help determine the observational manifestation
+tidally heated binary WDs.
 
-In this paper, we perform numerical simulations of tidally-excited IGWs
-undergoing wave breaking in an idealized WD fluid. The primary aim of the paper
-is to thoroughly characterize the angular momentum transfer within a WD by
-purely hydrodynamical effects. As a first approximation, we analyze the problem
-in a 2D Cartesian geometry, and consider IGW propagating into a fluid initially
-at rest. We find that, after an initial transient phase, the fluid develops two
-distinct zones: (i) a lower zone that has no horizontal mean flow, and (ii) an
-upper zone with significant horizontal mean flow.
+In this paper, we perform numerical simulations of IGW breaking in a
+plane-parallel stratified atmosphere (a stellar enevelope). We use the
+pseudo-spectral code Dedalus \citep{dedalus,dedalus2} and a 2D Cartesian
+geometry, and consider IGWs propagating into an isothermal fluid initially at
+rest. We find that, after an initial transient phase, a \emph{critical layer}
+naturally develops, separating a lower zone that has no horizontal mean flow
+and an upper zone with mean flow at the horizontal phase velocity of the IGW\@.
+The major part of our paper is dedicated to characterizing the behavior of the
+critical layer when interacting with a continuous train of IGW excited from the
+bottom of the fluid. IGWs are generally \emph{anti}-diffusive, in that they
+steepen shear flows \citep{lindzen_qbo,lecoanet_meanflow} and act to narrow the
+critical layer. We find this steepening is suppressed by the Kelvin-Helmholtz
+instability and turbulence within the narrow critical layer. By careful
+accounting of the momentum flux budget about the critical layer, we are able to
+model the reflection and absorption of the incident IGW, and the slow downward
+propagation of the critical layer.
 
-These two zones are separated by a \emph{critical layer}. The interaction of IGW
-and critical layers plays an important role in the tidal synchronization process
-of stellar binaries \citep{zahn75,gn89} as well as in terrestrial phenomena such
-as the quasi-biennial oscillation \citep{lindzen_qbo}. The majority of our paper
-is dedicated to characterizing the behavior of the critical layer when
-interacting with a continuous train of IGW excited from the bottom of the fluid.
-IGW are generally \emph{anti}-diffusive, in that they steepen shear flows
-\citep{lindzen_qbo,lecoanet_meanflow}, and act to narrow the critical layer. We
-find this steepening is suppressed by the Kelvin-Helmholtz instability and
-turbulence within the very narrow critical layer. By careful accounting of the
-momentum flux budget about the critical layer, we are able to model the
-propagation of the critical layer, reflection of the incident IGW, and other
-momentum redistribution behaviors. Our results are numerically converged for
-sufficiently large resolutions.
+While the motivation of our study is to understand tidal dissipation
+in WD and mass star binaries, the IGW breaking process studied in this paper
+is also quite relevant to the circulation dynamics of planetary atmospheres
+\citep[see e.g.][]{lindzen1981turbulence,holton1983influence}.
 
-In Section~\ref{s:equations}, we will describe the system of equations we will
-use to analyze IGW breaking. In Section~\ref{s:theory}, we review existing
-understanding of wave breaking and present new analytical results. In
-Section~\ref{s:numerics}, we describe our numerical setup, which in
-Section~\ref{s:weak_sim} we validate in the weak forcing limit against linear
-theory. In Section~\ref{s:sim}, we present the results of simulation of IGW
-breaking and our characterization of the critical layer. Finally, we summarize
-and conclude in Section~\ref{s:discussion}.
+This paper is organized as follows. In Section~\ref{s:equations} we present the
+system of equations used in our simulations. In Section~\ref{s:theory}, we
+review the existing understanding of wave breaking and present new analytical
+results on IGWs around a critical layer. In Section~\ref{s:numerics} we describe
+our numerical setup and in Section~\ref{s:weak_sim} we validate our method in
+the weak forcing limit against linear theory. In Section~\ref{s:sim}, we present
+the results of simulations of IGW breaking and our characterization of the
+critical layer. We summarize and conclude in Section~\ref{s:discussion}.
 
 \section{Problem Setup}\label{s:equations}
 
@@ -484,13 +505,17 @@ below:
         horizontal momentum (see Appendix~\ref{se:strat_impl} for details). To
         quantify $\nu$, we define the dimensionless Reynolds number
         \begin{equation}
-            \mathrm{Re}  \equiv \frac{\omega}{\nu k_{z}^2}. \label{eq:re_def}
+            \mathrm{Re} \equiv \frac{\omega}{\nu k_{z}^2}
+                = \frac{\omega}{\nu}\p{\frac{H}{2\pi}}^2.\label{eq:re_def}
         \end{equation}
-        When the forcing is weak, we may set $\nu \approx 0$, or $\mathrm{Re}
-        \gg 1$ because there is negligible energy transfer into higher-order
-        modes. Note that $\nu = 0$ changes the order of the PDE system, as the
-        highest-order derivatives appear only in the dissipitive terms, so a
-        nonzero $\nu$ must be chosen even in weakly forced simulations.
+        We use $\mathrm{Re} \gg 1$ in our simulations\footenote{This condition
+        is always satisfied in stars. For example, in WDs, the dominant linear
+        dissipation mechanism of g-modes is radiative damping, with damping rate
+        ranging from $10^{-11}$--$10^-4$ of the mode frequency \citep{fullerI}.
+        This corresponds to a small effective viscosity or $\mathrm{Re} \gg
+        1$.}. Note that $\nu = 0$ changes the order of the PDE system, as the
+        highest-order derivatives appear only in the dissipitive terms, so only
+        nonzero $\nu$ can be used even in weakly forced simulations.
 \end{enumerate}
 
 Finally, we use initial conditions $\bm{u}(x, z, 0) = \Upsilon(x, z, 0) = 0$ and
@@ -979,7 +1004,7 @@ are shown in Fig.~\ref{fig:agg}.
     variation of each measurement between the $16\%$ and $84\%$ range. Small
     horizontal displacements are made for data points at identical $\mathrm{Re}$
     for readability. Note that simulations with larger $\mathrm{Re}$ correspond
-    to smaller viscosity and are more physically realistic.  At the smallest
+    to smaller viscosity and are more physically realistic. At the smallest
     $\mathrm{Re}$ value, $\mathrm{Ri} \approx 50$ is too large to fit on the
     plot.}\label{fig:agg}
 \end{figure}
@@ -1024,92 +1049,35 @@ follows:
 In the subsequent sections, we will discuss the validity of these results and
 their application to astrophysical systems.
 
-\subsection{Physical Sources of Dissipation in WDs}\label{ss:disp}
+\subsection{Discussion}
 
-The most significant linear damping in WD g-modes comes from radiative damping
-\citep{fullerI}. In \citep{wu} and \citep{fullerI}, the radiative damping rate
-is given in terms of $\omega_i = \gamma \omega_r$, where $\omega_r$ is the
-frequency of the g-mode. Typical values for $\gamma$ range from $10^{-4}$ to
-$10^{-11}$ depending on $n$ of the g-mode.
+In this paper, we have studied the nonlinear behavior of IGWs with $\abs{k_x /
+k_z} \sim 1$ in a plane-parallel atmospheres. On the other hand, tidally
+excited IGWs in binary stars have horizontal wave number $k_\perp \sim 1/R$
+(where $R$ is the stellar radius) much smaller than the radial wave number
+$k_r$. Strictly speaking, our results may not directly apply to IGWs with
+$\abs{k_x/k_z}\ll 1$. However the qualitative behavior is likely to be similar,
+as the turbulence driving the critical layer dynamics occurs at scales
+significantly smaller than either $1/k_x$ or $1/\abs{k_z}$. Simulating IGWs with
+$k_x \ll k_z$ is more numerically challenging and we defer its exploration to
+future work.
 
-We will assume this prescription directly transfers to propagating IGW, which
-results in general agreement with \citep{bukart}'s estimate of radiative damping
-rates. Then, making coarse identification $\omega_i \sim \nu k^2 \approx \nu
-k_z^2$, we find that $\mathrm{Re} \sim \frac{1}{\gamma}$. Even at $\gamma =
-10^{-4}$ however, the corresponding $\mathrm{Re}$ is far too weak to suppress
-reflection/transmission at the critical layer (Fig.~\ref{fig:agg}).
+It is interesting to compare our work with that of \citet{barker_ogilvie}, who
+studied inward-propagating IGWs in solar-type stars and their nonlinear breaking
+due to geometric focusing. In their numerical simulation in a 2D polar geometry,
+they find no evidence for reflected waves, contrary to our result. It is
+plausible the discrepancy arises due to the differing causes of wave breaking
+(geometric focusing vs.\ density rarefaction). Additionally, their nonlinearity
+parameter $\lambda \sim 1/\mathrm{Re}$ where $\mathrm{Re}$ is our Reynolds
+number (Eq.~\eqref{eq:re_def}). For $\lambda \sim 10^{-1}$ as explored in
+\citet{barker_ogilvie}, our results also predict no reflected wave.
 
-Another source of dissipation considered in \citep{bukart} is turbulent
-conbmtive damping. They find this damping rate to never exceed that of
-radiative damping, and so it is also too weak to suppress critical layer
-formation in our problem.
-
-Finally, we consider the impact of magnetic winding. In \citep{bukart}, magnetic
-winding is used to enforce solid body rotation on the grounds that $t_A \gg
-t_{gw}$, where
-\begin{equation}
-    t_A = \int\limits_0^R \frac{\sqrt{4\pi \rho}}{B_0}\;\mathrm{d}r
-        \sim 10^2\;\mathrm{yr}\p{\frac{10^3\;\mathrm{G}}{B}},
-\end{equation}
-the Alfv\'en wave crossing time (evaluated for a CO WD in \citet{fullerIV}),
-measures the magnetic coupling time and $t_{gw}$ measures the gravitational wave
-inspiral timescale. Before solid body rotation is attained, another relevant
-timescale is the synchronization timescale $t_s$. For a tidal torque $\tau$ and
-tidal forcing frequency $\sigma = m\p{\Omega - \Omega_{spin}}$, we note that
-angular momentum transfer is $\pd{M_{sync}}{t} \sigma R^2 = \tau$, where
-$M_{sync}$ denotes the mass of the WD that has synchronized. Thus, the
-synchronization timescale is
-\begin{align}
-    t_{sync} &\sim \frac{M_{sync}\sigma R^2}{\tau},\\
-        &\sim 20\;\mathrm{yr}
-            \p{\frac{M_{sync}}{10^{-4}M_{\odot}}}
-            \p{\frac{\sigma}{2\pi / (1\;\mathrm{hr})}}
-            \p{\frac{R}{R_{\oplus}}}^2
-            \p{\frac{10^{-14} GM_{\odot}^2/R_{\oplus}}{\tau}}.
-\end{align}
-A representative $\tau$ has been taken from \citep{bukart}. Only $M_{sync} \sim
-10^{-4}M_{\odot}$ need be heated for the thermodynamically interesting effects
-studied in \citep{fullerIV} and \citep{tidal_novae}, it seems that strong shear
-flows may exist even in the presence of magnetic coupling.
-
-\subsection{Applicability to Astrophysical Systems}\label{ss:other}
-
-Below, we speculate on the applicability of our results to general astrophysical
-problems of interest:
-\begin{enumerate}
-    \item In astrophysical systems, $k_{\perp} \ll k_r$, while in our study,
-        $k_x \simeq k_z$. True turbulence is expected to be isotropic at small
-        scales, which may introduce different behavior for different ratios of
-        $k_z/k_x$. However, $k_x \ll k_z$ is a numerically difficult regime; we
-        defer its exploration to future work.
-
-    \item In~\cite{barker_ogilvie}, inwards-propagating IGW are excited that
-        break via geometric focusing. They find no reflected wave despite their
-        nonlinear timescales being $10\times$ shorter than their viscous
-        timescale, in contrast with the reflective behavior observed in our
-        simulations. It is plausible the discrepancy arises due to the differing
-        causes of wave breaking (geometric focusing vs.\ density
-        stratification), but their simulations are also at significantly higher
-        artificial viscosities than ours, as we show below.
-
-        Associating $t_{L} \sim \nu k^2 \approx \nu k_z^2$ with the visocus
-        timescale and $t_{NL} \sim \bm{u} \cdot \bm{\nabla} \sim \omega$ for the
-        nonlinear timescale, we find their $\lambda = \frac{t_{NL}}{t_L} \sim
-        \mathrm{Re}$ our Reynolds number. Our simulations indicate $\mathrm{Re}
-        \gtrsim 500$ are required to observe the correct asymptotic behavior in
-        terms of horizontal momentum flux reflection/transmission, so it is
-        possible their lack of reflection is resolution limited.
-
-    \item Our results give some tentative understanding of where tidal heating
-        is expected to occur. While we use a barotropic equation of state and do
-        not track heat deposition, we can recall that the strongest small-scale
-        variations in fluid flow are localized within the critical layer. Thus,
-        we posit that a substantial fraction of the energy carried by the IGW is
-        deposited in the very narrow critical layer. Then, as the critical layer
-        propagates downwards, the entire star is heated. This tidal heating
-        model differs flom that used in \citep{tidal_novae}, and its effects
-        will be studied in future work.
-\end{enumerate}
+Regardless of the limitations inherent in our simulations (e.g.\ plane-parallel
+geometry), our results shed light on the physical mechanism of tidal heating in
+close binaries. In particular, our simulations indicate that energy dissipation
+occurs in a narrow critical layer. The star heats up from outside-in as the
+critical layer propagates inwards. This tidal heating profile differs flom that
+used by \citet{tidal_novae}. We plan to study this issue in a future work.
 
 \section{Acknowledgements}\label{s:ack}
 
