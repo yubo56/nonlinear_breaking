@@ -4,8 +4,8 @@
 import numpy as np
 import sys
 from strat_helper import *
-# from mpi4py import MPI
-# CW = MPI.COMM_WORLD
+from mpi4py import MPI
+CW = MPI.COMM_WORLD
 
 H = 1
 XMAX = 4 * H

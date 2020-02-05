@@ -9,7 +9,7 @@ logger = logging.getLogger()
 import os
 from collections import defaultdict
 
-# import h5py
+import h5py
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -17,12 +17,12 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
 
-# from dedalus import public as de
-# from dedalus.tools import post
-# from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
-# from dedalus.extras.plot_tools import quad_mesh, pad_limits
-# from mpi4py import MPI
-# CW = MPI.COMM_WORLD
+from dedalus import public as de
+from dedalus.tools import post
+from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
+from dedalus.extras.plot_tools import quad_mesh, pad_limits
+from mpi4py import MPI
+CW = MPI.COMM_WORLD
 PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
@@ -158,13 +158,13 @@ def subtract_lins(params, state_vars, sim_times, domain):
     global N_X, N_Z
     xstride = N_X // 256
     zstride = N_Z // 1024
-    xscale = 1 if xstride == 0 else int(1 / xstride)
-    zscale = 1 if zstride == 0 else int(1 / zstride)
+    xscale = 1 if xstride == 0 else 1 / xstride
+    zscale = 1 if zstride == 0 else 1 / zstride
     N_X = 256
     N_Z = 1024
 
-    x = domain.grid(0, scales=xscale)
-    z = domain.grid(1, scales=zscale)
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
     x_t = np.array([x] * len(sim_times)) # all-time
     z_t = np.array([z] * len(sim_times))
     grid_ones = np.ones_like(x + z)
@@ -175,8 +175,8 @@ def subtract_lins(params, state_vars, sim_times, domain):
     pos_slice = np.s_[:, z_bot:z_top]
     time_slice = np.s_[:, :, z_bot:z_top]
 
-    dx = domain.grid_spacing(0, scales=xscale)
-    dz = domain.grid_spacing(1, scales=zscale)
+    dx = domain.grid_spacing(0, scales=1)
+    dz = domain.grid_spacing(1, scales=1)
     dxdz = np.outer(dx, dz)[pos_slice]
     norm = np.exp(-z/H)[pos_slice]
 
@@ -457,15 +457,13 @@ def load(name, params, dyn_vars, stride, start=0):
     global N_X, N_Z
     xstride = N_X // 256
     zstride = N_Z // 1024
-    xscale = 1 if xstride == 0 else int(1 / xstride)
-    zscale = 1 if zstride == 0 else int(1 / zstride)
     N_X = 256
     N_Z = 1024
     snapshots_dir = SNAPSHOTS_DIR % name
     merge(name)
 
     solver, domain = get_solver(params)
-    z = domain.grid(1, scales=zscale)
+    z = domain.grid(1, scales=1)
 
     i = 1
     filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
@@ -479,7 +477,7 @@ def load(name, params, dyn_vars, stride, start=0):
             if zstride > 0:
                 for varname in dyn_vars:
                     assert params['N_X'] == np.shape(dat['tasks'][varname])[1],\
-                        'Z: %d, %d' % (params['N_X'],
+                        'X: %d, %d' % (params['N_X'],
                                        np.shape(dat['tasks'][varname]))
                     assert params['N_Z'] == np.shape(dat['tasks'][varname])[2],\
                         'Z: %d, %d' % (params['N_Z'],
@@ -825,8 +823,8 @@ def write_front(name, params, stride=1):
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
     N_X = 256
     N_Z = 1024
-    xscale = 1 if params['N_X'] < N_X else int(N_X / params['N_X'])
-    zscale = 1 if params['N_Z'] < N_Z else int(N_Z / params['N_Z'])
+    xscale = 1 if params['N_X'] < N_X else N_X / params['N_X']
+    zscale = 1 if params['N_Z'] < N_Z else N_Z / params['N_Z']
     u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U']
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -837,8 +835,8 @@ def write_front(name, params, stride=1):
 
     sim_times, domain, state_vars = load(
         name, params, dyn_vars, stride=stride, start=10)
-    x = domain.grid(0, scales=xscale)
-    z = domain.grid(1, scales=zscale)
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
     dz = domain.grid_spacing(1, scales=zscale)[0]
     z0 = z[0]
     rho0 = RHO0 * np.exp(-z0 / H)
@@ -872,9 +870,14 @@ def write_front(name, params, stride=1):
         ri_min.append(np.min(ri_arr))
         ri_max.append(np.max(ri_arr))
 
+        w_field = state_vars['W'][t_idx, :, front_idx - 10: front_idx + 10]
+        field_ri_all = g**2 * np.min(1 / (w_field * search_ux_z**2), axis=1)
+
         width_arr = []
+        field_ri_arr = []
         for x_idx in range(N_X):
             ux_slice = state_vars['ux'][t_idx, x_idx]
+            w_slice = state_vars['W'][t_idx, x_idx]
             def interp_idx(f, idx, val):
                 df_grid = f[idx] - f[idx - 1]
                 dz_grid = z0[idx] - z0[idx - 1]
@@ -888,13 +891,26 @@ def write_front(name, params, stride=1):
 
             if not len(z_top_where) or not len(z_bot_where):
                 width_arr.append(ZMAX)
+                field_ri_arr.append(np.inf)
                 continue
-            z_top = interp_idx(ux_slice, z_top_where[0] + front_idx - 5, u_c)
-            z_bot = interp_idx(ux_slice, z_bot_where[-1] + 1, 0.3 * u_c)
-            width_arr.append(z_top - z_bot)
+            top_idx = z_top_where[0] + front_idx - 5
+            bot_idx = z_bot_where[-1] + 1
+            z_top = interp_idx(ux_slice, top_idx, u_c)
+            z_bot = interp_idx(ux_slice, bot_idx, 0.3 * u_c)
+            dz = z_top - z_bot
+            width_arr.append(dz)
+
+            if top_idx <= bot_idx:
+                ri_arr.append(np.inf)
+                continue
+            mean_w = np.mean(w_slice[bot_idx: top_idx])
+            ri_arr.append((g**2 / mean_w) * dz**2 / (0.7 * u_c)**2)
         width_med.append(np.median(width_arr))
         width_min.append(np.min(width_arr))
         width_max.append(np.max(width_arr))
+        field_ri_med.append(np.median(field_ri_arr))
+        field_ri_min.append(np.min(field_ri_arr))
+        field_ri_max.append(np.max(field_ri_arr))
 
         window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
 
@@ -930,6 +946,8 @@ def write_front(name, params, stride=1):
             np.array(amps), np.array(phis),
             np.array(amps_down), np.array(phis_down),
             np.array(S_bot_ffts), np.array(S_top_ffts),
+            np.array(field_ri_med), np.array(field_ri_min),
+            np.array(field_ri_max),
         ), data)
 
 def get_dS_front(params, S_px, sim_times, z0):
@@ -990,7 +1008,8 @@ def plot_front(name, params):
         z0, sim_times, S_px, Spx11, u0, ri_med, ri_min, ri_max,\
             width_med, width_min, width_max,\
             amps, phis, amps_down, phis_down, \
-            S_bot_ffts, S_top_ffts = pickle.load(data)
+            S_bot_ffts, S_top_ffts, \
+            field_ri_med, field_ri_min, field_ri_max = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
@@ -1178,7 +1197,7 @@ def plot_front(name, params):
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  front_pos_intg_S,
-                 'g-',
+                 'r-',
                  label='Predictor (Eq. 23)',
                  linewidth=LW * 0.7)
 
@@ -1192,7 +1211,7 @@ def plot_front(name, params):
             / tau)
         ax2.plot(t,
                  pos_anal,
-                 'b',
+                 'g',
                  label="Predictor (Eq. 24, $F_a = %.2fF_{al}$)" %
                     (mean_incident / flux_th),
                  linewidth=LW * 0.7)
@@ -1345,6 +1364,10 @@ def plot_front(name, params):
                  label=r'$\min \mathrm{Ri}_x$')
         # ri_max = N**2 * width_max**2 / (0.7 * u_c)**2
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
+
+        ax1.plot(t, field_ri_width[start_idx: ], 'k:', linewidth=LW * 0.3)
+        ax1.plot(t, field_ri_min[start_idx: ], 'r:', linewidth=LW * 0.2)
+
         ax1.set_ylim([0, 0.6])
         ax1.set_ylabel(r"Ri", fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
