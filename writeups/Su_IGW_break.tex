@@ -1,7 +1,7 @@
     \documentclass[
         fleqn,
         usenatbib,
-        referee,
+        % referee,
     ]{mnras}
     \usepackage{
         amsmath,
@@ -44,11 +44,11 @@
 
 \title[Physics of Tidal Dissipation]{Physics of Tidal Dissipation in Early-Type
 Stars and White Dwarfs: Hydrodynamical Simulations of Internal Gravity Wave
-Breaking in Isothermal Stellar Envelopes}
+Breaking in Stellar Envelopes}
 \author[Y. Su et\ al.]{
 Yubo Su,$^1$,
 Daniel Lecoanet,$^2$
-Dong Lai,$^{1,3}$
+Dong Lai$^{1,3}$
 \\
 $^1$ Cornell Center for Astrophysics and Planetary Science, Department of
 Astronomy, Cornell University, Ithaca, NY 14853, USA
@@ -56,7 +56,7 @@ Astronomy, Cornell University, Ithaca, NY 14853, USA
 $^2$ Princeton Center for Theoretical Science, Princeton University, Princeton,
 NJ 08544, USA
 \\
-$^3$ Tsung-Dao Lee Institute, 800 Dongchuan Road, Shanghai, 200240, China
+$^3$ Tsung-Dao Lee Institute, Shanghai Jiao Tong University, Shanghai, 200240, China
 }
 
 \date{Accepted XXX\@. Received YYY\@; in original form ZZZ}
@@ -71,16 +71,16 @@ $^3$ Tsung-Dao Lee Institute, 800 Dongchuan Road, Shanghai, 200240, China
 
 \begin{abstract}
     In binaries composed of early-type stars and white dwarfs, the dominant
-    tidal process involve the excitation of internal gravity waves (IGWs) that
+    tidal process involves the excitation of internal gravity waves (IGWs) that
     propagate towards the stellar surface and their dissipation via nonlinear
     wave breaking. We perform 2D hydrodynamical simulations of this wave
     breaking process in a stratified isothermal atmosphere. We find that, after
     an initial transient phase, the dissipation of the IGWs naturally generate a
     sharp critical layer, separating the lower stationary region (with no mean
-    flow) and the upper ``synchronized'' envelope (with the mean flow speed
-    equal to the horizontal wave phase velocity). We find that the indefinite
-    steepening of this critical layer is suppressed by the Kelvin-Helmholtz
-    instability, and the width of the layer is determined by the Richardson
+    flow) and the upper ``synchronized'' region (with the mean flow velocity
+    equal to the horizontal wave phase speed). We find that the indefinite
+    steepening of this critical layer is suppressed by Kelvin-Helmholtz
+    instabilities, and the width of the layer is determined by the Richardson
     criterion. We study the absorption and reflection of incident waves off the
     critical layer and provide analytical formulae describing its evolution. The
     result of this study is important for characterizing the evolution of
@@ -105,56 +105,46 @@ types of binary systems. In solar-type stars with radiative cores and convective
 envelopes, IGWs are excited by tidal forcing at the radiative-convective
 boundary and propagate inward; as the wave amplitude grows due to geometric
 focusing, nonlinear effects can lead to efficient damping of the wave
-\citep{goodman1998dynamical,barker_ogilvie,essick2015orbital}. In massive
+\citep{goodman1998dynamical,barker_ogilvie,essick2015orbital}. In early-type
 main-sequence stars, with convective cores and radiative envelopes, IGWs are
 similarly excited at the convective-radiative interface but travel toward the
 stellar surface; nonlinearity develops as the wave amplitude grows, leading to
 efficient dissipation \citep{zahn75,zahn77}. As the outgoing wave deposites its
 angular momentum to the stellar surface layer, a critical layer may form and the
-star synchronize from outside-in \citep{gn89}.
+star is expected to synchronize from outside-in \citep{gn89}.
 
 Tidal dissipation can also play an important role in compact double white dwarf
 (WD) binary systems (with orbital periods in the range of minutes to hours).
 Such binaries may produce a variety of exotic astrophysical systems and
-phenomena, ranging from isolated sdB/sdO stars,
-%(likely created by the merger of two He WDs),
-R CrB stars,
-%(likely created by the merger of a CO and He WD),
-AM CVn binaries,
-%(possibly created by stable mass transfer from a He WD onto a CO WD),
-high-mass neutron stars and magnetars (created by the accretion-induced
-collapse of merging WDs),
-%CO WDs or accreting O-Ne-Mg WDs),
-and various optical transients (underluminous supernovae, Ca-rich fast
-transients, and type Ia supernovae)
-\citep[e.g.][]{livio2018progenitors,gaiaDD2,toloza2019understanding,
-underlum,carich,Ia1,Ia2}. The outcomes of WD mergers depend on the WD masses
-and composition, but tidal dissipation can strongly affect the pre-merger
-conditions of the WDs. Tidal dessipation may also incluence the evoluton of
-eccentric WD-massive black hole binaries prior to the eventual tidal disruption
-of the WD \citep{vick2017tidal}.
+phenomena, ranging from isolated sdB/sdO stars, R CrB stars, AM CVn binaries,
+high-mass neutron stars and magnetars (created by the accretion-induced collapse
+of merging WDs), and various optical transients (underluminous supernovae,
+Ca-rich fast transients, and type Ia supernovae)
+\citep[e.g.][]{livio2018progenitors,toloza2019understanding}. The outcomes of WD
+mergers depend on the WD masses and composition, but tidal dissipation can
+strongly affect the pre-merger conditions of the WDs and therefore the merger
+outcomes. Tidal dessipation may also influence the evoluton of eccentric
+WD-massive black hole binaries prior to the eventual tidal disruption of the WD
+\citep{vick2017tidal}.
 
-Previous studies have identified nonlinear dissipation of IGWs as the key tidal
+Recent studies have identified nonlinear dissipation of IGWs as the key tidal
 process in compact WD binaries \citep{fullerII,fullerIV,tidal_novae,bukart}:
 IGWs are tidally excited mainly at the compositon transitions of the WD
-envelope; as these waves propagate outwards towards the WD surface, they grow
-in amplitude until they break, and transfer both energy and angular momentum
-from the binary orbit to the outer envelope of the WD\@.
-%Fuller \& Lai (20xx,20xx) found that the dissipation of IGW can generate
-%significantly more energy than thermal radiation from the isolated WD surface
-%and is thus a major contributor to the WD energy budget.
-However, these previous works parameterized the wave breaking process in an ad
-hoc manner. The details of dissipation, namely the location and spatial extent
-of the wave breaking, affect the observable outcome: Dissipation near the
-surface of the WD can be efficiently radiated away and simply brightens the WD,
-while dissipation deep in the WD envelope causes an energy buildup that results
-in energetic flares \citep{tidal_novae}. An important goal of this paper is to
-elucidate the details of the nonlinear IGW breaking process; the result of this
-``microphysics'' study will help determine the observational manifestation
-tidally heated binary WDs.
+envelope; as these waves propagate outwards towards the WD surface, they grow in
+amplitude until they break, and transfer both energy and angular momentum from
+the binary orbit to the outer envelope of the WD\@. However, these previous
+works parameterized the wave breaking process in an ad hoc manner. The details
+of dissipation, namely the location and spatial extent of the wave breaking,
+affect the observable outcomes: dissipation near the surface of the WD can be
+efficiently radiated away and simply brightens the WD, while dissipation deep in
+the WD envelope causes an energy buildup that results in energetic flares
+\citep{tidal_novae}. An important goal of this paper is to elucidate the details
+of the nonlinear IGW breaking process; the result of this ``microphysics'' study
+will help determine the thermal evolution and and the observational
+manifestations of tidally heated binary WDs.
 
 In this paper, we perform numerical simulations of IGW breaking in a
-plane-parallel stratified atmosphere (a stellar enevelope). We use the
+plane-parallel stratified atmosphere (stellar enevelope). We use the
 pseudo-spectral code Dedalus \citep{dedalus,dedalus2} and a 2D Cartesian
 geometry, and consider IGWs propagating into an isothermal fluid initially at
 rest. We find that, after an initial transient phase, a \emph{critical layer}
@@ -162,7 +152,7 @@ naturally develops, separating a lower zone that has no horizontal mean flow
 and an upper zone with mean flow at the horizontal phase velocity of the IGW\@.
 The major part of our paper is dedicated to characterizing the behavior of the
 critical layer when interacting with a continuous train of IGW excited from the
-bottom of the fluid. IGWs are generally \emph{anti}-diffusive, in that they
+bottom of the atmosphere. IGWs are generally \emph{anti}-diffusive, in that they
 steepen shear flows \citep{lindzen_qbo,lecoanet_meanflow} and act to narrow the
 critical layer. We find this steepening is suppressed by the Kelvin-Helmholtz
 instability and turbulence within the narrow critical layer. By careful
@@ -170,9 +160,9 @@ accounting of the momentum flux budget about the critical layer, we are able to
 model the reflection and absorption of the incident IGW, and the slow downward
 propagation of the critical layer.
 
-While the motivation of our study is to understand tidal dissipation
-in WD and mass star binaries, the IGW breaking process studied in this paper
-is also quite relevant to the circulation dynamics of planetary atmospheres
+While the motivation of our study is to understand tidal dissipation in WD and
+early-type stellar binaries, the IGW breaking process studied in this paper is
+also quite relevant to the circulation dynamics of planetary atmospheres
 \citep[see e.g.][]{lindzen1981turbulence,holton1983influence}.
 
 This paper is organized as follows. In Section~\ref{s:equations} we present the
@@ -180,11 +170,11 @@ system of equations used in our simulations. In Section~\ref{s:theory}, we
 review the existing understanding of wave breaking and present new analytical
 results on IGWs around a critical layer. In Section~\ref{s:numerics} we describe
 our numerical setup and in Section~\ref{s:weak_sim} we validate our method in
-the weak forcing limit against linear theory. In Section~\ref{s:sim}, we present
+the weak-forcing limit against linear theory. In Section~\ref{s:sim}, we present
 the results of simulations of IGW breaking and our characterization of the
 critical layer. We summarize and conclude in Section~\ref{s:discussion}.
 
-\section{Problem Setup}\label{s:equations}
+\section{Problem Setup and Equations}\label{s:equations}
 
 We consider a stratified, incompressible, isothermal fluid representing a
 stellar envelope or atmosphere. We use barotropic equation of state $P(\rho, T)
@@ -199,8 +189,8 @@ background density stratification is given by
 \begin{equation}
     \overline{\rho} = \overline{\rho}_0 e^{-z/H},
 \end{equation}
-with $\overline{\rho}_0$ some reference density (we generally denote background
-quantities with overbars and perturbation quantities with primes).
+with $\overline{\rho}_0$ some reference density. We generally denote background
+quantities with overbars and perturbation quantities with primes.
 
 The Euler equations for an incompressible, barotropic fluid in a uniform
 gravitational field are
@@ -246,9 +236,8 @@ Hydrostatic equilibrium corresponds to $\Upsilon = 0, \overline{\varpi} = gH$.
 
 \subsection{Linear Analysis}\label{ss:lin_analysis}
 
-In the small perturbation limit, we may linearize
-Eqs.~\eqref{se:nl_upsilon}. The solution in this linear regime is given by
-\citep{drazin,sutherland0}
+In the small perturbation limit, we may linearize Eq.~\eqref{se:nl_upsilon}. The
+solution in this linear regime is given by \citep{drazin,sutherland0}
 \begin{equation}
     u_z'\p{x, z, t} = Ae^{z/2H}\cos\p{k_{x}x + k_{z}z - \omega t},
         \label{eq:lin_sol}
@@ -260,7 +249,7 @@ number $\p{k_x, k_z}$ satisfy the dispersion relation
         \label{eq:disp_rel}
 \end{equation}
 Our equations are valid in the limit of large sound speed ($c_s \to \infty$), in
-which the \emph{Brunt-V\"ais\"al\"a frequency} $N$ is given by
+which the \emph{Brunt-V\"ais\"al\"a frequency}, $N$, is given by
 \begin{equation}
     N^2 \equiv g^2\p{\rd{\rho}{P} - \frac{1}{c_s^2}} = \frac{g}{H},
 \end{equation}
@@ -282,7 +271,7 @@ the following characteristics:
                 {\s{k_{x}^2 + k_{z}^2 + \p{2H}^{-2}}^{3/2}}.\label{eq:vg}
         \end{align}
         We note $\bm{c}_{p} \cdot \bm{c}_g = \mathcal{O}\s{\p{k_{z}H}^{-2}}
-        \approx 0$. In the Boussinesq approximation where terms
+        \approx 0$. In the Boussinesq approximation where terms of order
         $\mathcal{O}\p{H^{-2}}$ are ignored, the phase and group velocities are
         exactly orthogonal \citep{drazin,sutherland1}. We use the convention
         where upward propagating IGW have $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
@@ -295,7 +284,7 @@ the following characteristics:
                     \label{eq:F_def}
         \end{equation}
         The notation $\ev{\dots}_x$ denotes averaging over the $x$ domain. For
-        the linear solution (Eq.~\eqref{eq:lin_sol}), this evaluates to
+        the linear solution (Eq.~\ref{eq:lin_sol}), this evaluates to
         \begin{equation}
             F \approx -\frac{A^2}{2}\overline{\rho}_0\frac{k_{z}}{k_{x}},
                     \label{eq:S_lin}
@@ -309,12 +298,13 @@ To model continuous excitation of IGWs deep in the stellar envelope propagating
 towards the surface, we use a volumetric forcing term to excite IGW near the
 bottom of the simulation domain. Our forcing excites both IGWs
 propagating upwards, imitating a wave tidally excited deeper in the star, and
-downwards, which are not physically meaningful, but are dissipated by a
-damping zone described in Section~\ref{ss:damping}.
+downwards, which are not physically relevant in binaries. In our simulations,
+these downward propagating waves are dissipated by a damping zone described in
+Section~\ref{ss:damping}.
 
 As not to interfere with the incompressibility constraint, we force the system
 on the density equation. We implement forcing with strength $C$ localized around
-$z_0$ with small width $\sigma$ by replacing Eq.~\eqref{eq:nl_up_density}
+height $z_0$ with small width $\sigma$ by replacing Eq.~\eqref{eq:nl_up_density}
 with
 \begin{equation}
     \md{\Upsilon}{t} + u_{z}\pd{\ln \overline{\rho}}{z}
@@ -322,7 +312,7 @@ with
             \cos \p{k_{x}x - \omega t}.\label{eq:vol_drive}
 \end{equation}
 Using a narrow Gaussian profile excites a broad $z$ power spectrum, but only the
-$k_{z}$ satisfying dispersion relation (Eq.~\eqref{eq:disp_rel}) for the given
+$k_{z}$ satisfying the dispersion relation (Eq.~\ref{eq:disp_rel}) for the given
 $k_{x}$ and $\omega$ will propagate.
 
 In the linearized system, the effect of this forcing can be solved exactly
@@ -342,25 +332,25 @@ from the forcing zone
             & \text{for }z < z_0.\\
     \end{cases}\label{eq:uz_lin}
 \end{align}
-The $z > z_0$ region models an upward propagating IGW wavetrain. The $x$
+The $z > z_0$ region contains an upward propagating IGW wavetrain. The $x$
 component of the velocity can be obtained by the incompressibility constraint
-(Eq.~\eqref{eq:nl_incomp}).
+(Eq.~\ref{eq:nl_incomp}).
 
 \subsection{Wave Breaking Height}\label{ss:wave_breaking}
 
 As the upward propagating IGW grows in amplitude ($\abs{\bm{u}} \propto
 e^{z/2H}$), it is expected to break due to nonlinear effects. We can estimate
-the height of wave breaking as when $\abs{\bm{u}} \sim \omega / \abs{\bm{k}}$.
-This can be rewritten using the Lagrangian displacement $\bm{\xi} = \bm{u} /
-\p{-i\omega}$:
+the height of wave breaking using the condition $\abs{\bm{u}} \sim \omega /
+\abs{\bm{k}}$. This can be rewritten using the Lagrangian displacement $\bm{\xi}
+= \bm{u} / \p{-i\omega}$:
 \begin{equation}
-    \abs{\xi_z k_z} \gtrsim 1.\label{eq:nl}
+    \abs{\xi_z k_z} \sim 1.\label{eq:nl}
 \end{equation}
 
 \citet{drazin, klostermeyer, winters1994} describe the onset of wave breaking in
 some detail. At intermediate amplitudes, wave breaking occurs via triadic
-resonances which transfer energy from the ``parent’’ IGW to ``daughter’’ waves
-on smaller length scales that efficiently damp. The horizontal momentum flux
+resonances, transfering energy from the ``parent’’ IGW to ``daughter’’ waves on
+smaller length scales that efficiently damp. The horizontal momentum flux
 decreases from $F$ to $0$ over this breaking region. The lost flux is deposited
 into a horizontal mean flow
 \begin{equation}
@@ -396,7 +386,7 @@ zero. Anywhere $\overline{U} = \overline{U}_c$ is called a \emph{critical
 layer}.
 
 The behavior of an IGW incident upon a critical layer was first studied in the
-inviscid, linear regime in \citep{booker_bretherton}, which found nearly
+inviscid, linear regime in \citet{booker_bretherton}, which found nearly
 complete absorption of the IGW\@. The amplitude
 reflection and transmission coefficients are given by
 \begin{align}
@@ -416,22 +406,23 @@ fluids \citep{hazel}. However, weakly nonlinear theory \citep{brown_stewartson}
 and numerical simulations \citep{winters1994} suggest that nonlinear effects may
 significantly enhance reflection and transmission.
 
-Instead, we consider the horizontal momentum transfer at the critical layer. Any
-incident horizontal momentum flux $F_a(t)$ absorbed by the fluid must manifest
-as additional horizontal momentum of the shear flow. Since $\overline{U}$ cannot
-exceed $\overline{U}_c$, the critical layer will instead propagate downward in
-response to the incident momentum flux. The horizontal momentum of the shear
-flow satisfies
+Consider now the long-term evolution of the critical layer due to continuous
+horizontal momentum transfer by IGWs. Any incident horizontal momentum flux
+$F_a(t)$ absorbed by the fluid must manifest as additional horizontal momentum
+of the shear flow. Since $\overline{U}$ cannot exceed $\overline{U}_c$, the
+critical layer will instead propagate downward in response to the incident
+momentum flux. The horizontal momentum of the shear flow satisfies
 \begin{equation}
     \pd{}{t}\int\limits \overline{\rho}(z) \overline{U}(z, t)\;\mathrm{d}z
         - F_a(t) = 0.
 \end{equation}
 Assuming $\overline{U}(z > z_c) \approx \overline{U}_c$ and $\overline{U}(z <
-z_c) \approx 0$ are both approximately constant, this condition becomes
+z_c) \approx 0$, this condition becomes
 \begin{equation}
     -\overline{\rho}(z_c) \overline{U}_c\rd{z_c}{t} = F_a(t).\label{eq:zc_anal}
 \end{equation}
-If $F_a$ is constant in time, $z_c(t)$ has as analytical solution
+If $F_a$ is constant in time, the height of the critical layer $z_c(t)$ has
+analytical solution:
 \begin{equation}
     z_c(t) = -H\ln \s{\exp\p{-\frac{z_c(t = 0)}{H}} +
         \frac{tF_a}{\overline{U}_c H\overline{\rho}_0}},\label{eq:zc_sol}
@@ -508,7 +499,7 @@ below:
             \mathrm{Re} \equiv \frac{\omega}{\nu k_{z}^2}
                 = \frac{\omega}{\nu}\p{\frac{H}{2\pi}}^2.\label{eq:re_def}
         \end{equation}
-        We use $\mathrm{Re} \gg 1$ in our simulations\footenote{This condition
+        We use $\mathrm{Re} \gg 1$ in our simulations\footnote{This condition
         is always satisfied in stars. For example, in WDs, the dominant linear
         dissipation mechanism of g-modes is radiative damping, with damping rate
         ranging from $10^{-11}$--$10^-4$ of the mode frequency \citep{fullerI}.
@@ -1021,56 +1012,52 @@ reflecton at the critical layer cannot be captured by the linear theory.
 
 In this paper, we have performed numerical simulations of nonlinear breaking of
 IGWs in a stratified isothermal atmosphere. Such a setup represents the
-plane-parallel idealization of the outer envelope of massive stars, WDs, or
-planets. Our simulations use the spectral code Dedalus \citep{dedalus,dedalus2},
-and are carried out in 2D. We observe spontaneous formation of a critical layer
-that separates a synchronized upper layer of fluid and a lower layer of fluid
-with no mean horizontal flow. This critical layer then propagates downwards as a
-continuous train of IGW are incident on it (see Fig.~\ref{fig:snapshots} for
-snapshots from our fiducial simulation). Our primary conclusions regarding the
-evolution of the critical layer are as
-follows:
+plane-parallel idealization of the outer stellar envelope. Our simulations use
+the spectral code Dedalus \citep{dedalus,dedalus2}, and are carried out in 2D.
+We observe spontaneous formation of a critical layer that separates a
+``synchronized'' upper layer of fluid and a lower layer with no mean
+horizontal flow. This critical layer then propagates downwards as incident IGWs
+break and deposit horizontal momentum to the fluid (see Fig.~\ref{fig:snapshots}
+for snapshots from our fiducial simulation). Our primary conclusions regarding
+the evolution of the critical layer are as follows:
 \begin{enumerate}
     \item The width of the turbulent critical layer is determined by requiring
         the local Richardson number (Eq.~\eqref{eq:ri_def}) $\mathrm{Ri} \gtrsim
-        0.5$, as shown in Fig.~\ref{fig:nl_f_ri}.
+        0.5$ (see Fig.~\ref{fig:nl_f_ri}).
 
     \item The location of the critical layer $z_c(t)$ can be predicted by
-        careful measurement of the absorbed flux at the critical layer
-        (see Eq.~\eqref{eq:zc_anal}) as shown in Fig.~\ref{fig:nl_front}.
+        careful measurement of the absorbed horizontal momentum flux at the
+        critical layer (see Eq.~\eqref{eq:zc_anal} and
+        Fig.~\ref{fig:nl_front}).
 
-    \item Flux absorption at the critical layer is incomplete. The
-        critical layer only absorbs $\sim 70\%$ of the incident flux in most
-        simulations (see Fig.~\ref{fig:agg} for convergence at high
-        resolutions). The reflected flux is carried away from the critical layer
-        as both a lowest-order reflected wave and waves with larger $z$
-        wavenumbers.
+    \item The absorption of IGW momentum flux at the critical layer is
+        incomplete. The critical layer only absorbs $\sim 70\%$ of the incident
+        flux in most simulations (see Fig.~\ref{fig:agg}). The reflected flux is
+        carried away from the critical layer as both lowest-order reflected
+        waves and waves with larger $z$ wavenumbers.
 \end{enumerate}
-In the subsequent sections, we will discuss the validity of these results and
-their application to astrophysical systems.
 
 \subsection{Discussion}
 
 In this paper, we have studied the nonlinear behavior of IGWs with $\abs{k_x /
-k_z} \sim 1$ in a plane-parallel atmospheres. On the other hand, tidally
-excited IGWs in binary stars have horizontal wave number $k_\perp \sim 1/R$
-(where $R$ is the stellar radius) much smaller than the radial wave number
-$k_r$. Strictly speaking, our results may not directly apply to IGWs with
-$\abs{k_x/k_z}\ll 1$. However the qualitative behavior is likely to be similar,
-as the turbulence driving the critical layer dynamics occurs at scales
-significantly smaller than either $1/k_x$ or $1/\abs{k_z}$. Simulating IGWs with
-$k_x \ll k_z$ is more numerically challenging and we defer its exploration to
-future work.
+k_z} \sim 1$ in a plane-parallel geometry. Tidally excited IGWs in binary stars
+have horizontal wave number $k_\perp \sim 1/R$ (where $R$ is the stellar radius)
+much smaller than the radial wave number $k_r$. Strictly speaking, our results
+may not directly apply to IGWs with $\abs{k_x/k_z}\ll 1$. However, the
+qualitative behavior is likely to be similar, as the turbulence driving the
+critical layer dynamics occurs at scales significantly smaller than either
+$1/k_x$ or $1/\abs{k_z}$. Simulating IGWs with $k_x \ll \abs{k_z}$ is more
+challenging numerically and we defer its exploration to future work.
 
 It is interesting to compare our work with that of \citet{barker_ogilvie}, who
 studied inward-propagating IGWs in solar-type stars and their nonlinear breaking
-due to geometric focusing. In their numerical simulation in a 2D polar geometry,
-they find no evidence for reflected waves, contrary to our result. It is
-plausible the discrepancy arises due to the differing causes of wave breaking
-(geometric focusing vs.\ density rarefaction). Additionally, their nonlinearity
-parameter $\lambda \sim 1/\mathrm{Re}$ where $\mathrm{Re}$ is our Reynolds
-number (Eq.~\eqref{eq:re_def}). For $\lambda \sim 10^{-1}$ as explored in
-\citet{barker_ogilvie}, our results also predict no reflected wave.
+due to geometric focusing. In their numerical simulations in a 2D polar
+geometry, they found no evidence for reflected waves, contrary to our result. It
+is plausible that the discrepancy arises due to the differing causes of wave
+breaking (geometric focusing vs.\ density rarefaction). Note that their
+nonlinearity parameter $\lambda \sim 1/\mathrm{Re}$ where $\mathrm{Re}$ is the
+Reynolds number (Eq.~\eqref{eq:re_def}). For $\lambda \sim 10^{-1}$ as explored
+in \citet{barker_ogilvie}, our results also show no reflected wave.
 
 Regardless of the limitations inherent in our simulations (e.g.\ plane-parallel
 geometry), our results shed light on the physical mechanism of tidal heating in
@@ -1081,8 +1068,8 @@ used by \citet{tidal_novae}. We plan to study this issue in a future work.
 
 \section{Acknowledgements}\label{s:ack}
 
-This work has been supported in part by NASA FINESST grant
-19-ASTRO19-0041.%chktex 8
+This work has been supported in part by the NSF grant AST-17152. YS is supported
+by the NASA FINESST grant 19-ASTRO19-0041.%chktex 8
 
 \bibliographystyle{mnras}
 \bibliography{Su_IGW_break}
