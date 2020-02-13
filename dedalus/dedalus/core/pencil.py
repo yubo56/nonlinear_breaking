@@ -49,6 +49,7 @@ def build_pencils(domain):
 
 
 def build_matrices(pencils, problem, matrices):
+    return
     """Build pencil matrices."""
     # Build new cachid for NCC expansions
     cacheid = uuid.uuid4()
@@ -274,18 +275,18 @@ class Pencil:
                 for j in range(nvars):
                     # Build equation terms
                     Eij = Ei[eq_vars[j]]
-                    if Eij is 0:
+                    if Eij == 0:
                         Eij = None
-                    elif Eij is 1:
+                    elif Eij == 1:
                         Eij = Gi_eq
                     else:
                         Eij = Gi_eq*Eij
                     # Build BC terms
                     if differential:
                         Bij = Bi[bc_vars[j]]
-                        if Bij is 0:
+                        if Bij == 0:
                             Bij = None
-                        elif Bij is 1:
+                        elif Bij == 1:
                             Bij = Gi_bc
                         else:
                             Bij = Gi_bc*Bij

@@ -122,11 +122,12 @@ extensions = [
         libraries=libraries,
         library_dirs=library_dirs,
         extra_compile_args=["-Wno-error=declaration-after-statement"],
-        extra_link_args=["-Xlinker",
-                         "-Bsymbolic",
-                         "/home/yssu/fftw/lib/libfftw3.a",
-                         "/home/yssu/fftw/lib/libfftw3_omp.a",
-                         "/home/yssu/fftw/lib/libfftw3_mpi.a"]),
+        # extra_link_args=["-Xlinker",
+        #                  "-Bsymbolic",
+        #                  "/home/yssu/fftw/lib/libfftw3.a",
+        #                  "/home/yssu/fftw/lib/libfftw3_omp.a",
+        #                  "/home/yssu/fftw/lib/libfftw3_mpi.a"]
+    ),
     Extension(
         name='dedalus.core.transposes',
         sources=['dedalus/core/transposes.pyx'],

@@ -22,3 +22,6 @@ Next, need to go into `dedalus/setup.py` and fix the commented out section. Fina
 cd ~/research/nonlinear_breaking/dedalus/
 MPI_PATH=~/anaconda3 FFTW_PATH=~/fftw make
 ```
+
+- Note: if running on bare metal, `extra_link_args` in extensions in `setup.py`
+  should be commented out, can find fftw

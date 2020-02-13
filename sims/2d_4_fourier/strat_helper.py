@@ -472,7 +472,7 @@ def load(name, params, dyn_vars, stride, start=0):
     total_sim_times = []
     state_vars = defaultdict(list)
 
-    while os.path.exists(filename):
+    while os.path.exists(filename) and i < 10:
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
             sim_times = np.array(dat['scales']['sim_time'])
@@ -819,7 +819,7 @@ def plot(name, params, stride=STRIDE):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=2):
+def write_front(name, params, stride=10):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
