@@ -4,6 +4,8 @@
 import numpy as np
 import sys
 from strat_helper import *
+
+# comment out when venv not working
 from mpi4py import MPI
 CW = MPI.COMM_WORLD
 

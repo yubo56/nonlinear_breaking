@@ -9,21 +9,22 @@ logger = logging.getLogger()
 import os
 from collections import defaultdict
 
-import h5py
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
+PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
+# comment out when venv not working
+import h5py
 from dedalus import public as de
 from dedalus.tools import post
 from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
 from dedalus.extras.plot_tools import quad_mesh, pad_limits
 from mpi4py import MPI
 CW = MPI.COMM_WORLD
-PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
@@ -818,7 +819,7 @@ def plot(name, params, stride=STRIDE):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=1):
+def write_front(name, params, stride=2):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
@@ -827,7 +828,7 @@ def write_front(name, params, stride=1):
     xscale = 1 if params['N_X'] < N_X else params['N_X'] / N_X
     zscale = 1 if params['N_Z'] < N_Z else params['N_Z'] / N_Z
     u_c = OMEGA / KX
-    dyn_vars = ['uz', 'ux', 'U']
+    dyn_vars = ['uz', 'ux', 'U', 'W']
     snapshots_dir = SNAPSHOTS_DIR % name
     logfile = '%s/data.pkl' % snapshots_dir
 
@@ -848,8 +849,11 @@ def write_front(name, params, stride=1):
     width_med = []
     width_min = []
     width_max = []
-    S_top_ffts = []
-    S_bot_ffts = []
+    field_ri_med = []
+    field_ri_min = []
+    field_ri_max = []
+    # S_top_ffts = []
+    # S_bot_ffts = []
     Spx11 = []
 
     S_px = horiz_mean(state_vars['S'], N_X)
@@ -902,10 +906,10 @@ def write_front(name, params, stride=1):
             width_arr.append(dz)
 
             if top_idx <= bot_idx:
-                ri_arr.append(np.inf)
+                field_ri_arr.append(np.inf)
                 continue
             mean_w = np.mean(w_slice[bot_idx: top_idx])
-            ri_arr.append((g**2 / mean_w) * dz**2 / (0.7 * u_c)**2)
+            field_ri_arr.append((g**2 / mean_w) * dz**2 / (0.7 * u_c)**2)
         width_med.append(np.median(width_arr))
         width_min.append(np.min(width_arr))
         width_max.append(np.max(width_arr))
@@ -913,29 +917,29 @@ def write_front(name, params, stride=1):
         field_ri_min.append(np.min(field_ri_arr))
         field_ri_max.append(np.max(field_ri_arr))
 
-        window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
+        # window_width = 2 * Z_TOP_MULT * np.pi / abs(KZ)
 
-        z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
-        z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
-        area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
-        S_bot = state_vars['S'][t_idx, :, z_bot_l: z_bot_r]
-        S_bot_fft = np.abs(np.fft.rfft(S_bot / flux_th, axis=0) / N_X)
-        # by using only half of the fft, all non-DC bins are half as high as
-        # they should be
-        S_bot_fft[1: ] *= 2
-        # area_bot isn't really the area element, since this is (kx, z) space,
-        # but kx, x are both evenly distributed so it's ok
-        S_bot_ffts.append(np.sum(S_bot_fft * area_bot, axis=1) /
-                          np.sum(area_bot, axis=1))
+        # z_bot_l = get_idx(z0[front_idx] - 2 * window_width, z0)
+        # z_bot_r = get_idx(z0[front_idx] - 1 * window_width, z0)
+        # area_bot = np.outer(np.ones_like(z[:, 0]), dz[z_bot_l: z_bot_r])
+        # S_bot = state_vars['S'][t_idx, :, z_bot_l: z_bot_r]
+        # S_bot_fft = np.abs(np.fft.rfft(S_bot / flux_th, axis=0) / N_X)
+        # # by using only half of the fft, all non-DC bins are half as high as
+        # # they should be
+        # S_bot_fft[1: ] *= 2
+        # # area_bot isn't really the area element, since this is (kx, z) space,
+        # # but kx, x are both evenly distributed so it's ok
+        # S_bot_ffts.append(np.sum(S_bot_fft * area_bot, axis=1) /
+        #                   np.sum(area_bot, axis=1))
 
-        z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
-        z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
-        area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
-        S_top = state_vars['S'][t_idx, :, z_top_l: z_top_r]
-        S_top_fft = np.abs(np.fft.rfft(S_top / flux_th, axis=0) / N_X)
-        S_top_fft[1: ] *= 2
-        S_top_ffts.append(np.sum(S_top_fft * area_top, axis=1) /
-                          np.sum(area_top, axis=1))
+        # z_top_r = get_idx(z0[front_idx] + 2 * window_width, z0)
+        # z_top_l = get_idx(z0[front_idx] + 1 * window_width, z0)
+        # area_top = np.outer(np.ones_like(z[:, 0]), dz[z_top_l: z_top_r])
+        # S_top = state_vars['S'][t_idx, :, z_top_l: z_top_r]
+        # S_top_fft = np.abs(np.fft.rfft(S_top / flux_th, axis=0) / N_X)
+        # S_top_fft[1: ] *= 2
+        # S_top_ffts.append(np.sum(S_top_fft * area_top, axis=1) /
+        #                   np.sum(area_top, axis=1))
 
         Spx11.append(horiz_mean(rho0 * dux2 * duz2, N_X, axis=0))
 
@@ -946,7 +950,7 @@ def write_front(name, params, stride=1):
             np.array(width_med), np.array(width_min), np.array(width_max),
             np.array(amps), np.array(phis),
             np.array(amps_down), np.array(phis_down),
-            np.array(S_bot_ffts), np.array(S_top_ffts),
+            # np.array(S_bot_ffts), np.array(S_top_ffts),
             np.array(field_ri_med), np.array(field_ri_min),
             np.array(field_ri_max),
         ), data)
@@ -1006,10 +1010,10 @@ def plot_front(name, params):
         print('Loading data')
 
     with open(logfile, 'rb') as data:
+            # S_bot_ffts, S_top_ffts, \
         z0, sim_times, S_px, Spx11, u0, ri_med, ri_min, ri_max,\
             width_med, width_min, width_max,\
             amps, phis, amps_down, phis_down, \
-            S_bot_ffts, S_top_ffts, \
             field_ri_med, field_ri_min, field_ri_max = pickle.load(data)
         Spx11 = np.array(Spx11) / flux_th
 
@@ -1366,7 +1370,7 @@ def plot_front(name, params):
         # ri_max = N**2 * width_max**2 / (0.7 * u_c)**2
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
 
-        ax1.plot(t, field_ri_width[start_idx: ], 'k:', linewidth=LW * 0.3)
+        ax1.plot(t, field_ri_med[start_idx: ], 'k:', linewidth=LW * 0.3)
         ax1.plot(t, field_ri_min[start_idx: ], 'r:', linewidth=LW * 0.2)
 
         ax1.set_ylim([0, 0.6])
