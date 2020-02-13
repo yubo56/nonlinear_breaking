@@ -158,8 +158,8 @@ def subtract_lins(params, state_vars, sim_times, domain):
     global N_X, N_Z
     xstride = N_X // 256
     zstride = N_Z // 1024
-    xscale = 1 if xstride == 0 else 1 / xstride
-    zscale = 1 if zstride == 0 else 1 / zstride
+    xscale = 1 if xstride == 0 else xstride
+    zscale = 1 if zstride == 0 else zstride
     N_X = 256
     N_Z = 1024
 
@@ -463,6 +463,7 @@ def load(name, params, dyn_vars, stride, start=0):
     merge(name)
 
     solver, domain = get_solver(params)
+    zscale = 1 if zstride == 0 else zstride
     z = domain.grid(1, scales=1)
 
     i = 1
@@ -577,8 +578,8 @@ def plot(name, params, stride=STRIDE):
     sim_times, domain, state_vars = load(name, params, dyn_vars, stride,
         start=0)
 
-    x = domain.grid(0, scales=256 / params['N_X'])
-    z = domain.grid(1, scales=1024 / params['N_Z'])
+    x = domain.grid(0, scales=1)
+    z = domain.grid(1, scales=1)
     z0 = z[0]
     xmesh, zmesh = quad_mesh(x=x[:, 0], y=z0)
     x2mesh, z2mesh = quad_mesh(x=np.arange(N_X // 2), y=z0)
@@ -823,8 +824,8 @@ def write_front(name, params, stride=1):
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
     N_X = 256
     N_Z = 1024
-    xscale = 1 if params['N_X'] < N_X else N_X / params['N_X']
-    zscale = 1 if params['N_Z'] < N_Z else N_Z / params['N_Z']
+    xscale = 1 if params['N_X'] < N_X else params['N_X'] / N_X
+    zscale = 1 if params['N_Z'] < N_Z else params['N_Z'] / N_Z
     u_c = OMEGA / KX
     dyn_vars = ['uz', 'ux', 'U']
     snapshots_dir = SNAPSHOTS_DIR % name
@@ -837,7 +838,7 @@ def write_front(name, params, stride=1):
         name, params, dyn_vars, stride=stride, start=10)
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
-    dz = domain.grid_spacing(1, scales=zscale)[0]
+    dz = domain.grid_spacing(1, scales=1)[0]
     z0 = z[0]
     rho0 = RHO0 * np.exp(-z0 / H)
 
