@@ -192,7 +192,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
             get_anal_ux(params, sim_time, x, z, phi=offset)[pos_slice]
         resz = uz[pos_slice] - amp *\
             get_anal_uz(params, sim_time, x, z, phi=offset)[pos_slice]
-        return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2 * norm) * dxdz)
+        return np.sum((resx**2 * KX**2 + resz**2 * KZ**2) * norm * dxdz)
 
     def obj_func_all_time(p, ux, uz, params):
         ''' objective function for all-time minimization '''
@@ -201,7 +201,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
             get_anal_ux(params, t_t, x_t, z_t, phi=offset)[time_slice]
         resz = uz[time_slice] - amp *\
             get_anal_uz(params, t_t, x_t, z_t, phi=offset)[time_slice]
-        return np.sum((resx**2 * KZ**2 + resz**2 * KZ**2 * norm) * dxdz)
+        return np.sum((resx**2 * KX**2 + resz**2 * KZ**2) * norm * dxdz)
 
     def get_fits(fit_params, dux, duz):
         ''' for fit_params, fits dux, dux up to A, dphi at all times '''
@@ -472,7 +472,7 @@ def load(name, params, dyn_vars, stride, start=0):
     total_sim_times = []
     state_vars = defaultdict(list)
 
-    while os.path.exists(filename) and i < 10:
+    while os.path.exists(filename):
         print('Loading %s' % filename)
         with h5py.File(filename, mode='r') as dat:
             sim_times = np.array(dat['scales']['sim_time'])
