@@ -216,7 +216,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
             amp_est = 0
             off_est = 0
             # nearest-pixel search only for upwards
-            for offset in range(N_X):
+            for offset in range(len(x)):
                 curr = np.sum((
                     np.roll(dux[t_idx][pos_slice], -offset, axis=0)
                         * fit_anal_ux * KX**2 * norm +
@@ -239,7 +239,7 @@ def subtract_lins(params, state_vars, sim_times, domain):
             amp, dphi = fit.x
             amps.append(amp)
             dphis.append(dphi)
-            print('Got fits', amp, dphi)
+            print('Got fits', amp, dphi, t_idx, sim_time)
 
             duxs.append(
                 dux[t_idx] -
@@ -819,7 +819,7 @@ def plot(name, params, stride=STRIDE):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=10):
+def write_front(name, params, stride=1):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
