@@ -75,6 +75,7 @@ def get_front_idx(_S_px, t_idx, z0, flux_threshold):
 
 def horiz_mean(field, n_x, axis=1):
     ''' horizontal direction (axis = 1) is uniform spacing, just mean '''
+    n_x = np.shape(field)[axis]
     return np.sum(field, axis=axis) / n_x
 
 def smooth(f):
@@ -230,13 +231,14 @@ def subtract_lins(params, state_vars, sim_times, domain):
                     off_est = offset
 
             dphi_est = (off_est * KX * XMAX / N_X)
-            fit = minimize(obj_func,
-                           [amp_est, dphi_est],
-                           (dux[t_idx], duz[t_idx], sim_time, fit_params),
-                           bounds=[(0, 1.5),
-                                   (dphi_est - dphi_pixel,
-                                    dphi_est + dphi_pixel)])
-            amp, dphi = fit.x
+            # fit = minimize(obj_func,
+            #                [amp_est, dphi_est],
+            #                (dux[t_idx], duz[t_idx], sim_time, fit_params),
+            #                bounds=[(0, 1.5),
+            #                        (dphi_est - dphi_pixel,
+            #                         dphi_est + dphi_pixel)])
+            # amp, dphi = fit.x
+            amp, dphi = amp_est, dphi_est
             amps.append(amp)
             dphis.append(dphi)
             print('Got fits', amp, dphi, t_idx, sim_time)
