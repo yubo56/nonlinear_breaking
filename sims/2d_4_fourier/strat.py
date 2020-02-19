@@ -5,9 +5,12 @@ import numpy as np
 import sys
 from strat_helper import *
 
-# comment out when venv not working
-from mpi4py import MPI
-CW = MPI.COMM_WORLD
+# Not needed for plotting after pkl is generated
+try:
+    from mpi4py import MPI
+    CW = MPI.COMM_WORLD
+except ModuleNotFoundError:
+    print('Not loading mpi packages')
 
 H = 1
 XMAX = 4 * H

@@ -17,14 +17,17 @@ from scipy.interpolate import interp1d
 from scipy.optimize import minimize
 PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
 
-# comment out when venv not working
-import h5py
-from dedalus import public as de
-from dedalus.tools import post
-from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
-from dedalus.extras.plot_tools import quad_mesh, pad_limits
-from mpi4py import MPI
-CW = MPI.COMM_WORLD
+# Not needed for plotting after pkl is generated
+try:
+    import h5py
+    from dedalus import public as de
+    from dedalus.tools import post
+    from dedalus.extras.flow_tools import CFL, GlobalFlowProperty
+    from dedalus.extras.plot_tools import quad_mesh, pad_limits
+    from mpi4py import MPI
+    CW = MPI.COMM_WORLD
+except ModuleNotFoundError:
+    print('Not loading dedalus and h5 packages')
 
 SNAPSHOTS_DIR = 'snapshots_%s'
 FILENAME_EXPR = '{s}/{s}_s{idx}.h5'
@@ -516,7 +519,9 @@ def load(name, params, dyn_vars, stride, start=0):
         state_vars[key] = np.array(state_vars[key])
 
     state_vars['ux_z'] = np.gradient(state_vars['ux'], axis=2)
-
+    state_vars['U_z'] = np.gradient(state_vars['U'], axis=2)
+    state_vars['W_z'] = np.gradient(state_vars['W'], axis=2)
+    state_vars['W'] += params['g'] * params['H'] # oops wrong gauge choice
     state_vars['S'] = RHO0 * np.exp(-z/ H) * (
         (state_vars['ux'] * state_vars['uz']) +
         (NU * np.exp(state_vars['U']) * state_vars['ux_z']))
@@ -885,6 +890,8 @@ def write_front(name, params, stride=1):
         for x_idx in range(N_X):
             ux_slice = state_vars['ux'][t_idx, x_idx]
             w_slice = state_vars['W'][t_idx, x_idx]
+            Uz_slice = state_vars['U_z'][t_idx, x_idx]
+            Wz_slice = state_vars['W_z'][t_idx, x_idx]
             def interp_idx(f, idx, val):
                 df_grid = f[idx] - f[idx - 1]
                 dz_grid = z0[idx] - z0[idx - 1]
@@ -910,8 +917,9 @@ def write_front(name, params, stride=1):
             if top_idx <= bot_idx:
                 field_ri_arr.append(np.inf)
                 continue
-            mean_w = np.mean(w_slice[bot_idx: top_idx])
-            field_ri_arr.append((g**2 / mean_w) * dz**2 / (0.7 * u_c)**2)
+            dp_drho = w_slice + Wz_slice / (Uz_slice - 1 / params['H'])
+            mean_dpdrho = np.mean(dp_drho[bot_idx: top_idx])
+            field_ri_arr.append((g**2 / mean_dpdrho) * dz**2 / (0.7 * u_c)**2)
         width_med.append(np.median(width_arr))
         width_min.append(np.min(width_arr))
         width_max.append(np.max(width_arr))
@@ -1372,9 +1380,6 @@ def plot_front(name, params):
         # ri_max = N**2 * width_max**2 / (0.7 * u_c)**2
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
 
-        ax1.plot(t, field_ri_med[start_idx: ], 'k:', linewidth=LW * 0.3)
-        ax1.plot(t, field_ri_min[start_idx: ], 'r:', linewidth=LW * 0.2)
-
         ax1.set_ylim([0, 0.6])
         ax1.set_ylabel(r"Ri", fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
@@ -1382,6 +1387,21 @@ def plot_front(name, params):
         plt.legend(loc='lower right', fontsize=FONTSIZE - 2)
         plt.tight_layout()
         plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=DPI)
+        plt.close()
+
+        f, ax1 = plt.subplots(1, 1, sharex=True)
+        ax1.plot(t, field_ri_med[start_idx: ], 'k', linewidth=LW * 0.6,
+                 label=r'$\mathrm{med}\;\mathrm{Ri}_x$')
+        ax1.plot(t, field_ri_min[start_idx: ], 'r', linewidth=LW * 0.2,
+                 label=r'$\min \mathrm{Ri}_x$')
+
+        ax1.set_ylim([0, 0.6])
+        ax1.set_ylabel(r"Ri", fontsize=int(1.5 * FONTSIZE))
+        ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
+        avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
+        plt.legend(loc='lower right', fontsize=FONTSIZE - 2)
+        plt.tight_layout()
+        plt.savefig('%s/f_ri_field.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
     #########################################################################
