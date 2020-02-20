@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     elif '-write' in sys.argv:
         for name, params_dict in tasks:
-            write_front(name, params_dict)
+            write_front(name, params_dict, start=0)
 
     elif '-front' in sys.argv:
         out = []

@@ -512,7 +512,8 @@ def load(name, params, dyn_vars, stride, start=0):
             start = (((simlen - start - 1) // stride) + 1) * stride\
                 + start - simlen
         filename = FILENAME_EXPR.format(s=snapshots_dir, idx=i)
-    print('Loaded total %d times' % len(total_sim_times))
+    print('Loaded total %d times' % len(total_sim_times),
+          total_sim_times[0], total_sim_times[-1])
 
     # cast to np arrays
     for key in state_vars.keys():
@@ -826,7 +827,7 @@ def plot(name, params, stride=STRIDE):
             logger.info('Saved %s/%s' % (snapshots_dir, savefig))
             plt.close()
 
-def write_front(name, params, stride=1):
+def write_front(name, params, stride=1, start=10):
     ''' few plots for front, defined where flux drops below 1/2 of theory '''
     populate_globals(params)
     # HACK HACK coerce N_X, N_Z to be loadable on exo15c
@@ -843,7 +844,7 @@ def write_front(name, params, stride=1):
     flux_threshold = flux_th * 0.3
 
     sim_times, domain, state_vars = load(
-        name, params, dyn_vars, stride=stride, start=10)
+        name, params, dyn_vars, stride=stride, start=start)
     x = domain.grid(0, scales=1)
     z = domain.grid(1, scales=1)
     dz = domain.grid_spacing(1, scales=1)[0]
@@ -999,7 +1000,7 @@ def get_dS_front(params, S_px, sim_times, z0):
         S_aboves.append(S_above)
     return np.array(dSpx), np.array(front_pos), front_idxs, np.array(S_aboves)
 
-def plot_front(name, params):
+def plot_front(name, params, start_time=None):
     populate_globals(params)
     N = np.sqrt(g / H)
     u_c = OMEGA / KX
@@ -1028,7 +1029,10 @@ def plot_front(name, params):
         Spx11 = np.array(Spx11) / flux_th
 
     tf = sim_times[-1]
-    start_idx = get_idx(200, sim_times)
+    if start_time is not None:
+        start_idx = get_idx(start_time, sim_times)
+    else:
+        start_idx = 0
     t = sim_times[start_idx: ]
 
     S_px0 = amps**2 * flux_th
@@ -1097,6 +1101,8 @@ def plot_front(name, params):
         #          'k',
         #          label=r'$\phi_I$',
         #          linewidth=LW * 0.7)
+        ax1.set_xlim(left=0)
+        print(t[0], t[-1])
         plt.tight_layout()
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1232,6 +1238,7 @@ def plot_front(name, params):
                  linewidth=LW * 0.7)
         ax2.set_ylabel(r'$z_c$', fontsize=int(1.5 * FONTSIZE))
         ax2.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
+        ax2.set_xlim(left=0)
         ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
         ax2.legend(fontsize=FONTSIZE, loc='upper right')
         plt.tight_layout()
@@ -1255,6 +1262,7 @@ def plot_front(name, params):
                  label=r'$A_r(t)$',
                  linewidth=LW * 0.7)
         ax1.set_ylabel(r'$A$', fontsize=int(1.5 * FONTSIZE))
+        ax1.set_xlim(left=0)
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=FONTSIZE)
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
@@ -1307,6 +1315,7 @@ def plot_front(name, params):
                    loc='center left',
                    bbox_to_anchor=(0.5, lower_loc, 1, upper_loc - lower_loc),
                    ncol=2)
+        ax2.set_xlim(left=0)
         plt.tight_layout()
         f.subplots_adjust(left=0.2)
         plt.savefig('%s/f_amps2.png' % snapshots_dir, dpi=DPI)
@@ -1358,7 +1367,8 @@ def plot_front(name, params):
         ax1.legend(fontsize=FONTSIZE, loc='upper left')
         # ax1.set_ylabel(r'Reflectivity', fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
-        ax1.set_ylim(bottom=0)
+        ax1.set_xlim(left=0)
+        ax1.set_ylim(0, 0.68)
 
         plt.tight_layout()
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=DPI)

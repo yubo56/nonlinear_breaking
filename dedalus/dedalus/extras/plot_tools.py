@@ -132,6 +132,7 @@ def plot_bot(dset, image_axes, data_slices, image_scales=(0,0), clim=None, even_
         ticks=ticker.MaxNLocator(nbins=5))
     cbar.outline.set_visible(False)
     caxes.xaxis.set_ticks_position('top')
+    caxes.set_xticklabels(caxes.get_xticklabels(), fontsize=12)
 
     # Labels
     if title is None:
@@ -139,7 +140,7 @@ def plot_bot(dset, image_axes, data_slices, image_scales=(0,0), clim=None, even_
             title = dset.attrs['name']
         except KeyError:
             title = dset.name
-    caxes.set_xlabel(title, fontsize=14)
+    caxes.set_xlabel(title, fontsize=14, labelpad=10)
     caxes.xaxis.set_label_position('top')
     if isinstance(xscale, str):
         paxes.set_xlabel(xscale)
