@@ -33,7 +33,7 @@ Z_TOP = 9.5
 
 # save two versions of these indicies, one version to put in paper (times are
 # labeled)
-PLOT_IDXS = [231, 50, 86, 451]
+PLOT_IDXS = [40, 89, 134, 451]
 PLOT_PREFIXES = ['(i)', '(ii)', '(iii)', '(iv)']
 
 def main(filename, start, count, output, write_start):
@@ -112,7 +112,7 @@ def main(filename, start, count, output, write_start):
             try:
                 fig_idx = PLOT_IDXS.index(suffix_num)
                 annotation.remove()
-                print('Adding extra annotation')
+                print('Adding extra annotation', suffix_num)
                 overlay = '%s %s' % (PLOT_PREFIXES[fig_idx], time_str)
                 paxes0.text(0.1, 10.8, overlay, fontsize=14)
             except ValueError:

@@ -1043,7 +1043,9 @@ def plot_front(name, params, start_time=None):
     dSpx, front_pos, front_idxs, S_aboves =\
         get_dS_front(params, S_px, sim_times, z0)
 
-    times = get_times([1/15, 1/7, 3/10, 1], sim_times, start_idx)
+    times = get_times([9/100, 1/5, 3/10, 1], sim_times, start_idx)
+    times[0] + 1 # this fraction thing is killing me
+    print(times)
     fig = plt.figure()
     if 'lin' in name:
         #####################################################################
@@ -1068,6 +1070,9 @@ def plot_front(name, params, start_time=None):
 
         plt.xlabel(r'$z / H$', fontsize=int(1.5 * FONTSIZE))
         plt.ylabel(r'$F / F_{al}$', fontsize=int(1.5 * FONTSIZE))
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1102,7 +1107,10 @@ def plot_front(name, params, start_time=None):
         #          label=r'$\phi_I$',
         #          linewidth=LW * 0.7)
         ax1.set_xlim(left=0)
-        print(t[0], t[-1])
+        ax1.set_ylim(0.96, 1.025)
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1130,7 +1138,7 @@ def plot_front(name, params, start_time=None):
                      u0_avg / u_c,
                      '%s-' % color,
                      linewidth=LW * 0.5,
-                     label=r'$t=%.1f/N$' % sim_times[time])
+                     label=r'$t=%d/N$' % sim_times[time])
             # S_px sliced at time, just one for comparison
             # if time == times[len(times) // 2]:
             # #     ax2.plot(z0_cut,
@@ -1144,7 +1152,7 @@ def plot_front(name, params, start_time=None):
                      S_px_avg / flux_th,
                      '%s-' % color,
                      linewidth=LW * 0.5,
-                     label=r'$t=%.1f/N$' % sim_times[time])
+                     label=r'$t=%d/N$' % sim_times[time])
         # overlay analytical flux including viscous dissipation
         # # ax2.plot(z0_cut,
         # ax2.plot(z0,
@@ -1155,17 +1163,21 @@ def plot_front(name, params, start_time=None):
         ax1.set_xlim(z_b, ZMAX)
         ax2.set_xlim(z_b, ZMAX)
         ax1.set_ylim(-0.2, 1.45)
-        ax2.set_ylim(-0.2, 1.1)
-        ax2.legend(fontsize=FONTSIZE - 4)
+        ax2.set_ylim(-0.2, 1.2)
+        ax2.legend(fontsize=FONTSIZE - 5, loc='upper right')
 
-        ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$', fontsize=int(1.5 *
-                                                                        FONTSIZE))
+        ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$',
+                       fontsize=int(1.5 * FONTSIZE))
         ax2.set_ylabel(r'$F / F_{al}$', fontsize=int(1.5 * FONTSIZE))
         ax2.set_xlabel(r'$z / H$', fontsize=int(1.5 * FONTSIZE))
+        for ax in [ax1, ax2]:
+            ax.xaxis.set_ticks_position('both')
+            ax.yaxis.set_ticks_position('both')
         plt.tight_layout()
         f.subplots_adjust(hspace=0.05)
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
+        return
 
         #####################################################################
         # front.png
@@ -1219,28 +1231,31 @@ def plot_front(name, params, start_time=None):
         ax2.plot(t,
                  front_pos_intg_S,
                  'r-',
-                 label='Predictor (Eq. 23)',
+                 label='Model (Eq. 23)',
                  linewidth=LW * 0.7)
 
         # estimate front position using just average absorbed flux
-        mean_incident = -np.mean(dSpx)
-        est_incident_flux = np.mean(S_px0 *
-                                    np.exp(-k_damp * 2 * (front_pos - Z0)))
-        tau = H * RHO0 * u_c / mean_incident
-        pos_anal = -H * np.log(
-            (t - tf + tau * np.exp(-zf/H))
-            / tau)
-        ax2.plot(t,
-                 pos_anal,
-                 'g',
-                 label="Predictor (Eq. 24, $F_a = %.2fF_{al}$)" %
-                    (mean_incident / flux_th),
-                 linewidth=LW * 0.7)
+        # mean_incident = -np.mean(dSpx)
+        # est_incident_flux = np.mean(S_px0 *
+        #                             np.exp(-k_damp * 2 * (front_pos - Z0)))
+        # tau = H * RHO0 * u_c / mean_incident
+        # pos_anal = -H * np.log(
+        #     (t - tf + tau * np.exp(-zf/H))
+        #     / tau)
+        # ax2.plot(t,
+        #          pos_anal,
+        #          'g',
+        #          label="Model (Eq. 24, $F_a = %.2fF_{al}$)" %
+        #             (mean_incident / flux_th),
+        #          linewidth=LW * 0.7)
         ax2.set_ylabel(r'$z_c$', fontsize=int(1.5 * FONTSIZE))
         ax2.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
         ax2.set_xlim(left=0)
         ax2.set_ylim([zf, np.max(front_pos[start_idx: ])])
-        ax2.legend(fontsize=FONTSIZE, loc='upper right')
+        ax2.legend(fontsize=FONTSIZE - 2, loc='upper right')
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/front.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1265,6 +1280,10 @@ def plot_front(name, params, start_time=None):
         ax1.set_xlim(left=0)
         ax1.set_ylim(bottom=0)
         ax1.legend(loc=0, fontsize=FONTSIZE)
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
+        plt.tight_layout()
         plt.savefig('%s/f_amps.png' % snapshots_dir, dpi=DPI)
         plt.clf()
 
@@ -1316,6 +1335,9 @@ def plot_front(name, params, start_time=None):
                    bbox_to_anchor=(0.5, lower_loc, 1, upper_loc - lower_loc),
                    ncol=2)
         ax2.set_xlim(left=0)
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         f.subplots_adjust(left=0.2)
         plt.savefig('%s/f_amps2.png' % snapshots_dir, dpi=DPI)
@@ -1364,12 +1386,16 @@ def plot_front(name, params, start_time=None):
                  label='$\mathcal{R}_A^2$')
         ax1.plot(t_refl, trans, 'k', linewidth=LW * 0.7, label='$\hat{F}_s$')
 
-        ax1.legend(fontsize=FONTSIZE, loc='upper left')
+        ax1.legend(fontsize=FONTSIZE - 2, loc='upper left',
+                   bbox_to_anchor=(0.08, 1))
         # ax1.set_ylabel(r'Reflectivity', fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlim(left=0)
         ax1.set_ylim(0, 0.68)
 
+        axes = plt.gca()
+        axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/f_refl.png' % snapshots_dir, dpi=DPI)
         plt.close()
@@ -1382,25 +1408,28 @@ def plot_front(name, params, start_time=None):
 
         f, ax1 = plt.subplots(1, 1, sharex=True)
         ri_width = N**2 * width_med**2 / (0.7 * u_c)**2
-        ax1.plot(t, ri_width[start_idx: ], 'k', linewidth=LW * 0.6,
-                 label=r'$\mathrm{med}\;\mathrm{Ri}_x$')
+        ax1.plot(t, ri_width[start_idx: ], 'k', linewidth=LW * 0.2,
+                 label=r'$\mathrm{med}\;\mathrm{Ri}$')
         ri_min = N**2 * width_min**2 / (0.7 * u_c)**2
         ax1.plot(t, ri_min[start_idx: ], 'r', linewidth=LW * 0.2,
-                 label=r'$\min \mathrm{Ri}_x$')
+                 label=r'$\min \mathrm{Ri}$')
         # ri_max = N**2 * width_max**2 / (0.7 * u_c)**2
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
 
-        ax1.set_ylim([0, 0.6])
+        ax1.set_ylim([0, 1])
         ax1.set_ylabel(r"Ri", fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
         avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
-        plt.legend(loc='lower right', fontsize=FONTSIZE - 2)
+        plt.legend(loc='lower right', fontsize=FONTSIZE - 4, ncol=2)
+        axes = plt.gca()
+        # axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/f_ri.png' % snapshots_dir, dpi=DPI)
         plt.close()
 
         f, ax1 = plt.subplots(1, 1, sharex=True)
-        ax1.plot(t, field_ri_med[start_idx: ], 'k', linewidth=LW * 0.6,
+        ax1.plot(t, field_ri_med[start_idx: ], 'k', linewidth=LW * 0.2,
                  label=r'$\mathrm{med}\;\mathrm{Ri}_x$')
         ax1.plot(t, field_ri_min[start_idx: ], 'r', linewidth=LW * 0.2,
                  label=r'$\min \mathrm{Ri}_x$')
@@ -1409,7 +1438,10 @@ def plot_front(name, params, start_time=None):
         ax1.set_ylabel(r"Ri", fontsize=int(1.5 * FONTSIZE))
         ax1.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
         avg_ri = get_stats(ri_width[len(ri_width) // 2: ])
-        plt.legend(loc='lower right', fontsize=FONTSIZE - 2)
+        plt.legend(loc='lower right', fontsize=FONTSIZE - 4, ncol=2)
+        axes = plt.gca()
+        # axes.xaxis.set_ticks_position('both')
+        axes.yaxis.set_ticks_position('both')
         plt.tight_layout()
         plt.savefig('%s/f_ri_field.png' % snapshots_dir, dpi=DPI)
         plt.close()

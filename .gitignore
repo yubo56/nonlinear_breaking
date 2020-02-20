@@ -1,5 +1,5 @@
 snapshots*
-frames
+frames*
 *.h5
 *.mp4
 __pycache__

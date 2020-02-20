@@ -1,8 +1,3 @@
-% TODO
-% - Figure 1: Could you include a tick mark at t=0? Does the curve start at t=0?
-% Section 6.2 needs more narrative discussion of the results. We should add another paragraph saying that the typical Richardson number of the critical layer is between 0.25 and 0.5, characteristic of Kelvin-Helmholtz instabilities. This suggestions the critical layer width is self-consistently determined by the ``turbulence’’ in our simulations. The layer width does not change with resolution. We should also say that here we calculate Ri using the background buoyancy frequency, because the fluctuations do not change N^2 significantly; thus, Ri~0.5 can be used to solve for the critical layer width in a star, as we know N^2 and U_c (corresponding to the tidal frequency Omega).
-% Investigate a smarter time averaging for the "average over everything
-% predictor"?
     \documentclass[
         fleqn,
         usenatbib,
@@ -645,7 +640,7 @@ Table~\ref{tab:params}.
 
 A full video of our simulation with $N_x = 768$, $N_z = 3072$, $\mathrm{Re} =
 1024$ is available
-online\footnote{http://www.princeton.edu/~lecoanet/data/breaking\_wave.mov}. We
+online\footnote{http://www.princeton.edu/\~lecoanet/data/breaking\_wave.mov}. We
 take this to be our fiducial simulation for the remainder of this paper, though
 other simulations show qualitatively similar behavior.
 
@@ -746,19 +741,22 @@ necessary to exclude the small mean flow generated in the weakly nonlinear
 regime far below the
 critical layer. This procedure can be written:
 \begin{align}
-    z_{CL, \min}(x, t) &\equiv \min_z
+    z_{CL, \min}(x, t) &\equiv \min
         \z{z\mid u_x(x, z, t) > 0.3\overline{U}_c},\\
-    z_{CL, \max}(x, t) &\equiv \max_z
+    z_{CL, \max}(x, t) &\equiv \max
         \z{z\mid u_x(x, z, t) < \overline{U}_c},\\
     \mathrm{Ri}_x(x, t) &\equiv
         \p{\frac{N^2 \p{z_{CL, \max} - z_{CL, \min}}^2}{(0.7
             \overline{U}_c)^2}},\\
     \mathrm{Ri}(t) &\equiv \med_x\mathrm{Ri}\p{x, t}.\label{eq:ri_med_def}
 \end{align}
-To understand the variation in $\mathrm{Ri}$ over $x$, we also compute
-$\min\limits_x \mathrm{Ri}_x(x, t)$ (the maximum is very noisy). Both are shown
-in Fig.~\ref{fig:nl_f_ri}. The critical layer quickly narrows to its minimum
-width, driven by the anti-diffusivity of IGWs.
+We use the background buoyancy frequency to compute $\mathrm{Ri}$, as
+fluctuations do not change $N^2$ significantly ($\sim 1\%$). To understand the
+variation in $\mathrm{Ri}$ over $x$, we also compute $\min\limits_x
+\mathrm{Ri}_x(x, t)$ (the maximum is very noisy). Both are shown in
+Fig.~\ref{fig:nl_f_ri}. The Richardson number at the critical layer quickly
+decreases to a typical value between $0.25$ and $0.5$, characteristic of the
+onset of the KHI\@.
 \begin{figure}
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/nl_f_ri.png}
@@ -771,6 +769,13 @@ width, driven by the anti-diffusivity of IGWs.
     critical layer does not steepen past the onset of the
     KHI.}\label{fig:nl_f_ri}
 \end{figure}
+
+The steadiness of $\mathrm{Ri}$ at this characteristic value suggests that the
+critical layer width is self-consistently determined by the ``turbulence'' in
+our simulations. The width does not change significantly with resolution in our
+resolved simulations (see Fig.~\ref{fig:agg}). Thus, in stars, $\mathrm{Ri} \sim
+0.5$ can be used to calculate the critical layer width, where $N^2$ and
+$\overline{U}_c$ (corresponding to the tidal frequency) are known.
 
 \subsection{Flux Budget}\label{ss:flux_budget}
 
@@ -858,36 +863,29 @@ deposition occurs:
 Measuring $z_c$ in other ways does not significantly change the results of the
 analysis.
 
-In Fig.~\ref{fig:nl_front} we plot the numerically measured $z_c$ against two
-semi-analytic models: (i) integration of Eq.~\eqref{eq:zc_anal} using the
-measured $F_a(t)$, and (ii) substituting the time-averaged $\ev{F_a}_t$ (over
-the entire length of the simulation) into Eq.~\eqref{eq:zc_sol}. Since $z_c(t)$
-is less well-defined at early times (when the critical layer is thick and
-transient behavior is strong), we solve Eq.~\eqref{eq:zc_anal} by integrating
-backwards from the end of the simulation ($t = t_f$), using $z_c(t_f)$ as the
-initial condition. From Fig.~\ref{fig:nl_front}, we see that the agreement
-between the measured $z_c(t)$ and its estimate via $F_a(t)$ and
-Eq.~\eqref{eq:zc_anal} is excellent.
+In Fig.~\ref{fig:nl_front} we plot the numerically measured $z_c$ against
+numerical integration of Eq.~\eqref{eq:zc_anal} using the measured $F_a(t)$.
+Since the critical layer is still forming at early times, we solve
+Eq.~\eqref{eq:zc_anal} by integrating backwards from the end of the simulation
+($t = t_f$), using $z_c(t_f)$ as the initial condition. From
+Fig.~\ref{fig:nl_front}, we see that the agreement between the measured $z_c(t)$
+and its estimate via $F_a(t)$ is excellent.
 
 By time-averaging the numerically measured $F_a$, we find $\ev{F_a}_t \approx
-0.71F_{al}$, which is used for the second model in Fig.~\ref{fig:nl_front}.
-Note that $F_a < F_{al}$, so momentum flux absorption at the critical layer is
-incomplete. This is due to reflection of waves off the critical layer, which
-carry momentum downward.
+0.71F_{al}$. Note that $F_a < F_{al}$, so momentum flux absorption at the
+critical layer is incomplete. This is due to reflection of waves off the
+critical layer, which carry momentum downward.
 \begin{figure}
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/nl_front.png}
     \caption{Propagation of the critical layer over time. Shown are: (black)
-    $z_c(t)$ from simulation data, (green) model for $z_c(t)$ using direct
+    $z_c(t)$ from simulation data, and (red) model for $z_c(t)$ using direct
     integration of Eq.~\eqref{eq:zc_anal} for $F_a(t)$ measured from simulation
-    data (described in Eq.~\eqref{eq:fa_def}), and (blue) direct substitution of
-    time-averaged $\ev{F_a(t)}_t$ into Eq.~\eqref{eq:zc_sol}. The models use the
-    end of the simulation as initial conditions and integrate backwards, as
-    $z_c$ is less well-defined at early times. The agreement of the
-    directly-integrated model with the data shows Eq.~\eqref{eq:zc_anal} is a
-    good description of the evolution of $z_c$. The the poorer but qualitatively
-    correct agreement of the time-averaged model with the data shows both that
-    $F_a(t) < F_{al}$.}\label{fig:nl_front}
+    data (described in Eq.~\eqref{eq:fa_def}). The model uses the end of the
+    simulation as its initial condition and integrates backwards, as the
+    critical layer is still forming at earlier times. The agreement of the model
+    with the simulation shows Eq.~\eqref{eq:zc_anal} is a good description of
+    the evolution of $z_c$.}\label{fig:nl_front}
 \end{figure}
 
 \subsection{Non-absorption at Critical Layer}\label{ss:reflectivity}
