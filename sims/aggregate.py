@@ -57,6 +57,9 @@ if __name__ == '__main__':
                      [[w_med - w_min], [w_max - w_med]],
                      ecolor='k', linewidth=lwidth)
         offsets[re_inv] += offset_mult * 3
+    for ax in ax1, ax3:
+        ax.xaxis.set_ticks_position('both')
+        ax.yaxis.set_ticks_position('both')
     ax3.set_xlim([100, 2200])
     ax3.set_ylim([0, 1.5])
     ax3.set_yticks([0, 0.5, 1])
