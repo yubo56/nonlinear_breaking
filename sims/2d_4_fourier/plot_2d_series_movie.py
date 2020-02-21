@@ -66,7 +66,7 @@ def main(filename, start, count, output, write_start):
                 # Call 3D plotting helper, slicing in time
                 dset = f['tasks'][task]
                 if n==0: #ux
-                  clim = [-1.2, 1.2]
+                  clim = [-1.3, 1.3]
                   title = r'$u_x / \overline{U}_c$'
                   func = lambda xmesh, ymesh, data: (xmesh, ymesh, data / UX_C)
                 elif n==1: #U
