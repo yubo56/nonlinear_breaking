@@ -46,7 +46,7 @@ Breaking in Stellar Envelopes}
 \author[Y. Su et\ al.]{
 Yubo Su,$^1$,
 Daniel Lecoanet,$^{2,3}$
-Dong Lai$^{1,4}$
+Dong Lai$^{1,4, 5}$
 \\
 $^1$ Cornell Center for Astrophysics and Planetary Science, Department of
 Astronomy, Cornell University, Ithaca, NY 14853, USA
@@ -57,7 +57,11 @@ NJ 08544, USA
 $^3$ Department of Astrophysical Sciences, Princeton University, Princeton NJ
 08544, USA
 \\
-$^4$ Tsung-Dao Lee Institute, Shanghai Jiao Tong University, Shanghai, 200240, China
+$^4$ Tsung-Dao Lee Institute, Shanghai Jiao Tong University, Shanghai, 200240,
+China
+\\
+$^5$ Department of Astronomy and Miller Institute for Basic Research In Science,
+UC Berkeley, Berkeley, CA 94720, USA
 }
 
 \date{Accepted XXX\@. Received YYY\@; in original form ZZZ}
@@ -81,13 +85,13 @@ $^4$ Tsung-Dao Lee Institute, Shanghai Jiao Tong University, Shanghai, 200240, C
     generate a sharp critical layer, separating the lower stationary region
     (with no mean flow) and the upper ``synchronized'' region (with the mean
     flow velocity equal to the horizontal wave phase speed). While the critical
-    layer is steepened by these waves, it is simultaneously broadened by
-    Kelvin-Helmholtz instabilities such that, in steady state, the critical
-    layer width is determined by the Richardson criterion. We study the
+    layer is steepened by absorption of these waves, it is simultaneously
+    broadened by Kelvin-Helmholtz instabilities such that, in steady state, the
+    critical layer width is determined by the Richardson criterion. We study the
     absorption and reflection of incident waves off the critical layer and
-    provide analytical formulae describing its evolution. The result of this
-    study is important for characterizing the evolution of tidally heated white
-    dwarfs and other binary stars.
+    provide analytical formulae describing its long-term evolution. The result
+    of this study is important for characterizing the evolution of tidally
+    heated white dwarfs and other binary stars.
 \end{abstract}
 
 \begin{keywords}
@@ -143,8 +147,8 @@ efficiently radiated away and simply brightens the WD, while dissipation deep in
 the WD envelope causes an energy buildup that results in energetic flares
 \citep{tidal_novae}. An important goal of this paper is to elucidate the details
 of the nonlinear IGW breaking process; the result of this ``microphysics'' study
-will help determine the thermal evolution and and the observational
-manifestations of tidally heated binary WDs.
+will help determine the thermal evolution and the observational manifestations
+of tidally heated binary WDs.
 
 In this paper, we perform numerical simulations of IGW breaking in a
 plane-parallel stratified atmosphere (a simple model for a stellar envelope). We
@@ -642,7 +646,7 @@ Table~\ref{tab:params}.
 
 A full video of our simulation with $N_x = 768$, $N_z = 3072$, $\mathrm{Re} =
 1024$ is available
-online\footnote{http://www.princeton.edu/\~lecoanet/data/breaking\_wave.mov}. We
+online\footnote{\url{http://www.princeton.edu/\~lecoanet/data/breaking\_wave.mov}}. We
 take this to be our fiducial simulation for the remainder of this paper, though
 other simulations show qualitatively similar behavior.
 
@@ -1048,7 +1052,7 @@ In this paper, we have studied the nonlinear behavior of IGWs with $\abs{k_x /
 k_z} \sim 1 / (2\pi)$ in a plane-parallel geometry. Tidally excited IGWs in
 binary stars have horizontal wave number $k_\perp \sim 1/R$ (where $R$ is the
 stellar radius) much smaller than the radial wave number $k_r$. While our
-simulations do not have $\abs{k_x/k_z}\ll 1$, the qualitative behavior is likely
+simulations do not satisfy $\abs{k_x/k_z}\ll 1$, the qualitative behavior is likely
 to be similar, as the turbulence driving the critical layer dynamics occurs at
 scales significantly smaller than either $1/k_x$ or $1/\abs{k_z}$. Simulating
 IGWs with $k_x \ll \abs{k_z}$ is more challenging numerically and we defer its
