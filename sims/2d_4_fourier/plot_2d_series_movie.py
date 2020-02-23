@@ -10,7 +10,9 @@ Options:
 """
 
 # rm -f frames/*.png && python plot_2d_series_movie.py --output frames snapshots_yubo_nu1_vhres/*.h5
-# ffmpeg -framerate 12 -pattern_type glob -i 'yubo_*[0-9].png' test.mp4
+# ffmpeg -pix_fmt yuv420p -framerate 12 -pattern_type glob -i 'yubo_*[0-9].png' Re_1024_wavebreaking.mp4
+# NOTE: does not play on quicktime, need the -vf flag (e.g. see
+# mesasdk/bin/images_to_movie.sh)
 
 import h5py
 import numpy as np
