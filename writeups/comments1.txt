@@ -1,0 +1,56 @@
+Scientific Editor: Prof Andrew King
+
+
+Assistant Editor's Comments:
+As you are not paying for colour printing, you should ensure that all of your figures can be understood when printed in black & white, and avoid distinguishing features by colour alone in captions and legends.
+
+
+Reviewer's Comments:
+
+This is an interesting manuscript that reports original numerical calculations and analysis of the breaking of internal gravity waves in a model of a stably stratified atmosphere (or stellar radiative zone). The calculations are relevant to the process of spin-orbit synchronization of stars in close binaries by tidal dissipation. Upwardly propagating waves are generated in a forced layer and break above a certain height, producing a mean flow and a critical layer that moves slowly downwards as it continues to absorb waves. This process was foreseen by Goldreich & Nicholson (1989) and has analogues in geophysical fluid dynamics.
+
+The numerical simulations are idealized but appear to be well resolved and carefully analysed. While the authors essentially verify the Goldreich & Nicholson scenario, they find that a significant fraction of the incident wave flux is not absorbed by the critical layer but is reflected or scattered. They also argue that the width of the critical layer is controlled by the Kelvin-Helmholtz instability.
+
+The results are interesting and this is a process with important astrophysical consequences (although these are not explored in this manuscript). The manuscript could be improved in a number of respects but is suitable for publication after moderate revision. My recommendations are as follows:
+
+(page/column/line)
+
+1/1/25 I was confused initially as to whether the tide was in an early-type star, a white dwarf or both. "Binaries composed of early-type stars and white dwarfs" is potentially ambiguous. Maybe "either early-type stars or white dwarfs"?
+
+2/1/47 I'm concerned that the model is said to be incompressible (although of non-uniform density), yet extends over many density scaleheights. Normally in such a problem incompressibility would come from the use of the Boussinesq approximation, which is valid over less than one scaleheight. Can the equivalent equations be derived within the anelastic approximation for an isothermal atmosphere?
+
+2/1/49 baratropic -> barotropic
+
+2/1/51 "wave breaking is a 3D process" might be read as meaning that it can only occur in 3D, which is not the case.
+
+2/1/61 Actually it is confusing to describe the system as barotropic because this should eliminate buoyancy effects altogether. Presumably the atmosphere is to be thought of as isothermally stratified but does not undergo isothermal perturbations, so it is not barotropic.
+
+2/2/15 P = rho g z?
+
+2/2/37 The solution -> A relevant solution?
+
+2/2/57 Why the last term in the denominator of equation (9)? Isn't the phase velocity (omega/|k|) k/|k|?
+
+3/2/60 Why is it stated that U cannot exceed \bar U_c? In fact this does occur in Fig. 4.
+
+4/1/7 F_a appears not to be defined until later in the manuscript.
+
+4/1/37 "one further parameter"Ébut you go on to list several of them.
+
+4/2/36 Does it matter that the damping procedure does not conserve horizontal momentum?
+
+5/1/30 What does the subscript "al" stand for? (If "analytical" then I think this is not an obvious abbreviation.)
+
+5/1/40 I can't make sense of the sentence "The normalization in Eq. (28) is chosenÉevenly weighted throughout the integration region."
+
+Fig. 1 caption, last sentence: Obviously the timestep is not determined using the CFL condition in this case.
+
+5/2/42 "Re is as large as possible": but much smaller than the weakly forced simulation, so what determines the maximum of Re in a simulation? Is it numerical stability?
+
+6/1/13 "few differences"Éexcept for the crucial one that the critical layer has moved downwards.
+
+6/1/34 presents -> presence
+
+6/1/58 Absorbtion -> absorption
+
+A more general question: how much mixing occurs beyond the critical layer, and is there any significant rearrangement of the stratification by the breaking waves?
