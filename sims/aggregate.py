@@ -41,11 +41,11 @@ if __name__ == '__main__':
         ax1.errorbar(x, r_med,
                      [[r_med - r_min], [r_max - r_med]],
                      ecolor='k', linewidth=lwidth)
-        ax1.plot(x + 2 * offset_mult, T_med, 'ro', markersize=msize)
+        ax1.plot(x + 2 * offset_mult, T_med, 'r*', markersize=msize)
         ax1.errorbar(x + 2 * offset_mult, T_med,
                      [[T_med - T_min], [T_max - T_med]],
                      ecolor='r', linewidth=lwidth)
-        ax1.plot(x + offset_mult, rA_med**2, 'bo', markersize=msize)
+        ax1.plot(x + offset_mult, rA_med**2, 'bx', markersize=msize)
         ax1.errorbar(x + offset_mult, rA_med**2,
                      [[rA_med**2 - rA_min**2], [rA_max**2 - rA_med**2]],
                      ecolor='b', linewidth=lwidth)
@@ -65,12 +65,12 @@ if __name__ == '__main__':
     ax3.set_yticks([0, 0.5, 1])
     ax3.set_xticks([100, 1000])
 
-    ln1 = mlines.Line2D([], [], color='b', marker='o', markersize=msize,
-                        label=r'$\left<\mathcal{R}_A(t)^2\right>$')
     ln2 = mlines.Line2D([], [], color='k', marker='o', markersize=msize,
-                        label=r'$\left<\hat{F}_r\right>$')
+                        ls='', label=r'$\left<\hat{F}_r\right>$')
+    ln1 = mlines.Line2D([], [], color='b', marker='x', markersize=msize,
+                        ls='', label=r'$\left<\mathcal{R}_A(t)^2\right>$')
     ln3 = mlines.Line2D([], [], color='r', marker='*', markersize=msize,
-                        label=r'$\left<\hat{F}_s\right>$')
+                        ls='', label=r'$\left<\hat{F}_s\right>$')
     ax1.legend(handles=[ln1, ln2, ln3], fontsize=14, loc='upper left')
 
     ax3.set_xlabel('Re')

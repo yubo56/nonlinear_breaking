@@ -597,8 +597,9 @@ indeed $A_i \approx 1$ after the initial transient.
     After an initial transient phase, we observe $A_i(t)$ asymptotes to $\approx
     1$, implying continuous excitation of identical IGW with the expected
     amplitude. The small deviation of $A_i(t)$ from unity may be due to
-    timestepping errors, as a relatively large fixed step size $\Delta t =
-    0.1/N$ was used for this simulation.}\label{fig:lin_amps}
+    \textcolor{Corr}{truncation error in our implicit timestepping scheme}, as a
+    relatively large fixed step size $\Delta t = 0.1/N$ was used for this
+    simulation.}\label{fig:lin_amps}
 \end{figure}
 
 The analytical theory (Section~\ref{ss:lin_analysis}) also predicts that the
@@ -706,8 +707,10 @@ equilibrium.} The flow evolves through several distinct stages:
     \includegraphics[width=0.45\textwidth]{plots/yubo_000451_labeled.png}
     \caption{Snapshots of $u_x$ and $\Upsilon \equiv \ln \p{\rho / \bar{\rho}}$
     in the fiducial simulation illustrating distinct phases of the evolution of
-    the flow. Damping layers are shaded in light grey (see
-    Section~\ref{ss:damping}), while the forcing zone (see
+    the flow. \textcolor{Corr}{See the online PDF for a color version.} Damping
+    layers \textcolor{Corr}{at the top and bottom of the simulation domain} are
+    shaded in light grey (see Section~\ref{ss:damping}), while the forcing zone
+    \textcolor{Corr}{in the lower middle portion of the simulation domain} (see
     Section~\ref{ss:forcing}) is shaded in light green (boundaries are at $z_0
     \pm 3\sigma$). The four panels illustrate (i) the initial transient wave
     breaking phase, (ii) formation of a distinct critical layer, (iii)

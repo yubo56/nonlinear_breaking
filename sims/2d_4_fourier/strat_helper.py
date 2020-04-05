@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
-PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
+# PLT_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'];
+PLT_STYLES = ['k-', 'b--', 'r-.', 'g:'];
 
 # Not needed for plotting after pkl is generated
 try:
@@ -1055,10 +1056,12 @@ def plot_front(name, params, start_time=None):
         #####################################################################
         z_0_idx = get_idx(Z0, z0)
         z0_cut = z0[z_0_idx: ]
-        for time in times:
+        for idx, (time, style) in enumerate(zip(times, PLT_STYLES[::-1])):
             plt.plot(z0_cut,
                      S_px[time, z_0_idx: ] / flux_th,
-                     linewidth=LW * 0.7,
+                     style,
+                     linewidth=LW * 0.8,
+                     alpha=0.7,
                      label=r'$t=%.1f/N$' % sim_times[time])
         # plt.plot(z0_cut,
         #          np.exp(-k_damp * 2 * (z0_cut - Z0)),
@@ -1125,7 +1128,7 @@ def plot_front(name, params, start_time=None):
         f, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 8), sharex=True)
         # z0_cut = z0[z_b_idx: ]
 
-        for time, color in zip(times[::-1], PLT_COLORS):
+        for idx, (time, style) in enumerate(zip(times, PLT_STYLES[::-1])):
             u0_avg = np.mean(u0[time - AVG_IDX: time + AVG_IDX,
                                 # z_b_idx: ], axis=0)
                                 : ], axis=0)
@@ -1136,8 +1139,9 @@ def plot_front(name, params, start_time=None):
             # ax1.plot(z0_cut,
             ax1.plot(z0,
                      u0_avg / u_c,
-                     '%s-' % color,
-                     linewidth=LW * 0.5,
+                     style,
+                     alpha=0.7,
+                     linewidth=LW * 0.8,
                      label=r'$t=%d/N$' % sim_times[time])
             # S_px sliced at time, just one for comparison
             # if time == times[len(times) // 2]:
@@ -1150,8 +1154,9 @@ def plot_front(name, params, start_time=None):
             # ax2.plot(z0_cut,
             ax2.plot(z0,
                      S_px_avg / flux_th,
-                     '%s-' % color,
-                     linewidth=LW * 0.5,
+                     style,
+                     linewidth=LW * 0.8,
+                     alpha=0.7,
                      label=r'$t=%d/N$' % sim_times[time])
         # overlay analytical flux including viscous dissipation
         # # ax2.plot(z0_cut,
@@ -1177,7 +1182,6 @@ def plot_front(name, params, start_time=None):
         f.subplots_adjust(hspace=0.05)
         plt.savefig('%s/fluxes.png' % snapshots_dir, dpi=DPI)
         plt.close()
-        return
 
         #####################################################################
         # front.png
@@ -1225,14 +1229,16 @@ def plot_front(name, params, start_time=None):
         # from incident flux in data
         ax2.plot(t,
                  front_pos[start_idx: ],
-                 'k-',
+                 PLT_STYLES[0],
+                 alpha=0.7,
                  label='$z_c$ (from Simulation)',
-                 linewidth=LW * 0.7)
+                 linewidth=LW * 0.5)
         ax2.plot(t,
                  front_pos_intg_S,
-                 'r-',
+                 PLT_STYLES[1],
+                 alpha=0.7,
                  label='Model (Eq. 23)',
-                 linewidth=LW * 0.7)
+                 linewidth=LW * 0.8)
 
         # estimate front position using just average absorbed flux
         # mean_incident = -np.mean(dSpx)
@@ -1267,13 +1273,13 @@ def plot_front(name, params, start_time=None):
         #####################################################################
         f, ax1 = plt.subplots(1, 1, figsize=(6, 5))
         ax1.plot(t,
-                smooth(amps[start_idx::]),
-                'g',
-                label=r'$A_i(t)$',
-                linewidth=LW * 0.7)
+                 smooth(amps[start_idx::]),
+                 PLT_STYLES[0],
+                 label=r'$A_i(t)$',
+                 linewidth=LW * 0.7)
         ax1.plot(t,
                  smooth(amps_down[start_idx::]),
-                 'r',
+                 PLT_STYLES[1],
                  label=r'$A_r(t)$',
                  linewidth=LW * 0.7)
         ax1.set_ylabel(r'$A$', fontsize=int(1.5 * FONTSIZE))
@@ -1306,22 +1312,22 @@ def plot_front(name, params, start_time=None):
         S_refl = S_excited * flux_th + dSpx[start_idx: ] - S_aboves[start_idx: ]
         ax2.plot(t,
                  smooth(S_excited),
-                 'g',
+                 PLT_STYLES[0],
                  label=r'$F_i(t)$',
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  -smooth(dSpx[start_idx: ]) / flux_th,
-                 'b',
+                 PLT_STYLES[1],
                  label=r'$F_a(t)$',
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  smooth(S_refl) / flux_th,
-                 'r',
+                 PLT_STYLES[2],
                  label=r'$F_r(t)$',
                  linewidth=LW * 0.7)
         ax2.plot(t,
                  smooth(S_aboves[start_idx: ]) / flux_th,
-                 'k',
+                 PLT_STYLES[3],
                  label=r'$F_s(t)$',
                  linewidth=LW * 0.7)
         ax2.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
@@ -1380,11 +1386,11 @@ def plot_front(name, params, start_time=None):
         avg_reflA = get_stats(refl_amp[int(len(refl_amp) * 3 / 4): ])
         avg_trans = get_stats(trans[int(len(trans) * 3 / 4): ])
 
-        ax1.plot(t_refl, refl, 'r', linewidth=LW * 0.7,
+        ax1.plot(t_refl, refl, PLT_STYLES[0], linewidth=LW * 0.7,
                  label=r'$\hat{F}_r$')
-        ax1.plot(t_refl, refl_amp**2, 'g', linewidth=LW * 0.7,
+        ax1.plot(t_refl, refl_amp**2, PLT_STYLES[1], linewidth=LW * 0.7,
                  label='$\mathcal{R}_A^2$')
-        ax1.plot(t_refl, trans, 'k', linewidth=LW * 0.7, label='$\hat{F}_s$')
+        ax1.plot(t_refl, trans, PLT_STYLES[2], linewidth=LW * 0.7, label='$\hat{F}_s$')
 
         ax1.legend(fontsize=FONTSIZE - 2, loc='upper left',
                    bbox_to_anchor=(0.08, 1))
@@ -1408,10 +1414,10 @@ def plot_front(name, params, start_time=None):
 
         f, ax1 = plt.subplots(1, 1, sharex=True)
         ri_width = N**2 * width_med**2 / (0.7 * u_c)**2
-        ax1.plot(t, ri_width[start_idx: ], 'k', linewidth=LW * 0.2,
+        ax1.plot(t, ri_width[start_idx: ], 'k:', linewidth=LW * 0.2,
                  label=r'$\mathrm{med}\;\mathrm{Ri}$')
         ri_min = N**2 * width_min**2 / (0.7 * u_c)**2
-        ax1.plot(t, ri_min[start_idx: ], 'r', linewidth=LW * 0.2,
+        ax1.plot(t, ri_min[start_idx: ], 'r', linewidth=LW * 0.4,
                  label=r'$\min \mathrm{Ri}$')
         # ri_max = N**2 * width_max**2 / (0.7 * u_c)**2
         # ax1.plot(t, ri_max[start_idx: ], 'r:', linewidth=LW * 0.7, label='Max')
@@ -1429,9 +1435,9 @@ def plot_front(name, params, start_time=None):
         plt.close()
 
         f, ax1 = plt.subplots(1, 1, sharex=True)
-        ax1.plot(t, field_ri_med[start_idx: ], 'k', linewidth=LW * 0.2,
+        ax1.plot(t, field_ri_med[start_idx: ], 'k:', linewidth=LW * 0.2,
                  label=r'$\mathrm{med}\;\mathrm{Ri}_x$')
-        ax1.plot(t, field_ri_min[start_idx: ], 'r', linewidth=LW * 0.2,
+        ax1.plot(t, field_ri_min[start_idx: ], 'r-', linewidth=LW * 0.4,
                  label=r'$\min \mathrm{Ri}_x$')
 
         ax1.set_ylim([0, 0.6])
