@@ -189,25 +189,35 @@ summarize and conclude in Section~\ref{s:discussion}.
 
 \section{Problem Setup and Equations}\label{s:equations}
 
-We consider a stratified, incompressible, isothermal fluid representing a
-stellar envelope or atmosphere. We approximate the equation of state as
-\textcolor{Corr}{barotropic}, i.e.\ $P(\rho, T) = P(\rho)$. We study dynamics in
-2D, so that fluid variables depend only on the Cartesian coordinates $x$ and
-$z$. \textcolor{Corr}{While it is well known that waves break differently in two
-versus three dimensions} \citep{klostermeyer,winters1994}, the dynamical effect
-of the breaking process is likely to be similar in 2D \citep{barker_ogilvie}. We
-approximate the gravitational field as uniform, pointing in the $(-\uv{z})$
-direction. The plane-parallel approximation is justified since wave breaking
-generally occurs near the stellar surface. The background density stratification
-is given by
+We consider a incompressible, isothermally stratified fluid representing a
+stellar envelope or atmosphere. We study dynamics in 2D, so that fluid variables
+depend only on the Cartesian coordinates $x$ and $z$. \textcolor{Corr}{While it
+is well known that waves break differently in 2D versus 3D} \citep{klostermeyer,
+winters1994}, the dynamical effect of the breaking process is likely to be
+similar in 2D \citep{barker_ogilvie}. We approximate the gravitational field as
+uniform, pointing in the $(-\uv{z})$ direction. The plane-parallel approximation
+is justified since wave breaking generally occurs near the stellar surface. The
+background density stratification is given by
 \begin{equation}
     \overline{\rho} = \overline{\rho}_0 e^{-z/H},
 \end{equation}
 with $\overline{\rho}_0$ some reference density. We denote background quantities
 with overbars and perturbation quantities with primes.
 
-The Euler equations for an incompressible, barotropic fluid in a uniform
-gravitational field are
+The Euler equations for an incompressible fluid in a uniform gravitational field
+are\footnote{\textcolor{Corr}{These equations arise by enforcing fluid
+incompressibility ($\mdil{\rho}{t} = 0$ or the adiabatic index $\gamma \to
+\infty$) in the Euler equations. They also can be derived from the commonly used
+``sound-proof'' \emph{anelastic equations} \citep[see e.g.][]{ogura1962scale,
+sutherland1} in the limit where (i) the density stratification is weak ($H \gg
+L$ for perturbation wavelength $L$) and (ii) the fluid is incompressible (note
+the anelastic equations are defined for arbitrary $\gamma$). Under condition
+(i), the anelastic approximation reduces to the Boussinesq approximation
+\citep{klein2009asymptotics}. Our equations permit a weak but nonzero density
+stratification and can be interpreted as ``locally Boussinesq''. Condition (ii)
+is motivated by WD fluid properties and, more generally, simplicity, as the
+dynamical effect of wave breaking is likely to be similar for different sets of
+fluid equations.}}
 \begin{subequations}\label{se:nl_orig}
     \begin{align}
         \bm{\nabla} \cdot \bm{u} &= 0,\label{eq:nl_incomp}\\
@@ -219,10 +229,12 @@ gravitational field are
 where $\mdil{}{t} = \pdil{}{t}\,+\,\p{\bm{u} \cdot \bm{\nabla}}$ is the
 Lagrangian or material derivative, and $\bm{u}, \rho, P$ denote the velocity
 field, density and pressure respectively. The constant gravitational
-acceleration is $-g\uv{z}$. For this isothermal background, hydrostatic
-equilibrium implies \textcolor{Corr}{$\overline{P}(z) = \overline{\rho}(z) g
-H$}. We assume there is initially no background flow, so $\bm{u} = \bm{u}'$.
-Physically, this assumption corresponds to a non-rotating star.
+acceleration is $(-g\uv{z})$.
+
+For this isothermal background, hydrostatic equilibrium implies
+\textcolor{Corr}{$\overline{P}(z) = \overline{\rho}(z) g H$}. We assume there is
+initially no background flow, so $\bm{u} = \bm{u}'$. Physically, this assumption
+corresponds to a non-rotating star.
 
 For convenience, we introduce the dimensionless density variable $\Upsilon$ and
 the reduced pressure $\varpi$ \citep[e.g.][]{lecoanet_anel} via
@@ -248,7 +260,7 @@ Hydrostatic equilibrium corresponds to $\Upsilon = 0, \overline{\varpi} = gH$.
 \subsection{Linear Analysis}\label{ss:lin_analysis}
 
 In the small perturbation limit, we may linearize Eq.~\eqref{se:nl_upsilon}.
-\textcolor{Corr}{These equations admit the canonical IGW solution}, given by
+\textcolor{Corr}{The resulting equations admit the canonical IGW solution}
 \citep{drazin,sutherland0}
 \begin{equation}
     u_z'\p{x, z, t} = Ae^{z/2H}\cos\p{k_{x}x + k_{z}z - \omega t},
@@ -283,10 +295,10 @@ the following characteristics:
                 {\s{k_{x}^2 + k_{z}^2 + \p{2H}^{-2}}^{3/2}}.\label{eq:vg}
         \end{align}
         \textcolor{Corr}{The additional $\p{2H}^{-2}$ term in the denominator
-        accounts for the growing amplitude of the IGW in the $z$ direction (the
-        $z$ wavenumber is effectively $k_z - i / (2H)$).}
-        We note $\bm{c}_{p} \cdot \bm{c}_g = \mathcal{O}\s{\p{k_{z}H}^{-2}}
-        \approx 0$. In the Boussinesq approximation where terms of order
+        accounts for the growing amplitude of the IGW in the $z$ direction (as
+        the $z$ wavenumber is effectively $k_z - i / (2H)$).} We note
+        $\bm{c}_{p} \cdot \bm{c}_g = \mathcal{O}\s{\p{k_{z}H}^{-2}} \approx 0$.
+        In the Boussinesq approximation where terms of order
         $\mathcal{O}\p{H^{-2}}$ are ignored, the phase and group velocities are
         exactly orthogonal \citep{drazin,sutherland1}. We use the convention
         where upward propagating IGW have $c_{g, z} > 0$, $k_z < 0, k_x > 0$.
@@ -428,8 +440,8 @@ additional horizontal momentum of the shear flow}.
 \textcolor{Corr}{Additionally, as the mean flow $\overline{U}$ cannot grow
 efficiently above $\overline{U}_c$ (due to the breakdown of the linear
 solution), we assume $\overline{U}$ saturates at $\overline{U}_c$, which holds
-to good accuracy (see Fig.~\ref{fig:nl_fluxes}). Instead, the critical layer
-must propagate downward in response to the incident momentum flux.} The
+to good accuracy (see Fig.~\ref{fig:nl_fluxes}). In this case, the critical
+layer must propagate downward in response to the incident momentum flux.} The
 horizontal momentum of the shear flow satisfies
 \begin{equation}
     \pd{}{t}\int\limits \overline{\rho}(z) \overline{U}(z, t)\;\mathrm{d}z
@@ -477,11 +489,12 @@ turbulence generated by wave breaking is approximately isotropic, so we use $L_x
 The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
 explicitly. A third-order, four-stage DIRK-ERK scheme \citep{ascher} is used
-with adaptive timesteps computed from advective Courant-Friedrichs-Lewy (CFL)
-time. Specifically, we use $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z /
-u_{z})$, where the minimum is taken over every grid point in the domain, and
-$\Delta x \equiv L_x / N_x$ and $\Delta z \equiv L_z / N_z$ are the grid
-spacings in the $x$ and $z$ directions respectively.
+with adaptive timesteps computed from \textcolor{Corr}{the minimum of $0.1 / N$
+and the advective Courant-Friedrichs-Lewy (CFL) time. The CFL time is given by}
+$\Delta t = 0.7 \min(\Delta x / u_x,\Delta z / u_{z})$, where the minimum is
+taken over every grid point in the domain, and $\Delta x \equiv L_x / N_x$ and
+$\Delta z \equiv L_z / N_z$ are the grid spacings in the $x$ and $z$ directions
+respectively.
 
 We non-dimensionalize the problem such that $H = N = \rho_0 = 1$. The physics of
 the simulation is then fixed by the four remaining parameters $k_{x}$, $\omega$,
@@ -544,12 +557,13 @@ derivatives in Eq.~\eqref{se:nl_upsilon} with:
 where $z_B = 0.3H$ and $z_T = 9.5H$ are the boundaries of the lower and upper
 damping zones respectively. This damps perturbations below $z_B$ and
 above $z_T$ with damping time $\tau$ and negligibly affects the dynamics between
-$z_B$ and $z_T$. \textcolor{Corr}{Most importantly, horizontal momentum is still
-conserved between $z_B$ and $z_T$}. We choose the transition width $\Delta z =
-0.25H$ and damping time $\tau = 1 / (15N)$. This prescription is similar to
-\citet{lecoanet_damp} and has the advantage of being smooth, important for
-spectral methods. Further details of our implementation of the fluid equations
-in Dedalus are described in Appendix~\ref{se:strat_impl}.
+$z_B$ and $z_T$. \textcolor{Corr}{Most importantly, horizontal momentum remains
+conserved between $z_B$ and $z_T$, and outgoing boundary conditions are imposed
+at $z_B, z_T$}. We choose the transition width $\Delta z = 0.25H$ and damping
+time $\tau = 1 / (15N)$. This prescription is similar to \citet{lecoanet_damp}
+and has the advantage of being smooth, important for spectral methods. Further
+details of our implementation of the fluid equations in Dedalus are described in
+Appendix~\ref{se:strat_impl}.
 
 \section{Weakly Forced Numerical Simulation}\label{s:weak_sim}
 
@@ -563,20 +577,20 @@ $\nu$ corresponding to $\mathrm{Re} = 10^7$.
 
 We expect the waves to follow the analytical solution given by
 Eq.~\eqref{eq:uz_lin} and the corresponding $u_x(x, z, t)$; we denote this
-solution $\bm{u}_{al}(x, z, t)$. The amplitude of the observed IGW in the
-simulation field $\bm{u}$ relative to analytical solution $\bm{u}_{al}$ over
+analytical solution $\bm{u}_{an}(x, z, t)$. The amplitude of the observed IGW in the
+simulation field $\bm{u}$ relative to $\bm{u}_{an}$ over
 some region $z \in [z_b, z_t]$ can be estimated from
 \begin{equation}
     A_i(t) = \frac{\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \overline{\rho}\p{\bm{u} \cdot \bm{u}_{al}}\;\mathrm{d}x\mathrm{d}z}
+        \overline{\rho}\p{\bm{u} \cdot \bm{u}_{an}}\;\mathrm{d}x\mathrm{d}z}
         {\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \overline{\rho}\abs{\bm{u}_{al}}^2\;\mathrm{d}x\mathrm{d}z}.
+        \overline{\rho}\abs{\bm{u}_{an}}^2\;\mathrm{d}x\mathrm{d}z}.
         \label{eq:ahat_def}
 \end{equation}
-The subscript $i$ denotes the incident wave. If $\bm{u} = \bm{u}_{al}$, then
+The subscript $i$ denotes the incident wave. If $\bm{u} = \bm{u}_{an}$, then
 $A_i(t) = 1$. \textcolor{Corr}{The factor of $\bar{\rho}$ inside the integrands
 in Eq.~\eqref{eq:ahat_def} corrects for the $\propto e^{z/2H}$ growth of
-$\bm{u}_{al}$; without it, $A_i(t)$ would be dominated by the contribution near
+$\bm{u}_{an}$; without it, $A_i(t)$ would be dominated by the contribution near
 $z_t$.}
 
 For the weakly forced simulation, we expect
@@ -607,19 +621,19 @@ horizontal momentum flux $F(z, t)$ is independent of $z$ between the forcing
 zone where the wave is generated and the damping zone where it is dissipated.
 The expected horizontal momentum flux carried by the excited IGW in the linear
 theory can be computed by simply evaluating Eq.~\eqref{eq:F_def} for
-$\bm{u}_{al}$ and is a constant:
+$\bm{u}_{an}$ and is a constant:
 \begin{equation}
-    F_{al} \equiv \ev{\rho u_{al, x} u_{al, z}}_x.\label{eq:F_al}
+    F_{an} \equiv \ev{\rho u_{an, x} u_{an, z}}_x.\label{eq:F_al}
 \end{equation}
 Denoting the momentum flux measured in the simulation by $F(z, t)$
 (use Eq.~\eqref{eq:F_def} with velocities taken from the simulation), we expect
-$F(z, t) = F_{al}$ between $z_0$ and $z_T$. Fig.~\ref{fig:lin_fluxes} shows
+$F(z, t) = F_{an}$ between $z_0$ and $z_T$. Fig.~\ref{fig:lin_fluxes} shows
 agreement with this prediction.
 \begin{figure}
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/lin_fluxes.png}
-    \caption{$F/F_{al}$ plotted at select times $t$ (in units of
-    $N^{-1}$). As the initial transient dies out, $F / F_{al} \approx 1$ to a
+    \caption{$F/F_{an}$ plotted at select times $t$ (in units of
+    $N^{-1}$). As the initial transient dies out, $F / F_{an} \approx 1$ to a
     good approximation above the forcing zone $z > z_0 = 2H$ and below the
     damping zone $z \lesssim z_T = 9.5H$. The horizontal momentum flux excited
     in the forcing zone is transported without loss to the top of the domain,
@@ -689,12 +703,11 @@ equilibrium.} The flow evolves through several distinct stages:
         \textcolor{Corr}{critical layer has advanced downwards, but otherwise}
         the flow shows very few significant qualitative differences from the
         previous snapshot. This suggests that the latter phase of the simulation
-        has reached a steady state.
-
-        \textcolor{Corr}{Notably, the horizontal banded structure of $u_x$ in
-        the synchronized fluid is mostly unchanged (also visible in the top
-        panel of Fig.~\ref{fig:nl_fluxes}), suggesting that momentum
-        redistribution and mixing within the synchronized fluid are negligible.}
+        has reached a steady state. \textcolor{Corr}{Notably, the horizontal
+        banded structure of $u_x$ in the upper, synchronized fluid does not
+        continue to evolve (also visible in the top panel of
+        Fig.~\ref{fig:nl_fluxes}), suggesting that momentum redistribution and
+        mixing within the synchronized fluid are negligible.}
 \end{enumerate}
 
 \begin{figure*}
@@ -720,7 +733,7 @@ equilibrium.} The flow evolves through several distinct stages:
 
 In Fig.~\ref{fig:nl_fluxes}, we plot the mean horizontal flow velocity
 $\overline{U}$ (Eq.~\eqref{eq:mean_flow}) and the dimensionless momentum flux $F
-/ F_{al}$ (Eqs.~\eqref{eq:F_def} and~\eqref{eq:F_al}) as a function of $z$ at
+/ F_{an}$ (Eqs.~\eqref{eq:F_def} and~\eqref{eq:F_al}) as a function of $z$ at
 the times depicted in Fig.~\ref{fig:snapshots}. At each time, $\overline{U}$ is
 close to zero below the critical layer, but then sharply increases to
 $\overline{U}_c$ at the critical layer (i.e.\ the flow is ``spun-up''). Above
@@ -728,7 +741,7 @@ the critical layer, $\overline{U}$ varies slightly due to momentum transport
 within the spun-up layer. This agrees with the expectation discussed in
 Section~\ref{ss:crit_layer}.
 
-Similarly, $F \lesssim F_{al}$ below the critical layer, and then decreases to
+Similarly, $F \lesssim F_{an}$ below the critical layer, and then decreases to
 about zero above the critical layer. However, two notable deviations from the
 discussion in Section~\ref{ss:crit_layer} can be observed: (i) the incident flux
 on the critical layer fluctuates somewhat temporally, and (ii) there is a small
@@ -739,7 +752,7 @@ in subsequent sections.
     \includegraphics[width=0.9\columnwidth]{plots/nl_fluxes.png}
     \caption{The mean horizontal flow velocity $\overline{U}(z, t)$
     (Eq.~\eqref{eq:mean_flow}) and the dimensionless momentum flux $F(z, t) /
-    F_{al}$ (Eqs.~\eqref{eq:F_def} and~\eqref{eq:F_al}) in our fiducial
+    F_{an}$ (Eqs.~\eqref{eq:F_def} and~\eqref{eq:F_al}) in our fiducial
     simulation plotted at the same times as in Fig.~\ref{fig:snapshots}. The two
     distinct zones of mean flow are separated by a critical layer. The critical
     layer propagates toward lower $z$ due to momentum transport
@@ -795,11 +808,11 @@ $\overline{U}_c$ (corresponding to the tidal frequency) are known.
     \includegraphics[width=0.9\columnwidth]{plots/nl_f_ri.png}
     \caption{Local Richardson number (Eq.~\eqref{eq:ri_med_def}) of the flow at
     the critical layer over time (in units of $N^{-1}$) in our fiducial
-    simulation. The red and solid green lines denote respectively the minimum
-    and median of $\mathrm{Ri}_x(x, t)$. These numbers measure the mean and
-    spread in width of the critical layer over $x$. Note that $\mathrm{Ri} \sim
-    \frac{1}{4}$ corresponds to the KHI, so this plot suggests the shear at the
-    critical layer does not steepen past the onset of the
+    simulation. The solid red and dotted black lines denote respectively the
+    minimum and median of $\mathrm{Ri}_x(x, t)$. These numbers measure the mean
+    and spread in width of the critical layer over $x$. Note that $\mathrm{Ri}
+    \sim \frac{1}{4}$ corresponds to the KHI, so this plot suggests the shear at
+    the critical layer does not steepen past the onset of the
     KHI.}\label{fig:nl_f_ri}
 \end{figure}
 
@@ -826,7 +839,7 @@ After measuring $z_c$ (see Section~\ref{ss:cl_prop}) and $F(z)$
 (Eq.~\eqref{eq:F_def}) at each time step, we determine each of $F_i$, $F_a$,
 $F_r$, $F_s$ as follows:
 \begin{align}
-    F_i(t) &= F_{al}A_i^2(t),\\
+    F_i(t) &= F_{an}A_i^2(t),\\
     F_r(t) &= F_i(t) - \frac{1}{H}
         \int\limits_{z_c - \Delta z - H}^{z_c - \Delta z}F(z, t)\;\mathrm{d}z
         % \ev{F(z, t)}_{z \in [z_c - \Delta z - H, z_c - \Delta z]}
@@ -864,11 +877,10 @@ determining $F_a$.
     \caption{Momentum flux decomposition calculated from the simulation. Plotted
     are the four components of the horizontal momentum flux budget over time
     (see Eq.~\eqref{eq:f_budget}), in units of the analytical estimate for the
-    incident wave flux $F_{al}$ (Eq.~\eqref{eq:S_lin}): $F_i$, the flux incident
-    on the critical layer (green); $F_a$, the flux absorbed by the critical
-    layer (blue); $F_r$, the flux reflected at the critical layer (red); and
-    $F_s$, the flux inside the synchronized layer
-    (black).}\label{fig:nl_f_amps2}
+    incident wave flux $F_{an}$ (Eq.~\eqref{eq:S_lin}): $F_i$, the flux incident
+    on the critical layer; $F_a$, the flux absorbed by the critical layer;
+    $F_r$, the flux reflected at the critical layer; and $F_s$, the flux inside
+    the synchronized layer.}\label{fig:nl_f_amps2}
 \end{figure}
 
 \subsection{Critical Layer Propagation}\label{ss:cl_prop}
@@ -882,8 +894,8 @@ fluctuations in $z_c(t)$. To minimize these spurious fluctuations, we measure
 the location of the critical layer using a spatial average of where flux
 deposition occurs:
 \begin{align}
-    z_{c, \min}(t) &\equiv \min_z \z{z: F(z, t) > 0.3F_{al}},\\
-    z_{c, \max}(t) &\equiv \max_z \z{z: F(z, t) < 0.3F_{al}},\\
+    z_{c, \min}(t) &\equiv \min_z \z{z: F(z, t) > 0.3F_{an}},\\
+    z_{c, \max}(t) &\equiv \max_z \z{z: F(z, t) < 0.3F_{an}},\\
     z_c(t) &\equiv \frac{z_{c, \min}(t) + z_{c, \max}(t)}{2}.\label{eq:zc_def}
 \end{align}
 Measuring $z_c$ in other ways does not significantly change the results of the
@@ -898,14 +910,14 @@ Fig.~\ref{fig:nl_front}, we see that the agreement between the measured $z_c(t)$
 and its estimate via $F_a(t)$ is excellent.
 
 By time-averaging the numerically measured $F_a$, we find $\ev{F_a}_t \approx
-0.71F_{al}$. Note that $F_a < F_{al}$, so momentum flux absorption at the
+0.71F_{an}$. Note that $F_a < F_{an}$, so momentum flux absorption at the
 critical layer is incomplete. This is due to reflection of waves off the
 critical layer, which carry momentum downward.
 \begin{figure}
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/nl_front.png}
-    \caption{Propagation of the critical layer over time. Shown are: (black)
-    $z_c(t)$ from simulation data, and (red) model for $z_c(t)$ using direct
+    \caption{Propagation of the critical layer over time. Shown are: (solid black)
+    $z_c(t)$ from simulation data, and (dashed red) model for $z_c(t)$ using direct
     integration of Eq.~\eqref{eq:zc_anal} for $F_a(t)$ measured from simulation
     data (described in Eq.~\eqref{eq:fa_def}). The model uses the end of the
     simulation as its initial condition and integrates backwards, as the
@@ -930,10 +942,10 @@ To measure the reflected wave amplitude $A_r(t)$, we use an approach similar to
 the calculation of $A_i(t)$ (Eq.~\eqref{eq:ahat_def}):
 \begin{equation}
     A_r(t) = \max_{\delta x}\frac{\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \overline{\rho}\p{\bm{u} \cdot \at{\bm{u}_{al,
+        \overline{\rho}\p{\bm{u} \cdot \at{\bm{u}_{an,
         \bm{k}_r}}_{x = x + \delta x}}\;\mathrm{d}x\mathrm{d}z}
         {\int\limits_{z_b}^{z_t}\int\limits_0^{L_x}
-        \overline{\rho}\abs{\bm{u}_{al}}^2\;\mathrm{d}x\mathrm{d}z},
+        \overline{\rho}\abs{\bm{u}_{an}}^2\;\mathrm{d}x\mathrm{d}z},
         \label{eq:ar_def}
 \end{equation}
 where $z_b = z_0 + 3\sigma$ and $z_t = z_b + H$ as before. The primary
@@ -950,8 +962,9 @@ of the simulation.
 \begin{figure}
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/nl_f_amps.png}
-    \caption{The incident wave amplitude $A_i(t)$ (green) and the reflected wave
-    amplitude $A_r(t)$ (red) just above the forcing zone.}\label{fig:nl_f_amps}
+    \caption{The incident wave amplitude $A_i(t)$ (solid black) and the
+    reflected wave amplitude $A_r(t)$ (dashed red) just above the forcing
+    zone.}\label{fig:nl_f_amps}
 \end{figure}
 
 Since $A_i(t), A_r(t)$ vary somewhat over time, we perform time averaging over
@@ -981,7 +994,7 @@ higher order modes as well.
     \centering
     \includegraphics[width=0.9\columnwidth]{plots/nl_f_refl.png}
     \caption{$\mathcal{R}_A^2$, $\hat{F}_r$, and redistribution flux $\hat{F}_s$
-    (Eqs.~\eqref{eq:Ra_def}--\eqref{eq:srefl_def}) as a function of time (in
+    [Eqs.~(\ref{eq:Ra_def}--\ref{eq:srefl_def})] as a function of time (in
     units of $N^{-1}$). These quantities seem to become comparatively stable
     past about $t = 2500/N$, indicating that an asymptotic value may have been
     reached. That $\hat{F}_r \gtrsim \mathcal{R}_A^2$ implies a substantial
@@ -1000,8 +1013,8 @@ similar for our highest Reynolds numbers (1024 and 2048).
 
 For each simulation in Tab.~\ref{tab:params}, we compute the median values of
 $\mathcal{R}_A^2$, $\hat{F}_r$, $\hat{F}_s$, and $\mathrm{Ri}$
-(Eqs.~\eqref{eq:Ra_def}--\eqref{eq:srefl_def} and~\eqref{eq:ri_def}
-respectively) over the last $1/4$ of the simulation time, when these quantities
+[Eqs.~(\ref{eq:Ra_def}--\ref{eq:srefl_def}) and~\eqref{eq:ri_def}
+respectively] over the last $1/4$ of the simulation time, when these quantities
 have reached their asymptotic values. These results are shown in
 Fig.~\ref{fig:agg}.
 
@@ -1179,7 +1192,7 @@ factor, we recover Eq.~\eqref{eq:uz_lin} in the main text
     \end{cases}
 \end{equation}
 Note that in the main text, this approximate form is used to compute
-$\bm{u}_{al}$, as it is easier to work with and sufficiently accurate in the
+$\bm{u}_{an}$, as it is easier to work with and sufficiently accurate in the
 regions of interest (many $\sigma$ away from $z_0$).
 
 \section{Equation Implementation}\label{se:strat_impl}

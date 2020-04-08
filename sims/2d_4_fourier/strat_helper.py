@@ -1072,7 +1072,7 @@ def plot_front(name, params, start_time=None):
         plt.legend(fontsize=FONTSIZE)
 
         plt.xlabel(r'$z / H$', fontsize=int(1.5 * FONTSIZE))
-        plt.ylabel(r'$F / F_{al}$', fontsize=int(1.5 * FONTSIZE))
+        plt.ylabel(r'$F / F_{an}$', fontsize=int(1.5 * FONTSIZE))
         axes = plt.gca()
         axes.xaxis.set_ticks_position('both')
         axes.yaxis.set_ticks_position('both')
@@ -1173,7 +1173,7 @@ def plot_front(name, params, start_time=None):
 
         ax1.set_ylabel(r'$\overline{U} / \overline{U}_c$',
                        fontsize=int(1.5 * FONTSIZE))
-        ax2.set_ylabel(r'$F / F_{al}$', fontsize=int(1.5 * FONTSIZE))
+        ax2.set_ylabel(r'$F / F_{an}$', fontsize=int(1.5 * FONTSIZE))
         ax2.set_xlabel(r'$z / H$', fontsize=int(1.5 * FONTSIZE))
         for ax in [ax1, ax2]:
             ax.xaxis.set_ticks_position('both')
@@ -1235,7 +1235,7 @@ def plot_front(name, params, start_time=None):
                  linewidth=LW * 0.5)
         ax2.plot(t,
                  front_pos_intg_S,
-                 PLT_STYLES[1],
+                 'r--',
                  alpha=0.7,
                  label='Model (Eq. 23)',
                  linewidth=LW * 0.8)
@@ -1251,7 +1251,7 @@ def plot_front(name, params, start_time=None):
         # ax2.plot(t,
         #          pos_anal,
         #          'g',
-        #          label="Model (Eq. 24, $F_a = %.2fF_{al}$)" %
+        #          label="Model (Eq. 24, $F_a = %.2fF_{an}$)" %
         #             (mean_incident / flux_th),
         #          linewidth=LW * 0.7)
         ax2.set_ylabel(r'$z_c$', fontsize=int(1.5 * FONTSIZE))
@@ -1279,7 +1279,7 @@ def plot_front(name, params, start_time=None):
                  linewidth=LW * 0.7)
         ax1.plot(t,
                  smooth(amps_down[start_idx::]),
-                 PLT_STYLES[1],
+                 'r--',
                  label=r'$A_r(t)$',
                  linewidth=LW * 0.7)
         ax1.set_ylabel(r'$A$', fontsize=int(1.5 * FONTSIZE))
@@ -1331,7 +1331,7 @@ def plot_front(name, params, start_time=None):
                  label=r'$F_s(t)$',
                  linewidth=LW * 0.7)
         ax2.set_xlabel(r'$Nt$', fontsize=int(1.5 * FONTSIZE))
-        ax2.set_ylabel(r"$F / F_{al}$", fontsize=int(1.5 * FONTSIZE))
+        ax2.set_ylabel(r"$F / F_{an}$", fontsize=int(1.5 * FONTSIZE))
         # best loc in (0.5, F=-0.2), (1, F=0.4) in axis coordinates
         ylim = ax2.get_ylim()
         lower_loc = (-0.2 - ylim[0]) / (ylim[1] - ylim[0])
