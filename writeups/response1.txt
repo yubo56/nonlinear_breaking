@@ -2,61 +2,81 @@ We would like to thank the reviewer for their detailed consideration of our pape
 
 
 > 1/1/25 I was confused initially as to whether the tide was in an early-type star, a white dwarf or both. "Binaries composed of early-type stars and white dwarfs" is potentially ambiguous. Maybe "either early-type stars or white dwarfs"?
+
 Suggestion accepted.
 
 > 2/1/47 I'm concerned that the model is said to be incompressible (although of non-uniform density), yet extends over many density scaleheights. Normally in such a problem incompressibility would come from the use of the Boussinesq approximation, which is valid over less than one scaleheight. Can the equivalent equations be derived within the anelastic approximation for an isothermal atmosphere?
-This is indeed an important point that we discussed among ourselves extensively before beginning the simulation. Our equations are the gamma -> infinity limit of the fully compressible Euler equations. This was determined to be the simplest way to filter sound waves, and the conclusions of the paper are unlikely to change for different sets of equations, which are similar for scales smaller than one density scale height. We have added a derivation for our equations and further justification for their use in the new Appendix A.
+
+These equations are derived by taking the limit gamma -> infinity, which filters out sound waves. They differ from the anelastic equations, but have the same linear wave dispersion relation, and conserve the same wave energy in the ideal limit. Thus, the propagation of the waves to the critical layer is very similar to as in the anelastic approximation. We have included a derivation and discussion of our equations in a new Appendix A.
 
 > 2/1/49 baratropic -> barotropic
+
 Deleted, see comment below regarding whether the system is barotropic.
 
 > 2/1/51 "wave breaking is a 3D process" might be read as meaning that it can only occur in 3D, which is not the case.
+
 Reworded accordingly
 
 > 2/1/61 Actually it is confusing to describe the system as barotropic because this should eliminate buoyancy effects altogether. Presumably the atmosphere is to be thought of as isothermally stratified but does not undergo isothermal perturbations, so it is not barotropic.
+
 This comment is correct and the original text is confusing. We have removed references to the system being barotropic.
 
 > 2/2/15 P = rho g z?
+
 Direct integration of the hydrostatic balance condition dP/dz = -g\bar{rho}_0 e^(-z / H) produces the form in the text. We have added (z) to emphasize P(z) and rho(z) are not constants and must be integrated
 
 > 2/2/37 The solution -> A relevant solution?
+
 Reworded in spirit of suggestion
 
 > 2/2/57 Why the last term in the denominator of equation (9)? Isn't the phase velocity (omega/|k|) k/|k|?
+
 The reported phase velocity is taken from literature, and the additional (2H)^(-2) term comes from the exponential growth of the wave in the z direction. We have added clarification in the main text
 
 > 3/2/60 Why is it stated that U cannot exceed \bar U_c? In fact this does occur in Fig. 4.
+
 We have rephrased this sentence to be less strict and added a justification for clarity
 
 > 4/1/7 F_a appears not to be defined until later in the manuscript.
+
 F_a is now explicitly defined in the body manuscript.
 
 > 4/1/37 "one further parameter"Ébut you go on to list several of them.
+
 This sentence is removed
 
 > 4/2/36 Does it matter that the damping procedure does not conserve horizontal momentum?
+
 It is okay for the damping layers themselves to dissipate horizontal momentum so long as (i) they impose outgoing boundary conditions and (ii) all dynamics between the damping layers still conserve momentum. With these two conditions, the simulation emulates excitation and dissipation in an infinitely tall fluid that conserves horizontal momentum. A sentence clarifying this has been added.
 
 > 5/1/30 What does the subscript "al" stand for? (If "analytical" then I think this is not an obvious abbreviation.)
+
 Changed subscript to "an" and explicitly defined the abbreviation
 
 > 5/1/40 I can't make sense of the sentence "The normalization in Eq. (28) is chosenÉevenly weighted throughout the integration region."
+
 Replaced with a clearer explanation
 
 > Fig. 1 caption, last sentence: Obviously the timestep is not determined using the CFL condition in this case.
+
 Added a maximum time step size of 0.1 / N to the text.
 
 > 5/2/42 "Re is as large as possible": but much smaller than the weakly forced simulation, so what determines the maximum of Re in a simulation? Is it numerical stability?
+
 Clarified in the text: we require the simulations to be well-resolved and stable.
 
 > 6/1/13 "few differences"Éexcept for the crucial one that the critical layer has moved downwards.
+
 Added observation.
 
 > 6/1/34 presents -> presence
+
 Fixed.
 
 > 6/1/58 Absorbtion -> absorption
+
 Fixed.
 
 > A more general question: how much mixing occurs beyond the critical layer, and is there any significant rearrangement of the stratification by the breaking waves?
+
 These are great questions. (i) Mixing seems negligible, as evidenced by the sustained "bands"/inhomogeneities in the mean flow above the critical layer. (ii) the magnitude of the effect of wave breaking on the stratification can be understood by examining \Upsilon, roughly the fractional density perturbation. Since \Upsilon \lesssim 0.1 throughout the simulation, we conclude the stratification is mostly unaffected. Comments addressing both of these questions have been added to the paper in red text.
