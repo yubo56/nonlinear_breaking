@@ -1,11 +1,11 @@
-We would like to thank the reviewer for their detailed consideration of our paper. We reply to each of their comments below. Modifications to the manuscript are noted in red text. Otherwise, figures and captions have been updated to be compatible with black & white printing.
+We would like to thank the reviewer for their detailed consideration of our paper. We reply to each of their comments below. A new Appendix A has been added to clarify our choice of hydrodynamical equations. Other modifications to the manuscript are noted in red text. Figures and captions have been updated to be compatible with black & white printing.
 
 
 > 1/1/25 I was confused initially as to whether the tide was in an early-type star, a white dwarf or both. "Binaries composed of early-type stars and white dwarfs" is potentially ambiguous. Maybe "either early-type stars or white dwarfs"?
 Suggestion accepted.
 
 > 2/1/47 I'm concerned that the model is said to be incompressible (although of non-uniform density), yet extends over many density scaleheights. Normally in such a problem incompressibility would come from the use of the Boussinesq approximation, which is valid over less than one scaleheight. Can the equivalent equations be derived within the anelastic approximation for an isothermal atmosphere?
-This is a crucial point that we discussed among ourselves extensively before beginning the simulation. Our equations are intended as the simplest application of the Euler equations in a stratified fluid with infinite adiabatic index. They are equivalent to the anelastic equations when the stratification is weak compared to the length scales of interest. We have added this observation in a footnote. Ultimately, it seemed to us like the details of the wave breaking process would be qualitatively similar for the various choices of hydrodynamical equations, so we opted for the simplest (and likely most astrophysically relevant) one after much discussion.
+This is indeed an important point that we discussed among ourselves extensively before beginning the simulation. Our equations are the gamma -> infinity limit of the fully compressible Euler equations. This was determined to be the simplest way to filter sound waves, and the conclusions of the paper are unlikely to change for different sets of equations, which are similar for scales smaller than one density scale height. We have added a derivation for our equations and further justification for their use in the new Appendix A.
 
 > 2/1/49 baratropic -> barotropic
 Deleted, see comment below regarding whether the system is barotropic.

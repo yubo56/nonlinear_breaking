@@ -205,19 +205,19 @@ with $\overline{\rho}_0$ some reference density. We denote background quantities
 with overbars and perturbation quantities with primes.
 
 The Euler equations for an incompressible fluid in a uniform gravitational field
-are\footnote{\textcolor{Corr}{These equations arise by enforcing fluid
-incompressibility ($\mdil{\rho}{t} = 0$ or the adiabatic index $\gamma \to
-\infty$) in the Euler equations. They also can be derived from the commonly used
-``sound-proof'' \emph{anelastic equations} \citep[see e.g.][]{ogura1962scale,
-sutherland1} in the limit where (i) the density stratification is weak ($H \gg
-L$ for perturbation wavelength $L$) and (ii) the fluid is incompressible (note
-the anelastic equations are defined for arbitrary $\gamma$). Under condition
-(i), the anelastic approximation reduces to the Boussinesq approximation
-\citep{klein2009asymptotics}. Our equations permit a weak but nonzero density
-stratification and can be interpreted as ``locally Boussinesq''. Condition (ii)
-is motivated by WD fluid properties and, more generally, simplicity, as the
-dynamical effect of wave breaking is likely to be similar for different sets of
-fluid equations.}}
+are
+% \footnote{\textcolor{Corr}{These equations arise by enforcing fluid
+% incompressibility ($\mdil{\rho}{t} = 0$ or the adiabatic index $\gamma \to
+% \infty$) in the Euler equations. They also can be derived from the commonly used
+% ``sound-proof'' \emph{anelastic equations} \citep[see e.g.][]{ogura1962scale,
+% sutherland1} in the limit where (i) the density stratification is weak ($H \gg
+% L$ for perturbation wavelength $L$) and (ii) the fluid is incompressible (note
+% the anelastic equations are defined for arbitrary $\gamma$). Under condition
+% (i), the anelastic approximation reduces to the Boussinesq approximation
+% \citep{klein2009asymptotics}. Our equations permit a weak but nonzero density
+% stratification and can be interpreted as ``locally Boussinesq''. Condition (ii)
+% filters out sound waves. The dynamical effect of wave breaking is likely to be
+% similar for different sets of fluid equations.}}
 \begin{subequations}\label{se:nl_orig}
     \begin{align}
         \bm{\nabla} \cdot \bm{u} &= 0,\label{eq:nl_incomp}\\
@@ -229,7 +229,11 @@ fluid equations.}}
 where $\mdil{}{t} = \pdil{}{t}\,+\,\p{\bm{u} \cdot \bm{\nabla}}$ is the
 Lagrangian or material derivative, and $\bm{u}, \rho, P$ denote the velocity
 field, density and pressure respectively. The constant gravitational
-acceleration is $(-g\uv{z})$.
+acceleration is $(-g\uv{z})$. \textcolor{Corr}{Note that these equations
+conserve the same wave energy as the commonly used anelastic equations
+\citep{ogura1962scale,anel_part1} and thus give the same wave amplitude
+growth. Appendix~\ref{s:equation_deriv} provides a derivation of these
+equations and justification for using them.}
 
 For this isothermal background, hydrostatic equilibrium implies
 \textcolor{Corr}{$\overline{P}(z) = \overline{\rho}(z) g H$}. We assume there is
@@ -1123,6 +1127,75 @@ Division at Ames Research Center on Pleiades with allocation GID s1647.
 \clearpage
 \onecolumn
 \appendix
+
+\section{Derivation of Fluid Equations}\label{s:equation_deriv}
+
+We aim to model wave dynamics over multiple density and pressure scaleheights.
+Start with the compressible Euler equations.
+\begin{align}
+    \partial_t \rho + \p{\bm{u}\cdot\bm{\nabla}} \rho
+            + \rho \bm{\nabla}\cdot\bm{u} =\, &0, \\
+    \partial_t s + \p{\bm{u}\cdot\bm{\nabla}} s =\, &0, \\
+    \partial_t \bm{u} + \p{\bm{u}\cdot\bm{\nabla}}\bm{u} +
+        \frac{1}{\rho}\bm{\nabla} p =& \, \bm{g},
+\end{align}
+where $s$ is the entropy. The pressure is calculated from the entropy and
+density using the equation of state
+\begin{equation}
+    \frac{s}{c_p} = \log \frac{p^{1/\gamma}}{\rho},
+\end{equation}
+where $c_p$ is the specific heat at constant pressure, and $\gamma$ is the ratio
+of specific heats. For computational ease, it is convenient to filter the fast
+sound waves from these equations. One approach is to assume pressure
+perturbations are small \citep[yielding the ``pseudo-incompressible''
+equations,][]{anel_part2}, or that all thermodynamic perturbations are small
+\citep[yielding the ``anelastic'' equations,][]{anel_part1}. In these
+approximations, one of the thermodynamic equations is replaced by a constraint
+equation: $\bm{\nabla}\cdot \p{p_0^{1/\gamma} \bm{u}}=0$ for
+pseudo-incompressible; $\bm{\nabla}\cdot\p{\rho_0 \bm{u}} =0$ for anelastic.
+Here $p_0$ and $\rho_0$ are the background density and pressure profiles. The
+pressure in the momentum equation can be interpreted as a Lagrange multiplier
+which enforces the constraint \citep{anel_part2}. Upon linearization, both
+approximations conserve a wave energy
+\begin{equation}
+    E_w = \frac{1}{2}\rho_0 \abs{\bm{u}}^2
+            + \frac{1}{2}\frac{g^2}{N^2} \frac{(\rho')^2}{\rho_0}
+        = \frac{1}{2}\rho_0 \abs{\bm{u}}^2
+            + \frac{1}{2}\rho_0 N^2 \frac{(s')^2}{\abs{\bm{\nabla} s_0}^2},
+            \label{eq:ewave}
+\end{equation}
+where $\rho'$ and $s'$ represent the density and entropy perturbations.
+
+Rather than assume thermodynamic perturbations are small, we instead filter
+sound waves by taking the limit $\gamma\rightarrow \infty$. Then the entropy and
+log density are proportional to each other, and the entropy equation becomes
+\begin{equation}
+    \partial_t \log \rho + \p{\bm{u}\cdot \bm{\nabla}} \log \rho = 0.
+\end{equation}
+Together with mass conservation, this implies
+\begin{equation}
+    \bm{\nabla} \cdot \bm{u} = 0.
+\end{equation}
+We solve these equations together with the normal momentum equation.
+
+Although these equations are non-standard, they have various desirable
+properties. They conserve mass and momentum, and the linearized equations
+conserve the wave energy $E_w$ [Eq.~\eqref{eq:ewave} above] similar to the
+pseudo-incompressible equations and anelastic equations. Our equations also
+satisfy the same linear dispersion relation as the fully compressible equations
+in the limit of large sound speed \citep[this is also true for the anelastic
+equations, but not pseudo-incompressible,][]{anel_part1, anel_part2}. Thus, the
+vertical propagation of internal gravity waves is similar to the
+pseudo-incompressible equations and anelastic equations.
+
+In this work we are interested in waves which reach large amplitudes and break.
+For breaking waves, \citet{achatz_igw_pi} suggests that the anelastic equations
+may miss important effects. Although the pseudo-incompressible equations may
+capture wave-breaking more accurately, they are more complicated, and do not
+satisfy the correct dispersion relation to order $(k_z H)^{-2}$
+\citep{anel_part2}. In the absence of a clear choice to study this wave breaking
+problem, we have elected to use these simple equations derived in the
+$\gamma\rightarrow\infty$ limit.
 
 \section{Forcing Solution}\label{s:force_solved}
 
