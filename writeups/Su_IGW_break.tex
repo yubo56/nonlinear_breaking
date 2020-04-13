@@ -1145,8 +1145,8 @@ density using the equation of state
     \frac{s}{c_p} = \log \frac{p^{1/\gamma}}{\rho},
 \end{equation}
 where $c_p$ is the specific heat at constant pressure, and $\gamma$ is the ratio
-of specific heats. For computational ease, it is convenient to filter the fast
-sound waves from these equations. One approach is to assume pressure
+of specific heats. For computational ease, it is convenient to filter out the
+fast sound waves from these equations. One approach is to assume pressure
 perturbations are small \citep[yielding the ``pseudo-incompressible''
 equations,][]{anel_part2}, or that all thermodynamic perturbations are small
 \citep[yielding the ``anelastic'' equations,][]{anel_part1}. In these
@@ -1166,7 +1166,7 @@ approximations conserve a wave energy
 \end{equation}
 where $\rho'$ and $s'$ represent the density and entropy perturbations.
 
-Rather than assume thermodynamic perturbations are small, we instead filter
+Rather than assume thermodynamic perturbations are small, we instead filter out
 sound waves by taking the limit $\gamma\rightarrow \infty$. Then the entropy and
 log density are proportional to each other, and the entropy equation becomes
 \begin{equation}
