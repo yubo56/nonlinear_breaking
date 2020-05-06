@@ -69,7 +69,8 @@ $^5$ Department of Astronomy and Miller Institute for Basic Research In Science,
 UC Berkeley, Berkeley, CA 94720, USA
 }
 
-\date{Accepted XXX\@. Received YYY\@; in original form ZZZ}
+\date{Accepted 2020 May 06. Received 2020 April 13; in original form 2020
+February 26}
 
 \pubyear{2020}
 
@@ -81,8 +82,8 @@ UC Berkeley, Berkeley, CA 94720, USA
 % cp ../sims/2d_4_fourier/frames2/*labeled.png plots
 
 \begin{abstract}
-    In binaries composed of \textcolor{Corr}{either early-type stars or white
-    dwarfs}, the dominant tidal process involves the excitation of internal
+    In binaries composed of either early-type stars or white
+    dwarfs, the dominant tidal process involves the excitation of internal
     gravity waves (IGWs), which propagate towards the stellar surface, and their
     dissipation via nonlinear wave breaking. We perform 2D hydrodynamical
     simulations of this wave breaking process in a stratified, isothermal
@@ -191,8 +192,8 @@ summarize and conclude in Section~\ref{s:discussion}.
 
 We consider a incompressible, isothermally stratified fluid representing a
 stellar envelope or atmosphere. We study dynamics in 2D, so that fluid variables
-depend only on the Cartesian coordinates $x$ and $z$. \textcolor{Corr}{While it
-is well known that waves break differently in 2D versus 3D} \citep{klostermeyer,
+depend only on the Cartesian coordinates $x$ and $z$. While it
+is well known that waves break differently in 2D versus 3D \citep{klostermeyer,
 winters1994}, the dynamical effect of the breaking process is likely to be
 similar in 2D \citep{barker_ogilvie}. We approximate the gravitational field as
 uniform, pointing in the $(-\uv{z})$ direction. The plane-parallel approximation
@@ -206,7 +207,7 @@ with overbars and perturbation quantities with primes.
 
 The Euler equations for an incompressible fluid in a uniform gravitational field
 are
-% \footnote{\textcolor{Corr}{These equations arise by enforcing fluid
+% \footnote{These equations arise by enforcing fluid
 % incompressibility ($\mdil{\rho}{t} = 0$ or the adiabatic index $\gamma \to
 % \infty$) in the Euler equations. They also can be derived from the commonly used
 % ``sound-proof'' \emph{anelastic equations} \citep[see e.g.][]{ogura1962scale,
@@ -217,7 +218,7 @@ are
 % \citep{klein2009asymptotics}. Our equations permit a weak but nonzero density
 % stratification and can be interpreted as ``locally Boussinesq''. Condition (ii)
 % filters out sound waves. The dynamical effect of wave breaking is likely to be
-% similar for different sets of fluid equations.}}
+% similar for different sets of fluid equations.}
 \begin{subequations}\label{se:nl_orig}
     \begin{align}
         \bm{\nabla} \cdot \bm{u} &= 0,\label{eq:nl_incomp}\\
@@ -229,14 +230,14 @@ are
 where $\mdil{}{t} = \pdil{}{t}\,+\,\p{\bm{u} \cdot \bm{\nabla}}$ is the
 Lagrangian or material derivative, and $\bm{u}, \rho, P$ denote the velocity
 field, density and pressure respectively. The constant gravitational
-acceleration is $(-g\uv{z})$. \textcolor{Corr}{Note that these equations
+acceleration is $(-g\uv{z})$. Note that these equations
 conserve the same wave energy as the commonly used anelastic equations
 \citep{ogura1962scale,anel_part1} and thus give the same wave amplitude
 growth. Appendix~\ref{s:equation_deriv} provides a derivation of these
-equations and justification for using them.}
+equations and justification for using them.
 
 For this isothermal background, hydrostatic equilibrium implies
-\textcolor{Corr}{$\overline{P}(z) = \overline{\rho}(z) g H$}. We assume there is
+$\overline{P}(z) = \overline{\rho}(z) g H$. We assume there is
 initially no background flow, so $\bm{u} = \bm{u}'$. Physically, this assumption
 corresponds to a non-rotating star.
 
@@ -264,7 +265,7 @@ Hydrostatic equilibrium corresponds to $\Upsilon = 0, \overline{\varpi} = gH$.
 \subsection{Linear Analysis}\label{ss:lin_analysis}
 
 In the small perturbation limit, we may linearize Eq.~\eqref{se:nl_upsilon}.
-\textcolor{Corr}{The resulting equations admit the canonical IGW solution}
+The resulting equations admit the canonical IGW solution
 \citep{drazin,sutherland0}
 \begin{equation}
     u_z'\p{x, z, t} = Ae^{z/2H}\cos\p{k_{x}x + k_{z}z - \omega t},
@@ -298,9 +299,9 @@ the following characteristics:
                 - \p{k_{x}k_{z}\uv{z}}}
                 {\s{k_{x}^2 + k_{z}^2 + \p{2H}^{-2}}^{3/2}}.\label{eq:vg}
         \end{align}
-        \textcolor{Corr}{The additional $\p{2H}^{-2}$ term in the denominator
+        The additional $\p{2H}^{-2}$ term in the denominator
         accounts for the growing amplitude of the IGW in the $z$ direction (as
-        the $z$ wavenumber is effectively $k_z - i / (2H)$).} We note
+        the $z$ wavenumber is effectively $k_z - i / (2H)$). We note
         $\bm{c}_{p} \cdot \bm{c}_g = \mathcal{O}\s{\p{k_{z}H}^{-2}} \approx 0$.
         In the Boussinesq approximation where terms of order
         $\mathcal{O}\p{H^{-2}}$ are ignored, the phase and group velocities are
@@ -438,14 +439,14 @@ and numerical simulations \citep{winters1994} suggest that nonlinear effects may
 significantly enhance reflection and transmission.
 
 Consider now the long-term evolution of the critical layer due to continuous
-horizontal momentum transfer by IGWs. \textcolor{Corr}{Any incident horizontal
+horizontal momentum transfer by IGWs. Any incident horizontal
 momentum flux absorbed by the fluid, denoted $F_a(t)$, must manifest as
-additional horizontal momentum of the shear flow}.
-\textcolor{Corr}{Additionally, as the mean flow $\overline{U}$ cannot grow
+additional horizontal momentum of the shear flow.
+Additionally, as the mean flow $\overline{U}$ cannot grow
 efficiently above $\overline{U}_c$ (due to the breakdown of the linear
 solution), we assume $\overline{U}$ saturates at $\overline{U}_c$, which holds
 to good accuracy (see Fig.~\ref{fig:nl_fluxes}). In this case, the critical
-layer must propagate downward in response to the incident momentum flux.} The
+layer must propagate downward in response to the incident momentum flux. The
 horizontal momentum of the shear flow satisfies
 \begin{equation}
     \pd{}{t}\int\limits \overline{\rho}(z) \overline{U}(z, t)\;\mathrm{d}z
@@ -493,8 +494,8 @@ turbulence generated by wave breaking is approximately isotropic, so we use $L_x
 The time integration uses a split implicit-explicit third-order scheme where
 certain terms are treated implicitly and the remaining terms are treated
 explicitly. A third-order, four-stage DIRK-ERK scheme \citep{ascher} is used
-with adaptive timesteps computed from \textcolor{Corr}{the minimum of $0.1 / N$
-and the advective Courant-Friedrichs-Lewy (CFL) time. The CFL time is given by}
+with adaptive timesteps computed from the minimum of $0.1 / N$
+and the advective Courant-Friedrichs-Lewy (CFL) time. The CFL time is given by
 $\Delta t = 0.7 \min(\Delta x / u_x,\Delta z / u_{z})$, where the minimum is
 taken over every grid point in the domain, and $\Delta x \equiv L_x / N_x$ and
 $\Delta z \equiv L_z / N_z$ are the grid spacings in the $x$ and $z$ directions
@@ -561,9 +562,9 @@ derivatives in Eq.~\eqref{se:nl_upsilon} with:
 where $z_B = 0.3H$ and $z_T = 9.5H$ are the boundaries of the lower and upper
 damping zones respectively. This damps perturbations below $z_B$ and
 above $z_T$ with damping time $\tau$ and negligibly affects the dynamics between
-$z_B$ and $z_T$. \textcolor{Corr}{Most importantly, horizontal momentum remains
+$z_B$ and $z_T$. Most importantly, horizontal momentum remains
 conserved between $z_B$ and $z_T$, and outgoing boundary conditions are imposed
-at $z_B, z_T$}. We choose the transition width $\Delta z = 0.25H$ and damping
+at $z_B, z_T$. We choose the transition width $\Delta z = 0.25H$ and damping
 time $\tau = 1 / (15N)$. This prescription is similar to \citet{lecoanet_damp}
 and has the advantage of being smooth, important for spectral methods. Further
 details of our implementation of the fluid equations in Dedalus are described in
@@ -592,10 +593,10 @@ some region $z \in [z_b, z_t]$ can be estimated from
         \label{eq:ahat_def}
 \end{equation}
 The subscript $i$ denotes the incident wave. If $\bm{u} = \bm{u}_{an}$, then
-$A_i(t) = 1$. \textcolor{Corr}{The factor of $\bar{\rho}$ inside the integrands
+$A_i(t) = 1$. The factor of $\bar{\rho}$ inside the integrands
 in Eq.~\eqref{eq:ahat_def} corrects for the $\propto e^{z/2H}$ growth of
 $\bm{u}_{an}$; without it, $A_i(t)$ would be dominated by the contribution near
-$z_t$.}
+$z_t$.
 
 For the weakly forced simulation, we expect
 $A_i(t) = 1$ when integrated between the forcing and damping zones, i.e.\
@@ -615,7 +616,7 @@ indeed $A_i \approx 1$ after the initial transient.
     After an initial transient phase, we observe $A_i(t)$ asymptotes to $\approx
     1$, implying continuous excitation of identical IGW with the expected
     amplitude. The small deviation of $A_i(t)$ from unity may be due to
-    \textcolor{Corr}{truncation error in our implicit timestepping scheme}, as a
+    truncation error in our implicit timestepping scheme, as a
     relatively large fixed step size $\Delta t = 0.1/N$ was used for this
     simulation.}\label{fig:lin_amps}
 \end{figure}
@@ -654,9 +655,9 @@ described in Section~\ref{s:numerics} and Section~\ref{s:weak_sim} except for
 different values of $C$ and $\nu$. In particular, we choose $C$ such that
 $\abs{\xi_z k_z} = 0.1$ in the forcing zone ($z = z_0$). The linear solution
 predicts $\abs{\xi_z k_z} \sim 4.25$ at the upper damping zone $z_T$.
-\textcolor{Corr}{We choose the viscosity $\nu$ for each resolution to be as
+We choose the viscosity $\nu$ for each resolution to be as
 small as possible while still resolving the shortest spatial scales of the wave
-breaking.} A table of our simulations can be found in Table~\ref{tab:params}.
+breaking. A table of our simulations can be found in Table~\ref{tab:params}.
 \begin{table}
     \centering
     \begin{tabular}{l c c c}
@@ -682,9 +683,9 @@ other simulations show qualitatively similar behavior.
 
 % convert yubo_000054.png -crop 2000x2000+150+250 out.png
 In Fig.~\ref{fig:snapshots}, we present snapshots of $u_x$ and $\Upsilon$ at
-various phases of the simulation. \textcolor{Corr}{Note that $\Upsilon \lesssim
+various phases of the simulation. Note that $\Upsilon \lesssim
 0.1$, so the density stratification does not deviate significantly from
-equilibrium.} The flow evolves through several distinct stages:
+equilibrium. The flow evolves through several distinct stages:
 \begin{enumerate}
     \item At early times (top left panel), the flow resembles a linear IGW lower
         in the simulation domain but breaks down into smaller-scale features at
@@ -704,14 +705,14 @@ equilibrium.} The flow evolves through several distinct stages:
         More discussion can be found in Section~\ref{ss:khi}.
 
     \item At the end of the simulation (bottom right panel), the
-        \textcolor{Corr}{critical layer has advanced downwards, but otherwise}
+        critical layer has advanced downwards, but otherwise
         the flow shows very few significant qualitative differences from the
         previous snapshot. This suggests that the latter phase of the simulation
-        has reached a steady state. \textcolor{Corr}{Notably, the horizontal
+        has reached a steady state. Notably, the horizontal
         banded structure of $u_x$ in the upper, synchronized fluid does not
         continue to evolve (also visible in the top panel of
         Fig.~\ref{fig:nl_fluxes}), suggesting that momentum redistribution and
-        mixing within the synchronized fluid are negligible.}
+        mixing within the synchronized fluid are negligible.
 \end{enumerate}
 
 \begin{figure*}
@@ -724,10 +725,10 @@ equilibrium.} The flow evolves through several distinct stages:
     \includegraphics[width=0.45\textwidth]{plots/yubo_000451_labeled.png}
     \caption{Snapshots of $u_x$ and $\Upsilon \equiv \ln \p{\rho / \bar{\rho}}$
     in the fiducial simulation illustrating distinct phases of the evolution of
-    the flow. \textcolor{Corr}{See the online PDF for a color version.} Damping
-    layers \textcolor{Corr}{at the top and bottom of the simulation domain} are
+    the flow. See the online PDF for a color version. Damping
+    layers at the top and bottom of the simulation domain are
     shaded in light grey (see Section~\ref{ss:damping}), while the forcing zone
-    \textcolor{Corr}{in the lower middle portion of the simulation domain} (see
+    in the lower middle portion of the simulation domain (see
     Section~\ref{ss:forcing}) is shaded in light green (boundaries are at $z_0
     \pm 3\sigma$). The four panels illustrate (i) the initial transient wave
     breaking phase, (ii) formation of a distinct critical layer, (iii)
@@ -767,7 +768,7 @@ in subsequent sections.
 
 The formation of the critical layer is associated with a strong shear flow. What
 is the width of this layer? Inspection of Fig.~\ref{fig:snapshots} suggests the
-\textcolor{Corr}{presence} of the Kelvin-Helmholtz Instability (KHI) in the
+presence of the Kelvin-Helmholtz Instability (KHI) in the
 critical layer. In a stratified medium, KHI occurs when the Richardson number
 (Eq.~\eqref{eq:ri_def}) satisfies $\mathrm{Ri} \lesssim 1/4$
 \citep[e.g.][]{shu1991physics}. It is natural to suspect that the shear flow
@@ -797,7 +798,7 @@ We use the background buoyancy frequency to compute $\mathrm{Ri}$, as
 fluctuations do not change $N^2$ significantly ($\sim 1\%$). To understand the
 variation in $\mathrm{Ri}$ over $x$, we also compute $\min\limits_x
 \mathrm{Ri}_x(x, t)$ (the maximum is very noisy). Both are shown in
-Fig.~\ref{fig:nl_f_ri}. \textcolor{Corr}{Absorption} of incident IGWs quickly
+Fig.~\ref{fig:nl_f_ri}. Absorption of incident IGWs quickly
 decreases the Richardson number to between $0.25$ and $0.5$, characteristic of
 the onset of the KHI\@.
 
